@@ -51,7 +51,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/google/test_google_youtube_upload.py" in rendered
     assert "tests/google/test_google_youtube_search.py" in rendered
     assert "tests/google/test_google_precision_report.py" in rendered
-    assert "tests/test_site_sso_subdomain_runtime.py" in rendered
+    assert "tests/site_engine/test_site_sso_subdomain_runtime.py" in rendered
     assert "tests/youtube/test_youtube_oauth.py" in rendered
     assert "tests/youtube/test_youtube_research.py" in rendered
     assert "tests/test_ai_agent_app_structure_design_baseline.py" in rendered

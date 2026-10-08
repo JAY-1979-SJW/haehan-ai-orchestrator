@@ -4,7 +4,7 @@ mcp_server.py(도구 등록)와 routers/ai_agent_router.py(claude -p --allowedTo
 같은 이름을 각자 적어 어긋나는 것을 막기 위해 여기 한 곳에서 정의한다. `mcp` 패키지에
 의존하지 않으므로 어떤 파이썬 환경에서도 import 된다.
 
-서버에 등록된 실제 도구 집합과 ALL_TOOL_NAMES 의 일치는 tests/test_ai_agent_allowed_tools.py 가
+서버에 등록된 실제 도구 집합과 ALL_TOOL_NAMES 의 일치는 tests/site_work/test_ai_agent_allowed_tools.py 가
 검사한다(도구를 추가하면 여기 그룹에도 넣어야 통과).
 """
 

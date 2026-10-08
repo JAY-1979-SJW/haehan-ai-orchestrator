@@ -128,7 +128,7 @@ def test_blocked_operation_does_not_create_local_agent_task() -> None:
 
 
 def test_sso_baseline_documents_common_oauth_client_policy() -> None:
-    baseline = (Path(__file__).resolve().parents[1] / "docs/baseline/SITE_SSO_SUBDOMAIN_RUNTIME_BASELINE.md").read_text(
+    baseline = (Path(__file__).resolve().parents[2] / "docs/baseline/SITE_SSO_SUBDOMAIN_RUNTIME_BASELINE.md").read_text(
         encoding="utf-8"
     )
 
@@ -140,7 +140,7 @@ def test_sso_baseline_documents_common_oauth_client_policy() -> None:
 
 
 def test_sso_baseline_documents_occasional_site_login_handoff() -> None:
-    baseline = (Path(__file__).resolve().parents[1] / "docs/baseline/SITE_SSO_SUBDOMAIN_RUNTIME_BASELINE.md").read_text(
+    baseline = (Path(__file__).resolve().parents[2] / "docs/baseline/SITE_SSO_SUBDOMAIN_RUNTIME_BASELINE.md").read_text(
         encoding="utf-8"
     )
 

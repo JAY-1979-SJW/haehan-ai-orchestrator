@@ -13849,7 +13849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ai_agent_allowed_tools.py": {
+  "tests/site_work/test_ai_agent_allowed_tools.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14185,7 +14185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_auth_window_gate.py": {
+  "tests/common/test_auth_window_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15073,7 +15073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_business_api_flow_20260509.py": {
+  "tests/approval/test_business_api_flow_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15753,7 +15753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gate_eum_approval.py": {
+  "tests/common/test_gate_eum_approval.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16297,7 +16297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_local_agent_approval_fixture.py": {
+  "tests/approval/test_local_agent_approval_fixture.py": {
    "layer": "L11",
    "role": "test",
    "domain": "local_agent",
@@ -16841,7 +16841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mail_bulk_policy_store.py": {
+  "tests/naver_mail/test_mail_bulk_policy_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16849,7 +16849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mail_bulk_run.py": {
+  "tests/naver_mail/test_mail_bulk_run.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16857,7 +16857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mail_bulk_service.py": {
+  "tests/naver_mail/test_mail_bulk_service.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16873,7 +16873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mail_draft_policy_store.py": {
+  "tests/naver_mail/test_mail_draft_policy_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17513,7 +17513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_publish_guard.py": {
+  "tests/common/test_publish_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17817,7 +17817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_access_login_flow_helpers.py": {
+  "tests/site_engine/test_site_access_login_flow_helpers.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17961,7 +17961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_registry_core.py": {
+  "tests/site_engine/test_site_registry_core.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17969,7 +17969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_session_safety.py": {
+  "tests/site_engine/test_site_session_safety.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17977,7 +17977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_sso_subdomain_runtime.py": {
+  "tests/site_engine/test_site_sso_subdomain_runtime.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18097,7 +18097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tag_and_option_sections.py": {
+  "tests/smartstore/test_tag_and_option_sections.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18105,7 +18105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_task_runner.py": {
+  "tests/site_work/test_task_runner.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18561,7 +18561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_memory_bounds_20261005.py": {
+  "tests/instagram/test_memory_bounds_20261005.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18681,7 +18681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cafe_activity.py": {
+  "tests/naver_cafe/test_cafe_activity.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -18689,7 +18689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cafe_membership.py": {
+  "tests/naver_cafe/test_cafe_membership.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -19137,7 +19137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_console_api_contract_agent_run.py": {
+  "tests/site_work/test_console_api_contract_agent_run.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19641,7 +19641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_gabia_paths.py": {
+  "tests/gabia/test_split_gabia_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -23049,7 +23049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_shared_helpers.py": {
+  "tests/site_engine/test_site_shared_helpers.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
