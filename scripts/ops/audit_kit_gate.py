@@ -31,6 +31,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _proc import no_window_kwargs
+from code_map.proc_tree import run_tree_killed
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -93,14 +94,13 @@ def raw_findings(kit: list[str], path: Path, root: Path | None = None) -> list[s
     root = root or ROOT
     payload = json.dumps({"tool_input": {"file_path": str(path)}, "cwd": str(root)})
     try:
-        proc = subprocess.run(
+        proc = run_tree_killed(  # audit-kit 이 자손을 남겨 파이프를 물어도 시간 초과 때 트리째 종료하고 돌아온다(PR #160 verify 정지)
             [*kit, "hook"],
             input=payload.encode("utf-8"),
-            capture_output=True,
+            text=False,
             timeout=PER_FILE_TIMEOUT_S,
             cwd=str(root),
             env=_utf8_env(),
-            check=False,
             **no_window_kwargs(),
         )
     except (OSError, subprocess.TimeoutExpired):
@@ -353,14 +353,13 @@ def _kit_hook(kit: list[str], path: Path, root: Path) -> tuple[list[str], str]:
     """`audit-kit hook` 으로 한 파일 검사 → (신규 항목, 검사 못 한 이유)."""
     payload = json.dumps({"tool_input": {"file_path": str(path)}, "cwd": str(root)})
     try:
-        proc = subprocess.run(
+        proc = run_tree_killed(  # audit-kit 이 자손을 남겨 파이프를 물어도 시간 초과 때 트리째 종료하고 돌아온다(PR #160 verify 정지)
             [*kit, "hook"],
             input=payload.encode("utf-8"),
-            capture_output=True,
+            text=False,
             timeout=PER_FILE_TIMEOUT_S,
             cwd=str(root),
             env=_utf8_env(),
-            check=False,
             **no_window_kwargs(),
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -472,7 +471,10 @@ def run_post_edit(stdin_text: str) -> int:
 
 def _session_python_files(session_id: str | None) -> list[Path]:
     """이번 세션이 편집한 저장소 안 .py 파일(중복 제거, 순서 유지)."""
-    from scripts.ops.post_edit_fast_gate import cleanup_old_session_edit_files, load_session_edits
+    from scripts.ops.post_edit_fast_gate import (
+        cleanup_old_session_edit_files,
+        load_session_edits,
+    )
 
     cleanup_old_session_edit_files()
     found = []

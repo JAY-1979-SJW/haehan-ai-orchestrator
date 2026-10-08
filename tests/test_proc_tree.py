@@ -43,3 +43,22 @@ def test_gives_up_on_a_pipe_that_never_closes(monkeypatch):
     with pytest.raises(subprocess.TimeoutExpired):
         proc_tree.run_tree_killed([sys.executable, "-c", PARENT_WITH_PIPE_HOLDING_CHILD], timeout=1)
     assert time.monotonic() - started < 30
+
+
+def test_bytes_mode_passes_stdin_and_returns_bytes():
+    code = "import sys; data = sys.stdin.buffer.read(); sys.stdout.buffer.write(data.upper()); sys.exit(2)"
+    result = proc_tree.run_tree_killed([sys.executable, "-c", code], input=b"abc", text=False, timeout=30)
+    assert (result.returncode, result.stdout, result.stderr) == (2, b"ABC", b"")
+
+
+def test_audit_kit_raw_findings_returns_none_instead_of_hanging_when_the_kit_leaves_a_pipe_holder(monkeypatch, tmp_path):
+    """PR #160 verify: audit-kit hook 이 자손을 남겨 파이프를 물면 subprocess.run(timeout) 이 영원히 멈췄다 → 트리째 종료하고 None(검사 못 함)."""
+    import audit_kit_gate as gate
+
+    fake_kit = tmp_path / "fake_kit.py"
+    fake_kit.write_text(PARENT_WITH_PIPE_HOLDING_CHILD, encoding="utf-8")
+    monkeypatch.setattr(gate, "PER_FILE_TIMEOUT_S", 2)
+    monkeypatch.setattr(proc_tree, "PIPE_GRACE_S", 10)
+    started = time.monotonic()
+    assert gate.raw_findings([sys.executable, str(fake_kit)], tmp_path / "x.py", tmp_path) is None
+    assert time.monotonic() - started < 40

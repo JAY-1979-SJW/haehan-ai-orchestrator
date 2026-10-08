@@ -38,6 +38,7 @@ PY = sys.executable
 _T0 = time.monotonic()
 PER_TEST_TIMEOUT_S = 300  # pytest-timeout: 시험 하나가 멈추면 90분을 다 쓰지 않고 그 시험 이름으로 실패한다
 MAX_XDIST_WORKERS = 4  # pytest-xdist 가 있으면 영향 시험을 이만큼 병렬로
+AUDIT_KIT_SLOW_S = 20  # audit-kit 한 파일이 이보다 오래 걸리면 파일 이름을 로그에 남긴다
 
 
 def _log(msg: str) -> None:
@@ -494,7 +495,20 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
         base_keys = mypy_keys_batch(py, [base_tree / rel for rel in py_changed if (base_tree / rel).exists()], base_tree)
         _log("mypy 일괄 검사 끝")
 
+    done = [0]
+
     def one(rel: str) -> list[str]:
+        started = time.monotonic()
+        try:
+            return _one(rel)
+        finally:
+            done[0] += 1
+            if time.monotonic() - started > AUDIT_KIT_SLOW_S:  # 느린 파일은 이름을 남긴다 — 멈춤 추적용(PR #160)
+                _log(f"audit-kit 느린 파일 {time.monotonic() - started:.0f}s: {rel}")
+            if done[0] % 100 == 0:
+                _log(f"audit-kit 파일 검사 진행 {done[0]}/{len(py_changed)}")
+
+    def _one(rel: str) -> list[str]:
         head = raw_findings(kit, head_tree / rel, head_tree)
         if head is None:
             return [f"{rel}: audit-kit 검사를 하지 못했습니다"]

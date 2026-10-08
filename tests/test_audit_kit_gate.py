@@ -318,16 +318,20 @@ def test_verify_includes_mypy_diff_against_base(tmp_path, tree_aware_kit, monkey
     akg = importlib.import_module("audit_kit_gate")
     base, head = _two_trees(tmp_path)
     monkeypatch.setattr(akg, "mypy_python", lambda _kit: "py")
-    seen = {}
+    calls = []
 
-    def fake_new(_py, path, baseline, _root=None):
-        seen[path.name] = baseline.name if baseline else None
-        return ([f"[mypy] {path.name}: 새 타입 오류"], "")
+    def fake_batch(_py, paths, root=None):
+        # head 트리: 옛 오류 'old' + 새 오류 'new', 기준 트리: 'old' 만 (일괄 1회씩 — 파일마다 따로 부르지 않는다)
+        calls.append((root.name, sorted(p.name for p in paths)))
+        keys = {"old", "new"} if root == head else {"old"}
+        return {p: set(keys) for p in paths}
 
-    monkeypatch.setattr(akg, "mypy_new", fake_new)
+    monkeypatch.setattr(akg, "mypy_keys_batch", fake_batch)
     found, _ = vc._audit_kit_new_findings(["pkg/a.py", "pkg/new.py"], base, head)
-    assert seen == {"a.py": "a.py", "new.py": None}  # 기준 트리에 있는 파일은 그 파일과, 새 파일은 기준 없이 비교
-    assert "pkg/a.py: [mypy] a.py: 새 타입 오류" in found and "pkg/new.py: [mypy] new.py: 새 타입 오류" in found
+    assert calls == [(head.name, ["a.py", "new.py"]), (base.name, ["a.py"])]  # head·base 각각 일괄 1회, 기준에는 기준 트리에 있는 파일만
+    # 기준 트리에 있는 파일은 기준에도 있던 오류('old')를 빼고, 새 파일은 기준 없이 전부 신규로 본다
+    assert "pkg/a.py: [mypy] a.py: new" in found and "pkg/a.py: [mypy] a.py: old" not in found
+    assert "pkg/new.py: [mypy] new.py: new" in found and "pkg/new.py: [mypy] new.py: old" in found
 
 
 def test_mypy_keys_retries_once_on_internal_error_and_serializes(monkeypatch, tmp_path):

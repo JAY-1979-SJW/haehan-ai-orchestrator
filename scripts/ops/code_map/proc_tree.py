@@ -14,6 +14,7 @@ import subprocess
 import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 PIPE_GRACE_S = 15  # 트리를 죽인 뒤 파이프가 닫히길 기다리는 최대 시간
 
@@ -35,22 +36,24 @@ def run_tree_killed(
     cwd: str | Path | None = None,
     timeout: float,
     env: Mapping[str, str] | None = None,
+    input: bytes | str | None = None,
+    text: bool = True,
+    **popen_extra: Any,
 ) -> subprocess.CompletedProcess:
-    """`subprocess.run(capture_output=True, text=True)` 와 같은 결과를 주되, 시간 초과 때 자손까지 죽이고 멈추지 않는다."""
-    kwargs: dict = {
-        "cwd": cwd,
-        "env": env,
-        "stdout": subprocess.PIPE,
-        "stderr": subprocess.PIPE,
-        "text": True,
-        "encoding": "utf-8",
-        "errors": "replace",
-    }
+    """`subprocess.run(capture_output=True[, text=True])` 와 같은 결과를 주되, 시간 초과 때 자손까지 죽이고 멈추지 않는다.
+
+    text=False 면 stdout/stderr 를 bytes 로 돌려준다(input 도 bytes). popen_extra 는 Popen 에 그대로 넘긴다(creationflags 등).
+    """
+    kwargs: dict = {"cwd": cwd, "env": env, "stdout": subprocess.PIPE, "stderr": subprocess.PIPE, **popen_extra}
+    if input is not None:
+        kwargs["stdin"] = subprocess.PIPE
+    if text:
+        kwargs.update({"text": True, "encoding": "utf-8", "errors": "replace"})
     if os.name != "nt":
         kwargs["start_new_session"] = True  # killpg 가 이 자식의 그룹만 겨냥하게
     proc = subprocess.Popen(cmd, **kwargs)
     try:
-        out, err = proc.communicate(timeout=timeout)
+        out, err = proc.communicate(input, timeout=timeout)
     except subprocess.TimeoutExpired as exc:
         kill_tree(proc.pid)
         try:
@@ -58,6 +61,6 @@ def run_tree_killed(
         except subprocess.TimeoutExpired:
             # 파이프를 문 프로세스가 남아 있다 — 기다리지 않고 포기한다. 파이프를 닫으려 하면(stream.close()) 읽기 스레드가
             # 잡고 있는 잠금 때문에 윈도우에서 다시 멈추므로 닫지 않는다(읽기 스레드는 daemon 이라 종료를 막지 않는다).
-            out, err = "", ""
+            out, err = ("", "") if text else (b"", b"")
         raise subprocess.TimeoutExpired(cmd, timeout, output=out, stderr=err) from exc
     return subprocess.CompletedProcess(cmd, proc.returncode, out, err)
