@@ -7,8 +7,8 @@
     scripts 쪽          : from scripts.common.app_paths import repo_root
 
 사용:
-    python scripts/ops/root_calc_gate.py --staged                    # pre-commit: staged diff 의 새 줄
-    python scripts/ops/root_calc_gate.py --check-diff <base> <head>  # CI: base..head 의 새 줄
+    python scripts/ops/repo_gates/root_calc_gate.py --staged                    # pre-commit: staged diff 의 새 줄
+    python scripts/ops/repo_gates/root_calc_gate.py --check-diff <base> <head>  # CI: base..head 의 새 줄
 
 판정(오탐 방지): 그 줄이 있는 파일의 저장소 상대 경로로 `Path(__file__)` 를 실제로 따라가서 **저장소 루트(이상)에
 닿을 때만** 위반이다. 자기 폴더 한 단계(`Path(__file__).parent`, `parents[0]`, dirname 한 번)나 저장소 안의 다른
@@ -28,7 +28,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+_BOOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 if str(_BOOT) not in sys.path:
     sys.path.insert(0, str(_BOOT))
 

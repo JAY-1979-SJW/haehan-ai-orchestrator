@@ -162,7 +162,7 @@ def _local_gate_file_failure(required_gate, pre_commit, pre_commit_orig, pre_pus
     if missing:
         return False, "missing required local gate file(s): " + ", ".join(missing)
 
-    # 현행 훅 구조(f6a169ae 2026-05-31 재작성 이후, 설치기 scripts/ops/install_git_hooks.py):
+    # 현행 훅 구조(f6a169ae 2026-05-31 재작성 이후, 설치기 scripts/ops/hooks/install_git_hooks.py):
     #   pre-commit(래퍼) -> pre-commit.orig 위임, pre-commit.orig 가 핵심 게이트들을 호출,
     #   pre-push -> ai_code_review_gate.py. required_quality_gate.py 는 더 이상 훅에서
     #   호출되지 않는다(그 미연결 자체는 의도 미확인 — 훅 변경은 이 검사기의 범위 밖).

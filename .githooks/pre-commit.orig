@@ -210,7 +210,7 @@ if _ak.exists():
 # ── 이동 사전점검 게이트 (git mv 한 .py 의 남은 경로 로드/직접 실행 참조) ──────
 # alias 한 줄 shim 은 import 만 받는다. 파일 경로 로드·직접 실행·설정/훅 경로 참조가 새 경로로 안 고쳐졌고
 # 옛 경로에 맞는 shim 도 없으면 커밋을 막는다(2026-10-07 hiworks·dashboard 회귀).
-# 해결: python scripts/ops/make_shim.py <옛> <새> 또는 참조를 새 경로로 수정. 우회 옵션 없음.
+# 해결: python scripts/ops/devflow/make_shim.py <옛> <새> 또는 참조를 새 경로로 수정. 우회 옵션 없음.
 _mp = ROOT / "scripts" / "ops" / "move_preflight.py"
 if _mp.exists() and any(
     ln.startswith("R") and ln.split("\t")[-1].endswith(".py")

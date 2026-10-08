@@ -41,8 +41,8 @@ Claude가 신규 함수를 짤 때 (a) 이미 있는 유사 기능을 다시 짜
 더 일관적이므로, 신규 파일도 **`scripts/ops/`에 둔다** (`.claude/hooks/`가 아님 — 위 표는 최초
 초안이었고 조사 중 기존 관례를 재확인해 정정함). 최종 경로:
 
-- `scripts/ops/pre_edit_dup_check.py`
-- `scripts/ops/post_edit_fast_gate.py`
+- `scripts/ops/hooks/pre_edit_dup_check.py`
+- `scripts/ops/hooks/post_edit_fast_gate.py`
 
 ## 3. 각 훅 설계
 
@@ -87,7 +87,7 @@ Claude가 신규 함수를 짤 때 (a) 이미 있는 유사 기능을 다시 짜
 
 방법: 새 훅 항목을 추가하지 않고 `behavior_gate.py` 자체를 수정하는 대신(파일 보존 원칙),
 Stop 배열에 **새 항목을 하나 더 추가**한다(`hooks` 배열은 여러 개 등록 가능, 기존 동작 안 건드림):
-- `scripts/ops/stop_fast_verify.py` (신규, 위치는 `scripts/ops/` 관례 유지):
+- `scripts/ops/hooks/stop_fast_verify.py` (신규, 위치는 `scripts/ops/` 관례 유지):
   1. `git status --porcelain`으로 이번 세션에서 바뀐 파일 목록만 추출.
   2. `.py` 있으면 ruff(기준선 diff) + 매핑 테스트(§3.2와 동일 로직, 중복 호출 시 결과 캐시 재사용).
   3. `.ts`/`.tsx` 있으면 tsc 1회(있으면 캐시 재사용).
@@ -175,7 +175,7 @@ Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/i
      { "matcher": "Write", "hooks": [ ...기존... ] },
 +    { "matcher": "Edit|Write",
 +      "hooks": [ { "type": "command",
-+        "command": "python \"...\\scripts\\ops\\pre_edit_dup_check.py\"",
++        "command": "python \"...\\scripts\ops\hooks\pre_edit_dup_check.py\"",
 +        "statusMessage": "중복 구현 가능성 검사 중..." } ] },
      { "matcher": "Bash|PowerShell", "hooks": [ ...기존 4개 그대로... ] },
      ...
@@ -184,14 +184,14 @@ Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/i
      { "matcher": "Write|Edit|NotebookEdit", "hooks": [ ...기존 log_code_change 그대로... ] },
 +    { "matcher": "Edit|Write",
 +      "hooks": [ { "type": "command",
-+        "command": "python \"...\\scripts\\ops\\post_edit_fast_gate.py\"",
++        "command": "python \"...\\scripts\ops\hooks\post_edit_fast_gate.py\"",
 +        "statusMessage": "빠른 게이트(ruff+영향테스트) 실행 중..." } ] },
      { "matcher": "Write", "hooks": [ ...기존 hook_check_a4 그대로... ] }
    ],
    "Stop": [
      { "hooks": [ ...기존 behavior_gate 그대로... ] },
 +    { "hooks": [ { "type": "command",
-+        "command": "python \"...\\scripts\\ops\\stop_fast_verify.py\"",
++        "command": "python \"...\\scripts\ops\hooks\stop_fast_verify.py\"",
 +        "statusMessage": "세션 변경분 최종 게이트 확인 중..." } ] }
    ]
 ```

@@ -17,7 +17,7 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 sys.path.insert(0, str(ROOT))
 
 from scripts.ops.write_gates import duplicate_impl_gate, naver_blog_safety_gate, sitemap_gate  # noqa: E402

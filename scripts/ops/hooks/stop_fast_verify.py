@@ -29,10 +29,10 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 sys.path.insert(0, str(ROOT))
 
-from scripts.ops.post_edit_fast_gate import (  # noqa: E402
+from scripts.ops.hooks.post_edit_fast_gate import (  # noqa: E402
     _check_python,
     _check_typescript,
     cleanup_old_session_edit_files,

@@ -4,7 +4,7 @@
 .git/hooks/pre-push    — Claude Code AI 코드 검수
 
 실행:
-  python scripts/ops/install_git_hooks.py
+  python scripts/ops/hooks/install_git_hooks.py
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]  # scripts/ops/ → repo root
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 # core.hooksPath = .githooks (프로젝트 설정)
 HOOKS_DIR = ROOT / ".githooks"
 CHECKLIST_MARKER = "# commit-checklist-wrapper v1"  # install_commit_checklist.py MARKER 와 동일
@@ -94,7 +94,7 @@ if py_files:
     #    (BLE001 같은 대규모 기존 부채가 있는 파일을 조금만 건드려도 매번 전체가
     #    막히면 사실상 개발이 정지된다 — CLAUDE.md "새 훅은 새로 생긴 오류만
     #    차단" 원칙을 실제로 구현, 2026-09-28)
-    gate = ROOT / "scripts" / "ops" / "ruff_new_only_gate.py"
+    gate = ROOT / "scripts" / "ops" / "repo_gates" / "ruff_new_only_gate.py"
     if gate.exists():
         gate_result = subprocess.run(
             [*_pyexe(), str(gate), "--config", cfg] + py_files,
@@ -214,7 +214,7 @@ if _sg.exists():
 
 # ── audit-kit 개발 기준서 게이트 (staged .py 의 신규 문제만 차단) ──────────
 # audit-kit 를 못 찾으면 건너뛰지만 AUDIT_KIT_REQUIRED=1 이면 커밋을 막는다.
-_ak = ROOT / "scripts" / "ops" / "audit_kit_gate.py"
+_ak = ROOT / "scripts" / "ops" / "hooks" / "audit_kit_gate.py"
 if _ak.exists():
     _ak_result = subprocess.run([*_pyexe(), str(_ak), "--staged"], cwd=str(ROOT))
     if _ak_result.returncode != 0:
@@ -286,7 +286,7 @@ def _pyexe():
 
 # Claude Code AI 코드 검수
 result = subprocess.run(
-    [*_pyexe(), str(ROOT / "scripts" / "ops" / "ai_code_review_gate.py")],
+    [*_pyexe(), str(ROOT / "scripts" / "ops" / "hooks" / "ai_code_review_gate.py")],
     cwd=str(ROOT),
 )
 sys.exit(result.returncode)

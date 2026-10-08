@@ -19,7 +19,7 @@
 | 적대적 검증 A | `498e78fc` | **`--allowedTools` 는 도구를 제한하지 않는다**(실측: Read/Grep/Glob 만 허용해도 Bash 실행됨, 프로젝트 설정 `bypassPermissions`). → `run_claude_agent` 에 `restricted=True`(`--restricted --strict-mcp-config --tools`). 분배의 모든 호출에 적용. 앞선 결과는 "신뢰할 수 없는 데이터"로 구분 |
 | 적대적 검증 B | `e1b8b2cb` | 취소↔tick 락, 조건부 갱신, 시작 선점(`starting`)으로 이중 큐잉 방지, 서버 시작 시 러너 재개, 러너 DB 오류 내성, 분배 전체 시간 초과(2시간) |
 | 적대적 검증 C | `4661d514` | 전역 직렬 작업은 읽기 전용 작업과도 동시에 안 돎, 경로 정규화(표기 우회 차단·판정 불가는 전역 직렬) |
-| 종단 시험 하니스 | (이 커밋) | `scripts/ops/agent_dispatch_e2e.py` — 실제 Claude Code 로 계획→병렬 조사→종합 실행(비용 약 $0.15) |
+| 종단 시험 하니스 | (이 커밋) | `scripts/ops/smoke/agent_dispatch_e2e.py` — 실제 Claude Code 로 계획→병렬 조사→종합 실행(비용 약 $0.15) |
 
 **푸시 완료**: `feat/login-state-by-element` (`1b6291be..4661d514` 및 이후 이 문서 커밋). **master 병합·운영 배포는 안 됨**(아래 창 A).
 **서버(8401)는 옛 코드 실행 중** — P1·P3·채팅 수정은 재시작 전까지 이 PC 앱에 반영 안 됨.
@@ -33,7 +33,7 @@
 ### 반드시 기억할 교훈
 1. `--allowedTools` ≠ 제한. 읽기 전용 보장은 `restricted=True`. 프로젝트 설정이 `bypassPermissions` 라서 허용 목록 밖 도구도 실행된다.
 2. 서버 `_strip_result_data` 가 문자열 값을 500자로 자른다 → 긴 결과는 `result_full` 키로만 통과(20000).
-3. 가짜 큐 시험으로는 위 두 가지를 못 잡았다 → 새 단계는 반드시 `scripts/ops/agent_dispatch_e2e.py` 로 실제 호출 확인.
+3. 가짜 큐 시험으로는 위 두 가지를 못 잡았다 → 새 단계는 반드시 `scripts/ops/smoke/agent_dispatch_e2e.py` 로 실제 호출 확인.
 4. 이 PC 는 메모리 사용률 90%+(여유 1~1.5GB). 분배는 여유 1500MB 미만이면 시작 보류(`AGENT_DISPATCH_MIN_FREE_MB` 로 조정). `verify_change`(145커밋)는 메모리 부족으로 중단됨.
 5. 에이전트/서버/keyring 은 공유 자원 — 격리 인스턴스로 에이전트를 새로 등록하면 기존 자격증명을 덮어쓸 위험. 시험은 스레드 큐 대역(하니스)으로.
 
@@ -83,7 +83,7 @@
 2. `workflows/agent_dispatch_worktree.py`: 짧은 경로 `C:\hhwt-<id>`, 임시 브랜치 생성·정리, 충돌 시험(임시 저장소로, 실제 프로젝트 브랜치 미접촉). git 은 서버 PC 로컬만.
 3. implement 도구 집합: `Read,Grep,Glob,Edit,Write` + 제한 모드(셸·MCP 없음). 병합 승인 API/상태(`merge_pending`) 추가, 병합은 직렬·사람 승인.
 4. 심볼릭 링크/정션은 이름으로 판별 불가 → worktree 격리로 보완(기준서 §4 명시됨).
-5. 시험 + `scripts/ops/agent_dispatch_e2e.py` 로 실제 호출 확인(쓰기 목표는 임시 저장소에서만).
+5. 시험 + `scripts/ops/smoke/agent_dispatch_e2e.py` 로 실제 호출 확인(쓰기 목표는 임시 저장소에서만).
 **시작 문구**: "docs/specs/HANDOFF_2026-10-02_agent-dispatch.md 의 창 B(P4) 를 해줘. 기준서 갱신→드라이런→승인 순서로."
 
 ### 창 C — P5 화면(AI 콘솔 "작업 분배" 패널)

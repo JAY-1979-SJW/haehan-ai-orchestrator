@@ -29,11 +29,9 @@ from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _proc import no_window_kwargs
-
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 sys.path.insert(0, str(ROOT))
+from scripts.ops._proc import no_window_kwargs  # noqa: E402
 
 PER_FILE_TIMEOUT_S = 60
 _MYPY_LOCK = threading.Lock()  # verify_change 가 파일을 병렬로 검사해도 mypy 는 한 번에 하나만(같은 .mypy_cache 를 동시에 쓰면 자체 오류가 난다)
@@ -495,7 +493,7 @@ def run_post_edit(stdin_text: str) -> int:
 
 def _session_python_files(session_id: str | None) -> list[Path]:
     """이번 세션이 편집한 저장소 안 .py 파일(중복 제거, 순서 유지)."""
-    from scripts.ops.post_edit_fast_gate import cleanup_old_session_edit_files, load_session_edits
+    from scripts.ops.hooks.post_edit_fast_gate import cleanup_old_session_edit_files, load_session_edits
 
     cleanup_old_session_edit_files()
     found = []

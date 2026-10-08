@@ -31,7 +31,7 @@ import sys
 from pathlib import Path, PurePosixPath
 
 # 독립 실행 도구 — 시험이 이 파일만 임시 저장소에 복사해 돌리므로 정본(scripts.common.app_paths)에 기대지 않고 파일 위치로 루트를 잡는다.
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 sys.path.insert(0, str(ROOT))  # sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -109,7 +109,7 @@ def cmd_build_baseline(_args: argparse.Namespace) -> int:
     index = build_repo_index()
     dup_hashes = {h: locs for h, locs in index.items() if len(locs) >= 2}
     payload = {
-        "generated_by": "scripts/ops/dup_gate.py build-baseline",
+        "generated_by": "scripts/ops/repo_gates/dup_gate.py build-baseline",
         "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/repo_gates/_dup_structure_hash.py)",
         "min_statements": MIN_STATEMENTS,
         "hash_count": len(dup_hashes),

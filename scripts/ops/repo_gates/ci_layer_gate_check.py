@@ -6,7 +6,7 @@ threshold까지 포함해 실패할 수 있다(이 저장소에 이미 있던 �
 FORBIDDEN_IMPORT > 0 / SECURITY_PATTERN > 0 / CIRCULAR_IMPORT > 0 세 가지만
 CI 차단 조건으로 삼는다.
 
-사용: python scripts/ops/codebase_layer_audit.py; python scripts/ops/ci_layer_gate_check.py
+사용: python scripts/ops/codebase_layer_audit.py; python scripts/ops/repo_gates/ci_layer_gate_check.py
 """
 
 from __future__ import annotations
@@ -15,7 +15,8 @@ import json
 import sys
 from pathlib import Path
 
-REPORT = Path(__file__).resolve().parents[2] / "data" / "codebase_layer_audit_latest.json"
+_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
+REPORT = _ROOT / "data" / "codebase_layer_audit_latest.json"
 
 
 def main() -> int:

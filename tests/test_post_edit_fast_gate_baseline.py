@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from scripts.ops import post_edit_fast_gate as gate
+from scripts.ops.hooks import post_edit_fast_gate as gate
 
 OUTPUT = """
 FAILED ai_orchestrator/tests/test_a.py::test_one - assert 404 == 200

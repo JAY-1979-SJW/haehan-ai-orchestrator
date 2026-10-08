@@ -24,12 +24,13 @@ logging.basicConfig(level=logging.WARNING, format="[hook_check_a4] %(message)s")
 log = logging.getLogger(__name__)
 
 HERE = Path(__file__).parent
-ROOT = HERE.parent.parent
+OFFICE = HERE.parent / "office"  # check_a4.py 가 있는 폴더(P2 에서 ops 직하 → office/ 로 이동)
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 
 
 def _run(script: str, file_path: str) -> int:
     result = subprocess.run(
-        [sys.executable, str(HERE / script), file_path],
+        [sys.executable, str(OFFICE / script), file_path],
         cwd=str(ROOT),
     )
     return result.returncode

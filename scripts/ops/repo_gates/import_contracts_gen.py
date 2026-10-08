@@ -21,9 +21,9 @@ skeleton_gate, module_separation_gate, check_blog_separability)만 재고 있었
 importlib.import_module 같은 동적 import. 목록은 --gaps 로 출력한다.
 
 사용:
-    python scripts/ops/import_contracts_gen.py           # .importlinter 다시 쓰기
-    python scripts/ops/import_contracts_gen.py --check   # 정본과 어긋나면 exit 1 (CI 비차단 단계에서 lint-imports 전에)
-    python scripts/ops/import_contracts_gen.py --gaps    # import-linter 가 볼 수 없는 층 파일 목록
+    python scripts/ops/repo_gates/import_contracts_gen.py           # .importlinter 다시 쓰기
+    python scripts/ops/repo_gates/import_contracts_gen.py --check   # 정본과 어긋나면 exit 1 (CI 비차단 단계에서 lint-imports 전에)
+    python scripts/ops/repo_gates/import_contracts_gen.py --gaps    # import-linter 가 볼 수 없는 층 파일 목록
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 
-_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+_BOOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 if str(_BOOT) not in sys.path:
     sys.path.insert(0, str(_BOOT))
 
@@ -205,9 +205,9 @@ def render(root: Path) -> tuple[str, list[str]]:
     modules = sorted({m for f in _tracked_py(root) if (m := visible_module(f, root))})
     pairs, skipped = pair_contracts(modules)
     head = [
-        "# 생성물 — 손으로 고치지 말 것. 다시 만들기: python scripts/ops/import_contracts_gen.py",
+        "# 생성물 — 손으로 고치지 말 것. 다시 만들기: python scripts/ops/repo_gates/import_contracts_gen.py",
         "# 정본: configs/module_registry.json · scripts/ops/code_map/layer_rules.py · scripts/ops/repo_gates/module_separation_gate.py ·",
-        "#       scripts/naver/blog/cli/check_blog_separability.py (머리말: scripts/ops/import_contracts_gen.py)",
+        "#       scripts/naver/blog/cli/check_blog_separability.py (머리말: scripts/ops/repo_gates/import_contracts_gen.py)",
         f"# import-linter 가 볼 수 없는 층 파일 {len(gaps)}개(루트 평면·namespace 폴더) — 목록: --gaps",
     ]
     head += [f"# 건너뛴 금지 쌍: {s}" for s in skipped]
@@ -236,7 +236,7 @@ def main() -> int:
         current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
         if current != text:
             print(
-                "[import_contracts_gen] .importlinter 가 정본과 다릅니다 — python scripts/ops/import_contracts_gen.py 로 다시 만드세요"
+                "[import_contracts_gen] .importlinter 가 정본과 다릅니다 — python scripts/ops/repo_gates/import_contracts_gen.py 로 다시 만드세요"
             )
             return 1
         print("[import_contracts_gen] .importlinter 최신")

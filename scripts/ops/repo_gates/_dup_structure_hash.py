@@ -2,7 +2,7 @@
 
 원본: C:/work/audit-tools/dupscan/src/dupscan/extractor.py(normalize/structure_hash/
 iter_functions/is_test_path). CI는 그 저장소(개인 PC 경로)에 접근할 수 없어 알고리즘만
-그대로 가져온다(외부 경로 의존 금지, scripts/ops/dup_gate.py가 재구현하지 않도록 함).
+그대로 가져온다(외부 경로 의존 금지, scripts/ops/repo_gates/dup_gate.py가 재구현하지 않도록 함).
 dupscan 자체(유사도 분석·카탈로그·리포트)는 재구현하지 않는다 — 이 파일은 구조 해시 하나만 다룬다.
 
 이전: 2026-10-07, dupscan 커밋 시점 기준 extractor.py 그대로 옮김(다른 프로젝트에서

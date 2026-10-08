@@ -11745,7 +11745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/ai_code_review_gate.py": {
+  "scripts/ops/hooks/ai_code_review_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12241,7 +12241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_kit_gate.py": {
+  "scripts/ops/hooks/audit_kit_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12457,7 +12457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/behavior_gate.py": {
+  "scripts/ops/hooks/behavior_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12513,7 +12513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/ci_layer_gate_check.py": {
+  "scripts/ops/repo_gates/ci_layer_gate_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12737,7 +12737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/guard_cdp_new_tab.py": {
+  "scripts/ops/hooks/guard_cdp_new_tab.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12745,7 +12745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/guard_force_cdp.py": {
+  "scripts/ops/hooks/guard_force_cdp.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12761,7 +12761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/guard_openai_call.py": {
+  "scripts/ops/hooks/guard_openai_call.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12777,7 +12777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hook_check_a4.py": {
+  "scripts/ops/hooks/hook_check_a4.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12785,7 +12785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/install_git_hooks.py": {
+  "scripts/ops/hooks/install_git_hooks.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12849,7 +12849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/make_constraints.py": {
+  "scripts/ops/devflow/make_constraints.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12897,7 +12897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/post_edit_fast_gate.py": {
+  "scripts/ops/hooks/post_edit_fast_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12913,7 +12913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/pre_edit_dup_check.py": {
+  "scripts/ops/hooks/pre_edit_dup_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12921,7 +12921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/preflight.py": {
+  "scripts/ops/verify/preflight.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12929,7 +12929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/prewrite_capability_check.py": {
+  "scripts/ops/hooks/prewrite_capability_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12961,7 +12961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/ruff_new_only_gate.py": {
+  "scripts/ops/repo_gates/ruff_new_only_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13145,7 +13145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/stop_fast_verify.py": {
+  "scripts/ops/hooks/stop_fast_verify.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19145,7 +19145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_r1_api_contract_gate.py": {
+  "scripts/ops/repo_gates/audit_r1_api_contract_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19353,7 +19353,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/make_shim.py": {
+  "scripts/ops/devflow/make_shim.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19361,7 +19361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/move_preflight.py": {
+  "scripts/ops/devflow/move_preflight.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19377,7 +19377,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/tool_home_gate.py": {
+  "scripts/ops/repo_gates/tool_home_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19417,7 +19417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/dup_gate.py": {
+  "scripts/ops/repo_gates/dup_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19433,7 +19433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/root_calc_gate.py": {
+  "scripts/ops/repo_gates/root_calc_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19889,7 +19889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/flat_root_gate.py": {
+  "scripts/ops/repo_gates/flat_root_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22361,7 +22361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/bundle_path_gate.py": {
+  "scripts/ops/repo_gates/bundle_path_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22385,7 +22385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/folder_gate.py": {
+  "scripts/ops/repo_gates/folder_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22393,7 +22393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/import_contracts_gen.py": {
+  "scripts/ops/repo_gates/import_contracts_gen.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23226,6 +23226,14 @@
    "source": "rule"
   },
   "tests/test_hook_gates_wired.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_hook_check_a4_targets.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

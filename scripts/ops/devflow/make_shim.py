@@ -1,9 +1,9 @@
 """이동한 파일(또는 패키지 전체)의 옛 경로에 호환 shim 을 만든다 (G2).
 
 사용(파일 1개):
-    python scripts/ops/make_shim.py <옛경로.py> <새경로.py> [--dry-run]
+    python scripts/ops/devflow/make_shim.py <옛경로.py> <새경로.py> [--dry-run]
 사용(패키지 — 하위 모듈째 옮긴 경우, 둘 다 디렉터리로 준다):
-    python scripts/ops/make_shim.py <옛패키지디렉터리> <새패키지디렉터리> [--dry-run]
+    python scripts/ops/devflow/make_shim.py <옛패키지디렉터리> <새패키지디렉터리> [--dry-run]
     (새 디렉터리의 .py 파일(__init__.py 포함) 각각에 옛 자리 shim 을 1개씩 만든다 —
      __init__.py 뿐 아니라 하위 모듈도 전부 4계약을 독립적으로 만족해야
      mail_read.cdp 같은 "하위 모듈 직접 import·경로 로드·직접 실행"이 깨지지 않는다.
@@ -33,7 +33,7 @@ _ALIAS_RE = re.compile(
 )
 _MARKER_RE = re.compile(r"^#\s*haehan-shim:\s*([\w.]+)", re.M)
 
-_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+_BOOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 if str(_BOOT) not in sys.path:
     sys.path.insert(0, str(_BOOT))
 
@@ -116,7 +116,7 @@ def render_shim(new_module: str, *, with_main: bool, old_path: str = "", new_pat
         f"{MARKER} {new_module}",
         f"# 호환 shim: 실제 모듈은 {new_module} 로 이동했다" + (f" ({new_path})." if new_path else "."),
         "# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.",
-        "# 생성: scripts/ops/make_shim.py — 계약 테스트: tests/test_shim_contract.py",
+        "# 생성: scripts/ops/devflow/make_shim.py — 계약 테스트: tests/test_shim_contract.py",
         "import importlib as _il",
         "import sys as _sys",
         "",

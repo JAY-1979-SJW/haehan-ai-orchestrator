@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops import audit_kit_gate as gate
+from scripts.ops.hooks import audit_kit_gate as gate
 
 BAD = "x: int = 'not an int'\n"  # mypy: Incompatible types in assignment
 BAD2 = "y: str = 123\n"

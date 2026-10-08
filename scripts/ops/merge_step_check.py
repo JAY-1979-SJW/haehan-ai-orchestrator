@@ -40,10 +40,10 @@ BASELINES = (
 )
 # (표시 이름, 명령) — head 트리에서 실행, 종료코드 0 이 통과
 GATES = (
-    ("G11 tool_home", ["scripts/ops/tool_home_gate.py", "--check-all"]),
-    ("G12 dup", ["scripts/ops/dup_gate.py", "check", "--all"]),
-    ("G15 flat_root", ["scripts/ops/flat_root_gate.py", "--check-all"]),
-    ("G16 folder", ["scripts/ops/folder_gate.py", "--check-all"]),
+    ("G11 tool_home", ["scripts/ops/repo_gates/tool_home_gate.py", "--check-all"]),
+    ("G12 dup", ["scripts/ops/repo_gates/dup_gate.py", "check", "--all"]),
+    ("G15 flat_root", ["scripts/ops/repo_gates/flat_root_gate.py", "--check-all"]),
+    ("G16 folder", ["scripts/ops/repo_gates/folder_gate.py", "--check-all"]),
 )
 
 
@@ -111,7 +111,7 @@ def moved_py(base: str, head: str, root: Path) -> dict[str, str]:
 
 
 def preflight_blocking(base: str, head: str, root: Path) -> list[str]:
-    from scripts.ops import move_preflight
+    from scripts.ops.devflow import move_preflight
 
     pairs = moved_py(base, head, root)
     if not pairs:
@@ -189,7 +189,7 @@ def main(argv: list[str] | None = None) -> int:
     ]
     rows += [(k, base_b[k], head_b[k], _verdict(base_b[k], head_b[k])) for k in head_b]
     gates = gate_results(ROOT)
-    g5 = _run(["scripts/ops/root_calc_gate.py", "--check-diff", a.base, "HEAD"], ROOT).returncode == 0
+    g5 = _run(["scripts/ops/repo_gates/root_calc_gate.py", "--check-diff", a.base, "HEAD"], ROOT).returncode == 0
     gates["G5 root_calc"] = g5
     blocking = preflight_blocking(a.base, "HEAD", ROOT)
 

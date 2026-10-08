@@ -7,11 +7,11 @@
 G11(tool_home_gate)과 같은 방식: pre-commit --staged, CI --check-all.
 
 사용:
-    python scripts/ops/flat_root_gate.py --staged          # pre-commit: 새로 추가(A)·이름변경(R)된 .py 만 본다
-    python scripts/ops/flat_root_gate.py --check-all       # CI: 추적 파일 전체 — 기준선에 없는 평면 파일이 있으면 실패
-    python scripts/ops/flat_root_gate.py --update-baseline # 기준선 줄이기(없어졌거나 하위 폴더로 옮긴 항목만 제거). 늘리기는 불가
-    python scripts/ops/flat_root_gate.py --init-baseline   # 기준선 파일이 없을 때 현재 상태로 최초 생성
-    python scripts/ops/flat_root_gate.py --classify <경로...>
+    python scripts/ops/repo_gates/flat_root_gate.py --staged          # pre-commit: 새로 추가(A)·이름변경(R)된 .py 만 본다
+    python scripts/ops/repo_gates/flat_root_gate.py --check-all       # CI: 추적 파일 전체 — 기준선에 없는 평면 파일이 있으면 실패
+    python scripts/ops/repo_gates/flat_root_gate.py --update-baseline # 기준선 줄이기(없어졌거나 하위 폴더로 옮긴 항목만 제거). 늘리기는 불가
+    python scripts/ops/repo_gates/flat_root_gate.py --init-baseline   # 기준선 파일이 없을 때 현재 상태로 최초 생성
+    python scripts/ops/repo_gates/flat_root_gate.py --classify <경로...>
 
 판정:
     - 평면 파일 = 평면 금지 폴더 바로 아래의 .py (scripts/x.py, ai_orchestrator/x.py, x.py). 하위 폴더 파일은 대상이 아니다.
@@ -28,12 +28,12 @@ import json
 import sys
 from pathlib import Path, PurePosixPath
 
-_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+_BOOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 if str(_BOOT) not in sys.path:
     sys.path.insert(0, str(_BOOT))
 
 from scripts.common.app_paths import repo_root  # noqa: E402
-from scripts.ops.tool_home_gate import staged_added, tracked_files  # noqa: E402
+from scripts.ops.repo_gates.tool_home_gate import staged_added, tracked_files  # noqa: E402
 
 ROOT = repo_root()
 CONFIG = "configs/flat_root_gate.json"

@@ -17,8 +17,8 @@ extraResources(package.json), Electron 이 번들 exe 를 찾는 경로(admin-we
 존재 판정은 git 추적 파일 기준이다(로컬에만 있는 미추적 파일로 통과했다가 CI 에서 깨지는 일 방지).
 
 사용:
-    python scripts/ops/bundle_path_gate.py --staged     # pre-commit: 관련 파일이 staged 일 때만 전체 검사
-    python scripts/ops/bundle_path_gate.py --check-all  # CI: 항상 전체 검사
+    python scripts/ops/repo_gates/bundle_path_gate.py --staged     # pre-commit: 관련 파일이 staged 일 때만 전체 검사
+    python scripts/ops/repo_gates/bundle_path_gate.py --check-all  # CI: 항상 전체 검사
 우회 옵션 없음 — 깨진 참조는 spec·package.json·js·워크플로를 실제 경로에 맞게 고친다.
 """
 
@@ -36,13 +36,13 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 
-_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+_BOOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 if str(_BOOT) not in sys.path:
     sys.path.insert(0, str(_BOOT))
 
 # 부트스트랩 뒤라 import 문 대신 import_module — git 헬퍼는 G11(tool_home_gate)의 것을 그대로 쓴다.
 repo_root = importlib.import_module("scripts.common.app_paths").repo_root
-tracked_files = importlib.import_module("scripts.ops.tool_home_gate").tracked_files
+tracked_files = importlib.import_module("scripts.ops.repo_gates.tool_home_gate").tracked_files
 
 ROOT = repo_root()
 SPECS = ("haehan-server.spec", "local-agent.spec", "mcp-server.spec")
@@ -461,7 +461,7 @@ def report(findings: list[Finding], verbose: bool) -> int:
         print(f"  [{f.status}] {f.area:8} {f.source}: {f.ref}" + (f"  — {f.detail}" if f.detail else ""), file=stream)
     if fails:
         print("  → spec·package.json·electron js·워크플로의 경로/모듈 이름을 실제 위치에 맞게 고치세요.", file=stream)
-        print("  (우회 옵션 없음. 정본: scripts/ops/bundle_path_gate.py 머리말)", file=stream)
+        print("  (우회 옵션 없음. 정본: scripts/ops/repo_gates/bundle_path_gate.py 머리말)", file=stream)
     else:
         print("[bundle_path_gate] PASS — 깨진 번들 경로 참조 없음", file=stream)
     print("=" * 60, file=stream)

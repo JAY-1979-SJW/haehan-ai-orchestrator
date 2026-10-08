@@ -5,12 +5,12 @@
 절차: 작업 창 → 지휘창에 '새 폴더 요청(경로·목적·왜 기존 폴더로 안 되는지)' → 대표님 승인 → 목록 추가 커밋 → PR 에 라벨 folder-approved(지휘창만 붙인다).
 
 사용:
-    python scripts/ops/folder_gate.py --staged                      # pre-commit: 새로 추가(A)·이름변경(R)된 코드 파일의 폴더가 목록에 없으면 차단
-    python scripts/ops/folder_gate.py --check-all                   # CI: 추적 코드 파일 전체의 폴더가 목록에 있어야 통과
-    python scripts/ops/folder_gate.py --check-approval --base B --head H [--event E] [--labels L1,L2]
+    python scripts/ops/repo_gates/folder_gate.py --staged                      # pre-commit: 새로 추가(A)·이름변경(R)된 코드 파일의 폴더가 목록에 없으면 차단
+    python scripts/ops/repo_gates/folder_gate.py --check-all                   # CI: 추적 코드 파일 전체의 폴더가 목록에 있어야 통과
+    python scripts/ops/repo_gates/folder_gate.py --check-approval --base B --head H [--event E] [--labels L1,L2]
                                                                     # CI: B→H 에서 목록에 항목이 '추가'됐으면 승인 증거(라벨)를 요구
-    python scripts/ops/folder_gate.py --init-registry               # 목록이 없을 때만: 현재 트리 + 사전 승인 폴더로 최초 생성
-    python scripts/ops/folder_gate.py --classify <폴더 또는 파일 경로...>
+    python scripts/ops/repo_gates/folder_gate.py --init-registry               # 목록이 없을 때만: 현재 트리 + 사전 승인 폴더로 최초 생성
+    python scripts/ops/repo_gates/folder_gate.py --classify <폴더 또는 파일 경로...>
 
 승인 증거(--check-approval):
     - pull_request  : 목록에 항목이 추가됐으면 라벨 folder-approved 가 있어야 통과(라벨은 지휘창만 붙인다).
@@ -32,12 +32,12 @@ import sys
 from collections.abc import Iterable
 from pathlib import Path, PurePosixPath
 
-_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+_BOOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 if str(_BOOT) not in sys.path:
     sys.path.insert(0, str(_BOOT))
 
 from scripts.common.app_paths import repo_root  # noqa: E402
-from scripts.ops.tool_home_gate import staged_added, tracked_files  # noqa: E402
+from scripts.ops.repo_gates.tool_home_gate import staged_added, tracked_files  # noqa: E402
 
 ROOT = repo_root()
 REGISTRY = "configs/folder_registry.json"
@@ -250,7 +250,7 @@ def write_registry(root: Path, entries: list[dict]) -> None:
         "_comment": (
             "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. "
             "항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. "
-            "kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py"
+            "kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/repo_gates/folder_gate.py"
         ),
         "count": len(entries),
         "folders": entries,

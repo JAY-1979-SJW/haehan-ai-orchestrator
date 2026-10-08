@@ -1,9 +1,9 @@
 """파일 이동 전/후 참조 전수 점검 (G1).
 
 사용:
-    python scripts/ops/move_preflight.py <옛경로.py> [...] [--json]
-    python scripts/ops/move_preflight.py <폴더>/ [--json]            # 하위 패키지를 통째로 옮길 때: 폴더 안 .py(__init__.py 포함) 전부 + 같은 폴더 bare import(`import 패키지`) 참조까지
-    python scripts/ops/move_preflight.py --staged-renames          # 커밋 훅용: git mv 한 것만 점검, 막을 것 있으면 exit 1
+    python scripts/ops/devflow/move_preflight.py <옛경로.py> [...] [--json]
+    python scripts/ops/devflow/move_preflight.py <폴더>/ [--json]            # 하위 패키지를 통째로 옮길 때: 폴더 안 .py(__init__.py 포함) 전부 + 같은 폴더 bare import(`import 패키지`) 참조까지
+    python scripts/ops/devflow/move_preflight.py --staged-renames          # 커밋 훅용: git mv 한 것만 점검, 막을 것 있으면 exit 1
 
 찾는 참조 종류 (kind):
     import          import / from-import (절대·상대)           → alias shim 으로 충분
@@ -30,11 +30,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.make_shim import has_main_block, module_name, shim_target  # noqa: E402
+from scripts.ops.devflow.make_shim import has_main_block, module_name, shim_target  # noqa: E402
 
 BLOCKING = {"path_load", "runpy", "direct_exec", "path_string", "config_path", "hook"}
 _TEXT_EXT = {
@@ -475,7 +475,7 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901 - CLI 진입점: �
             for r in bad:
                 new = (new_paths or {}).get(r["file"], "<새경로>")
                 print(
-                    f"  - {r['file']}: {len(r['blocking'])}건 → python scripts/ops/make_shim.py {r['file']} {new}",
+                    f"  - {r['file']}: {len(r['blocking'])}건 → python scripts/ops/devflow/make_shim.py {r['file']} {new}",
                     file=sys.stderr,
                 )
                 for b in r["blocking"][:5]:

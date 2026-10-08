@@ -198,10 +198,10 @@
 - 09:11 **[지시]** 네
 - 09:11 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git commit -m "$(cat <<'EOF' fix(electron): 터미널 창 차단 — spawn windowsHide:t...`
 - 09:10 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && git add admin-web/electron/lib/agent.js admin-web/electron/lib/fastapi_ser...`
-- 09:10 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python scripts/ops/install_git_hooks.py 2>&1 | tail -3 && grep -c "windows...`
+- 09:10 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python scripts/ops/hooks/install_git_hooks.py 2>&1 | tail -3 && grep -c "windows...`
 - 09:09 **[실행]** `grep -n "windowsHide\|session-guard\|pre_commit_template\|HOOK_CONTENT\|write_text\|pre.commit" "C:\work\01. haehan-a...`
 - 09:09 **[실행]** `grep -c "windowsHide-guard" "C:\work\01. haehan-ai-orchestrator\.githooks\pre-commit"`
-- 09:09 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python scripts/ops/install_git_hooks.py 2>&1 | tail -3`
+- 09:09 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python scripts/ops/hooks/install_git_hooks.py 2>&1 | tail -3`
 - 09:08 **[실행]** `powershell -NoProfile -File - << 'PSEOF' $src = "C:\work\01. haehan-ai-orchestrator\dist-installer\app-extracted" $ds...`
 - 09:07 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" && python scripts/ops/codebase_layer_audit.py 2>&1 | grep -E "FORBIDDEN|SECUR...`
 - 09:05 **[실행]** `grep -n "_cdp_call\|get_page\|cdp" "C:\work\01. haehan-ai-orchestrator\ai_orchestrator\connectors\google\actions.py" ...`
@@ -278,8 +278,8 @@
 - 17:01 **[지시]** 네이버 로그인 유지하는데  GPT와 앱의 도구들과 연결을 많이 해야 하나?
 - 16:59 **[지시]** 구글 GPT한테 로그인 요청해봐
 - 16:58 **[지시]** 이전 로그인 세션 모두 삭제하고 사용자가 매번 로그인 하는 방식으로 할까?
-- 16:57 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 scripts/ops/install_git_hooks.py 2>&1 | grep "완료" | tail -1 git add C...`
-- 16:56 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile scripts/ops/install_git_hooks.py && echo "py_compile OK...`
+- 16:57 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 scripts/ops/hooks/install_git_hooks.py 2>&1 | grep "완료" | tail -1 git add C...`
+- 16:56 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile scripts/ops/hooks/install_git_hooks.py && echo "py_compile OK...`
 - 16:54 **[지시]** 네
 - 16:53 **[지시]** 매번 로그인 문제가 발생하는데 훅하고 게이트와 운영규칙으로 해서 프로그램을 고정해야 하나?
 - 16:53 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== naver_session_state.json — 구조·시점(값 마스킹) ===" python3 - <<'PY' impor...`
@@ -334,8 +334,8 @@
 - 15:57 **[지시]** 앱의 모든 탭 및 버튼이 채팅창과 연동되는지 확인해  사용자는 채팅해서 한번에 해결하고 싶어
 - 15:56 **[지시]** 앱 새로고침해서 우측 패널 확인해
 - 15:55 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git push origin feat/desktop-selfcontained-smartstore 2>&1 | tail -5`
-- 15:55 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add scripts/ops/install_git_hooks.py git status --short .githooks/pre-com...`
-- 15:55 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile scripts/ops/install_git_hooks.py && echo "py_compile OK...`
+- 15:55 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add scripts/ops/hooks/install_git_hooks.py git status --short .githooks/pre-com...`
+- 15:55 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python3 -m py_compile scripts/ops/hooks/install_git_hooks.py && echo "py_compile OK...`
 - 15:54 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== install_git_hooks 정의 위치 ===" grep -rlE "install_git_hooks|pre-commi...`
 - 15:52 **[지시]** 소스 방식을 왜 안 지키고 빌드업을 하는데 훅 설치?
 - 15:52 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== push 대상 ===" git log origin/feat/desktop-selfcontained-smartstore.....`

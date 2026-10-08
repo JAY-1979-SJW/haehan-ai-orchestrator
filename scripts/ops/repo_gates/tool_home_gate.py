@@ -4,11 +4,11 @@
 도구별 집: 구현 scripts/<도구>/, API ai_orchestrator/connectors/<도구>/, 화면 admin-web/src/app/<도구>/ (docs/architecture/TOOL_HOME_MAP.md).
 
 사용:
-    python scripts/ops/tool_home_gate.py --staged          # pre-commit: 새로 추가(A)·이름변경(R)된 .py/.ts/.tsx 만 본다
-    python scripts/ops/tool_home_gate.py --check-all       # CI: 추적 파일 전체 — 기준선에 없는 집 밖 파일이 있으면 실패
-    python scripts/ops/tool_home_gate.py --update-baseline # 기준선 줄이기(없어졌거나 집으로 옮긴 항목만 제거). 늘리기는 불가
-    python scripts/ops/tool_home_gate.py --init-baseline   # 기준선 파일이 없을 때 현재 상태로 최초 생성
-    python scripts/ops/tool_home_gate.py --classify <경로...>
+    python scripts/ops/repo_gates/tool_home_gate.py --staged          # pre-commit: 새로 추가(A)·이름변경(R)된 .py/.ts/.tsx 만 본다
+    python scripts/ops/repo_gates/tool_home_gate.py --check-all       # CI: 추적 파일 전체 — 기준선에 없는 집 밖 파일이 있으면 실패
+    python scripts/ops/repo_gates/tool_home_gate.py --update-baseline # 기준선 줄이기(없어졌거나 집으로 옮긴 항목만 제거). 늘리기는 불가
+    python scripts/ops/repo_gates/tool_home_gate.py --init-baseline   # 기준선 파일이 없을 때 현재 상태로 최초 생성
+    python scripts/ops/repo_gates/tool_home_gate.py --classify <경로...>
 
 판정:
     - 이동(R)은 목적지가 집 안이면 통과. 집 밖이면 새 이탈로 본다.
@@ -27,7 +27,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+_BOOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 if str(_BOOT) not in sys.path:
     sys.path.insert(0, str(_BOOT))
 

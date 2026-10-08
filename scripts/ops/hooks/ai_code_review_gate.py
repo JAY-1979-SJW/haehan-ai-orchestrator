@@ -7,7 +7,7 @@ git push 직전에 origin/master 대비 변경 diff를 Claude Code CLI로 리뷰
 VERDICT: BLOCK 이 나오면 push를 차단한다.
 
 실행:
-  python scripts/ops/ai_code_review_gate.py
+  python scripts/ops/hooks/ai_code_review_gate.py
 
 환경:
   AI_REVIEW_ENABLED=false  → 검수 건너뜀 (기본 true)
@@ -24,7 +24,7 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 REPORT_PATH = ROOT / "data" / "runtime" / "ai_review_latest.json"
 
 PROMPT_TEMPLATE = """당신은 시니어 시큐리티 코드 리뷰어입니다.

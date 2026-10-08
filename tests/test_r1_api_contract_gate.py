@@ -1,4 +1,4 @@
-from scripts.ops import audit_r1_api_contract_gate as gate
+from scripts.ops.repo_gates import audit_r1_api_contract_gate as gate
 from scripts.ops.repo_gates import audit_api_contract_frontend_backend as audit
 
 

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops import folder_gate as gate
+from scripts.ops.repo_gates import folder_gate as gate
 
 REAL_ROOT = Path(__file__).resolve().parents[1]
 

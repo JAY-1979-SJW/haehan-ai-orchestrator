@@ -1,8 +1,8 @@
 """AI 코드 품질 게이트 훅 스크립트 단위테스트.
 
 기준서: docs/specs/2026-09-26_ai_code_quality_gate.md
-대상: scripts/ops/pre_edit_dup_check.py, scripts/ops/post_edit_fast_gate.py,
-      scripts/ops/stop_fast_verify.py
+대상: scripts/ops/hooks/pre_edit_dup_check.py, scripts/ops/hooks/post_edit_fast_gate.py,
+      scripts/ops/hooks/stop_fast_verify.py
 
 각 스크립트를 실제 Claude Code 훅과 동일한 방식(stdin JSON → subprocess 실행 →
 exit code/stdout/stderr 확인)으로 검증한다. 실제 ruff/pytest 를 사용한다(모킹 없음) —
@@ -27,9 +27,9 @@ requires_ruff = pytest.mark.skipif(
     importlib.util.find_spec("ruff") is None,
     reason="ruff 가 설치돼 있지 않다 — post_edit_fast_gate 의 ruff 검사를 시험할 수 없다",
 )
-PRE_EDIT = ROOT / "scripts" / "ops" / "pre_edit_dup_check.py"
-POST_EDIT = ROOT / "scripts" / "ops" / "post_edit_fast_gate.py"
-STOP_VERIFY = ROOT / "scripts" / "ops" / "stop_fast_verify.py"
+PRE_EDIT = ROOT / "scripts" / "ops" / "hooks" / "pre_edit_dup_check.py"
+POST_EDIT = ROOT / "scripts" / "ops" / "hooks" / "post_edit_fast_gate.py"
+STOP_VERIFY = ROOT / "scripts" / "ops" / "hooks" / "stop_fast_verify.py"
 
 
 def _run_hook(script: Path, payload: dict, timeout: float = 30) -> subprocess.CompletedProcess:

@@ -5,8 +5,8 @@
 `requirements.txt` 는 직접 의존성을 범위(`>=`)로 적는다 → PC·시점마다 설치되는 버전이 달라진다. 이 도구는 **지금 파이썬 환경에 설치된**
 버전 중 requirements.txt 에서 닿는 패키지(간접 의존성 포함)만 골라 `이름==버전` 으로 적는다. 시험이 통과하는 환경에서 돌려 만든다:
 
-    <시험용 파이썬> scripts/ops/make_constraints.py            # constraints.txt 를 새로 쓴다
-    <시험용 파이썬> scripts/ops/make_constraints.py --check    # 파일이 현재 환경과 같은지만 확인(다르면 종료코드 1)
+    <시험용 파이썬> scripts/ops/devflow/make_constraints.py            # constraints.txt 를 새로 쓴다
+    <시험용 파이썬> scripts/ops/devflow/make_constraints.py --check    # 파일이 현재 환경과 같은지만 확인(다르면 종료코드 1)
 
 설치: `pip install -r requirements.txt -c constraints.txt`.  pytest·ruff 같은 개발 도구는 requirements.txt 에서 닿지 않으므로 들어가지 않는다.
 읽기 전용 점검(`--check`)을 빼면 파일 하나만 쓴다. 패키지를 설치·삭제하지 않는다.
@@ -24,7 +24,7 @@ from pathlib import Path
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 REQUIREMENTS = ROOT / "requirements.txt"
 OUTPUT = ROOT / "constraints.txt"
 
@@ -75,7 +75,7 @@ def closure(
 
 def render(versions: dict[str, str], today: date | None = None) -> str:
     header = [
-        "# 검증된 환경의 버전 집합 — scripts/ops/make_constraints.py 로 생성(직접 고치지 않는다). 설치: pip install -r requirements.txt -c constraints.txt",
+        "# 검증된 환경의 버전 집합 — scripts/ops/devflow/make_constraints.py 로 생성(직접 고치지 않는다). 설치: pip install -r requirements.txt -c constraints.txt",
         f"# 생성: {today or date.today()} / Python {platform.python_version()} / {sys.platform}",
         "# requirements.txt 에서 닿는 패키지(간접 의존성 포함)만 담는다. 개발 도구(pytest·ruff 등)는 들어가지 않는다.",
     ]
