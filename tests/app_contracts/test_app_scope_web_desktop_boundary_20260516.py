@@ -147,7 +147,7 @@ class TestBackendCloseoutBoundary:
         "tests/app_contracts/test_backend_direct_dict_boundary_lock_20260516.py",
         "tests/app_contracts/test_backend_frontend_dependency_audit_20260516.py",
         "tests/app_contracts/test_backend_endpoint_inventory_recount_20260516.py",
-        "ai_orchestrator/tests/test_web_task_router_policy_flow.py",
+        "tests/server_features/test_web_task_router_policy_flow.py",
     ]
 
     @pytest.mark.parametrize("test_path", CLOSEOUT_IN_SCOPE_TESTS)

@@ -5721,7 +5721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_admin_ui_capture_screenshot.py": {
+  "tests/server_features/test_admin_ui_capture_screenshot.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5809,7 +5809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_capture_screenshot_approval.py": {
+  "tests/server_features/test_capture_screenshot_approval.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5817,7 +5817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_capture_screenshot_dry_run.py": {
+  "tests/server_features/test_capture_screenshot_dry_run.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5825,7 +5825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_capture_screenshot_request_api.py": {
+  "tests/server_features/test_capture_screenshot_request_api.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5833,7 +5833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_capture_screenshot_telegram.py": {
+  "tests/server_features/test_capture_screenshot_telegram.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5889,7 +5889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_example_portal_adapter.py": {
+  "tests/server_features/test_example_portal_adapter.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5921,7 +5921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_fetch_web_page.py": {
+  "tests/server_features/test_fetch_web_page.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6113,7 +6113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_open_url_execute.py": {
+  "tests/server_features/test_open_url_execute.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6265,7 +6265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_telegram_callback.py": {
+  "tests/server_features/test_telegram_callback.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6273,7 +6273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_telegram_webhook.py": {
+  "tests/server_features/test_telegram_webhook.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6281,7 +6281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_web_automation_standard.py": {
+  "tests/server_features/test_web_automation_standard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6289,7 +6289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_web_reader.py": {
+  "tests/server_features/test_web_reader.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6297,7 +6297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_web_task_registry.py": {
+  "tests/server_features/test_web_task_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6305,7 +6305,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_web_task_router_policy_flow.py": {
+  "tests/server_features/test_web_task_router_policy_flow.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6313,7 +6313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_web_task_templates.py": {
+  "tests/server_features/test_web_task_templates.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

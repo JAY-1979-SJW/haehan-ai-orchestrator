@@ -14,14 +14,14 @@
 
   2. web-tasks/run
      - admin-web frontend에 직접 참조 없음
-     - ai_orchestrator/tests/test_web_task_registry.py에서
+     - tests/server_features/test_web_task_registry.py에서
        dry_run/status/task_id/provider/action_type/risk_level/requires_approval/expires_at 모두 검증
      - real_run 경로: status="pending_approval" + task_id 가 테스트 흐름에 연결됨
      - HOLD_FOR_APPROVAL_FLOW_DESIGN (TEST_ONLY_DEPENDENCY + 승인 흐름 연계)
 
   3. web-tasks/run-from-template
      - admin-web frontend에 직접 참조 없음
-     - ai_orchestrator/tests/test_web_task_templates.py에서
+     - tests/server_features/test_web_task_templates.py에서
        dry_run/template_id/provider/action_type/success/summary 검증
      - KEEP_CURRENT_CONTRACT (TEST_ONLY_DEPENDENCY)
 
@@ -53,8 +53,8 @@ DEPENDENCY_TABLE = {
     "POST /api/v1/web-tasks/run": {
         "admin_web_files": [],
         "test_files": [
-            "ai_orchestrator/tests/test_web_task_registry.py",
-            "ai_orchestrator/tests/test_web_task_router_policy_flow.py",
+            "tests/server_features/test_web_task_registry.py",
+            "tests/server_features/test_web_task_router_policy_flow.py",
         ],
         "used_keys_in_tests": [
             "dry_run",
@@ -81,7 +81,7 @@ DEPENDENCY_TABLE = {
     },
     "POST /api/v1/web-tasks/run-from-template": {
         "admin_web_files": [],
-        "test_files": ["ai_orchestrator/tests/test_web_task_templates.py"],
+        "test_files": ["tests/server_features/test_web_task_templates.py"],
         "used_keys_in_tests": [
             "dry_run",
             "template_id",
