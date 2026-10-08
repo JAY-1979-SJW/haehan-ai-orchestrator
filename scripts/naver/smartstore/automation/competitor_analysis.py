@@ -15,12 +15,13 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[3]
-DB_PATH = ROOT / "data" / "cdp.db"
+DB_PATH = data_dir() / "cdp.db"  # 예전 ROOT(parents[3])는 저장소 루트가 아니라 scripts/ 라 data/cdp.db 와 다른 DB 를 쓰던 버그
 
 
 def _init_db():

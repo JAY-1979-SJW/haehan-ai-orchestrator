@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from security_utils import safe_preview
-from scripts.youtube.research_common import (
+from scripts.common.youtube_api_common import (
     _now,
     _write_report,
     SENSITIVE_WORDS,

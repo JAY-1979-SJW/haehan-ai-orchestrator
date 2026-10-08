@@ -6,7 +6,7 @@ router.py(컴포지션 루트)와 router_* leaf 사이의 조합 계층이라 le
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 
 from .router_blog import _cmd_blog_assets
 from .router_cafe import _cmd_cafe, _cmd_calendar, _cmd_mybox

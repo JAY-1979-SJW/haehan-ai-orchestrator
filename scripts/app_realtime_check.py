@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.realtime_audit import emit_event
+from scripts.common.realtime_audit import emit_event  # noqa: E402 - sys.path 부트스트랩 뒤 import
 
 LOG_DIR = ROOT / "data" / "logs"
 LATEST_PATH = LOG_DIR / "app_realtime_check_latest.json"

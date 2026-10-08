@@ -8,8 +8,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from ai_orchestrator.persistence import fax_authorization_store as store
-from ai_orchestrator.services import hanafax_authorization_service as service
+from ai_orchestrator.connectors.hanafax import authorization_store as store
+from ai_orchestrator.connectors.hanafax import authorization_service as service
 from scripts.hanafax import address_book
 
 HEADER = ["", "이름", "회사", "팩스번호", "휴대전화", "일반전화", "이메일"]

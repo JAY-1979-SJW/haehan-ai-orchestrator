@@ -23,10 +23,10 @@ try:
 except ImportError:
     pass
 
-from scripts.gate import GateBlocked  # noqa: E402
-from scripts.gate import check as gate_check  # noqa: E402
-from scripts.logger import get_logger  # noqa: E402
-from scripts.op_log import op_context  # noqa: E402
+from scripts.common.gate import GateBlocked  # noqa: E402
+from scripts.common.gate import check as gate_check  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
+from scripts.common.op_log import op_context  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -248,7 +248,7 @@ def _print_and_save_demolition_list(result: dict) -> None:
 def main(apply: bool = False, device_id: str | None = None) -> None:
     """CLI 실행."""
     from scripts.eum.auth import is_logged_in, login
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     # CLI 인자 파싱
     args = sys.argv[1:]

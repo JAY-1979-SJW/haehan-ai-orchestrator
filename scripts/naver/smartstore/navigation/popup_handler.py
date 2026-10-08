@@ -21,7 +21,7 @@ from __future__ import annotations
 import contextlib
 import time
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -121,7 +121,7 @@ def dismiss_all_popups(page, check_today_hide: bool = True) -> dict:
     # 4. fallback — 범용 popup_detector
     if closed == 0:
         try:
-            from scripts.popup_detector import handle_page_popups
+            from scripts.browser.popup.popup_detector import handle_page_popups
 
             fb = handle_page_popups(page)
             closed += fb.get("popups_closed", 0)
@@ -279,7 +279,7 @@ def _close_general_modal(page) -> bool:
 
 def _count_popup_windows(page) -> int:
     try:
-        from scripts.popup_detector import _looks_like_popup_window
+        from scripts.browser.popup.popup_detector import _looks_like_popup_window
 
         pages = page.context.pages
         return sum(1 for p in pages if p is not page and _looks_like_popup_window(p)[0])
@@ -289,7 +289,7 @@ def _count_popup_windows(page) -> int:
 
 def _close_popup_windows(page) -> int:
     try:
-        from scripts.popup_detector import close_popup_windows
+        from scripts.browser.popup.popup_detector import close_popup_windows
 
         return close_popup_windows(page)
     except Exception:  # noqa: BLE001 - 스마트스토어 공지팝업/배너 감지·닫기 — 순수 UI 노이즈 제거, 실패는 로그 후 계속 또는 False/0 기본값(2026-09-28 검토)

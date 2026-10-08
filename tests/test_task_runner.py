@@ -11,8 +11,8 @@ from typing import Any
 
 import pytest
 
-from ai_orchestrator.domain import site_task_map as tm
-from ai_orchestrator.persistence import site_task_map_store as store
+from ai_orchestrator.site_work import site_task_map as tm
+from ai_orchestrator.site_work import site_task_map_store as store
 from scripts.explorer import task_runner as tr
 
 HOST = "fixture.test"
@@ -380,7 +380,7 @@ def _catalog_context(browser, pages: dict[str, str]):
 
 
 def test_real_snapshot_menu_excludes_product_cards_and_risky_links(browser):
-    from ai_orchestrator.domain import site_map_menu as menu
+    from ai_orchestrator.site_work import site_map_menu as menu
     from scripts.explorer.page_snapshot import collect
 
     context, page = _catalog_context(browser, {"/": CATALOG_HOME})

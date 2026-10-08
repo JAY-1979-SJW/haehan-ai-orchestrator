@@ -6,8 +6,8 @@ router 역할: command dispatch, validator 호출, gate 호출, response formatt
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
-from scripts.logger import get_logger
+from scripts.common.gate import check as gate_check
+from scripts.common.logger import get_logger
 
 __status__ = {
     "tasks": {
@@ -206,10 +206,10 @@ def _cmd_suite(args: list[str]) -> None:
 
 def _print_help() -> None:
     print("""G2B 사용법:
-  python scripts/cdp_client.py g2b status              세대 상태 조회
-  python scripts/cdp_client.py g2b gate <action>       gate 판정
-  python scripts/cdp_client.py g2b analysis-draft      입찰분석 초안
-  python scripts/cdp_client.py g2b submit-draft        제출 초안
-  python scripts/cdp_client.py g2b discover            공개 공고 URL 탐색
-  python scripts/cdp_client.py g2b download            첨부파일 배치 다운로드
-  python scripts/cdp_client.py g2b suite               Read-Only 라이브 스위트""")
+  python scripts/browser/cdp/cdp_client.py g2b status              세대 상태 조회
+  python scripts/browser/cdp/cdp_client.py g2b gate <action>       gate 판정
+  python scripts/browser/cdp/cdp_client.py g2b analysis-draft      입찰분석 초안
+  python scripts/browser/cdp/cdp_client.py g2b submit-draft        제출 초안
+  python scripts/browser/cdp/cdp_client.py g2b discover            공개 공고 URL 탐색
+  python scripts/browser/cdp/cdp_client.py g2b download            첨부파일 배치 다운로드
+  python scripts/browser/cdp/cdp_client.py g2b suite               Read-Only 라이브 스위트""")

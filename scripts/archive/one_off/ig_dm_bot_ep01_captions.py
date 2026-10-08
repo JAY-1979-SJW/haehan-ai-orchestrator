@@ -20,7 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from ai_orchestrator.config import get_local_data_dir  # noqa: E402
+from ai_orchestrator.core.config import get_local_data_dir  # noqa: E402
 from scripts.archive.one_off.ig_dm_bot_ep01 import SCENES  # noqa: E402
 
 OUT_DIR = get_local_data_dir() / "video" / "ig_dm_bot_ep01"

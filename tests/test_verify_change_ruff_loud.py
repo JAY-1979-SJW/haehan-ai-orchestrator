@@ -62,3 +62,38 @@ def test_only_findings_on_changed_lines_are_new(tmp_path):
     payload = json.dumps([_find(tmp_path, 3), _find(tmp_path, 99)])
     out = vc._new_ruff_findings(_proc(payload, 1), tmp_path, "base", "head")
     assert len(out) == 1 and out[0].startswith("a.py:3:")
+
+
+# ── 변경 파일이 많아도 ruff 명령줄이 한도를 넘지 않게 묶음으로 돌린다 (PR #160 WinError 206) ─────────
+
+
+def test_run_ruff_splits_files_into_chunks_and_merges_json(monkeypatch, tmp_path):
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, cwd, timeout=0):
+        calls.append(cmd)
+        files = [c for c in cmd if c.endswith(".py")]
+        rows = [{"filename": f, "code": "E1", "message": "m", "location": {"row": 1, "column": 1}} for f in files[:1]]
+        return _proc(json.dumps(rows), 1)
+
+    monkeypatch.setattr(vc, "run", fake_run)
+    monkeypatch.setattr(vc, "RUFF_CHUNK", 3)
+    result = vc._run_ruff([], [f"f{i}.py" for i in range(7)], tmp_path)
+    assert len(calls) == 3  # 7개 / 3 = 묶음 3번
+    assert result.returncode == 1 and [r["filename"] for r in json.loads(result.stdout)] == ["f0.py", "f3.py", "f6.py"]
+
+
+def test_run_ruff_returns_the_failing_chunk_so_the_failure_stays_loud(monkeypatch, tmp_path):
+    answers = iter([_proc("[]", 0), _proc("", 2, "ruff: boom")])
+    monkeypatch.setattr(vc, "run", lambda cmd, cwd, timeout=0: next(answers))
+    monkeypatch.setattr(vc, "RUFF_CHUNK", 2)
+    result = vc._run_ruff([], ["a.py", "b.py", "c.py"], tmp_path)
+    assert result.returncode == 2
+    findings = vc._new_ruff_findings(result, tmp_path, "base", "head")
+    assert findings and "ruff 실행 실패" in findings[0]
+
+
+def test_run_ruff_all_clean_gives_empty_json(monkeypatch, tmp_path):
+    monkeypatch.setattr(vc, "run", lambda cmd, cwd, timeout=0: _proc("[]", 0))
+    result = vc._run_ruff([], ["a.py"], tmp_path)
+    assert (result.returncode, json.loads(result.stdout)) == (0, [])

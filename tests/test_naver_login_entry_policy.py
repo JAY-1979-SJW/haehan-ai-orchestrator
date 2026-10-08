@@ -1,9 +1,9 @@
-from scripts.known_login_urls import get_known_login_url
-from scripts.naver.auth import NAVER_LOGIN_URL
 from ai_orchestrator.external_sites.provider_registry import get_provider
 from ai_orchestrator.local_agent.content_workflow_policy import NAVER_LOGIN_DOMAIN
 from ai_orchestrator.sites.adapters.naver_cafe_adapter import NaverCafeAdapter
-from scripts.sites.subdomain_registry import PROVIDERS as SSO_PROVIDERS
+from scripts.auth.known_login_urls import get_known_login_url
+from scripts.naver.auth import NAVER_LOGIN_URL
+from scripts.site_engine.subdomain_registry import PROVIDERS as SSO_PROVIDERS
 
 
 def test_naver_login_starts_from_naver_main():

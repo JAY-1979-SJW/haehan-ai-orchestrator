@@ -165,7 +165,7 @@ Minimum verification for Workspace changes:
 ```text
 python scripts/ops/audit_google_workspace_module_baseline_contract.py
 python -m pytest tests/test_google_tab_registry.py tests/test_google_workflows.py tests/test_google_surfaces.py tests/test_google_user_present_session_auth.py -q
-python scripts/module_quality_gate.py --module repo_guard
+python scripts/ops/quality/module_quality_gate.py --module repo_guard
 ```
 
 ## 10. Known WARN

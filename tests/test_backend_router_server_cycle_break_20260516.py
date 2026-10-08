@@ -199,7 +199,7 @@ def test_safe_to_envelope_still_zero():
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.asgi import app
-    from ai_orchestrator.connectors.user_auth_router import get_jwt_user
+    from ai_orchestrator.auth.user_auth_router import get_jwt_user
 
     client = TestClient(app, raise_server_exceptions=False)
 

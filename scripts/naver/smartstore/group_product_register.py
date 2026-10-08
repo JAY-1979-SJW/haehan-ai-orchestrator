@@ -49,7 +49,7 @@ ng-click 바인딩 타이밍? hover 상태 선행 필요?)을 못 찾았다. **�
 사용자가 수동으로 이어서 완성하거나, 후속 개발로 채운다.
 
 사용법:
-    from scripts.cdp_helper import CDP
+    from scripts.browser.cdp.cdp_helper import CDP
     from scripts.naver.smartstore.group_product_register import GroupProductRegister
 
     cdp = CDP(port=9222)
@@ -68,7 +68,7 @@ ng-click 바인딩 타이밍? hover 상태 선행 필요?)을 못 찾았다. **�
 import json
 import time
 
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 
 CREATE_URL = "https://sell.smartstore.naver.com/#/products/standard-group-product/create"
 

@@ -16,9 +16,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # get_page() 로 CDP page 를 조작하는 라우터들 — 모두 run_on_browser_thread 필수
 NAVER_CDP_ROUTERS = [
-    "ai_orchestrator/connectors/naver_cafe_router.py",
-    "ai_orchestrator/connectors/naver_mail_router.py",
-    "ai_orchestrator/connectors/naver_blog_router.py",
+    "ai_orchestrator/connectors/naver_cafe/naver_cafe_router.py",
+    "ai_orchestrator/connectors/naver_mail/naver_mail_router.py",
+    "ai_orchestrator/connectors/naver_blog/naver_blog_router.py",
     "ai_orchestrator/connectors/community_router.py",
     "ai_orchestrator/connectors/eum/router.py",
     "ai_orchestrator/connectors/google/gmail_router.py",

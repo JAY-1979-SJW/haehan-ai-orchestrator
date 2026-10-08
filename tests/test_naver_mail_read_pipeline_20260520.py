@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import pytest
 
-from scripts.naver.mail_read import body_reader as br
-from scripts.naver.mail_read import classify as cls_mod
-from scripts.naver.mail_read import list_collector as lc
+from scripts.naver.mail.read import body_reader as br
+from scripts.naver.mail.read import classify as cls_mod
+from scripts.naver.mail.read import list_collector as lc
 
 
 # ── PII 마스킹 ───────────────────────────────────────────────────────

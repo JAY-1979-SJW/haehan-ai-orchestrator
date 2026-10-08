@@ -36,20 +36,20 @@ CODE_MULTIPLE = "multiple_naver_browsers"
 CODE_DIRECT_LOGIN = "direct_login_entry"
 CODE_SANDBOX_BLOCKED = "sandbox_browser_launch_blocked"
 
-from scripts.browser_cdp_selection_gate import (  # noqa: E402
+from scripts.browser.session.browser_cdp_selection_gate import (  # noqa: E402
     CODE_AMBIGUOUS_DOMAIN_SESSION,
     CODE_MIXED_DOMAIN_SESSION,
     CODE_NO_CDP,
     CODE_NO_DOMAIN_SESSION,
     discover_sessions,
 )
-from scripts.browser_cdp_selection_gate import (  # noqa: E402
+from scripts.browser.session.browser_cdp_selection_gate import (  # noqa: E402
     CODE_OK as CDP_SELECT_OK,
 )
-from scripts.browser_cdp_selection_gate import (  # noqa: E402
+from scripts.browser.session.browser_cdp_selection_gate import (  # noqa: E402
     evaluate_sessions as evaluate_cdp_sessions,
 )
-from scripts.browser_sandbox_gate import (  # noqa: E402
+from scripts.browser.session.browser_sandbox_gate import (  # noqa: E402
     assert_browser_launch_allowed,
     is_sandboxed_runtime,
 )
@@ -153,7 +153,7 @@ def evaluate_conditions(
 
 
 def _find_chrome_exe() -> str:
-    # 이 파일은 정책(L2)으로 분류돼 L4 인 scripts.browser_paths 를 import 할 수 없다(층 위반) → 같은 후보 순서를 여기에 유지한다.
+    # 이 파일은 정책(L2)으로 분류돼 L4 인 scripts.browser.session.browser_paths 를 import 할 수 없다(층 위반) → 같은 후보 순서를 여기에 유지한다.
     # 경로는 Windows 가 알려 주는 환경변수로 만든다(C: 가 아닌 드라이브에 설치된 PC 도 맞음). HAEHAN_CHROME_PATH 가 있으면 최우선.
     relative = Path("Google") / "Chrome" / "Application" / "chrome.exe"
     roots = [os.environ.get(name, "") for name in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA")]

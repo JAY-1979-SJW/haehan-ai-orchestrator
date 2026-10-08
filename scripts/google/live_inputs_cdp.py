@@ -25,8 +25,8 @@ class _CDPSessionManager:
 
 
 def _new_cdp_target_session(target_url: str) -> _CDPSessionManager:
-    from scripts.cdp_console import CDPSession
-    from scripts.config import CDP_HOST, CDP_PORT
+    from scripts.browser.cdp.cdp_console import CDPSession
+    from scripts.common.config import CDP_HOST, CDP_PORT
 
     encoded_url = quote(target_url, safe=":/?&=%#")
     endpoint = f"http://{CDP_HOST}:{CDP_PORT}/json/new?{encoded_url}"
@@ -55,7 +55,7 @@ def _live_input_target_url(action: dict, values: dict) -> str:
 
 
 def _connect_live_input_cdp(action: dict, result: dict) -> Any:
-    from scripts.cdp_console import connect
+    from scripts.browser.cdp.cdp_console import connect
 
     target_url = action.get("target_url", "")
     try:

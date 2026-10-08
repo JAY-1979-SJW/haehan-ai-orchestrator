@@ -5,7 +5,7 @@ L11 Tests. provider 그룹핑·필드 구조·민감정보 미포함을 검증.
 
 from __future__ import annotations
 
-from ai_orchestrator.external_work_registry import list_site_catalog
+from ai_orchestrator.tasks.external_work_registry import list_site_catalog
 
 
 def test_catalog_groups_by_provider():

@@ -26,8 +26,9 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
-from scripts.popup_classifier import Decision  # noqa: E402
+from scripts.browser.popup.popup_classifier import Decision  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
+from scripts.common.op_log import log_op  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -66,7 +67,7 @@ def handle_access_block(
     """
     log.warning(f"[EUM] 비정상 접근 감지: {category} (심각도: {severity})")
 
-    result = {
+    result: dict[str, Any] = {
         "recovered": False,
         "retry_count": retry_count,
         "last_error": "",
@@ -134,7 +135,7 @@ def handle_access_block(
             )
 
     # 로그 기록
-    log.op(
+    log_op(
         "eum_access_recovery",
         ok=result["recovered"],
         category=category,
@@ -156,7 +157,7 @@ def wait_for_recovery(minutes: int = 5) -> None:
     log.info("[EUM] 대기 완료, 재접근 시도")
 
 
-def detect_and_handle(page: Any, decision: dict[str, Any]) -> bool:
+def detect_and_handle(page: Any, decision: Decision) -> bool:
     """Decision을 기반으로 비정상 접근 자동 처리.
 
     반환:

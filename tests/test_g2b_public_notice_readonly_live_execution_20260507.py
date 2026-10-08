@@ -21,7 +21,7 @@ _repo_root = Path(__file__).resolve().parent.parent
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (  # noqa: E402
+from ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate import (  # noqa: E402
     GATE_BLOCKED,
     GATE_NEEDS_VERIFICATION,
     GATE_READONLY_EXECUTION_CANDIDATE,
@@ -29,7 +29,7 @@ from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (  # n
     evaluate_g2b_public_notice_execution_gate,
     validate_g2b_execution_gate_result,
 )
-from ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner import (  # noqa: E402
+from ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner import (  # noqa: E402
     BODY_TEXT_MAX_LEN,
     run_g2b_public_notice_fixture_live_suite,
     run_g2b_public_notice_readonly_live,
@@ -264,7 +264,7 @@ def test_26_live_result_no_forbidden_fields():
 def test_27_body_text_sample_max_length():
     """body_text_sample 최대 길이 제한이 작동한다."""
     long_text = "x" * 2000
-    from ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner import _truncate_body
+    from ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner import _truncate_body
 
     result = _truncate_body(long_text)
     assert len(result) <= BODY_TEXT_MAX_LEN
@@ -471,7 +471,7 @@ def test_40_scripts_import():
 
 def test_41_fixture_live_suite_schema():
     """fixture live suite 결과 schema 확인 (mock playwright)."""
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": True,
             "error": "",
@@ -494,7 +494,7 @@ def test_41_fixture_live_suite_schema():
 
 def test_42_fixture_live_suite_blocked_not_live_executed():
     """fixture BLOCKED 케이스는 live runner를 호출하지 않는다 (mock으로 확인)."""
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": True,
             "error": "",
@@ -542,7 +542,7 @@ def test_44_gate_evaluate_needs_verification_result():
 
 def test_45_live_runner_no_click_function():
     """live runner 모듈에 click 실행 함수가 없다."""
-    import ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner as m
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner as m
 
     for name in dir(m):
         fn = getattr(m, name)
@@ -552,7 +552,7 @@ def test_45_live_runner_no_click_function():
 
 def test_46_live_runner_no_submit_function():
     """live runner 모듈에 submit 실행 함수가 없다."""
-    import ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner as m
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner as m
 
     for name in dir(m):
         fn = getattr(m, name)
@@ -562,7 +562,7 @@ def test_46_live_runner_no_submit_function():
 
 def test_47_live_runner_no_download_function():
     """live runner 모듈에 download 실행 함수가 없다."""
-    import ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner as m
+    import ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner as m
 
     for name in dir(m):
         if "download" in name.lower() and "block" not in name.lower() and "allowed" not in name.lower():
@@ -572,7 +572,7 @@ def test_47_live_runner_no_download_function():
 def test_48_live_runner_with_mock_playwright_pass():
     """mock playwright로 허용 케이스 live 실행 PASS 시나리오."""
     candidate = build_g2b_readonly_execution_candidate("https://g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do", "read")
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": True,
             "error": "",
@@ -593,7 +593,7 @@ def test_48_live_runner_with_mock_playwright_pass():
 def test_49_live_runner_final_url_escape_fail():
     """final_url이 허용 도메인 밖으로 이동하면 LIVE_FAIL."""
     candidate = build_g2b_readonly_execution_candidate("https://g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do", "read")
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": True,
             "error": "",
@@ -611,7 +611,7 @@ def test_49_live_runner_final_url_escape_fail():
 def test_50_live_runner_local_agent_unavailable_warn():
     """playwright 미설치 시 LIVE_WARN 반환."""
     candidate = build_g2b_readonly_execution_candidate("https://g2b.go.kr/pt/menu/ntn01/pta02/ptb02001l.do", "read")
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": False,
             "error": "playwright not installed",

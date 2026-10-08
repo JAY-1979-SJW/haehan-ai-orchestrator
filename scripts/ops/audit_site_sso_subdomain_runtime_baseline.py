@@ -76,9 +76,9 @@ def _check_provider_service(provider_id: str, service: dict) -> list[str]:
 
 
 def _check_provider(provider_id: str, expected_count: int) -> list[str]:
-    from scripts.sites.readonly_check import build_provider_readonly_check_plan
-    from scripts.sites.sso_runtime import build_login_entry_task
-    from scripts.sites.subdomain_registry import get_provider
+    from scripts.site_engine.readonly_check import build_provider_readonly_check_plan
+    from scripts.site_engine.sso_runtime import build_login_entry_task
+    from scripts.site_engine.subdomain_registry import get_provider
 
     failures: list[str] = []
     provider = get_provider(provider_id)
@@ -98,7 +98,7 @@ def _check_provider(provider_id: str, expected_count: int) -> list[str]:
 
 
 def _check_blocked_operation() -> list[str]:
-    from scripts.sites.sso_runtime import build_blocked_operation_result
+    from scripts.site_engine.sso_runtime import build_blocked_operation_result
 
     blocked = build_blocked_operation_result("google", "cloud_console", "deploy")
     if blocked.get("local_agent_task") is not None or blocked.get("state_change") is not False:
@@ -107,7 +107,7 @@ def _check_blocked_operation() -> list[str]:
 
 
 def _check_occasional_site_login() -> list[str]:
-    from scripts.sites.sso_runtime import dry_run_occasional_site_login_task
+    from scripts.site_engine.sso_runtime import dry_run_occasional_site_login_task
 
     failures: list[str] = []
     occasional = dry_run_occasional_site_login_task("https://example.com/", site_label="example")
@@ -179,7 +179,7 @@ def audit() -> tuple[bool, list[str]]:
 
     failures.extend(_check_baseline_phrases())
 
-    from scripts.sites.subdomain_registry import validate_registry
+    from scripts.site_engine.subdomain_registry import validate_registry
 
     registry_errors = validate_registry()
     if registry_errors:

@@ -1,6 +1,6 @@
 {
  "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
- "count": 317,
+ "count": 345,
  "folders": [
   {
    "path": ".",
@@ -2515,12 +2515,116 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "tests/app_contracts",
+   "purpose": "앱·백엔드 계약 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/approval",
+   "purpose": "승인 흐름 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/auth",
+   "purpose": "인증 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/browser",
+   "purpose": "브라우저·CDP 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/common",
+   "purpose": "공용 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/desktop",
+   "purpose": "desktop 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/eum",
+   "purpose": "eum 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/g2b",
+   "purpose": "g2b 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/gabia",
+   "purpose": "gabia 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/google",
+   "purpose": "google 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/hanafax",
+   "purpose": "hanafax 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
    "path": "tests/helpers",
    "purpose": "tests 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "시험",
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "tests/hiworks",
+   "purpose": "hiworks 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/instagram",
+   "purpose": "instagram 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
   },
   {
    "path": "tests/integration",
@@ -2537,6 +2641,126 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "tests/kakao",
+   "purpose": "kakao 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/legacy_v1",
+   "purpose": "orchestrator_v1 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/local_agent",
+   "purpose": "로컬 에이전트 시험(T4)",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/naver_auth",
+   "purpose": "naver_auth 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/naver_blog",
+   "purpose": "naver_blog 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/naver_cafe",
+   "purpose": "naver_cafe 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/naver_mail",
+   "purpose": "naver_mail 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/naver_search",
+   "purpose": "naver_search 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/quality_gates",
+   "purpose": "품질·구조 게이트 시험(G11~G16·verify_change·감사)",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/server_core",
+   "purpose": "서버 핵심(core·llm·mcp·notify·tasks) 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/server_features",
+   "purpose": "소형 서버 기능 묶음 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/site_engine",
+   "purpose": "사이트 엔진 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/site_work",
+   "purpose": "사이트 작업(F1) 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/smartstore",
+   "purpose": "smartstore 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
+  },
+  {
+   "path": "tests/youtube",
+   "purpose": "youtube 도메인 시험",
+   "kind": "시험",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
   }
  ]
 }

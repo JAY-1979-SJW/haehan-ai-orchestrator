@@ -132,8 +132,8 @@ Baseline and gate work may modify:
 docs/baseline/modules/COMMON_TOOL_RUNTIME_BASELINE.md
 docs/baseline/MODULE_BASELINE.md
 scripts/ops/audit_common_tool_runtime_baseline_contract.py
-scripts/module_quality_gate.py
-scripts/required_quality_gate.py
+scripts/ops/quality/module_quality_gate.py
+scripts/ops/quality/required_quality_gate.py
 tests/test_common_tool_runtime_baseline_contract.py
 tests/test_module_quality_gate.py
 tests/test_required_quality_gate.py
@@ -153,8 +153,8 @@ Runtime/common contract verification:
 ```text
 python scripts/ops/audit_common_tool_runtime.py
 python -m pytest tests/test_common_tool_runtime.py -q
-python scripts/module_quality_gate.py --module repo_guard
-python scripts/required_quality_gate.py
+python scripts/ops/quality/module_quality_gate.py --module repo_guard
+python scripts/ops/quality/required_quality_gate.py
 ```
 
 ## 10. Known WARN

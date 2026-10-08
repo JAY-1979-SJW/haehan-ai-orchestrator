@@ -83,22 +83,20 @@ IMPORT_SCAN_PREFIXES = {
     "adapters",
 }
 
-OPENAPI_APP_MODULES = (
-    "browser_api.server",
+OPENAPI_APP_MODULES = (  # browser_api.server 는 2026-10-07 scripts/archive/misc 로 보관(실행 대상 아님) — 목록에서 뺌
     "ai_orchestrator.browser_tool.worker.app",
     "ai_orchestrator.asgi",
 )
 
 PYDANTIC_SCHEMA_MODULES = (
-    "scripts.schemas",
+    "scripts.common.schemas",
     "ai_orchestrator.browser_tool.worker.schemas",
     "ai_orchestrator.browser_tool.schemas",
     "ai_orchestrator.browser_tool.unified_browser_task_schema",
     "ai_orchestrator.server.task_queue_schema",
     "ai_orchestrator.local_agent.action_schemas",
     "local_agent.browser_websocket_schema",
-    "agent.models",
-)
+)  # agent.models 는 2026-10-07 scripts/archive/misc 로 보관(가져다 쓰는 곳 없음) — 목록에서 뺌
 
 
 SITE_STANDARD_FILES = {
@@ -607,16 +605,16 @@ _ROUTER_THINNESS_KNOWN_DEBT: set[str] = {
 # 2026-10-04: 허브 분리로 옮겨진 7개 파일의 경로를 갱신하고(같은 파일, 이미 허용된 부채), 이전에 목록에 없던 DB 직접 사용 6개를 추가 —
 # 6개는 DB 모듈 자체이거나(instagram_dm_db·gonobi/db) 연결을 직접 여는 파일이라 L7 헬퍼로 옮기는 별도 리팩터링 대상.
 _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
-    "ai_orchestrator/connectors/instagram_dm_db.py",
-    "ai_orchestrator/connectors/naver_search_db.py",
-    "ai_orchestrator/connectors/naver_search_queries.py",
+    "ai_orchestrator/connectors/instagram/instagram_dm_db.py",
+    "ai_orchestrator/connectors/naver_search/naver_search_db.py",
+    "ai_orchestrator/connectors/naver_search/naver_search_queries.py",
     "ai_orchestrator/local_agent/browser/cdp_session_manager.py",
-    "ai_orchestrator/persistence/registration_code_store.py",
+    "ai_orchestrator/auth/registration_code_store.py",
     "apps/ig-comment-dm-bot/core/processed_store.py",
     "local_agent/browser_approval_db_store.py",
-    "scripts/cdp_db.py",
+    "scripts/browser/cdp/cdp_db.py",
     "scripts/common/youtube_search_cache.py",
-    "scripts/critical_logger.py",
+    "scripts/common/critical_logger.py",
     "scripts/naver/automation/platform/error_recovery.py",
     "scripts/naver/automation/platform/scheduler.py",
     "scripts/naver/smartstore/automation/analytics_dashboard.py",
@@ -627,8 +625,8 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "scripts/naver/shopping/analysis.py",
     "scripts/naver/shopping/crawl.py",
     "scripts/naver/smartstore/product/bulk.py",
-    "scripts/op_log.py",
-    "scripts/popup_monitor.py",
+    "scripts/common/op_log.py",
+    "scripts/browser/popup/popup_monitor.py",
 }
 
 # STORAGE_BOUNDARY test known debt (tests 폴더 내 sqlite3 사용)
@@ -728,7 +726,17 @@ _DB_DIRECT_ACCESS_PATTERNS = [
 _STORAGE_ALLOWED_PREFIXES = (
     "ai_orchestrator/storage/",
     "ai_orchestrator/persistence/",  # L7 Persistence 계층 자체 — DB 접근이 이 계층의 책임이다(2026-10-01)
-    "scripts/app_paths_migrate.py",  # 저장소 이전 도구 — sqlite 를 backup() 으로 복사하는 것이 본업(2026-10-01)
+    # 기능 폴더로 옮겨 온 저장소 파일 — 원래 persistence/ 에 있던 L7 저장소라 허용이었다(폴더 이동 F1·F9~F16 으로 접두사 밖이 됨). 폴더 전체가 아니라 파일 5개만 정확히 허용한다.
+    "ai_orchestrator/agent_dispatch/agent_dispatch_store.py",
+    "ai_orchestrator/auth/user_db.py",
+    "ai_orchestrator/gongmu/gongmu_store.py",
+    "ai_orchestrator/scheduler/scheduled_job_store.py",
+    "ai_orchestrator/site_work/work_record_store.py",
+    # 도구 폴더로 옮겨진 L7 저장소(F3·F4 묶음 이동 — 층은 registry 에서 그대로 L7 persistence, 위치만 도구 집 안)
+    "ai_orchestrator/connectors/hanafax/authorization_store.py",
+    "ai_orchestrator/connectors/naver_mail/bulk_store.py",
+    "ai_orchestrator/connectors/naver_mail/draft_store.py",
+    "scripts/common/app_paths_migrate.py",  # 저장소 이전 도구 — sqlite 를 backup() 으로 복사하는 것이 본업(2026-10-01)
     "storage/",
     "migrations/",
     "scripts/ops/",

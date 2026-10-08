@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import Literal
 
-from ai_orchestrator.models import RiskAssessment, TaskRequest
+from ai_orchestrator.core.models import RiskAssessment, TaskRequest
 
 logger = logging.getLogger(__name__)
 

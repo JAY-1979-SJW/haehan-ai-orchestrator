@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scripts.app_paths import onedrive_root, resolve_external  # noqa: E402
+from scripts.common.app_paths import onedrive_root, resolve_external  # noqa: E402
 from scripts.youtube.uploader import APPROVAL_PHRASE, execute_upload_plan, prepare_upload_plan  # noqa: E402
 
 video_path = str(

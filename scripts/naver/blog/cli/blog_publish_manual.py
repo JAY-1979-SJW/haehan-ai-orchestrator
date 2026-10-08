@@ -1,7 +1,7 @@
 """사람(Claude Code)이 작성한 원고를 네이버 블로그에 발행한다.
 
 GPT 자동 생성 경로(blog_ai_batch_20.py)를 대체한다. 2026-08-19 사업자 결정으로
-OpenAI 호출을 차단했고(ai_orchestrator/openai_guard.py), 글은 Claude Code가
+OpenAI 호출을 차단했고(ai_orchestrator/llm/openai_guard.py), 글은 Claude Code가
 직접 조사·작성한다. GPT는 학습 데이터만으로 쓰다 보니 "2022년 건설산업기본법",
 "최저임금 10,000원" 같은 없는 수치를 지어내는 문제가 실제로 있었다.
 
@@ -41,7 +41,7 @@ _ROOT = Path(__file__).resolve().parents[4]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 from scripts.naver.blog.marketing.content import seo_check, split_body  # noqa: E402
 
 _log = get_logger("scripts.naver.blog.cli.blog_publish_manual")
@@ -69,7 +69,7 @@ def verify_login(port: int = 9222, blog_id: str | None = None) -> dict:
 
     반환: {"ok": bool, "blog_id": str, "reason": str}
     """
-    from scripts.cdp_helper import CDP
+    from scripts.browser.cdp.cdp_helper import CDP
     from scripts.naver.blog.accounts import get_account
 
     account = get_account(blog_id)
@@ -277,7 +277,7 @@ def main() -> None:
     )
     ap.add_argument("--check", action="store_true", help="점검만 (기본)")
     ap.add_argument("--publish", action="store_true", help="실제 발행")
-    from scripts.gate import CONFIRM_TEXTS
+    from scripts.common.gate import CONFIRM_TEXTS
 
     ap.add_argument("--confirm", default=None, help=f"실제 발행 승인 문구(직접 입력): {CONFIRM_TEXTS['blog_publish']}")
     ap.add_argument("--no-images", action="store_true", help="이미지 자동 수집 끄기")
@@ -305,7 +305,7 @@ def main() -> None:
         print("\n※ 실제 발행하려면 --publish --confirm=<승인 문구>")
         return
 
-    from scripts.gate import GateBlocked, require_approved
+    from scripts.common.gate import GateBlocked, require_approved
 
     try:  # 로그인·이미지 작업 전에 승인 문구부터 확인한다
         require_approved("blog_publish", args.confirm, via="blog_publish_manual")

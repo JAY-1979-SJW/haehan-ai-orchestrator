@@ -40,7 +40,7 @@ def app_client(tmp_path_factory):
     os.environ["HTTP_USERS_PATH"] = str(users_path)
 
     # 설정 캐시 무효화 → 관련 모듈 리로드
-    from ai_orchestrator import config as _config
+    from ai_orchestrator.core import config as _config
 
     importlib.reload(_config)
     from ai_orchestrator.gates import auth as _auth
@@ -181,7 +181,7 @@ def test_tasks_unauthenticated_401(app_client):
 # ── 2. POST /tasks — requested_by 스푸핑 무시 ────────────────────────
 def test_tasks_requested_by_is_current_user(app_client):
     """body.requested_by 를 조작해도 저장/로그의 actor 는 current_user.actor."""
-    from ai_orchestrator.audit_logger import read_recent_logs
+    from ai_orchestrator.audit.audit_logger import read_recent_logs
 
     task_id = _uniq("SPF")
     r = app_client.post(
@@ -285,7 +285,7 @@ def test_reject_admin_success(app_client):
 # ── 5. 감사 로그 기준 — current_user 고정 ────────────────────────────
 def test_approve_audit_actor_is_current_user(app_client):
     """body.approved_by/role 을 임의 값으로 보내도 audit actor/role 은 current_user 로 기록."""
-    from ai_orchestrator.audit_logger import read_recent_logs
+    from ai_orchestrator.audit.audit_logger import read_recent_logs
 
     task_id, token_id = _submit_medium_task(app_client, _auth("admin_u"))
     if not token_id:

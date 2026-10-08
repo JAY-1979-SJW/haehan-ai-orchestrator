@@ -126,6 +126,15 @@ def _cdp_fill_first(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변
     return False
 
 
+def _record_cdp_click(data: Any, err: Any, result: dict, field: str, warning: str) -> bool:
+    """CDP 클릭 JS 결과를 result 에 기록한다 — 성공이면 clicked_nonfinal_controls 에 추가, 실패면 warning 을 남긴다."""
+    if not err and isinstance(data, dict) and data.get("ok"):
+        result.setdefault("clicked_nonfinal_controls", []).append({"field": field, **data})
+        return True
+    result["warnings"].append(warning)
+    return False
+
+
 def _cdp_click_first_selector(session: Any, selectors: list[str], result: dict, field: str) -> bool:
     data, err = session.js_json(
         """(function(selectors) {
@@ -145,11 +154,7 @@ def _cdp_click_first_selector(session: Any, selectors: list[str], result: dict, 
         + json.dumps(selectors)
         + ")"
     )
-    if not err and isinstance(data, dict) and data.get("ok"):
-        result.setdefault("clicked_nonfinal_controls", []).append({"field": field, **data})
-        return True
-    result["warnings"].append(f"button selector not found by CDP: {field}")
-    return False
+    return _record_cdp_click(data, err, result, field, f"button selector not found by CDP: {field}")
 
 
 def _cdp_click_text(session: Any, labels: list[str], result: dict, field: str) -> bool:
@@ -178,11 +183,7 @@ def _cdp_click_text(session: Any, labels: list[str], result: dict, field: str) -
         + json.dumps(labels)
         + ")"
     )
-    if not err and isinstance(data, dict) and data.get("ok"):
-        result.setdefault("clicked_nonfinal_controls", []).append({"field": field, **data})
-        return True
-    result["warnings"].append(f"button not found by CDP: {field}")
-    return False
+    return _record_cdp_click(data, err, result, field, f"button not found by CDP: {field}")
 
 
 def _cdp_fill_generic_input_handoff(session: Any, action: dict, values: dict, result: dict) -> None:

@@ -37,7 +37,7 @@ EUM은 조회 업무와 상태 변경 업무를 분리한다.
 | workflow 인덱스 | `scripts/eum/workspace.py` |
 | 승인/준비 계획 | `scripts/eum/work_plan.py` |
 | 실행 로그 | `scripts/eum/run_log.py` |
-| 실시간 감사 | `scripts/realtime_audit.py`, `data/logs/realtime_audit.jsonl` |
+| 실시간 감사 | `scripts/common/realtime_audit.py`, `data/logs/realtime_audit.jsonl` |
 | 신규 등록 prepare/submit | `scripts/eum/registration.py` |
 | 철거/말소 prepare/submit | `scripts/eum/deregistration.py` |
 | 폼 분석 | `scripts/eum/form_analyzer.py` |
@@ -213,6 +213,6 @@ python -m pytest tests -k eum -q
 
 ```bash
 python -m pytest tests\test_realtime_audit.py tests\test_eum_run_log.py -q
-python scripts/realtime_audit.py recent --site eum
-python scripts/realtime_audit.py tail --text
+python scripts/common/realtime_audit.py recent --site eum
+python scripts/common/realtime_audit.py tail --text
 ```

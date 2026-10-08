@@ -11,7 +11,7 @@ def test_youtube_oauth_console_plan_forbids_default_browser() -> None:
 
     assert plan["browser_runtime"] == "managed_local_agent_cdp_profile"
     assert plan["default_browser_allowed"] is False
-    assert plan["open_method"] == "scripts.web_connector.get_page().goto"
+    assert plan["open_method"] == "scripts.browser.cdp.connection.get_page().goto"
     assert plan["state_change"] is False
     assert plan["final_approval_boundary"] == "user_final_approval_only"
     assert plan["secret_action_policy"]["mode"] == "final_approval_only"
@@ -38,7 +38,7 @@ def test_youtube_oauth_console_sequence_starts_from_google_home() -> None:
 
 
 def test_google_login_probe_uses_home_first() -> None:
-    from scripts.config import LOGIN_PROBE_URLS
+    from scripts.common.config import LOGIN_PROBE_URLS
 
     assert LOGIN_PROBE_URLS["google"] == "https://www.google.com/"
 

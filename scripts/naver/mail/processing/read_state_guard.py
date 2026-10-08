@@ -16,7 +16,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 
 # 모드 상수
 MODE_LIST_ONLY = "LIST_ONLY"

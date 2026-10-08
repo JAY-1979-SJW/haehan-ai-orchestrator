@@ -12,12 +12,12 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.connectors import naver_cafe_router as router_module
-from ai_orchestrator.domain import cafe_membership_diff as diff
+from ai_orchestrator.connectors.naver_cafe import naver_cafe_router as router_module
+from ai_orchestrator.connectors.naver_cafe import membership_diff as diff
 from ai_orchestrator.gates import auth as auth_module
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.persistence import cafe_membership_store as store
-from ai_orchestrator.services import cafe_membership_service as service
+from ai_orchestrator.connectors.naver_cafe import membership_store as store
+from ai_orchestrator.connectors.naver_cafe import membership_service as service
 
 
 def cafe(i: int, name: str | None = None) -> dict:
@@ -209,7 +209,7 @@ def test_service_recent_summarizes_trend_and_log(env):
 @pytest.fixture
 def client(env, monkeypatch):
     import scripts.naver.cafe.collection.explorer as explorer
-    import scripts.web_connector as wc
+    import scripts.browser.cdp.connection as wc
 
     monkeypatch.setattr(explorer, "_DATA_DIR", env / "my_cafes_dir")
     state = {"result": (cafes(1, 2, 3), "api"), "closed": 0, "new_pages": 0}

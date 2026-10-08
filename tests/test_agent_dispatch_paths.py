@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.gates import agent_dispatch_policy as pol
+from ai_orchestrator.agent_dispatch import agent_dispatch_policy as pol
 
 
 @pytest.fixture(autouse=True)

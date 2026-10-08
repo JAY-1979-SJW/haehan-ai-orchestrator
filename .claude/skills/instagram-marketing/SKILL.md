@@ -133,7 +133,7 @@ python scripts/ops/ig_batch.py --confirmed     # 실제 발행(단일 사진)
 ## 승인 절차 (매번 필수)
 
 - 외부 공개 발행 = 매번 재확인 원칙(CLAUDE.md). `--confirmed` 실행은
-  `scripts/ops/guard_instagram_publish.py` PreToolUse 훅이 강제로 사용자
+  `scripts/instagram/guard_instagram_publish.py` PreToolUse 훅이 강제로 사용자
   확인을 받는다(`.claude/settings.json` 등록됨) — bypassPermissions 모드여도
   우회 안 됨.
 - 캡션은 발행 전 사용자에게 반드시 미리보기로 보여주고 승인받는다.

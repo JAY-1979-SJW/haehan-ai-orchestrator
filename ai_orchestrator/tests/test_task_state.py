@@ -6,14 +6,14 @@ import importlib
 
 import pytest
 
-from ai_orchestrator import task_state as ts
+from ai_orchestrator.core import task_state as ts
 
 
 @pytest.fixture(autouse=True)
 def _isolated_state(tmp_path, monkeypatch):
     # 독립적인 storage 경로에서 테스트
     monkeypatch.setenv("LOG_DIR", str(tmp_path))
-    from ai_orchestrator import config as _cfg
+    from ai_orchestrator.core import config as _cfg
 
     importlib.reload(_cfg)
     importlib.reload(ts)

@@ -1,4 +1,4 @@
-"""외부 발송 라우터 공통 — scripts.gate.require_side_effect 의 FastAPI 어댑터(GateBlocked → HTTP 403).
+"""외부 발송 라우터 공통 — scripts.common.gate.require_side_effect 의 FastAPI 어댑터(GateBlocked → HTTP 403).
 
 승인 문구는 사용자가 확인 단계에서 직접 입력한 값이어야 한다(코드·화면에 고정해 자동 전송 금지). 발송 호출·브라우저 조작
 이전에 부르고, 수신거부 목록과 대조한다. 발송 건수는 제한하지 않는다.

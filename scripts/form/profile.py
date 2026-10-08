@@ -1,7 +1,7 @@
 """회원가입/폼 채우기용 개인정보 프로필 — Fernet 암호화 저장.
 
 저장 위치: data/profile.json (암호화 필드)
-키 재사용: scripts.credentials._get_or_create_key (data/.cred.key)
+키 재사용: scripts.auth.credentials._get_or_create_key (data/.cred.key)
 
 저장 필드 (예시):
     name, name_en, email, phone, birth (YYYY-MM-DD),
@@ -31,8 +31,10 @@ from pathlib import Path
 
 from cryptography.fernet import InvalidToken
 
+from ai_orchestrator.paths.runtime import atomic_write_text, data_dir
+
 ROOT = Path(__file__).resolve().parents[2]
-PROFILE_FILE = ROOT / "data" / "profile.json"
+PROFILE_FILE = data_dir() / "profile.json"
 
 # 공통 필드 카탈로그 — 회원가입에서 자주 쓰이는 역할
 KNOWN_FIELDS = [
@@ -57,7 +59,7 @@ KNOWN_FIELDS = [
 
 def _crypto():
     """credentials.py 의 키를 그대로 재사용."""
-    from scripts.credentials import _fernet
+    from scripts.auth.credentials import _fernet
 
     return _fernet()
 
@@ -88,10 +90,7 @@ def _load_raw() -> dict:
 
 def _save_raw(data: dict) -> None:
     PROFILE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    PROFILE_FILE.write_text(
-        json.dumps(data, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    atomic_write_text(PROFILE_FILE, json.dumps(data, ensure_ascii=False, indent=2))
     # 저장 파일 권한(chmod 600) 설정 실패는 무시 -- 파일 저장 자체는 이미 완료된 뒤의 부가적 권한 강화 조치이며 Windows 등 chmod 미지원 환경에서도 저장 기능이 막히지 않도록 함
     with contextlib.suppress(Exception):
         PROFILE_FILE.chmod(0o600)

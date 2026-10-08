@@ -12,7 +12,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 
 def load_registry():
-    import ai_orchestrator.gabia.site_settings_registry as m
+    import ai_orchestrator.connectors.gabia.site_settings_registry as m
 
     return m
 
@@ -165,7 +165,7 @@ def test_22_list_by_status_current_not_empty():
 
 
 def test_23_gabia_dns_models_intact():
-    from ai_orchestrator.gabia.gabia_dns_models import make_assistant_subdomain_drafts
+    from ai_orchestrator.connectors.gabia.dns_models import make_assistant_subdomain_drafts
 
     d1, d2 = make_assistant_subdomain_drafts("1.2.3.4")
     assert d1.host == "assistant"
@@ -173,7 +173,7 @@ def test_23_gabia_dns_models_intact():
 
 
 def test_24_gabia_browser_task_intact():
-    from ai_orchestrator.gabia.gabia_browser_task import make_autowork_dns_task
+    from ai_orchestrator.connectors.gabia.browser_task import make_autowork_dns_task
 
     t = make_autowork_dns_task()
     assert t.target_domain == "haehan-ai.kr"
@@ -181,7 +181,7 @@ def test_24_gabia_browser_task_intact():
 
 
 def test_25_gabia_work_registry_intact():
-    from ai_orchestrator.gabia.gabia_dns_work_registry import GABIA_DNS_FINAL_SAVE
+    from ai_orchestrator.connectors.gabia.dns_work_registry import GABIA_DNS_FINAL_SAVE
 
     assert GABIA_DNS_FINAL_SAVE.approval_required is True
 

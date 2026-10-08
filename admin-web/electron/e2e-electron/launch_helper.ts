@@ -1,4 +1,5 @@
 import { _electron as electron } from "@playwright/test";
+import type { ElectronApplication, Page } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -25,7 +26,8 @@ export function launchApp(
   // process.env 값은 string | undefined라 Playwright의 env({[key: string]: string})
   // 타입과 안 맞는다 — undefined 항목을 걸러낸다.
   const env: Record<string, string> = {};
-  for (const [k, v] of Object.entries({ ...process.env, ...extraEnv })) {
+  // HAEHAN_E2E=1: 시작 실패 시 사람이 닫아야 하는 오류 창 대신 바로 종료(main.js failStartup)
+  for (const [k, v] of Object.entries({ ...process.env, HAEHAN_E2E: "1", ...extraEnv })) {
     if (v !== undefined) env[k] = v;
   }
   const packagedExe = EXE_FROM_ENV && fs.existsSync(EXE_FROM_ENV) ? EXE_FROM_ENV : PACKAGED_EXE;
@@ -34,4 +36,18 @@ export function launchApp(
   }
   console.log("[e2e] 패키징 exe 없음 — 개발 모드(electron .)로 대체:", DEV_ROOT);
   return electron.launch({ args: [".", ...extraArgs], cwd: DEV_ROOT, env });
+}
+
+// 메인 창은 먼저 대기 화면으로 뜨고, 서버가 준비되면 shell.html(본 화면)로 바뀐다 — 본 화면이 될 때까지 기다린다.
+export async function waitForShell(app: ElectronApplication, timeoutMs = 180_000): Promise<Page> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    for (const p of app.windows()) {
+      let u = "";
+      try { u = p.url(); } catch { /* 닫힌 창 */ }
+      if (u.includes("shell.html")) return p;
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error("본 화면(shell.html)이 열리지 않음 — userData\\logs\\startup.log·fastapi.log 확인");
 }

@@ -77,7 +77,7 @@ INVESTIGATION_FINDINGS = {
     },
     "execution_history_path": {
         "env_based_path": "/app/ai_orchestrator/storage/execution_history.jsonl",
-        "config_code": "ai_orchestrator/config.py:20 — EXECUTION_HISTORY_PATH = LOG_DIR / 'execution_history.jsonl'",
+        "config_code": "ai_orchestrator/core/config.py:20 — EXECUTION_HISTORY_PATH = LOG_DIR / 'execution_history.jsonl'",
         "LOG_DIR_confirmed": "/app/ai_orchestrator/storage",
         "persisted_in_named_volume": True,
         "currently_exists": False,

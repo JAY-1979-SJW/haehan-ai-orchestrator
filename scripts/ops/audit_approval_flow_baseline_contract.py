@@ -39,7 +39,7 @@ REQUIRED_APPROVAL_PHRASES = (
     "waiting_approval -> failed",
     "api_failed -> queued",
     "allow high-risk task queue entry without approval",
-    "python scripts/module_quality_gate.py --module backend_core",
+    "python scripts/ops/quality/module_quality_gate.py --module backend_core",
 )
 
 REQUIRED_MODULE_BASELINE_PHRASES = (

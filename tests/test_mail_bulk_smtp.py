@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import smtplib
 
-from scripts.naver.mail_imap import bulk_sender, sender
+from scripts.naver.mail.imap import bulk_sender, sender
 
 PW = "fake-secret"  # 시험용 값(실제 비밀번호 아님)
 

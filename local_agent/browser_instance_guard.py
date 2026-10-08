@@ -25,7 +25,7 @@ from typing import Any
 _ROOT = Path(__file__).resolve().parents[1]
 
 # 자동화 Chrome 식별 기준값.
-# 기존 scripts/cdp_daemon.py 가 사용하는 PROFILE_DIR / CDP_PORT 와 일치.
+# 기존 scripts/browser/cdp/cdp_daemon.py 가 사용하는 PROFILE_DIR / CDP_PORT 와 일치.
 DEFAULT_PROFILE_DIR = _ROOT / "data" / "cdp_profile" / "ai_chrome"
 DEFAULT_CDP_PORT = 9222
 

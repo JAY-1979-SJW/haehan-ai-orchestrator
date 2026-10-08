@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator import chat_sessions as store
+from ai_orchestrator.tasks import chat_sessions as store
 from local_agent.actions import _build_claude_command
 
 

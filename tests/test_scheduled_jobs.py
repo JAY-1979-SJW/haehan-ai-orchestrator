@@ -9,9 +9,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.persistence import scheduled_job_store as store
-from ai_orchestrator.routers.scheduled_job_router import scheduled_job_router
-from ai_orchestrator.services import scheduled_job_service as svc
+from ai_orchestrator.scheduler import scheduled_job_store as store
+from ai_orchestrator.scheduler.scheduled_job_router import scheduled_job_router
+from ai_orchestrator.scheduler import scheduled_job_service as svc
 from ai_orchestrator.services import scheduled_job_actions as actions
 
 NOW = datetime(2026, 10, 1, 0, 0, 0, tzinfo=UTC)
@@ -572,7 +572,7 @@ class FakeBlog:
     def __init__(self, monkeypatch, alias="skyjwsin", result=None):
         self.calls: list[dict] = []
         self.result = result or {"ok": True, "log_no": "123"}
-        monkeypatch.setattr("scripts.web_connector.get_page", lambda: object())
+        monkeypatch.setattr("scripts.browser.cdp.connection.get_page", lambda: object())
         monkeypatch.setattr("scripts.naver.blog.automation.account_probe.read_alias", lambda page: alias)
         monkeypatch.setattr("scripts.naver.blog.core.writer.write_post", self._write)
 

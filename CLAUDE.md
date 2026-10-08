@@ -289,7 +289,7 @@ chmod/chown 자동 변경 금지
 ```bash
 python scripts/ops/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
-python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 ```
 
 FORBIDDEN_IMPORT > 0 → STOP  
@@ -348,18 +348,18 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
   코드보다 먼저 브라우저 자체 상태를 의심한다** — 장시간 세션에서 탭을 많이
   열고 닫으며 반복 테스트하면 브라우저(Chrome) 세션 자체가 오염돼 이후의 모든
   CDP 연결 핸드셰이크가 느려질 수 있다(2026-09-29 실측: 여러 시간 테스트 후 새로
-  기동한 FastAPI 프로세스의 첫 Gmail 호출조차 멈춤 → `scripts/cdp_force_start.py
+  기동한 FastAPI 프로세스의 첫 Gmail 호출조차 멈춤 → `scripts/browser/cdp/cdp_force_start.py
   stop` 후 `start`로 브라우저만 재시작(프로필 유지, 로그인 세션 그대로 보존됨)하니
   즉시 정상화). 코드를 계속 고치기 전에 이 재시작부터 시도한다.
-- Google 서비스 URL은 `scripts/config.py`의 `GOOGLE_URLS` 딕셔너리에서 가져온다
+- Google 서비스 URL은 `scripts/common/config.py`의 `GOOGLE_URLS` 딕셔너리에서 가져온다
   (하드코딩 금지) — 실제 인증된 세션에서 도착 URL을 확인하지 않고 추측으로
   적으면 리다이렉트/마케팅 페이지로 빠질 수 있다. 새 URL을 추가하기 전엔 실제
   로그인된 CDP 세션으로 `page.goto()` 후 `page.url`을 찍어 확인한다.
-- **9222 데몬 Chrome 의 로그인 유지·깨끗한 시작 정책은 `scripts/config.py` 의 `CDP_BROWSER_POLICY`
+- **9222 데몬 Chrome 의 로그인 유지·깨끗한 시작 정책은 `scripts/common/config.py` 의 `CDP_BROWSER_POLICY`
   한 곳에서 정한다**(상세·근거: `docs/architecture/CDP_BROWSER_POLICY.md`). (2026-10-05 실측) 로그인(세션
   쿠키)은 `--restore-last-session` 스위치(**값 없이** — `=false` 도 켜진다) + CDP `Browser.close` 정상
   종료일 때만 재시작 뒤에도 남는다. 종료 신호·강제 종료·전원 차단은 로그인을 잃는다 → 데몬 재시작은
-  `python scripts/cdp_daemon.py restart` 로만. 시작 페이지는 구글 홈(복원된 옛 탭은 시작 직후 정리).
+  `python scripts/browser/cdp/cdp_daemon.py restart` 로만. 시작 페이지는 구글 홈(복원된 옛 탭은 시작 직후 정리).
   로그인 확인은 쿠키 이름 존재 여부(참/거짓)로만 하고 값은 읽지 않는다.
 - **시험·검증 도구가 9222 브라우저에 접속하면 안 된다** — 사용자 탭이 이동·소멸하고 로그인이 풀린다
   (2026-10-05: 패치가 잘못된 모듈에 걸린 YouTube 시험과, 파일 이름 지정만으로 수집되던
@@ -632,7 +632,7 @@ NAVER_SEARCH_DB_ENABLED=true  # SQLite DB 적재 활성화
 네이버 블로그 글에 사진을 첨부할 때는 **Unsplash API**를 사용한다 (AI API 아님, 승인 절차 대상 아님, 상시 허용).
 
 - 환경변수: `UNSPLASH_ACCESS_KEY` (`.env` 참조, 원문 로그 출력 금지)
-- 이미 구현되어 있음 — 신규 코드 불필요: `ai_orchestrator/connectors/naver_blog_router.py`
+- 이미 구현되어 있음 — 신규 코드 불필요: `ai_orchestrator/connectors/naver_blog/naver_blog_router.py`
   - 검색: `GET https://api.unsplash.com/search/photos` (쿼리 영어 3단어 이내, orientation=landscape)
   - 로컬 캐시: `data/unsplash_images.json`
   - 다운로드: `data/blog_uploads/unsplash_*.jpg` (Unsplash 정책상 `download_location` 트리거 필요)
@@ -643,9 +643,9 @@ NAVER_SEARCH_DB_ENABLED=true  # SQLite DB 적재 활성화
 
 브라우저 CDP가 내려갔을 때:
 ```bash
-python scripts/cdp_force_start.py start [URL]
-python scripts/cdp_force_start.py status
-python scripts/cdp_force_start.py stop
+python scripts/browser/cdp/cdp_force_start.py start [URL]
+python scripts/browser/cdp/cdp_force_start.py status
+python scripts/browser/cdp/cdp_force_start.py stop
 ```
 - 샌드박스 게이트 우회 버전 (`assert_browser_launch_allowed` 미호출)
 - 프로필: `data/cdp_profile/ai_chrome`

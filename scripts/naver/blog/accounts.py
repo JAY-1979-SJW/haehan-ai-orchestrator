@@ -17,7 +17,8 @@
 
 from __future__ import annotations
 
-from scripts.app_paths import onedrive_root, resolve_external
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.app_paths import onedrive_root, resolve_external
 
 DEFAULT_ACCOUNT = "skyjwsin"
 
@@ -26,7 +27,7 @@ BLOG_ACCOUNTS: dict[str, dict] = {
         "blog_id": "skyjwsin",
         "domain": "건설공무",
         "label": "AI 업무자동화 연구소",
-        "cache_file": "data/blog_topic_cache_skyjwsin.json",
+        "cache_file": str(data_dir() / "blog_topic_cache_skyjwsin.json"),
         # 커스텀 공개 주소 없음 — admin.blog.naver.com 링크에도 로그인 ID
         # 그대로 나온다. skyjwshin과 대비해 명시적으로 채워둔다.
         "public_alias": "skyjwsin",
@@ -35,7 +36,7 @@ BLOG_ACCOUNTS: dict[str, dict] = {
         "blog_id": "skyjwshin",
         "domain": "조명인테리어",
         "label": "반딧불 전파사 조명 이야기",
-        "cache_file": "data/blog_topic_cache_skyjwshin.json",
+        "cache_file": str(data_dir() / "blog_topic_cache_skyjwshin.json"),
         # 2026-08-22 이 계정에서 blog.naver.com/beautiful-light 로 주소를 직접
         # 바꿨다(네이버 정책상 1회성, 되돌릴 수 없음) — blog_id(로그인 계정)와
         # 공개 주소가 다르니 혼동하지 않는다.
@@ -54,7 +55,7 @@ BLOG_ACCOUNTS: dict[str, dict] = {
         # (blog_publish_manual.py --account skyjwshin)에 그대로 물리기 전에
         # 주제 품질을 한 번 검수할 것.
         "topic_research_ready": True,
-        "topic_research_file": "data/blog_topic_research_lighting_latest.json",
+        "topic_research_file": str(data_dir() / "blog_topic_research_lighting_latest.json"),
         # 2026-08-24 사용자 요청: 작성자 정보를 모든 글 하단에 상시 노출.
         # 실제 자격증·경력(회사소개서.pdf, 승민전력 신재우 대표 이력서)에서
         # 가져온 것 — 지어낸 스펙 아님. CTA(제품/서비스 안내, 주제마다

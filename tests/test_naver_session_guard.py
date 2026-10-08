@@ -6,7 +6,7 @@ from datetime import datetime
 
 import pytest
 
-from ai_orchestrator.workflows import naver_session_guard as G
+from ai_orchestrator.connectors.naver_auth import session_guard as G
 from scripts.naver import auth as A
 from scripts.naver.blog.automation import account_probe as P
 
@@ -293,7 +293,7 @@ def test_ensure_login_may_start_the_browser():
 
 
 def test_default_deps_detect_does_not_launch_chrome_when_cdp_is_down(monkeypatch):
-    from ai_orchestrator.workflows import naver_login_pipeline as pipeline
+    from ai_orchestrator.connectors.naver_auth import login_pipeline as pipeline
 
     started: list[int] = []
     monkeypatch.setattr(pipeline, "_is_cdp_alive", lambda *a, **k: False)

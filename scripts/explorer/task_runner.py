@@ -19,9 +19,9 @@ from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_orchestrator.domain import site_map_menu as menu
-from ai_orchestrator.domain import site_task_map as tm
-from ai_orchestrator.persistence import site_task_map_store as store
+from ai_orchestrator.site_work import site_map_menu as menu
+from ai_orchestrator.site_work import site_task_map as tm
+from ai_orchestrator.site_work import site_task_map_store as store
 
 RUN_BUDGET_S = 25.0  # 앱의 call_api 호출 상한(30초) 안에서 끝낸다
 STEP_TIMEOUT_MS = 8000
@@ -416,9 +416,9 @@ def run_task(
 @contextlib.contextmanager
 def private_tab_scope(start_url: str):
     """운영용 페이지 범위: 공유 브라우저에 새 전용 탭을 열고(`cdp_tabs`), 끝나면 그 탭만 닫는다. 브라우저 스레드 안에서만 쓴다."""
-    from scripts import cdp_tabs
+    from scripts.browser.cdp import cdp_tabs
+    from scripts.browser.cdp.connection import get_context
     from scripts.explorer.task_mapper import open_private_tab
-    from scripts.web_connector import get_context
 
     page, handle = open_private_tab(get_context(), start_url)
     try:
@@ -430,6 +430,6 @@ def private_tab_scope(start_url: str):
 
 def run_task_in_browser(host: str, task_id: str, values: dict[str, str]) -> dict[str, Any]:
     """서비스에 주입하는 운영용 실행기: 공유 브라우저 스레드에서 전용 탭으로 실행한다."""
-    from scripts.web_connector import run_on_browser_thread
+    from scripts.browser.cdp.connection import run_on_browser_thread
 
     return run_on_browser_thread(lambda: run_task(host, task_id, values, page_scope=private_tab_scope), timeout=int(RUN_BUDGET_S) + 40)

@@ -38,7 +38,7 @@ import time
 from collections.abc import Callable
 from typing import ClassVar
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 # ── 백그라운드 폴러 싱글톤 ────────────────────────────────────────────────────
 _poller: CdpPopupPoller | None = None
@@ -962,13 +962,13 @@ class CdpPopupPoller:
         # 과거: 매 틱 `with sync_playwright()` → 5초마다 새 node 드라이버 프로세스 +
         # Windows conhost 콘솔 창이 깜빡이는 "상시 터미널" 문제. 이제 단일 영속 연결을
         # 재사용하므로 틱당 드라이버 생성 0건. 단일 스레드 직렬화로 CDP 충돌도 예방.
-        from scripts.web_connector import run_on_browser_thread
+        from scripts.browser.cdp.connection import run_on_browser_thread
 
         run_on_browser_thread(self._tick_work, timeout=60)
         self.poll_count += 1
 
     def _tick_work(self) -> None:
-        from scripts.web_connector import _connect_browser
+        from scripts.browser.cdp.connection import _connect_browser
 
         _browser, ctx = _connect_browser()  # 캐시된 영속 (browser, context)
         pages = ctx.pages

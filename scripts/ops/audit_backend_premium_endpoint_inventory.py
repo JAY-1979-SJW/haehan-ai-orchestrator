@@ -116,10 +116,10 @@ def _check_router_file_count() -> dict:
 
 
 def _check_naver_endpoint_count() -> dict:
-    # naver 3개 — 실제 위치: ai_orchestrator/connectors/naver_search_router.py
+    # naver 3개 — 실제 위치: ai_orchestrator/connectors/naver_search/naver_search_router.py
     naver_src = ""
     for f in [
-        ROOT / "ai_orchestrator/connectors/naver_search_router.py",
+        ROOT / "ai_orchestrator/connectors/naver_search/naver_search_router.py",
         ROOT / "ai_orchestrator/naver_search_router.py",
         ROOT / "ai_orchestrator/sites/naver_search/router.py",
     ]:

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from scripts.instagram.caption import build_caption
 from scripts.instagram.cases import Case, mark_posted
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -35,7 +35,7 @@ def publish_case(case: Case, confirmed: bool = False, approval: str | None = Non
     from playwright.sync_api import sync_playwright
 
     if confirmed:  # 브라우저를 열기 전에 확인한다
-        from scripts.gate import require_approved
+        from scripts.common.gate import require_approved
 
         require_approved("instagram_publish", approval, via="ig_publish_case", case_id=case.case_id)
 

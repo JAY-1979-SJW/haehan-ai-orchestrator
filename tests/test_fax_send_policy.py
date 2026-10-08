@@ -1,4 +1,4 @@
-"""ai_orchestrator.gates.fax_send_policy — 하나팩스 자동 발송 정책 판정 (순수 함수).
+"""ai_orchestrator.connectors.hanafax.send_policy — 하나팩스 자동 발송 정책 판정 (순수 함수).
 
 외부 수신자에게 나가는 되돌릴 수 없는 발송을 가두는 로직이라, 모든 거부 경로와 fail-closed 동작을 검증한다.
 실제 발송은 하지 않는다(이 모듈은 판정만 한다).
@@ -11,7 +11,7 @@ from datetime import datetime, time, timedelta, timezone
 
 import pytest
 
-from ai_orchestrator.gates import fax_send_policy as pol
+from ai_orchestrator.connectors.hanafax import send_policy as pol
 
 KST = timezone(timedelta(hours=9))
 NOW = datetime(2026, 10, 2, 10, 0, tzinfo=KST)  # 금요일 오전 10시(허용 시간대 안)

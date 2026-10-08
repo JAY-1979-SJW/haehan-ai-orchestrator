@@ -21,7 +21,7 @@ CDP로 열어 프롬프트로 이미지를 생성시키고 로컬에 저장한�
      다음 캡처한다.
 
 사용법:
-    from scripts.cdp_helper import CDP
+    from scripts.browser.cdp.cdp_helper import CDP
     from scripts.naver.blog.marketing.gpt_images import generate_image
 
     cdp = CDP(port=9222)
@@ -33,7 +33,7 @@ import json
 import time
 from pathlib import Path
 
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 
 
 def clear_device_metrics(cdp: CDP) -> None:

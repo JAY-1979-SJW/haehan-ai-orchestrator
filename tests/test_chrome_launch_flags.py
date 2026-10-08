@@ -10,10 +10,10 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from scripts import browser_lifecycle as lc
+from scripts.browser.session import browser_lifecycle as lc
 
 ROOT = Path(__file__).resolve().parents[1]
-CDP_LAUNCHERS = ("scripts/cdp_daemon.py", "scripts/cdp_force_start.py")  # 로그인 유지가 필요한 9222 브라우저 실행 경로
+CDP_LAUNCHERS = ("scripts/browser/cdp/cdp_daemon.py", "scripts/browser/cdp/cdp_force_start.py")  # 로그인 유지가 필요한 9222 브라우저 실행 경로
 ALL_LAUNCHERS = (*CDP_LAUNCHERS, "scripts/naver/browser_gate.py")
 
 
@@ -52,7 +52,7 @@ def test_cdp_launchers_always_pass_a_custom_user_data_dir():
 
 def test_cdp_launchers_apply_the_central_policy():
     """데몬·force_start 는 시작 정리·종료에서 설정의 정책(`CDP_BROWSER_POLICY`)을 그대로 쓴다 — 값이 코드에 흩어지지 않게(2026-10-05 구조화)."""
-    from scripts.config import CDP_BROWSER_POLICY, CDP_START_URL, GOOGLE_URLS
+    from scripts.common.config import CDP_BROWSER_POLICY, CDP_START_URL, GOOGLE_URLS
 
     assert CDP_START_URL == CDP_BROWSER_POLICY["start_url"] == GOOGLE_URLS["home"] == "https://www.google.com/"
     for rel in CDP_LAUNCHERS:

@@ -248,7 +248,7 @@ class TestApiContract:
         # 2026-10-04 갱신: ops API 는 JWT 인증이 필수가 됨 — 인증 의존성을 시험용 사용자로 대체해 응답 계약만 검증.
         from fastapi.testclient import TestClient
 
-        from ai_orchestrator.connectors.user_auth_router import get_jwt_user
+        from ai_orchestrator.auth.user_auth_router import get_jwt_user
         from ai_orchestrator.asgi import app
 
         app.dependency_overrides[get_jwt_user] = lambda: {"actor": "owner-test", "role": "owner"}

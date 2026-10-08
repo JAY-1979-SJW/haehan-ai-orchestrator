@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.publish_guard import guarded
+from scripts.common.publish_guard import guarded
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "data"
@@ -106,7 +106,7 @@ def execute_send_batch(plan: dict[str, Any], *, page, approval: str | None = Non
     approval 이 APPROVAL_CONFIRM_TEXT 가 아니면 한 통도 보내지 않고 GateBlocked 를 낸다(직접 import 호출도 동일).
     수신거부 목록에 있는 수신자는 보내지 않고 skipped 로 기록한다. 발송 건수는 제한하지 않는다.
     """
-    from scripts.gate import GateBlocked, require_side_effect
+    from scripts.common.gate import GateBlocked, require_side_effect
     from scripts.hiworks.mail import fill_compose, send_mail
 
     # 항목이 0건이어도 승인 문구가 틀리면 같은 방식으로 차단한다.

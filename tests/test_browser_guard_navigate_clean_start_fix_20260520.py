@@ -115,7 +115,7 @@ def test_l2_alias_not_treated_as_raw_url():
 
 
 def test_l2_navigate_with_raw_url_uses_page_goto(monkeypatch):
-    """ACT_NAVIGATE 의 default_runner 가 raw URL 분기에서 web_connector.get_page 를 호출하고,
+    """ACT_NAVIGATE 의 default_runner 가 raw URL 분기에서 connection.get_page 를 호출하고,
     page.goto 결과를 ok=True 로 반환한다."""
     goto_calls: list[str] = []
 
@@ -126,7 +126,7 @@ def test_l2_navigate_with_raw_url_uses_page_goto(monkeypatch):
     import types
 
     fake_module = types.SimpleNamespace(get_page=lambda: _FakePage())
-    monkeypatch.setitem(__import__("sys").modules, "scripts.web_connector", fake_module)
+    monkeypatch.setitem(__import__("sys").modules, "scripts.browser.cdp.connection", fake_module)
 
     out = bx.default_runner(bx.ACT_NAVIGATE, {"url": "about:blank"})
     assert out["ok"] is True
@@ -141,7 +141,7 @@ def test_l2_navigate_with_alias_still_uses_navigator(monkeypatch):
     fake_nav = types.SimpleNamespace(
         goto=lambda url, timeout_ms=60000: calls.append(url),
     )
-    monkeypatch.setitem(__import__("sys").modules, "scripts.navigator", fake_nav)
+    monkeypatch.setitem(__import__("sys").modules, "scripts.browser.navigator.navigator", fake_nav)
 
     out = bx.default_runner(bx.ACT_NAVIGATE, {"url": "gmail"})
     assert out["ok"] is True

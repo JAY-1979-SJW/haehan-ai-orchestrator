@@ -4,7 +4,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
-from ai_orchestrator.inbox import create_inbox_item, get_inbox_item, read_recent_inbox
+from ai_orchestrator.tasks.inbox import (
+    create_inbox_item,
+    get_inbox_item,
+    read_recent_inbox,
+)
 
 
 # ── 1. item 저장/조회 정상 ────────────────────────────────────────────

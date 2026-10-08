@@ -16,9 +16,9 @@ import time
 from typing import Any
 
 from local_agent import site_entry_policy
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
-from scripts.login_detector import detect_login_state, wait_for_login_generic
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
+from scripts.auth.login_detector import detect_login_state, wait_for_login_generic
 
 _log = get_logger(__name__)
 

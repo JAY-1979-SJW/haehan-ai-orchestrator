@@ -1,4 +1,4 @@
-"""R2 커버리지 — 외부 발행·발송을 하는 함수가 공통 장치(scripts.gate)를 거치는지 정적 검사한다.
+"""R2 커버리지 — 외부 발행·발송을 하는 함수가 공통 장치(scripts.common.gate)를 거치는지 정적 검사한다.
 
 발행·발송 호출(sink)을 가진 함수가 게이트 호출(`require_side_effect` / `gate_check` / `check_send` / `@gated`)을
 하지 않으면 '미적용 경로'다. 기존 미적용 경로는 tests/data/side_effect_gate_baseline.json 에 고정해 두고,
@@ -52,8 +52,8 @@ GUARDS = {
 WEAK_GUARD_RECEIVERS = {"gates"}  # gates.check_send(force=...) 는 불리언으로 통과 가능 — policy.check_send 같은 별도 정책만 인정
 # 정의 자체가 발송 구현이라 호출이 아닌 것(예: smtplib 래퍼 정의)은 SINK 호출이 없으므로 자동 제외된다.
 REQUIRED_GUARDED = {
-    "ai_orchestrator/connectors/naver_blog_router.py::write_to_naver._do",  # 게이트는 바깥 write_to_naver 에 있다
-    "ai_orchestrator/routers/marketing_ops_router.py::publish_blog._do",  # 게이트는 바깥 publish_blog 에 있다
+    "ai_orchestrator/connectors/naver_blog/naver_blog_router.py::write_to_naver._do",  # 게이트는 바깥 write_to_naver 에 있다
+    "ai_orchestrator/marketing/marketing_ops_router.py::publish_blog._do",  # 게이트는 바깥 publish_blog 에 있다
     "scripts/hiworks/mail_batch.py::execute_send_batch",
     "ai_orchestrator/connectors/google/gmail_router.py::api_reply",
     "ai_orchestrator/connectors/google/gmail_router.py::api_send",
@@ -66,7 +66,7 @@ REQUIRED_GUARDED = {
     "scripts/naver/blog/marketing/publish.py::publish_one",  # write_post 호출(사각지대였던 sink)
     "scripts/instagram/publish.py::publish_case",
     "scripts/hanafax/router.py::_cmd_send",
-    "ai_orchestrator/connectors/instagram_dm_service.py::process_comment_event",
+    "ai_orchestrator/connectors/instagram/instagram_dm_service.py::process_comment_event",
 }
 
 
@@ -163,7 +163,7 @@ def test_no_new_unguarded_publish_or_send_paths():
     baseline = set(json.loads(BASELINE.read_text(encoding="utf-8")))
     new = sorted(unguarded - baseline)
     assert not new, (
-        "공통 장치(scripts.gate.require_side_effect)를 거치지 않는 새 발행·발송 경로:\n  "
+        "공통 장치(scripts.common.gate.require_side_effect)를 거치지 않는 새 발행·발송 경로:\n  "
         + "\n  ".join(new)
         + "\n→ 함수 안쪽에서 require_side_effect 를 호출하거나, 불가피하면 기준선에 사유와 함께 추가하세요."
     )

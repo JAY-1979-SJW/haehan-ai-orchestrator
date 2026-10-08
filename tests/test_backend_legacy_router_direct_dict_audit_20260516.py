@@ -22,7 +22,7 @@ from tests.app_routes import EXPECTED_HTTP_ROUTES, EXPECTED_WEBSOCKET_ROUTES
 
 def test_naver_search_router_importable():
     """naver_search_router 모듈이 import error 없이 로드된다."""
-    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+    from ai_orchestrator.connectors.naver_search.naver_search_router import naver_search_router
 
     assert naver_search_router is not None
 
@@ -31,7 +31,7 @@ def test_naver_search_router_has_13_source_endpoints():
     """naver_search_router source-level에 13개 HTTP endpoint가 정의되어 있다."""
     from fastapi.routing import APIRoute
 
-    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+    from ai_orchestrator.connectors.naver_search.naver_search_router import naver_search_router
 
     routes = [r for r in naver_search_router.routes if isinstance(r, APIRoute)]
     assert len(routes) == 13, f"naver_search_router source endpoint 수={len(routes)}, 기준=13"
@@ -41,7 +41,7 @@ def test_naver_search_router_endpoint_paths():
     """naver_search_router의 3개 endpoint path가 /external/naver/* 패턴이다."""
     from fastapi.routing import APIRoute
 
-    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+    from ai_orchestrator.connectors.naver_search.naver_search_router import naver_search_router
 
     paths = {r.path for r in naver_search_router.routes if isinstance(r, APIRoute)}
     assert "/external/naver/blog-search" in paths
@@ -79,7 +79,7 @@ def test_naver_search_router_all_endpoints_require_admin_or_owner():
 
     from fastapi.routing import APIRoute
 
-    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+    from ai_orchestrator.connectors.naver_search.naver_search_router import naver_search_router
 
     routes = [r for r in naver_search_router.routes if isinstance(r, APIRoute)]
     assert len(routes) == 13, f"endpoint 수 불일치: {len(routes)}"
@@ -98,7 +98,7 @@ def test_naver_search_router_quarantine_hold_status():
     from fastapi.routing import APIRoute
 
     from ai_orchestrator.asgi import app
-    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+    from ai_orchestrator.connectors.naver_search.naver_search_router import naver_search_router
 
     naver_source_paths = {r.path for r in naver_search_router.routes if isinstance(r, APIRoute)}
     from tests.app_routes import route_paths
@@ -375,7 +375,7 @@ def test_unregistered_router_endpoint_count():
     """naver_search_router source-level 13개 endpoint가 존재한다 (등록 완료)."""
     from fastapi.routing import APIRoute
 
-    from ai_orchestrator.connectors.naver_search_router import naver_search_router
+    from ai_orchestrator.connectors.naver_search.naver_search_router import naver_search_router
 
     naver_routes = [r for r in naver_search_router.routes if isinstance(r, APIRoute)]
     assert len(naver_routes) == 13, f"naver_search_router source endpoint={len(naver_routes)}, 기준=13"
@@ -475,5 +475,5 @@ def test_domain_enums_stable():
 
 def test_naver_router_source_file_exists():
     """naver_search_router.py 파일이 실제로 존재한다."""
-    p = pathlib.Path("ai_orchestrator/connectors/naver_search_router.py")
+    p = pathlib.Path("ai_orchestrator/connectors/naver_search/naver_search_router.py")
     assert p.exists(), "naver_search_router.py 파일 없음"

@@ -52,8 +52,8 @@ def search_shopping(
     import urllib.request
 
     from ai_orchestrator.connectors.naver_openapi_config import load_config
+    from ai_orchestrator.connectors.naver_search.naver_search_jobs import run_naver_shopping_search_job
     from ai_orchestrator.connectors.naver_search_client import NaverSearchClient
-    from ai_orchestrator.connectors.naver_search_jobs import run_naver_shopping_search_job
 
     def _transport(method, url, headers, params):
         # url 은 client.build_url() 이 params 를 이미 쿼리스트링으로 붙여서 넘긴다.

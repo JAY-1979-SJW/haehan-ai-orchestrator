@@ -4,7 +4,7 @@
 저장소 루트를 따로 계산하다가 폴더를 옮길 때마다 깊이가 어긋나 데이터 위치가 바뀐 사고(defect #120)가 났다.
 새 코드는 정본을 쓴다:
     ai_orchestrator 안  : from ai_orchestrator.paths import repo_root
-    scripts 쪽          : from scripts.app_paths import repo_root
+    scripts 쪽          : from scripts.common.app_paths import repo_root
 
 사용:
     python scripts/ops/root_calc_gate.py --staged                    # pre-commit: staged diff 의 새 줄
@@ -32,7 +32,7 @@ _BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.p
 if str(_BOOT) not in sys.path:
     sys.path.insert(0, str(_BOOT))
 
-from scripts.app_paths import repo_root  # noqa: E402
+from scripts.common.app_paths import repo_root  # noqa: E402
 
 ROOT = repo_root()
 CONFIG = "configs/root_calc_gate.json"
@@ -103,7 +103,7 @@ def _is_syspath_bootstrap(lines: list[str], idx: int) -> bool:
 def _guidance(path: str) -> str:
     if path.startswith("ai_orchestrator/"):
         return "from ai_orchestrator.paths import repo_root"
-    return "from scripts.app_paths import repo_root"
+    return "from scripts.common.app_paths import repo_root"
 
 
 def check_file(path: str, added: list[tuple[int, str]], text: str, cfg: dict) -> list[tuple[int, str, str]]:
@@ -127,9 +127,17 @@ def check_file(path: str, added: list[tuple[int, str]], text: str, cfg: dict) ->
     return bad
 
 
+def _depth_free(line: str) -> str:
+    """깊이 숫자만 지운 줄 — 파일을 옮기면서 `parents[1]` → `parents[3]` 처럼 단계 수만 바뀐 줄을 같은 줄로 보기 위해."""
+    code = re.sub(r"parents\[\d+\]", "parents[N]", line.strip())
+    code = re.sub(r"(?:\.parent(?![\w]))+", ".parent*", code)
+    return re.sub(r"(?:os\.path\.)?dirname\(", "dirname(", code)
+
+
 def parse_added(diff: str) -> dict[str, list[tuple[int, str]]]:
-    """`git diff -U0` 출력 → {파일: [(새 줄번호, 줄)]}."""
+    """`git diff -U0` 출력 → {파일: [(새 줄번호, 줄)]}. 같은 파일의 지워진 줄과 깊이 숫자만 다른 줄(= 이동에 따른 단계 보정)은 뺀다."""
     out: dict[str, list[tuple[int, str]]] = {}
+    removed: dict[str, set[str]] = {}
     cur: str | None = None
     new_no = 0
     for ln in diff.splitlines():
@@ -140,9 +148,18 @@ def parse_added(diff: str) -> dict[str, list[tuple[int, str]]]:
         if m:
             new_no = int(m.group(1))
             continue
-        if cur and ln.startswith("+") and not ln.startswith("+++"):
+        if cur and ln.startswith("-") and not ln.startswith("---"):
+            removed.setdefault(cur, set()).add(_depth_free(ln[1:]))
+        elif cur and ln.startswith("+") and not ln.startswith("+++"):
             out.setdefault(cur, []).append((new_no, ln[1:]))
             new_no += 1
+    for path, rows in list(out.items()):
+        gone = removed.get(path, set())
+        kept = [(no, text) for no, text in rows if _depth_free(text) not in gone]
+        if kept:
+            out[path] = kept
+        else:
+            del out[path]
     return out
 
 
@@ -169,7 +186,7 @@ def _report(bad: list[tuple[str, int, str, str]]) -> None:
         print(f"  - {path}:{no}  {line[:100]}", file=sys.stderr)
         print(f"      → {guide}  (repo_root() 를 쓰세요)", file=sys.stderr)
     print(
-        "  자기 폴더 한 단계(Path(__file__).parent)는 허용됩니다. 정본: ai_orchestrator/paths · scripts/app_paths.py",
+        "  자기 폴더 한 단계(Path(__file__).parent)는 허용됩니다. 정본: ai_orchestrator/paths · scripts/common/app_paths.py",
         file=sys.stderr,
     )
     print(

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from scripts.youtube.research_common import (
+from scripts.common.youtube_api_common import (
     LATEST_ANALYSIS,
     ROOT,
     SENSITIVE_WORDS,

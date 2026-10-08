@@ -188,7 +188,7 @@ def _verify_router_state() -> dict:
 
 
 def _verify_executor_whitelist() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/executor.py").read_text(encoding="utf-8", errors="ignore")
+    content = (REPO_ROOT / "ai_orchestrator/tasks/executor.py").read_text(encoding="utf-8", errors="ignore")
     medium_actions = ["write_file", "edit_config", "create_patch", "generate_report"]
 
     # ALLOWED_ACTIONS 섹션 추출

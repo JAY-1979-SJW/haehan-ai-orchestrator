@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.quality_gate import record_deploy_dry_run
+from scripts.ops.quality.quality_gate import record_deploy_dry_run  # noqa: E402 - sys.path 부트스트랩 뒤 import
 
 
 def main() -> int:

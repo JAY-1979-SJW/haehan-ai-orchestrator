@@ -1,4 +1,4 @@
-from scripts.browser_cdp_selection_gate import CdpPage, CdpSession
+from scripts.browser.session.browser_cdp_selection_gate import CdpPage, CdpSession
 from scripts.naver.mail import background_runner as br
 
 

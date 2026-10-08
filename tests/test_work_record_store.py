@@ -1,4 +1,4 @@
-"""ai_orchestrator.persistence.work_record_store (L7) — tmp_path 임시 DB·합성 데이터만. 실제 data/·storage/ 접촉 없음."""
+"""ai_orchestrator.site_work.work_record_store (L7) — tmp_path 임시 DB·합성 데이터만. 실제 data/·storage/ 접촉 없음."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import threading
 
 import pytest
 
-from ai_orchestrator.domain.work_record import (
+from ai_orchestrator.site_work.work_record import (
     ArtifactSpec,
     InvalidTransitionError,
     JobDraft,
@@ -22,7 +22,7 @@ from ai_orchestrator.domain.work_record import (
     StepUpdate,
     ValidationError,
 )
-from ai_orchestrator.persistence import work_record_store as wrs
+from ai_orchestrator.site_work import work_record_store as wrs
 from ai_orchestrator.persistence.sqlite_schema import SchemaTooNewError
 
 J = JobStatus

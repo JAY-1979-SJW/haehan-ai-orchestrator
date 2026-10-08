@@ -1,4 +1,4 @@
-from scripts import quality_gate
+from scripts.ops.quality import quality_gate
 
 
 def _cfg():

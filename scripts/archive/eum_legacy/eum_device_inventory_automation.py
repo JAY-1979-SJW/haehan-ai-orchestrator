@@ -20,8 +20,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
-from scripts.web_connector import get_page  # noqa: E402
+from scripts.browser.cdp.connection import get_page  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 
 _log = get_logger(__name__)
 
@@ -148,7 +148,7 @@ class EumDeviceInventoryManager:
 
             # 팝업 처리
             try:
-                from scripts.popup_detector import handle_page_popups
+                from scripts.browser.popup.popup_detector import handle_page_popups
 
                 handle_page_popups(self.page, timeout_s=2.0)
             except:  # noqa: E722

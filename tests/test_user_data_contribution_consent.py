@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from ai_orchestrator.asgi import app
-from ai_orchestrator.server import user_data_contribution_store as store
+from ai_orchestrator.user_data import user_data_contribution_store as store
 
 
 @pytest.fixture(autouse=True)
@@ -182,7 +182,7 @@ def test_router_is_included_under_api_v1() -> None:
 
 
 def test_api_export_blocks_missing_consent(monkeypatch) -> None:
-    from ai_orchestrator import config
+    from ai_orchestrator.core import config
 
     monkeypatch.setattr(config, "AUTH_ENABLED", False)
     client = TestClient(app)

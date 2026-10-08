@@ -13,8 +13,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.gates.secret_action_gate import build_secret_action_policy
-from scripts.gates.work_mode_gate import build_google_work_mode_policy
+from scripts.common.gates.secret_action_gate import build_secret_action_policy
+from scripts.common.gates.work_mode_gate import build_google_work_mode_policy
 
 from . import managed_console
 
@@ -257,7 +257,7 @@ def prefill_youtube_oauth_console(
         return result, None
 
     try:
-        from scripts.web_connector import get_page
+        from scripts.browser.cdp.connection import get_page
 
         page = get_page()
     except Exception as exc:  # noqa: BLE001 - 구글 클라우드 콘솔 OAuth 설정 폼 자동입력 - 최종 저장/제출 버튼은 클릭하지 않고 ready_for_user_final_button 상태로 사용자에게 넘김, 실패시 warnings 기록

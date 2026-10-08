@@ -14,7 +14,7 @@ from collections import Counter
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -283,7 +283,7 @@ class BlogSEO:
 
         log_critical = None  # noqa: F841
         try:
-            from scripts.critical_logger import log_critical as _lc
+            from scripts.common.critical_logger import log_critical as _lc
 
             _lc("OTHER", f"SEO 종합 분석: '{title[:30]}'", score=result["final_score"], mode="seo_full")
         except Exception:  # noqa: BLE001 - 블로그 SEO 분석 도구(읽기전용 검색어/AI호출) - 실패 시 빈 목록/기본 dict 반환

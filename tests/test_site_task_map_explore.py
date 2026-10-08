@@ -8,13 +8,13 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.domain import site_task_map as tm
 from ai_orchestrator.gates import auth as auth_module
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.persistence import site_task_map_request_store as rstore
-from ai_orchestrator.persistence import site_task_map_store as store
 from ai_orchestrator.routers.site_task_map_router import site_task_map_router
-from ai_orchestrator.services import site_task_map_explore_service as svc
+from ai_orchestrator.site_work import site_task_map as tm
+from ai_orchestrator.site_work import site_task_map_explore_service as svc
+from ai_orchestrator.site_work import site_task_map_request_store as rstore
+from ai_orchestrator.site_work import site_task_map_store as store
 from scripts.explorer import task_mapper
 
 URL = "https://www.example-kiscon.test/gongsi/ksc_dft.asp"
@@ -349,6 +349,6 @@ def test_redirected_start_host_is_mapped_under_actual_host_and_noted_on_requeste
     assert out["host"] == "www.example-kiscon.test" and out["tasks"] == 1
     note = store.load("start.example.test")
     assert note["tasks"] == [] and "www.example-kiscon.test 지도에 있습니다" in note["explored"]["coverage"]["warning"]
-    from ai_orchestrator.services import site_task_map_service as service
+    from ai_orchestrator.site_work import site_task_map_service as service
 
     assert "주의:" in service.lookup("start.example.test", "검색")["hint"]  # 요청 호스트로 물어도 어디를 봐야 하는지 알려 준다
