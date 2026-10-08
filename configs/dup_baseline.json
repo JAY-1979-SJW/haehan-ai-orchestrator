@@ -9,6 +9,7 @@
    "ai_orchestrator/services/mail_bulk_service.py:_read_rows"
   ],
   "088ada4c32833480504cc02bbb5e071313f817b4": [
+   "scripts/google/calendar.py:_task_delete",
    "scripts/google/drive.py:_task_delete",
    "scripts/google/sheets.py:_task_delete"
   ],
