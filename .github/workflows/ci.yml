@@ -120,7 +120,52 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
 
-  verify:
+  # base/head 계산 — 아래 job 들이 같이 쓴다
+  refs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      base: ${{ steps.refs.outputs.base }}
+      head: ${{ steps.refs.outputs.head }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Determine base/head refs
+        id: refs
+        shell: bash
+        # 수동 실행 입력(inputs.base)은 스크립트 주입을 막으려고 run 안에 직접 쓰지 않고 env 로만 넘긴다.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_BASE: ${{ inputs.base }}
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+            echo "head=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            base="${{ github.event.before }}"
+            if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "$DISPATCH_BASE" ]; then
+              # 수동 실행에서 base 를 준 경우: 브랜치 전체를 그 기준과 비교(checkout fetch-depth: 0 이라 origin/* ref 사용 가능)
+              # scripts/ci/resolve_ci_base.sh — 짧은 해시·긴 해시·브랜치 이름을 한 줄 해시로 풀고, 못 풀면 명확한 오류로 종료한다
+              # (옛 방식 `git rev-parse origin/X || git rev-parse X` 는 없는 ref 의 이름을 stdout 에 찍어 base 가 두 줄이 됐다)
+              base=$(bash scripts/ci/resolve_ci_base.sh)
+            fi
+            if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+              base=$(git rev-parse HEAD^ 2>/dev/null || git rev-parse HEAD)
+            fi
+            echo "base=$base" >> "$GITHUB_OUTPUT"
+            echo "head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # verify 는 job 3종으로 나눠 병렬로 돈다(2026-10-08, 영향 시험 20여 분이 전체를 지배해 35분 걸리던 것을 단축):
+  #   refs         base/head 계산(한 번)
+  #   verify-static  게이트·코드맵·audit-kit·mypy·ruff (시험 제외)
+  #   verify-tests   영향 시험 묶음 3개(matrix) — base·head 에서 돌려 실패 목록만 남긴다
+  #   verify         위 결과를 합쳐 판정(필수 검사 이름은 그대로 verify). 검사를 약하게 하는 변경이 아니다 — 같은 판정, 나눠서 돌릴 뿐.
+  verify-static:
+    needs: refs
     runs-on: windows-latest
     timeout-minutes: 90
     steps:
@@ -204,50 +249,12 @@ jobs:
       - name: Layer audit self-test
         run: python -m pytest tests/test_codebase_layer_audit.py -q
 
-      - name: import-linter 계약 (비차단 시험 운영 — 표준 도구 1단계, 기존 층·금지 import·분리 게이트와 나란히)
-        # 2026-10-08 대표님 승인 '표준 도구 채택': 층 방향(module_registry allowed_deps)·금지 import 쌍(layer_rules)·leaf 분리
-        # (module_separation_gate)·블로그 분리(check_blog_separability)를 import-linter 계약으로 옮겨 같은 결과가 나오는지 지켜본다.
-        # .importlinter 는 생성물(scripts/ops/repo_gates/import_contracts_gen.py) — 정본 설정이 바뀌었는데 다시 만들지 않았으면 --check 가 먼저 알린다.
-        # 기존 게이트를 대체하지 않는다. 판정이 기존 측정과 일치함이 확인될 때까지 continue-on-error 로 PR 을 막지 않는다.
-        # 알려진 한계: 루트 평면 .py·__init__.py 없는 폴더·동적 import(importlib) 는 import-linter 가 못 본다(기존 게이트가 계속 맡는다).
-        continue-on-error: true
-        shell: bash
-        run: |
-          python scripts/ops/repo_gates/import_contracts_gen.py --check
-          lint-imports --no-cache
-
-      - name: Determine base/head refs
-        id: refs
-        shell: bash
-        # 수동 실행 입력(inputs.base)은 스크립트 주입을 막으려고 run 안에 직접 쓰지 않고 env 로만 넘긴다.
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          DISPATCH_BASE: ${{ inputs.base }}
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
-            echo "head=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
-          else
-            base="${{ github.event.before }}"
-            if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "$DISPATCH_BASE" ]; then
-              # 수동 실행에서 base 를 준 경우: 브랜치 전체를 그 기준과 비교(checkout fetch-depth: 0 이라 origin/* ref 사용 가능)
-              # scripts/ci/resolve_ci_base.sh — 짧은 해시·긴 해시·브랜치 이름을 한 줄 해시로 풀고, 못 풀면 명확한 오류로 종료한다
-              # (옛 방식 `git rev-parse origin/X || git rev-parse X` 는 없는 ref 의 이름을 stdout 에 찍어 base 가 두 줄이 됐다)
-              base=$(bash scripts/ci/resolve_ci_base.sh)
-            fi
-            if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
-              base=$(git rev-parse HEAD^ 2>/dev/null || git rev-parse HEAD)
-            fi
-            echo "base=$base" >> "$GITHUB_OUTPUT"
-            echo "head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: 폴더 승인 증거 (목록에 폴더가 추가되면 PR 라벨 folder-approved 필요 — G16)
         # 라벨 이름은 사용자 입력이라 run 안에 직접 쓰지 않고 env(FOLDER_GATE_LABELS)로만 넘긴다. 이벤트 종류는 Actions 가 GITHUB_EVENT_NAME 으로 준다.
         # pull_request: 추가가 있으면 라벨 필요 · workflow_dispatch: 추가가 있으면 FAIL · push: 병합 전 PR 에서 확인했으므로 경고만.
         env:
           FOLDER_GATE_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-        run: python scripts/ops/repo_gates/folder_gate.py --check-approval --base ${{ steps.refs.outputs.base }} --head ${{ steps.refs.outputs.head }}
+        run: python scripts/ops/folder_gate.py --check-approval --base ${{ needs.refs.outputs.base }} --head ${{ needs.refs.outputs.head }}
 
       - name: G12 중복 게이트 (신규 구조동일 중복 함수 차단)
         # dup_gate.py check — PR의 base..head 사이에 바뀐(추가/수정) .py 파일만 대상.
@@ -255,7 +262,7 @@ jobs:
         shell: bash
         run: |
           # verify job 의 refs 단계가 계산한 base(PR base · push before · 수동 실행 base 입력)를 그대로 쓴다
-          base="${{ steps.refs.outputs.base }}"
+          base="${{ needs.refs.outputs.base }}"
           if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
             base=$(git rev-parse HEAD^ 2>/dev/null || git rev-parse HEAD)
           fi
@@ -272,13 +279,104 @@ jobs:
       - name: 루트 직접 계산 차단 게이트 (새 줄만 — Path(__file__).parents[N] 등)
         # 저장소 루트를 파일마다 따로 계산하는 새 줄을 차단한다(기존 줄은 통과). 정본: ai_orchestrator.paths.repo_root /
         # scripts.common.app_paths.repo_root. 예외·사유: configs/root_calc_gate.json.
-        run: python scripts/ops/repo_gates/root_calc_gate.py --check-diff ${{ steps.refs.outputs.base }} ${{ steps.refs.outputs.head }}
+        run: python scripts/ops/root_calc_gate.py --check-diff ${{ needs.refs.outputs.base }} ${{ needs.refs.outputs.head }}
 
-      - name: Verify change (ruff + 영향 테스트 + 라우트/구조 대조, 기준 대비 새 문제만 FAIL)
+      - name: Verify change — static (코드맵·층·순환·audit-kit·mypy·ruff; 시험은 verify-tests 가 돌린다)
         run: >
-          python scripts/ops/verify_change.py
-          --base ${{ steps.refs.outputs.base }}
-          --head ${{ steps.refs.outputs.head }}
+          python scripts/ops/verify_change.py --phase static
+          --base ${{ needs.refs.outputs.base }}
+          --head ${{ needs.refs.outputs.head }}
+          --json verify_static.json
+
+      - name: Upload static result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: verify-static
+          path: verify_static.json
+          if-no-files-found: ignore
+
+  verify-tests:
+    needs: refs
+    runs-on: windows-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -c constraints.txt
+          python -m pip install -r requirements-dev.txt
+
+      - name: Verify change — tests ${{ matrix.shard }}/3
+        run: >
+          python scripts/ops/verify_change.py --phase tests --shard ${{ matrix.shard }}/3
+          --base ${{ needs.refs.outputs.base }}
+          --head ${{ needs.refs.outputs.head }}
+          --json verify_tests_${{ matrix.shard }}.json
+
+      - name: Upload tests result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: verify-tests-${{ matrix.shard }}
+          path: verify_tests_${{ matrix.shard }}.json
+          if-no-files-found: ignore
+
+  # 최종 판정 — 필수 검사 이름 'verify' 를 유지한다. static 과 시험 묶음 3개가 모두 성공해야 하고, 묶음 결과가 하나라도 빠지면 FAIL.
+  verify:
+    needs: [refs, verify-static, verify-tests]
+    if: ${{ always() }}
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: 앞선 job 결과 확인
+        shell: bash
+        env:
+          RESULTS: ${{ needs.verify-static.result }} ${{ needs.verify-tests.result }}
+        run: |
+          echo "static/tests: $RESULTS"
+          for r in $RESULTS; do
+            if [ "$r" != "success" ]; then echo "앞선 job 이 success 가 아니다: $RESULTS"; exit 1; fi
+          done
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Download results
+        uses: actions/download-artifact@v7
+        with:
+          path: verify_parts
+
+      - name: Verify change — report (static + 시험 묶음 합쳐 판정)
+        shell: bash
+        run: >
+          python scripts/ops/verify_change.py --phase report
+          --base ${{ needs.refs.outputs.base }}
+          --head ${{ needs.refs.outputs.head }}
+          --static-json verify_parts/verify-static/verify_static.json
+          --test-json verify_parts/verify-tests-1/verify_tests_1.json verify_parts/verify-tests-2/verify_tests_2.json verify_parts/verify-tests-3/verify_tests_3.json
           --json verify_change_result.json
 
       - name: Upload verify_change report

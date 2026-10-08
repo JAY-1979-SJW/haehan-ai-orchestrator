@@ -646,6 +646,104 @@ def _new_ruff_findings(
     return result
 
 
+def _parse_shard(spec: str | None) -> tuple[int, int]:
+    """'I/N' → (I, N) (1부터). 없으면 (1, 1)."""
+    if not spec:
+        return 1, 1
+    index, _, count = spec.partition("/")
+    i, n = int(index), int(count)
+    if not (1 <= i <= n):
+        raise SystemExit(f"--shard {spec}: 1 <= I <= N 이어야 한다")
+    return i, n
+
+
+def shard_slice(tests: list[str], index: int, count: int) -> list[str]:
+    """영향 시험 파일을 N 개 묶음으로 나눈다(라운드 로빈 — 큰 폴더가 한 묶음에 몰리지 않게). 모든 묶음을 합치면 원래 목록과 같다."""
+    return tests[index - 1 :: count]
+
+
+def _checkout_trees(a: argparse.Namespace, tmp: Path) -> list[Path] | None:
+    trees = [tmp / "base"] + ([tmp / "head"] if a.head else [])
+    for ref, dest in zip([a.base, a.head], trees, strict=False):
+        if not _checkout(ref, dest):
+            print(f"[verify] 트리 생성 실패: {ref}")
+            return None
+    return trees
+
+
+def _cleanup_trees(tmp: Path, trees: list[Path]) -> None:
+    killed = kill_leftovers(tmp.name)  # 측정 폴더 경로가 명령줄에 든 잔여 프로세스
+    if killed:
+        print(f"[verify] 측정 중 남은 프로세스 {len(killed)}개 종료: {killed}")
+    for dest in trees:
+        run(["git", "worktree", "remove", "--force", str(dest)], ROOT)
+    shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _phase_tests(a: argparse.Namespace) -> int:
+    """phase=tests: 영향 시험의 한 묶음(shard)만 base·head 트리에서 돌려 실패 목록을 JSON 으로 남긴다(판정은 report 가 한다)."""
+    index, count = _parse_shard(a.shard)
+    changed = changed_files(a.base, a.head)
+    _log(f"[tests {index}/{count}] 변경 파일 {len(changed)}개 — 코드맵 빌드")
+    run([PY, "scripts/ops/code_map/build.py"], ROOT)
+    all_tests = affected_tests(changed)
+    mine = shard_slice(all_tests, index, count)
+    _log(f"[tests {index}/{count}] 영향 시험 {len(all_tests)}개 중 이 묶음 {len(mine)}개")
+    tmp = Path(tempfile.mkdtemp(prefix="verify_base_"))
+    trees: list[Path] = []
+    try:
+        trees = _checkout_trees(a, tmp) or []
+        if not trees:
+            return 2
+        head_tree = trees[1] if a.head else ROOT
+        with ThreadPoolExecutor(2) as ex:
+            fb, fa = ex.submit(_measure_affected_test_results, trees[0], mine), ex.submit(_measure_affected_test_results, head_tree, mine)
+            (b_fail, b_to), (a_fail, a_to) = fb.result(), fa.result()
+    finally:
+        _cleanup_trees(tmp, trees)
+    _log(f"[tests {index}/{count}] 끝: base 실패 {len(b_fail)}·head 실패 {len(a_fail)}")
+    out = {"shard": index, "count": count, "tests": mine, "all_tests": all_tests,
+           "before": {"test_failures": b_fail, "test_timeouts": b_to}, "after": {"test_failures": a_fail, "test_timeouts": a_to}}
+    if a.json:
+        Path(a.json).write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    return 0
+
+
+def _phase_report(a: argparse.Namespace) -> int:
+    """phase=report: static 결과 1개 + tests 묶음 결과들을 합쳐 판정한다(시험은 돌리지 않는다)."""
+    static = json.loads(Path(a.static_json).read_text(encoding="utf-8"))
+    before, after = static["before"], static["after"]
+    before["test_failures"], before["test_timeouts"], after["test_failures"], after["test_timeouts"] = [], [], [], []
+    seen_shards: set[int] = set()
+    count = 0
+    for path in a.test_json or []:
+        part = json.loads(Path(path).read_text(encoding="utf-8"))
+        seen_shards.add(part["shard"])
+        count = part["count"]
+        before["test_failures"] += part["before"]["test_failures"]
+        before["test_timeouts"] += part["before"]["test_timeouts"]
+        after["test_failures"] += part["after"]["test_failures"]
+        after["test_timeouts"] += part["after"]["test_timeouts"]
+    if static["tests"] and seen_shards != set(range(1, count + 1)):  # 묶음이 하나라도 빠지면 시험이 조용히 건너뛰어진 것 → 실패로 드러낸다
+        print(f"[verify] 시험 묶음이 모자란다: 받은 {sorted(seen_shards)} / 기대 1..{count}")
+        return 1
+    for key in ("test_failures", "test_timeouts"):
+        before[key], after[key] = sorted(set(before[key])), sorted(set(after[key]))
+    measurements = {
+        "before": before, "after": after, "ruff_errors": static["ruff_errors"], "kit_errors": static["kit_errors"],
+        "loc_deps": static["loc_deps"], "moved": static["moved"], "receiving": set(static["receiving"]),
+    }
+    ok, report = _build_verify_report(a, static["changed"], static["tests"], measurements)
+    print(report)
+    if a.json:
+        Path(a.json).write_text(
+            json.dumps({"ok": ok, "changed": static["changed"], "tests": static["tests"], "before": before, "after": after,
+                        "ruff": static["ruff_errors"], "report": report}, ensure_ascii=False, indent=1),
+            encoding="utf-8",
+        )
+    return 0 if ok else 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="master", help="비교 기준 커밋/브랜치")
@@ -655,10 +753,23 @@ def main() -> int:
         help="의도된 라우트 수(기준서에 적힌 값). 지정하면 '변경 후 = 이 값'일 때 통과, 기준과 같아야 한다는 규칙 대신",
     )
     ap.add_argument("--json", help="결과 JSON 저장 경로")
+    ap.add_argument(
+        "--phase",
+        choices=["all", "static", "tests", "report"],
+        default="all",
+        help="all=전부(기본) · static=시험 빼고 측정(코드맵·audit-kit·mypy·ruff) · tests=영향 시험 한 묶음만 · report=위 결과들을 합쳐 판정 (CI 가 job 을 나눠 병렬로 돌린다)",
+    )
+    ap.add_argument("--shard", help="phase=tests: 'I/N' — 영향 시험을 N 묶음으로 나눈 I 번째(1부터)")
+    ap.add_argument("--static-json", help="phase=report: static 단계 결과 JSON")
+    ap.add_argument("--test-json", nargs="*", help="phase=report: tests 단계 결과 JSON 들(묶음마다 하나)")
     a = ap.parse_args()
     with contextlib.suppress(AttributeError, ValueError):
         sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]
-    _log(f"시작: base={a.base} head={a.head or '작업트리'}")
+    if a.phase == "tests":
+        return _phase_tests(a)
+    if a.phase == "report":
+        return _phase_report(a)
+    _log(f"시작: base={a.base} head={a.head or '작업트리'} (phase={a.phase})")
     changed = changed_files(a.base, a.head)
     loc_deps = moved_location_deps(a.base, a.head)
     _log(f"변경 파일 {len(changed)}개 — 코드맵 빌드")
@@ -681,7 +792,8 @@ def main() -> int:
         try:
             _log("기준·변경 후 측정 + audit-kit 파일 검사 시작(셋을 동시에: 서로 파일을 읽기만 한다)")
             with ThreadPoolExecutor(3) as ex:
-                fb, fa = ex.submit(measure, trees[0], tests), ex.submit(measure, head_tree, tests)
+                measured = [] if a.phase == "static" else tests  # static: 시험은 다른 job(phase=tests)이 돌린다
+                fb, fa = ex.submit(measure, trees[0], measured), ex.submit(measure, head_tree, measured)
                 fk = ex.submit(_audit_kit_new_findings, py_changed, trees[0], head_tree)  # 시험(약 20분)과 겹쳐 돌려 직렬 대기를 없앤다
                 before, after = fb.result(), fa.result()
                 kit_errors, kit_note = fk.result()
@@ -716,6 +828,12 @@ def main() -> int:
         "moved": moved,
         "receiving": receiving,
     }
+    if a.phase == "static":  # 판정은 phase=report 가 시험 묶음 결과와 합쳐서 한다
+        if a.json:
+            dump = {**measurements, "receiving": sorted(receiving), "changed": changed, "tests": tests}
+            Path(a.json).write_text(json.dumps(dump, ensure_ascii=False, indent=1), encoding="utf-8")
+        _log("static 단계 끝")
+        return 0
     _log("판정 보고서 작성")
     ok, report = _build_verify_report(a, changed, tests, measurements)
     print(report)
