@@ -106,6 +106,32 @@ class _Target:
         self.path_re = _path_re(self.rel)
         f = root / (main_from or self.rel)  # 이미 옮겨졌으면 새 위치에서 __main__ 을 본다
         self.has_main = f.is_file() and has_main_block(f.read_text(encoding="utf-8", errors="replace"))
+        # 같은 basename("policy.py" 등)을 가진 **다른** 파일이 저장소에 더 있으면, 문자열에 디렉터리가
+        # 없는 bare 파일명만으로는 "이 이동 대상을 가리킨다"고 확신할 수 없다(이름만 같은 다른 파일 참조일
+        # 수 있음) — 그런 경우 bare-name 매칭의 신뢰도를 낮춘다(대표님 지시: maps 전체경로 판정 원칙).
+        self.ambiguous_basename = any(
+            p.is_file() and p.relative_to(root).as_posix() != self.rel
+            for p in root.rglob(f"{self.stem}.py")
+            if "__pycache__" not in p.parts
+        )
+
+
+def _divide_chain_join(node: ast.AST) -> str | None:
+    """`Path(...) / "a" / "b.py"` 체인(ast.BinOp, Divide)을 "a/b.py" 로 이어붙인다.
+    세그먼트가 하나뿐이면(단일 문자열) 일반 상수 처리로 충분하므로 None."""
+    segs: list[str] = []
+    cur = node
+    while (
+        isinstance(cur, ast.BinOp)
+        and isinstance(cur.op, ast.Div)
+        and isinstance(cur.right, ast.Constant)
+        and isinstance(cur.right.value, str)
+    ):
+        segs.append(cur.right.value)
+        cur = cur.left
+    if len(segs) < 2:
+        return None
+    return "/".join(reversed(segs))
 
 
 def _py_refs(rel: str, text: str, t: _Target) -> list[dict]:  # noqa: C901, PLR0912, PLR0915 - 참조 종류별 분기를 한 곳에서 판정하는 스캐너(분리하면 종류 간 문맥 공유가 늘어남)
@@ -115,10 +141,15 @@ def _py_refs(rel: str, text: str, t: _Target) -> list[dict]:  # noqa: C901, PLR0
     except SyntaxError:
         tree = None
     consts: list[tuple[int, str]] = []
+    chain_join_by_line: dict[int, str] = {}
     pkg_parts = module_name(rel).split(".")
     pkg = pkg_parts if rel.endswith("__init__.py") else pkg_parts[:-1]
     if tree is not None:
         for node in ast.walk(tree):
+            if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+                joined = _divide_chain_join(node)
+                if joined:
+                    chain_join_by_line[node.right.lineno] = joined
             if isinstance(node, ast.Import):
                 for a in node.names:
                     if a.name == t.module or a.name.startswith(t.module + "."):
@@ -185,8 +216,16 @@ def _py_refs(rel: str, text: str, t: _Target) -> list[dict]:  # noqa: C901, PLR0
         m = _PYTHON_RUN_RE.findall(v)
         direct = any(t.rel in x.replace("\\", "/") or x.replace("\\", "/").endswith("/" + t.rel) for x in m)
         full_path = bool(t.path_re.search(v)) and (" " not in v.strip() or "/" in v or "\\" in v)
-        base_only = v == f"{t.stem}.py" or v.endswith("/" + f"{t.stem}.py") or v.endswith("\\" + f"{t.stem}.py")
-        if direct or full_path or (base_only and parent_present):
+        # 디렉터리가 있는 문자열(v 에 "/"·"\\" 포함)은 그 디렉터리가 이 대상의 바로 위 폴더
+        # (parent_dir)와 실제로 일치할 때만 "같은 파일"로 본다 — 파일명만 같고 폴더가 다르면
+        # (예: ai_orchestrator/browser_tool/policy.py ≠ ai_orchestrator/gates/policy.py) 이 대상의
+        # 참조가 아니다(대표님 지시: maps 전체경로 판정과 동일 원칙).
+        has_dir_in_string = "/" in v or "\\" in v
+        seg_match = v.endswith(f"/{t.parent_dir}/{t.stem}.py") or v.endswith(f"\\{t.parent_dir}\\{t.stem}.py")
+        # 디렉터리 없이 파일명만(Path 조인 체인의 마지막 세그먼트 분리형) 인 경우에만 bare 매칭 허용
+        # — 그 경우에도 같은 basename 을 가진 다른 파일이 저장소에 있으면(이름만으론 식별 불가) 쓰지 않는다.
+        bare_only = (not has_dir_in_string) and v == f"{t.stem}.py" and not t.ambiguous_basename
+        if direct or full_path or seg_match or (bare_only and parent_present):
             if has_spec:
                 kind = "path_load"
             elif has_runpy_path:
@@ -195,7 +234,10 @@ def _py_refs(rel: str, text: str, t: _Target) -> list[dict]:  # noqa: C901, PLR0
                 kind = "direct_exec"
             else:
                 kind = "path_string"
-            refs.append({"kind": kind, "line": line, "text": v[:120]})
+            # Path(...) / "a" / "b.py" 체인의 마지막 세그먼트만 보면 디렉터리를 잃는다 — 전체
+            # 이어붙인 경로를 text 로 남겨야 report() 의 new_path 일치 판정이 정확해진다.
+            ref_text = chain_join_by_line.get(line, v)
+            refs.append({"kind": kind, "line": line, "text": ref_text[:120]})
     # Path 조인 `/ "x.py"` 처럼 문자열이 쪼개진 경우는 위 base_only 가 잡는다. 중복 줄 제거.
     seen: set[tuple[str, int]] = set()
     uniq = []
@@ -352,6 +394,14 @@ def report(files: list[str], root: Path = ROOT, new_paths: dict[str, str] | None
         rel = rel.replace("\\", "/")
         t = _Target(rel, root, (new_paths or {}).get(rel))
         refs = refs_by[rel]
+        new_rel = (new_paths or {}).get(rel)
+        if new_rel:
+            # 참조 문자열이 이동 목록표의 new_path(디렉터리 포함) 와 일치하면 이미 고쳐진 참조 —
+            # 막지 않는다. 파일명만 같고 디렉터리가 다르면(= _path_re 가 전체 경로를 요구하므로
+            # 매칭 안 됨) 여전히 다른 파일로 보고 막는다. 옛 경로 문자열은 new_rel 과 다르므로
+            # 당연히 매칭 안 되어 그대로 차단된다.
+            new_re = _path_re(new_rel.replace("\\", "/"))
+            refs = [r for r in refs if not (r["kind"] in BLOCKING and new_re.search(r["text"]))]
         reason = None
         if Path(rel).name in {"__init__.py", "conftest.py", "sitecustomize.py"}:
             reason = f"{Path(rel).name} 은(는) 위치가 의미를 가진다(패키지 경계/pytest 수집 범위)"
@@ -380,6 +430,21 @@ def report(files: list[str], root: Path = ROOT, new_paths: dict[str, str] | None
                 "blocking": [] if shim_ok else blocking,
             }
         )
+    return out
+
+
+def load_maps_csv(paths: list[Path]) -> dict[str, str]:
+    """maps\\*.csv(old_path,new_path) 를 읽어 old->new 딕셔너리로 합친다(헤더행 제외)."""
+    import csv
+
+    out: dict[str, str] = {}
+    for p in paths:
+        with open(p, encoding="utf-8") as f:
+            for row in csv.reader(f):
+                if not row or row[0].strip().lower() in ("old_path", "#", ""):
+                    continue
+                old, new = row[0].strip().replace("\\", "/"), row[1].strip().replace("\\", "/")
+                out[old] = new
     return out
 
 
@@ -447,14 +512,18 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901 - CLI 진입점: �
     ap.add_argument("files", nargs="*")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--staged-renames", action="store_true")
+    ap.add_argument("--maps", nargs="+", type=Path, default=None, help="maps\\*.csv(old_path,new_path) — new_path 로 고쳐진 참조는 해결 처리")
     ap.add_argument("--root", type=Path, default=ROOT)
     a = ap.parse_args(argv)
     root = a.root.resolve()
     new_paths: dict[str, str] | None = None
+    if a.maps:
+        new_paths = load_maps_csv(a.maps)
     files = expand_targets(a.files, root)
     if a.staged_renames:
-        new_paths = staged_renames(root)
-        files = list(new_paths)
+        staged = staged_renames(root)
+        new_paths = {**(new_paths or {}), **staged}
+        files = list(staged)
         if not files:
             return 0
     if not files:

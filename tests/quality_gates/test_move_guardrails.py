@@ -89,6 +89,68 @@ def test_adjacent_filename_is_not_a_reference(repo):
     assert lines == [("scripts/run.sh", 2)]
 
 
+def test_full_path_string_to_a_different_same_name_file_is_not_a_reference(repo):
+    """2026-10-08 실제 회귀: ai_orchestrator/gates/policy.py 를 이동할 때 preflight 가
+    ai_orchestrator/browser_tool/policy.py(완전히 다른 파일, 그냥 이름만 같음)를 가리키는
+    전체 경로 문자열을 이동 대상 참조로 잘못 판정해 막았다. 문자열이 가리키는 폴더가 이동
+    대상의 실제 부모 폴더와 다르면 참조가 아니어야 한다."""
+    _w(repo, "pkg_a/__init__.py", "")
+    _w(repo, "pkg_a/policy.py", "X = 1\n")
+    _w(repo, "pkg_b/policy.py", "Y = 2\n")
+    _w(repo, "other.py", '"pkg_b/policy.py"\n')  # 다른 폴더의 같은 이름 파일을 가리키는 전체 경로
+    _w(repo, "real_user.py", "from pkg_a.policy import X\n")  # 진짜 참조(모집단이 비어 있지 않음을 보장)
+    rows_a = mp.report(["pkg_a/policy.py"], repo)
+    assert rows_a[0]["references"], "sanity: 스캔 결과 모집단 자체가 비어 있음(아래 필터 assert 가 무의미해짐)"
+    hits_a = [r for r in rows_a[0]["references"] if r["file"] == "other.py"]
+    assert hits_a == [], f"다른 파일(pkg_b/policy.py)을 가리키는 문자열인데 참조로 잡힘: {hits_a}"
+    # 양성 대조: 같은 문자열이 실제로 가리키는 pkg_b/policy.py 를 대상으로 돌리면 잡혀야 한다
+    # (스캐너 자체가 꺼져서 hits_a 가 그냥 항상 비는 게 아님을 증명).
+    rows_b = mp.report(["pkg_b/policy.py"], repo)
+    hits_b = [r for r in rows_b[0]["references"] if r["file"] == "other.py"]
+    assert hits_b, "양성 대조 실패 — pkg_b/policy.py 를 가리키는 문자열인데도 안 잡힘(스캐너 자체 문제)"
+
+
+def test_bare_filename_string_ambiguous_with_other_same_name_file_is_not_blocked(repo):
+    """basename 만 있는 문자열(디렉터리 없음)이고, 저장소에 같은 이름의 **다른** 파일이 있으면
+    그 문자열이 어느 파일을 가리키는지 확정할 수 없다 — bare 매칭 신뢰도를 낮춰 참조로 안 봄."""
+    _w(repo, "pkg_a/__init__.py", "")
+    _w(repo, "pkg_a/policy.py", "X = 1\n")
+    _w(repo, "pkg_b/policy.py", "Y = 2\n")
+    _w(repo, "other2.py", "import pkg_a\nPARENT_HINT = 'pkg_a'\nNAME = 'policy.py'\n")
+    _w(repo, "real_user2.py", "from pkg_a.policy import X\n")  # 진짜 참조(모집단이 비어 있지 않음을 보장)
+    rows = mp.report(["pkg_a/policy.py"], repo)
+    assert rows[0]["references"], "sanity: 스캔 결과 모집단 자체가 비어 있음(아래 필터 assert 가 무의미해짐)"
+    hits = [r for r in rows[0]["references"] if r["file"] == "other2.py" and r["kind"] == "path_string"]
+    assert hits == [], f"같은 이름의 다른 파일(pkg_b/policy.py)이 있어 모호한데 bare 매칭으로 잡힘: {hits}"
+    # 양성 대조: 모호함을 없애면(같은 이름의 다른 파일 제거) 같은 문자열이 다시 잡혀야 한다
+    # (bare 매칭 자체가 꺼진 게 아니라 모호성 때문에만 안 잡혔음을 증명).
+    (repo / "pkg_b" / "policy.py").unlink()
+    rows_unambiguous = mp.report(["pkg_a/policy.py"], repo)
+    hits_unambiguous = [
+        r for r in rows_unambiguous[0]["references"] if r["file"] == "other2.py" and r["kind"] == "path_string"
+    ]
+    assert hits_unambiguous, "양성 대조 실패 — 모호성을 없앴는데도 bare 매칭이 안 잡힘(판정 자체 문제)"
+
+
+def test_bare_filename_string_without_ambiguity_still_blocked_as_before(repo):
+    """basename 만 있는 문자열이고 저장소에 그 이름을 가진 파일이 하나뿐이면(모호하지 않음),
+    Path 조인 체인(디렉터리 문자열이 같은 파일 다른 줄에 있음) 판정은 그대로 유지돼야 한다
+    (기존 회귀 방지 — 이번 수정이 정탐까지 지워버리면 안 됨)."""
+    _w(repo, "solo_mod.py", "def f():\n    return 1\n")
+    _w(
+        repo,
+        "loader.py",
+        "import importlib.util\nfrom pathlib import Path\n\n"
+        "PARENT = ''\n"
+        "def load(name):\n"
+        "    spec = importlib.util.spec_from_file_location(name, Path(__file__).parent / name)\n",
+    )
+    _w(repo, "caller.py", "from loader import load\nload('solo_mod.py')\n")
+    rows = mp.report(["solo_mod.py"], repo)
+    hits = [r for r in rows[0]["references"] if r["file"] == "caller.py"]
+    assert hits, "모호하지 않은 bare 파일명 + 호출부는 그대로 참조로 잡혀야 함(과교정 방지)"
+
+
 def test_direct_exec_in_batch_and_config(repo):
     _w(repo, "run_reader.bat", "python reader.py --once\n")
     _w(repo, "configs/entrypoints_manual.json", '{"entry": "reader.py"}\n')
@@ -296,6 +358,66 @@ def test_ack_without_reason_is_ignored(repo):
     _git(repo, "mv", "dash.py", "pkg/dash.py")
     _w(repo, "configs/move_preflight_ack.json", json.dumps({"acked": [{"file": "dash.py"}]}))
     assert mp.main(["--staged-renames", "--root", str(repo)]) == 1  # 사유 없는 항목은 무효
+
+
+# ── maps\*.csv(old_path,new_path): 이미 새 경로로 고친 참조는 해결 처리, 파일명만 같고 디렉터리가
+# 다르면(옛 경로 잔존 가능성) 여전히 차단 ─────────────────────────────────────────────
+
+
+def test_new_paths_resolves_full_match_but_not_bare_filename(repo):
+    _w(repo, "pkg/mod_x.py", "def f():\n    return 1\n")
+    _w(
+        repo,
+        "caller_fixed.py",
+        "import importlib.util\nspec = importlib.util.spec_from_file_location('mod_x', 'pkg2/mod_x.py')\n",
+    )
+    _w(
+        repo,
+        "caller_stale.py",
+        "_NOTE = 'pkg'\nimport importlib.util\nspec = importlib.util.spec_from_file_location('mod_x', 'mod_x.py')\n",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add mod_x callers")
+    new_paths = {"pkg/mod_x.py": "pkg2/mod_x.py"}
+    rows = mp.report(["pkg/mod_x.py"], repo, new_paths)
+    blocking_files = {b["file"] for b in rows[0]["blocking"]}
+    assert "caller_fixed.py" not in blocking_files  # new_path(디렉터리 포함) 와 완전히 일치 → 해결
+    assert "caller_stale.py" in blocking_files  # 파일명만 같고 디렉터리 없음(옛 경로일 수도) → 그대로 차단
+
+
+def test_new_paths_resolves_path_join_chain_by_full_reconstructed_path(repo):
+    """ROOT / "tools" / "mod_x.py" 처럼 쪼개진 체인은 마지막 세그먼트만 보면 디렉터리를 잃는다 —
+    전체 체인을 이어붙인 경로가 new_path 와 일치할 때만 해결, 옛 경로 체인은 그대로 차단."""
+    _w(repo, "pkg/mod_x.py", "def f():\n    return 1\n")
+    _w(
+        repo,
+        "caller_chain_fixed.py",
+        "from pathlib import Path\nimport importlib.util\n"
+        "ROOT = Path('.')\n"
+        "spec = importlib.util.spec_from_file_location('mod_x', ROOT / 'pkg2' / 'mod_x.py')\n",
+    )
+    _w(
+        repo,
+        "caller_chain_stale.py",
+        "from pathlib import Path\nimport importlib.util\n"
+        "ROOT = Path('.')\n"
+        "spec = importlib.util.spec_from_file_location('mod_x', ROOT / 'pkg' / 'mod_x.py')\n",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add mod_x chain callers")
+    new_paths = {"pkg/mod_x.py": "pkg2/mod_x.py"}
+    rows = mp.report(["pkg/mod_x.py"], repo, new_paths)
+    blocking_files = {b["file"] for b in rows[0]["blocking"]}
+    assert "caller_chain_fixed.py" not in blocking_files  # 체인 전체 경로가 new_path 와 일치 → 해결
+    assert "caller_chain_stale.py" in blocking_files  # 체인이 옛 경로(pkg/mod_x.py) 그대로 → 차단
+
+
+def test_maps_csv_flag_feeds_new_paths_for_staged_renames(repo, tmp_path):
+    _git(repo, "mv", "reader.py", "pkg/reader.py")
+    maps_csv = tmp_path / "batch.csv"
+    maps_csv.write_text("old_path,new_path\nreader.py,pkg/reader.py\n", encoding="utf-8")
+    # --maps 는 --staged-renames 가 이미 아는 old->new 와 같으므로 결과도 같아야 한다(멱등 지원 확인).
+    assert mp.main(["--staged-renames", "--maps", str(maps_csv), "--root", str(repo)]) == 1
 
 
 def test_ack_does_not_hide_explicit_references(repo):
