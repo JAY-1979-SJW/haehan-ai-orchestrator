@@ -9,13 +9,14 @@ from __future__ import annotations
 
 import logging
 
+from local_agent.browser.approval.browser_approval_verifier import BrowserApprovalVerifier
+
 from .browser_action_contract import (
     ExecutionResult,
     ServerApprovalAction,
     assess_action_risk,
     validate_execution_result,
 )
-from .browser_approval_verifier import BrowserApprovalVerifier
 from .browser_controller import BrowserController
 
 logger = logging.getLogger(__name__)

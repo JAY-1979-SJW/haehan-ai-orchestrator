@@ -118,7 +118,7 @@ class TestBrowserAuditContractGap:
     def test_browser_audit_contract_does_not_exist(self):
         """BrowserAuditEvent factory 부재"""
         try:
-            from local_agent.browser_audit_contract import BrowserAuditEvent
+            from local_agent.browser.approval.browser_audit_contract import BrowserAuditEvent
 
             # 만약 import 성공하면
             assert hasattr(BrowserAuditEvent, "organization_id"), "BrowserAuditEvent must have organization_id"

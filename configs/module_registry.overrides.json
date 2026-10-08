@@ -746,7 +746,7 @@
   "role": "site_module",
   "reason": "스마트스토어 상품 일괄 등록(Playwright Page)이 본체이고 DB 기록은 부수적 — 'DB 기록' 규칙이 L7 로 오분류. L5 smartstore 모듈들이 import"
  },
- "local_agent/browser_approval_errors.py": {
+ "local_agent/browser/approval/browser_approval_errors.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "저장소(L7)·검증기가 함께 쓰는 공용 예외 클래스만 정의(로직 없음) — 'approval' 이름 규칙이 L2 policy 로 오분류. L7 저장소가 import 하려면 L1 이어야 함"

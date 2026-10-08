@@ -5,9 +5,10 @@ action dispatch, and result serialization.
 """
 
 import asyncio
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
+import pytest
 
 try:
     from playwright.async_api import async_playwright
@@ -109,16 +110,16 @@ class TestBrowserTaskHandlerExecution:
     """Test browser task handler with actual execution."""
 
     def test_valid_approval_click_task_executes(self):
+        from local_agent.browser.approval.browser_approval_verifier import (
+            BrowserApprovalStore,
+            BrowserApprovalVerifier,
+        )
         from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
         from local_agent.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.browser_approval_verifier import (
-            BrowserApprovalStore,
-            BrowserApprovalVerifier,
-        )
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -160,16 +161,16 @@ class TestBrowserTaskHandlerExecution:
         asyncio.run(run_test())
 
     def test_valid_approval_type_task_executes(self):
+        from local_agent.browser.approval.browser_approval_verifier import (
+            BrowserApprovalStore,
+            BrowserApprovalVerifier,
+        )
         from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
         from local_agent.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.browser_approval_verifier import (
-            BrowserApprovalStore,
-            BrowserApprovalVerifier,
-        )
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -213,13 +214,13 @@ class TestBrowserTaskHandlerExecution:
 
     def test_execute_type_verifier_direct(self):
         """Direct test for execute_type with verifier (BROWSER-4B coverage)."""
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
+        from local_agent.browser_action_contract import ServerApprovalAction
+        from local_agent.browser_controller import BrowserController
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -260,16 +261,16 @@ class TestBrowserTaskHandlerExecution:
         asyncio.run(run_test())
 
     def test_task_without_approval_id_blocked(self):
+        from local_agent.browser.approval.browser_approval_verifier import (
+            BrowserApprovalStore,
+            BrowserApprovalVerifier,
+        )
         from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
         from local_agent.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.browser_approval_verifier import (
-            BrowserApprovalStore,
-            BrowserApprovalVerifier,
-        )
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -303,16 +304,16 @@ class TestBrowserTaskHandlerExecution:
         asyncio.run(run_test())
 
     def test_task_with_wrong_token_blocked(self):
+        from local_agent.browser.approval.browser_approval_verifier import (
+            BrowserApprovalStore,
+            BrowserApprovalVerifier,
+        )
         from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
         from local_agent.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.browser_approval_verifier import (
-            BrowserApprovalStore,
-            BrowserApprovalVerifier,
-        )
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -353,16 +354,16 @@ class TestBrowserTaskHandlerExecution:
         asyncio.run(run_test())
 
     def test_used_approval_reuse_blocked_in_task(self):
+        from local_agent.browser.approval.browser_approval_verifier import (
+            BrowserApprovalStore,
+            BrowserApprovalVerifier,
+        )
         from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
         from local_agent.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.browser_approval_verifier import (
-            BrowserApprovalStore,
-            BrowserApprovalVerifier,
-        )
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -407,16 +408,16 @@ class TestBrowserTaskHandlerExecution:
         asyncio.run(run_test())
 
     def test_risky_delete_task_blocked(self):
+        from local_agent.browser.approval.browser_approval_verifier import (
+            BrowserApprovalStore,
+            BrowserApprovalVerifier,
+        )
         from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
         from local_agent.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.browser_approval_verifier import (
-            BrowserApprovalStore,
-            BrowserApprovalVerifier,
-        )
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -458,16 +459,16 @@ class TestBrowserTaskHandlerExecution:
         asyncio.run(run_test())
 
     def test_result_data_no_approval_token(self):
+        from local_agent.browser.approval.browser_approval_verifier import (
+            BrowserApprovalStore,
+            BrowserApprovalVerifier,
+        )
         from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
         from local_agent.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.browser_approval_verifier import (
-            BrowserApprovalStore,
-            BrowserApprovalVerifier,
-        )
+        from local_agent.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:

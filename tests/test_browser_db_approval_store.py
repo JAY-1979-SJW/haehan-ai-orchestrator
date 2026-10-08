@@ -13,15 +13,15 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from local_agent.browser_approval_db_store import (
+from local_agent.browser.approval.browser_approval_db_store import (
     _FORBIDDEN_DB_COLUMNS,
     DatabaseBrowserApprovalStore,
     SQLiteBrowserApprovalStore,
 )
-from local_agent.browser_approval_persistent_store import (
+from local_agent.browser.approval.browser_approval_persistent_store import (
     PersistentBrowserApprovalStore,
 )
-from local_agent.browser_approval_verifier import (
+from local_agent.browser.approval.browser_approval_verifier import (
     BrowserApprovalVerifier,
 )
 

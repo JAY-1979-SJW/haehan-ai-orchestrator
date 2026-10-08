@@ -9,7 +9,7 @@ Verifies:
 """
 
 from ai_orchestrator.agent_hub.registry import facade as _reg
-from local_agent.browser_approval_verifier import BrowserApprovalStore, BrowserApprovalVerifier
+from local_agent.browser.approval.browser_approval_verifier import BrowserApprovalStore, BrowserApprovalVerifier
 from local_agent.browser_task_handler import BrowserTaskPayload, BrowserTaskResult
 
 

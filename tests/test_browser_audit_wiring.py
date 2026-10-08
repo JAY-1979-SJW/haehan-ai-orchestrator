@@ -12,18 +12,18 @@ import json
 import unittest
 from unittest.mock import MagicMock
 
-from local_agent.browser_action_contract import ExecutionResult
-from local_agent.browser_approval_verifier import (
+from local_agent.browser.approval.browser_approval_verifier import (
     BrowserApprovalStore,
     BrowserApprovalVerifier,
 )
-from local_agent.browser_audit_contract import (
+from local_agent.browser.approval.browser_audit_contract import (
     FORBIDDEN_AUDIT_FIELDS,
     REQUIRED_AUDIT_COLUMNS,
     BrowserAuditEventType,
     MockAuditWriter,
     build_browser_approval_audit_event,
 )
+from local_agent.browser_action_contract import ExecutionResult
 from local_agent.browser_task_handler import BrowserTaskHandler
 from local_agent.browser_websocket_bridge import (
     BrowserLocalWebSocketBridge,
@@ -393,7 +393,7 @@ class TestAuditMetadataContents(unittest.TestCase):
 
 class TestPayloadHashSafe(unittest.TestCase):
     def test_audit_payload_hash_uses_safe_payload_only(self):
-        from local_agent.browser_audit_contract import hash_safe_payload
+        from local_agent.browser.approval.browser_audit_contract import hash_safe_payload
 
         writer = MockAuditWriter()
         bridge, store, coll = _make_bridge(audit_writer=writer)

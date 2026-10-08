@@ -28,12 +28,13 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from .browser_audit_contract import (
+from local_agent.browser.approval.browser_audit_contract import (
     BrowserAuditEvent,
     BrowserAuditEventType,
     build_browser_result_audit_event,
     build_browser_task_audit_event,
 )
+
 from .browser_task_handler import (
     BrowserTaskHandler,
     BrowserTaskPayload,

@@ -611,7 +611,7 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "scripts/browser/agent/cdp_session_manager.py",
     "ai_orchestrator/auth/registration_code_store.py",
     "apps/ig-comment-dm-bot/core/processed_store.py",
-    "local_agent/browser_approval_db_store.py",
+    "local_agent/browser/approval/browser_approval_db_store.py",
     "scripts/browser/cdp/cdp_db.py",
     "scripts/common/youtube_search_cache.py",
     "scripts/common/critical_logger.py",

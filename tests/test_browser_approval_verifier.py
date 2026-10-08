@@ -39,7 +39,7 @@ class TestBrowserApprovalVerifier:
     """Test approval verification without Playwright."""
 
     def test_create_approval(self):
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             _hash_token,
         )
@@ -59,7 +59,7 @@ class TestBrowserApprovalVerifier:
         assert record.token_hash == _hash_token("secret-token-abc")
 
     def test_hash_token_consistency(self):
-        from local_agent.browser_approval_verifier import _hash_token
+        from local_agent.browser.approval.browser_approval_verifier import _hash_token
 
         token = "my-secret-token"
         hash1 = _hash_token(token)
@@ -67,7 +67,7 @@ class TestBrowserApprovalVerifier:
         assert hash1 == hash2
 
     def test_verify_valid_approval(self):
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
@@ -92,7 +92,7 @@ class TestBrowserApprovalVerifier:
         assert result.record is not None
 
     def test_verify_missing_approval_id(self):
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
@@ -110,7 +110,7 @@ class TestBrowserApprovalVerifier:
         assert result.error_code == "missing_approval_id"
 
     def test_verify_missing_approval_token(self):
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
@@ -128,7 +128,7 @@ class TestBrowserApprovalVerifier:
         assert result.error_code == "missing_approval_token"
 
     def test_verify_unknown_approval_id(self):
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
@@ -146,7 +146,7 @@ class TestBrowserApprovalVerifier:
         assert result.error_code == "approval_not_found"
 
     def test_verify_wrong_token(self):
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
@@ -171,7 +171,7 @@ class TestBrowserApprovalVerifier:
         assert result.error_code == "invalid_token"
 
     def test_verify_wrong_action_type(self):
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
@@ -196,7 +196,7 @@ class TestBrowserApprovalVerifier:
         assert result.error_code == "action_type_mismatch"
 
     def test_verify_wrong_selector(self):
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
@@ -221,7 +221,7 @@ class TestBrowserApprovalVerifier:
         assert result.error_code == "selector_mismatch"
 
     def test_mark_used(self):
-        from local_agent.browser_approval_verifier import BrowserApprovalStore
+        from local_agent.browser.approval.browser_approval_verifier import BrowserApprovalStore
 
         store = BrowserApprovalStore()
         store.create_approval(
@@ -236,7 +236,7 @@ class TestBrowserApprovalVerifier:
         assert record.status == "used"
 
     def test_reuse_blocked_after_use(self):
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
@@ -273,7 +273,7 @@ class TestBrowserApprovalVerifier:
         assert result2.error_code == "approval_used"
 
     def test_revoke_approval(self):
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
@@ -300,7 +300,7 @@ class TestBrowserApprovalVerifier:
         assert result.error_code == "approval_revoked"
 
     def test_expired_approval(self):
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
@@ -331,11 +331,11 @@ class TestServerActionAdapterWithApprovalVerifier:
     """Test ServerActionAdapter with approval verifier."""
 
     def test_execute_click_with_valid_approval(self):
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
+        from local_agent.browser_action_contract import ServerApprovalAction
         from local_agent.browser_controller import BrowserController
         from local_agent.server_action_adapter import ServerActionAdapter
 
@@ -376,11 +376,11 @@ class TestServerActionAdapterWithApprovalVerifier:
         asyncio.run(run_test())
 
     def test_execute_click_with_invalid_token_blocked(self):
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
+        from local_agent.browser_action_contract import ServerApprovalAction
         from local_agent.browser_controller import BrowserController
         from local_agent.server_action_adapter import ServerActionAdapter
 
@@ -422,11 +422,11 @@ class TestServerActionAdapterWithApprovalVerifier:
         asyncio.run(run_test())
 
     def test_approval_marked_used_after_execution(self):
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
+        from local_agent.browser_action_contract import ServerApprovalAction
         from local_agent.browser_controller import BrowserController
         from local_agent.server_action_adapter import ServerActionAdapter
 
@@ -469,11 +469,11 @@ class TestServerActionAdapterWithApprovalVerifier:
         asyncio.run(run_test())
 
     def test_reuse_blocked_after_first_execution(self):
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
+        from local_agent.browser_action_contract import ServerApprovalAction
         from local_agent.browser_controller import BrowserController
         from local_agent.server_action_adapter import ServerActionAdapter
 
@@ -551,11 +551,11 @@ class TestServerActionAdapterWithApprovalVerifier:
         asyncio.run(run_test())
 
     def test_approval_token_not_in_result_data(self):
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_approval_verifier import (
+        from local_agent.browser.approval.browser_approval_verifier import (
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
+        from local_agent.browser_action_contract import ServerApprovalAction
         from local_agent.browser_controller import BrowserController
         from local_agent.server_action_adapter import ServerActionAdapter
 

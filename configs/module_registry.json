@@ -6937,7 +6937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_approval_db_store.py": {
+  "local_agent/browser/approval/browser_approval_db_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -6945,7 +6945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_approval_errors.py": {
+  "local_agent/browser/approval/browser_approval_errors.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -6953,7 +6953,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/browser_approval_persistent_store.py": {
+  "local_agent/browser/approval/browser_approval_persistent_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -6961,7 +6961,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/browser_approval_verifier.py": {
+  "local_agent/browser/approval/browser_approval_verifier.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -6969,7 +6969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_audit_contract.py": {
+  "local_agent/browser/approval/browser_audit_contract.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -23354,6 +23354,14 @@
    "source": "rule"
   },
   "local_agent/tools/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/browser/approval/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

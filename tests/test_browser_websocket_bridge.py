@@ -18,15 +18,15 @@ import time
 import unittest
 from unittest.mock import MagicMock
 
-from local_agent.browser_action_contract import ExecutionResult
-from local_agent.browser_approval_db_store import SQLiteBrowserApprovalStore
-from local_agent.browser_approval_persistent_store import (
+from local_agent.browser.approval.browser_approval_db_store import SQLiteBrowserApprovalStore
+from local_agent.browser.approval.browser_approval_persistent_store import (
     PersistentBrowserApprovalStore,
 )
-from local_agent.browser_approval_verifier import (
+from local_agent.browser.approval.browser_approval_verifier import (
     BrowserApprovalStore,
     BrowserApprovalVerifier,
 )
+from local_agent.browser_action_contract import ExecutionResult
 from local_agent.browser_task_handler import BrowserTaskHandler
 from local_agent.browser_websocket_bridge import (
     BrowserLocalWebSocketBridge,

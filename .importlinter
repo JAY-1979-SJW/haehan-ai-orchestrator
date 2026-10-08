@@ -83,7 +83,7 @@ source_modules =
     ai_orchestrator.tasks.inbox
     ai_orchestrator.vendor_directory.vendor_directory
     ai_orchestrator.web_task.web_task_templates
-    local_agent.browser_approval_errors
+    local_agent.browser.approval.browser_approval_errors
     local_agent.config
     orchestrator_v1.core.logger
     orchestrator_v1.core.logging_utils
@@ -529,10 +529,10 @@ forbidden_modules =
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
-    local_agent.browser_approval_db_store
-    local_agent.browser_approval_persistent_store
-    local_agent.browser_approval_verifier
-    local_agent.browser_audit_contract
+    local_agent.browser.approval.browser_approval_db_store
+    local_agent.browser.approval.browser_approval_persistent_store
+    local_agent.browser.approval.browser_approval_verifier
+    local_agent.browser.approval.browser_audit_contract
     local_agent.browser_controller
     local_agent.browser_instance_guard
     local_agent.browser_login_probe
@@ -1308,7 +1308,7 @@ source_modules =
     ai_orchestrator.services.execution_policy_service
     ai_orchestrator.sites.secrets_policy
     ai_orchestrator.web_task.web_task_approval_service
-    local_agent.browser_approval_verifier
+    local_agent.browser.approval.browser_approval_verifier
     local_agent.browser_instance_guard
     local_agent.policy.internal_test_allowlist
     local_agent.policy.site_compliance_gate
@@ -1657,7 +1657,7 @@ forbidden_modules =
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
-    local_agent.browser_audit_contract
+    local_agent.browser.approval.browser_audit_contract
     local_agent.browser_controller
     local_agent.browser_login_probe
     local_agent.browser_reader
@@ -2707,10 +2707,10 @@ forbidden_modules =
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
-    local_agent.browser_approval_db_store
-    local_agent.browser_approval_persistent_store
-    local_agent.browser_approval_verifier
-    local_agent.browser_audit_contract
+    local_agent.browser.approval.browser_approval_db_store
+    local_agent.browser.approval.browser_approval_persistent_store
+    local_agent.browser.approval.browser_approval_verifier
+    local_agent.browser.approval.browser_audit_contract
     local_agent.browser_controller
     local_agent.browser_instance_guard
     local_agent.browser_login_probe
@@ -3808,7 +3808,7 @@ forbidden_modules =
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
-    local_agent.browser_audit_contract
+    local_agent.browser.approval.browser_audit_contract
     local_agent.browser_controller
     local_agent.browser_login_probe
     local_agent.browser_reader
@@ -4970,7 +4970,7 @@ forbidden_modules =
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
-    local_agent.browser_audit_contract
+    local_agent.browser.approval.browser_audit_contract
     local_agent.browser_controller
     local_agent.browser_login_probe
     local_agent.browser_reader
@@ -5257,7 +5257,7 @@ forbidden_modules =
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
-    local_agent.browser_audit_contract
+    local_agent.browser.approval.browser_audit_contract
     local_agent.browser_controller
     local_agent.browser_login_probe
     local_agent.browser_reader
@@ -5335,8 +5335,8 @@ source_modules =
     ai_orchestrator.site_work.site_task_map_store
     ai_orchestrator.site_work.work_record_store
     ai_orchestrator.user_data.user_data_contribution_store
-    local_agent.browser_approval_db_store
-    local_agent.browser_approval_persistent_store
+    local_agent.browser.approval.browser_approval_db_store
+    local_agent.browser.approval.browser_approval_persistent_store
     local_agent.browser_session_store
     local_agent.token_store
     local_agent.user_present.user_present_state_store
@@ -5746,8 +5746,8 @@ forbidden_modules =
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
-    local_agent.browser_approval_verifier
-    local_agent.browser_audit_contract
+    local_agent.browser.approval.browser_approval_verifier
+    local_agent.browser.approval.browser_audit_contract
     local_agent.browser_controller
     local_agent.browser_instance_guard
     local_agent.browser_login_probe
@@ -6428,7 +6428,7 @@ source_modules =
     local_agent.browser_action_contract
     local_agent.browser_action_executor
     local_agent.browser_actions
-    local_agent.browser_audit_contract
+    local_agent.browser.approval.browser_audit_contract
     local_agent.browser_controller
     local_agent.browser_login_probe
     local_agent.browser_reader
