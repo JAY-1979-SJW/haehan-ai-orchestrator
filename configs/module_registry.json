@@ -5729,7 +5729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_agent_result_limits.py": {
+  "tests/server_core/test_agent_result_limits.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5737,7 +5737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_alert_dev_reg.py": {
+  "tests/server_core/test_alert_dev_reg.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5745,7 +5745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_audit_dev_reg_approvals.py": {
+  "tests/server_core/test_audit_dev_reg_approvals.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5753,7 +5753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_audit_logger.py": {
+  "tests/server_core/test_audit_logger.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5857,7 +5857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_dev_reg_adapters.py": {
+  "tests/server_core/test_dev_reg_adapters.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5865,7 +5865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_dev_reg_approval_gate.py": {
+  "tests/server_core/test_dev_reg_approval_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5873,7 +5873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_dev_reg_audit_log_unit.py": {
+  "tests/server_core/test_dev_reg_audit_log_unit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5881,7 +5881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_dev_reg_cli.py": {
+  "tests/server_core/test_dev_reg_cli.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5897,7 +5897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_execution_limits.py": {
+  "tests/server_core/test_execution_limits.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5905,7 +5905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_execution_limits_extended.py": {
+  "tests/server_core/test_execution_limits_extended.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5913,7 +5913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_executor_policy_flow.py": {
+  "tests/server_core/test_executor_policy_flow.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5929,7 +5929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_inbox.py": {
+  "tests/server_core/test_inbox_orchestrator_tasks.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5937,7 +5937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_job_state_unit.py": {
+  "tests/server_core/test_job_state_unit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6121,7 +6121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_policy_gate.py": {
+  "tests/server_core/test_policy_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6129,7 +6129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_registration_code_store.py": {
+  "tests/server_core/test_registration_code_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6137,7 +6137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_registration_codes.py": {
+  "tests/server_core/test_registration_codes.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6145,7 +6145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_risk_classifier.py": {
+  "tests/server_core/test_risk_classifier.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6153,7 +6153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_router_smoke.py": {
+  "tests/server_core/test_router_smoke.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6161,7 +6161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_session_manager_unit.py": {
+  "tests/server_core/test_session_manager_unit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6257,7 +6257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_task_state.py": {
+  "tests/server_core/test_task_state.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
