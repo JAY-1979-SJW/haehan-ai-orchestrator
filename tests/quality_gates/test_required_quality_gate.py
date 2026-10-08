@@ -54,10 +54,10 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/site_engine/test_site_sso_subdomain_runtime.py" in rendered
     assert "tests/youtube/test_youtube_oauth.py" in rendered
     assert "tests/youtube/test_youtube_research.py" in rendered
-    assert "tests/test_ai_agent_app_structure_design_baseline.py" in rendered
-    assert "tests/test_ai_agent_ui_structure_blueprint.py" in rendered
+    assert "tests/quality_gates/test_ai_agent_app_structure_design_baseline.py" in rendered
+    assert "tests/quality_gates/test_ai_agent_ui_structure_blueprint.py" in rendered
     assert "tests/server_core/test_mcp_gateway_baseline.py" in rendered
-    assert "tests/test_ai_work_session_gate.py" in rendered
+    assert "tests/quality_gates/test_ai_work_session_gate.py" in rendered
     assert "scripts/ops/dry_run_local_agent_cdp_attach.py" in rendered
     assert "scripts/ops/audit_common_tool_runtime.py" in rendered
     assert "scripts/ops/audit_common_tool_runtime_baseline_contract.py" in rendered
@@ -301,7 +301,7 @@ def test_ai_work_session_gate_pytest_uses_workspace_temp(monkeypatch):
     command = next(
         command
         for command in gate.COMMANDS
-        if "tests/test_ai_work_session_gate.py" in command and gate.command_is_pytest(command)
+        if "tests/quality_gates/test_ai_work_session_gate.py" in command and gate.command_is_pytest(command)
     )
 
     assert gate.command_needs_isolated_pytest_temp(command) is True

@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from ai_orchestrator.asgi import app
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 client = TestClient(app, raise_server_exceptions=True)
 
 SHA = "db235656a1b2c3d4e5f60718293a4b5c6d7e8f90"

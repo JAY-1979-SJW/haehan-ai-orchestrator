@@ -13857,7 +13857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ai_agent_app_structure_design_baseline.py": {
+  "tests/quality_gates/test_ai_agent_app_structure_design_baseline.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13865,7 +13865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ai_agent_ui_structure_blueprint.py": {
+  "tests/quality_gates/test_ai_agent_ui_structure_blueprint.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13881,7 +13881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ai_work_session_gate.py": {
+  "tests/quality_gates/test_ai_work_session_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15249,7 +15249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_competitor_detail.py": {
+  "tests/naver_search/test_competitor_detail.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16041,7 +16041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_grant_radar_router_contract.py": {
+  "tests/server_features/test_grant_radar_router_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "grant_radar",
@@ -16937,7 +16937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mk_catalog_append.py": {
+  "tests/common/test_mk_catalog_append.py": {
    "layer": "L11",
    "role": "test",
    "domain": "marketing",
@@ -17033,7 +17033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_browser_gate.py": {
+  "tests/naver_auth/test_naver_browser_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17081,7 +17081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_company_seo_and_shopping.py": {
+  "tests/naver_search/test_naver_company_seo_and_shopping.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -17089,7 +17089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_content.py": {
+  "tests/naver_blog/test_naver_content.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17113,7 +17113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_excel_and_mail_attach.py": {
+  "tests/naver_mail/test_naver_excel_and_mail_attach.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17121,7 +17121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_live_safety.py": {
+  "tests/naver_auth/test_naver_live_safety.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17321,7 +17321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_talk_approval.py": {
+  "tests/smartstore/test_naver_talk_approval.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17377,7 +17377,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_page_analysis.py": {
+  "tests/site_work/test_page_analysis.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17401,7 +17401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_popup_probe.py": {
+  "tests/site_work/test_popup_probe.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -17505,7 +17505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_public_media_router.py": {
+  "tests/server_features/test_public_media_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17833,7 +17833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_catalog.py": {
+  "tests/site_work/test_site_catalog.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18529,7 +18529,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "tests/test_error_recovery_log_critical.py": {
+  "tests/smartstore/test_error_recovery_log_critical.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19121,7 +19121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_health_build_info.py": {
+  "tests/server_core/test_health_build_info.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19217,7 +19217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_route_count_single_source.py": {
+  "tests/app_contracts/test_route_count_single_source.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22753,7 +22753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_audit_log_sensitive_scan.py": {
+  "tests/quality_gates/test_audit_log_sensitive_scan.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

@@ -15,7 +15,7 @@ import pytest
 from scripts.ops import audit_backend_runtime_contract as audit
 from tests.app_routes import http_routes, runtime_routes, websocket_routes
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 EXPECTATION = ROOT / "configs" / "route_count_expectation.json"
 
 
