@@ -326,6 +326,13 @@ sys.exit(0)
 
 def install(name: str, content: str) -> None:
     path = HOOKS_DIR / name
+    if path.exists():
+        # .githooks 는 git 이 추적하는 정본이다. 세션 시작 훅(.claude/settings.json)이 매번 이 설치기를 돌리는데, 내장 템플릿은
+        # 정본보다 오래돼 덮어쓰면 게이트 8개 연결(96줄)이 사라진 채 `git add -A` 로 커밋됐다(2026-10-08 PR #162 사고).
+        # 없을 때만 만들고, 있으면 내용은 건드리지 않고 실행 권한만 맞춘다.
+        path.chmod(path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+        print(f"[install_git_hooks] {name} 이미 있음 — 내용은 덮어쓰지 않음: {path}")
+        return
     path.write_text(content, encoding="utf-8")
     path.chmod(path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
     print(f"[install_git_hooks] {name} 설치 완료: {path}")
