@@ -298,6 +298,66 @@ def test_ack_without_reason_is_ignored(repo):
     assert mp.main(["--staged-renames", "--root", str(repo)]) == 1  # 사유 없는 항목은 무효
 
 
+# ── maps\*.csv(old_path,new_path): 이미 새 경로로 고친 참조는 해결 처리, 파일명만 같고 디렉터리가
+# 다르면(옛 경로 잔존 가능성) 여전히 차단 ─────────────────────────────────────────────
+
+
+def test_new_paths_resolves_full_match_but_not_bare_filename(repo):
+    _w(repo, "pkg/mod_x.py", "def f():\n    return 1\n")
+    _w(
+        repo,
+        "caller_fixed.py",
+        "import importlib.util\nspec = importlib.util.spec_from_file_location('mod_x', 'pkg2/mod_x.py')\n",
+    )
+    _w(
+        repo,
+        "caller_stale.py",
+        "_NOTE = 'pkg'\nimport importlib.util\nspec = importlib.util.spec_from_file_location('mod_x', 'mod_x.py')\n",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add mod_x callers")
+    new_paths = {"pkg/mod_x.py": "pkg2/mod_x.py"}
+    rows = mp.report(["pkg/mod_x.py"], repo, new_paths)
+    blocking_files = {b["file"] for b in rows[0]["blocking"]}
+    assert "caller_fixed.py" not in blocking_files  # new_path(디렉터리 포함) 와 완전히 일치 → 해결
+    assert "caller_stale.py" in blocking_files  # 파일명만 같고 디렉터리 없음(옛 경로일 수도) → 그대로 차단
+
+
+def test_new_paths_resolves_path_join_chain_by_full_reconstructed_path(repo):
+    """ROOT / "tools" / "mod_x.py" 처럼 쪼개진 체인은 마지막 세그먼트만 보면 디렉터리를 잃는다 —
+    전체 체인을 이어붙인 경로가 new_path 와 일치할 때만 해결, 옛 경로 체인은 그대로 차단."""
+    _w(repo, "pkg/mod_x.py", "def f():\n    return 1\n")
+    _w(
+        repo,
+        "caller_chain_fixed.py",
+        "from pathlib import Path\nimport importlib.util\n"
+        "ROOT = Path('.')\n"
+        "spec = importlib.util.spec_from_file_location('mod_x', ROOT / 'pkg2' / 'mod_x.py')\n",
+    )
+    _w(
+        repo,
+        "caller_chain_stale.py",
+        "from pathlib import Path\nimport importlib.util\n"
+        "ROOT = Path('.')\n"
+        "spec = importlib.util.spec_from_file_location('mod_x', ROOT / 'pkg' / 'mod_x.py')\n",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add mod_x chain callers")
+    new_paths = {"pkg/mod_x.py": "pkg2/mod_x.py"}
+    rows = mp.report(["pkg/mod_x.py"], repo, new_paths)
+    blocking_files = {b["file"] for b in rows[0]["blocking"]}
+    assert "caller_chain_fixed.py" not in blocking_files  # 체인 전체 경로가 new_path 와 일치 → 해결
+    assert "caller_chain_stale.py" in blocking_files  # 체인이 옛 경로(pkg/mod_x.py) 그대로 → 차단
+
+
+def test_maps_csv_flag_feeds_new_paths_for_staged_renames(repo, tmp_path):
+    _git(repo, "mv", "reader.py", "pkg/reader.py")
+    maps_csv = tmp_path / "batch.csv"
+    maps_csv.write_text("old_path,new_path\nreader.py,pkg/reader.py\n", encoding="utf-8")
+    # --maps 는 --staged-renames 가 이미 아는 old->new 와 같으므로 결과도 같아야 한다(멱등 지원 확인).
+    assert mp.main(["--staged-renames", "--maps", str(maps_csv), "--root", str(repo)]) == 1
+
+
 def test_ack_does_not_hide_explicit_references(repo):
     _w(repo, "run_dash.bat", "python dash.py\n")  # 명시적 직접 실행 참조
     _git(repo, "add", "-A")

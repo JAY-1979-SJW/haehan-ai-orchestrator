@@ -380,6 +380,111 @@
    "new": "scripts/youtube/upload/step5_publish.py",
    "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/youtube/upload/step5_publish.py",
    "date": "2026-10-07"
+  },
+  {
+   "file": "scripts/ops/audit_app_api_contract_endpoints_prep.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_api_readonly_endpoints_browser_smoke.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_api_readonly_endpoints_implementation.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_api_readonly_endpoints_implementation_plan.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_baseline_contract.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_construction_schedule.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_development_standard.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_foundation_governance.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_foundation_mvp_design.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_foundation_mvp_prep.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_structure_contract.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_task_queue_readonly_list_polish.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_test_baseline_current_contract_sync.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_ui_readonly_backend_status_cards.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_ui_shell_browser_smoke.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_ui_shell_readonly_api_wiring.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_app_ui_shell_skeleton.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_approval_flow_baseline_contract.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_authed_local_agent_dispatch_dry_run.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
+  },
+  {
+   "file": "scripts/ops/audit_autowork_frontdoor_operation.py",
+   "reason": "A-1 scripts/ops->tools 이동 — 내부 참조 전수 수정 완료(move_rewrite.py), 옛 경로 직접 실행 호출처 없음(grep 0건)",
+   "date": "2026-10-08"
   }
  ]
 }
