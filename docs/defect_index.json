@@ -1539,7 +1539,7 @@
       "evidence": "2026-10-01 #19 H1 에이전트가 발견. test_browser_submit_policy_validator 6건·test_browser_submit_api_flow 일부가 이 때문에 실패하던 것을 '기존 실패'로 분류하고 있었음. 같은 패턴(`_x` 루프 변수 + 본문 `x` 사용) AST 전수 검사 결과 이 1곳뿐.",
       "stage": "RUN",
       "status": "fixed",
-      "fix_note": "2026-10-01 루프 변수를 field_item 으로 바꾸고 본문도 일치시킴. submit_policy 관련 테스트 86 passed."
+      "fix_note": "2026-10-01 루프 변수를 field_item 으로 바꾸고 본문도 일치시킴. submit_policy 관련 테스트 86 passed. 2026-10-08 추기: submit_policy.py 는 운영 사용처 0(실제 submit 플로우는 ai_orchestrator/local_agent/actions/browser_submit_with_user_approval.py 등 별도 구현)으로 판명되어 stage/dead-code-audit 에서 파일 자체를 삭제함(docs/deleted_code_index.md 참고). 이 결함 기록은 과거 사고 이력으로 보존."
     },
     {
       "no": 116,
