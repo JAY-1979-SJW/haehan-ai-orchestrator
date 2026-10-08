@@ -26,6 +26,7 @@ import signal
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from dataclasses import dataclass
@@ -50,6 +51,12 @@ PROFILE_DIR = Path(_PROFILE_ENV) if _PROFILE_ENV else (ROOT / "data" / "cdp_prof
 BROWSER_TYPE = os.environ.get("CDP_BROWSER", "auto")
 TASK_NAME = "HaehanCdpDaemon"  # Task Scheduler 작업명
 MAX_RESTART = int(os.environ.get("CDP_MAX_RESTART", "10"))  # 최대 재시작 횟수
+# 유휴 자동 종료 — CDP 포트에 외부 연결이 N초 동안 하나도 없으면 Chrome·데몬 스스로 종료(기본 15분).
+CDP_IDLE_TIMEOUT = int(os.environ.get("CDP_IDLE_TIMEOUT_SECONDS", "900"))
+# 단일 인스턴스 락 — ROOT(저장소 경로) 기준이 아니라 OS 공용 임시 폴더 기준이라, 이 코드를 체크아웃한
+# worktree 가 몇 개든 포트 하나당 락 파일 하나를 공유한다(대표님 지시: 다른 경로의 데몬이 이미
+# 이 포트를 쓰면 시작 안 함).
+_SINGLETON_LOCK_FILE = Path(tempfile.gettempdir()) / f"haehan_cdp_daemon_{CDP_PORT}.lock"
 
 DAEMON_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
@@ -81,6 +88,7 @@ class DaemonState:
     browser_kind: str = ""
     browser_exe: str = ""
     profile_dir: str = ""
+    last_active_at: str = ""  # 마지막으로 CDP 포트에 외부 연결이 있었던 시각(유휴 자동 종료 판정용)
 
 
 def _save_state(s: DaemonState) -> None:
@@ -96,6 +104,97 @@ def _load_state() -> DaemonState:
         return DaemonState(**{k: v for k, v in data.items() if k in DaemonState.__dataclass_fields__})
     except Exception:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
         return DaemonState()
+
+
+# ── 단일 인스턴스 락(여러 worktree 가 같은 CDP_PORT 를 중복 기동하지 못하게) ──────────
+def _pid_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        import psutil
+
+        return psutil.pid_exists(pid)
+    except ImportError:
+        pass
+    if sys.platform == "win32":
+        import ctypes
+
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        handle = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if handle:
+            ctypes.windll.kernel32.CloseHandle(handle)
+            return True
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
+def _read_singleton_lock() -> tuple[int, str] | None:
+    try:
+        lines = _SINGLETON_LOCK_FILE.read_text(encoding="utf-8").splitlines()
+        return int(lines[0]), (lines[1] if len(lines) > 1 else "")
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _singleton_lock_holder() -> tuple[int, str] | None:
+    """락 파일의 PID 가 아직 살아 있으면 (pid, started) 를, 죽었거나 락이 없으면 None."""
+    info = _read_singleton_lock()
+    if info is None:
+        return None
+    pid, started = info
+    return (pid, started) if _pid_alive(pid) else None
+
+
+def _acquire_singleton_lock() -> bool:
+    """이 PID 가 CDP_PORT 의 유일한 데몬임을 선언한다. 다른(죽지 않은) PID 가 이미 들고 있으면 거부."""
+    holder = _singleton_lock_holder()
+    if holder is not None and holder[0] != os.getpid():
+        log.warning(
+            "[SINGLETON] 다른 CDP 데몬(PID=%d, 시작=%s)이 이미 포트 %d 를 쓰는 중 — 시작 안 함",
+            holder[0], holder[1], CDP_PORT,
+        )
+        return False
+    tmp = _SINGLETON_LOCK_FILE.with_suffix(".tmp")
+    tmp.write_text(f"{os.getpid()}\n{datetime.now(UTC).isoformat()}\n", encoding="utf-8")
+    os.replace(tmp, _SINGLETON_LOCK_FILE)  # 원자적 쓰기(임시 파일 후 교체)
+    return True
+
+
+def _release_singleton_lock() -> None:
+    info = _read_singleton_lock()
+    if info is not None and info[0] == os.getpid():
+        try:
+            _SINGLETON_LOCK_FILE.unlink()
+        except OSError:
+            pass
+
+
+# ── 유휴 자동 종료 — CDP 포트에 들어온 외부 연결 수(우리 자신의 헬스체크 프로브는 제외) ──
+def _external_cdp_connection_count(port: int = CDP_PORT) -> int:
+    """port 로 들어온 ESTABLISHED TCP 연결 중, 이 프로세스(데몬 자신의 헬스체크 프로브) 소유가
+    아닌 것의 수. psutil 이 없으면(드묾) 셀 수 없으니 항상 활동 중(0 아님)으로 보수적으로 본다
+    — 측정 못한다고 유휴로 오판해 끄면 안 되기 때문."""
+    try:
+        import psutil
+    except ImportError:
+        return 1
+    own_pid = os.getpid()
+    try:
+        conns = psutil.net_connections(kind="tcp")
+    except (psutil.AccessDenied, OSError):
+        return 1
+    count = 0
+    for c in conns:
+        if c.status != psutil.CONN_ESTABLISHED or not c.laddr or c.laddr.port != port:
+            continue
+        if c.pid == own_pid:
+            continue
+        count += 1
+    return count
 
 
 # ── 브라우저 탐색 & 실행 ─────────────────────────────────────────────
@@ -513,10 +612,38 @@ def _heartbeat_loop() -> None:
 
             _restart_dead_monitors()
 
+            if _check_idle_and_maybe_shutdown():
+                break
+
             _save_state(_state)
         except Exception as e:  # noqa: BLE001 - CDP 데몬 생명주기 관리 — 로컬 Chrome 프로세스/파일 상태 확인은 실패 종류가 다양해(파일없음/프로세스종료/포트미응답 등) 일괄 로그·기본값 폴백, 결제·인증·원격쓰기 없음(2026-09-28 검토)
             log.error("[HEARTBEAT] 오류: %s", e)
         _stop_event.wait(timeout=10)
+
+
+def _check_idle_and_maybe_shutdown() -> bool:
+    """CDP 포트에 외부 연결이 CDP_IDLE_TIMEOUT 초 동안 하나도 없으면 데몬 전체를 종료한다
+    (대표님 지시 ②: 유휴면 크롬·데몬 스스로 종료). 종료를 트리거했으면 True."""
+    if CDP_IDLE_TIMEOUT <= 0:
+        return False  # 0 이하면 유휴 종료 기능 끔
+    now = datetime.now(UTC)
+    if _external_cdp_connection_count() > 0:
+        _state.last_active_at = now.isoformat()
+        return False
+    try:
+        last_active = datetime.fromisoformat(_state.last_active_at) if _state.last_active_at else now
+    except ValueError:
+        last_active = now
+        _state.last_active_at = now.isoformat()
+    idle_seconds = (now - last_active).total_seconds()
+    if idle_seconds < CDP_IDLE_TIMEOUT:
+        return False
+    log.warning(
+        "[IDLE] CDP 포트 %d 외부 연결 없음 %.0f초(기준 %d초) — 데몬 스스로 종료",
+        CDP_PORT, idle_seconds, CDP_IDLE_TIMEOUT,
+    )
+    _stop_event.set()
+    return True
 
 
 def _signal_handler(signum: int, _frame: Any) -> None:
@@ -571,6 +698,7 @@ def _shutdown_daemon() -> None:
     _state.chrome_ui_monitor_pid = 0
     _state.browser_context = "inactive"
     _save_state(_state)
+    _release_singleton_lock()
     log.info("데몬 종료 완료")
 
 
@@ -581,7 +709,12 @@ def run_daemon() -> None:
     log.info("  PID: %d  CDP 포트: %d", os.getpid(), CDP_PORT)
     log.info("  프로필: %s", PROFILE_DIR)
     log.info("  최대 재시작: %d회", MAX_RESTART)
+    log.info("  유휴 자동 종료: %d초", CDP_IDLE_TIMEOUT)
     log.info("=" * 60)
+
+    if not _acquire_singleton_lock():
+        log.error("다른 CDP 데몬이 이미 포트 %d 를 쓰는 중 — 이 인스턴스는 바로 종료", CDP_PORT)
+        return
 
     signal.signal(signal.SIGTERM, _signal_handler)
     signal.signal(signal.SIGINT, _signal_handler)
@@ -594,6 +727,7 @@ def run_daemon() -> None:
                 cdp_port=CDP_PORT,
                 browser_context="inactive",
                 started_at=datetime.now(UTC).isoformat(),
+                last_active_at=datetime.now(UTC).isoformat(),
                 profile_dir=str(PROFILE_DIR),
             )
         )
@@ -679,6 +813,13 @@ def cmd_start() -> None:
         return
     except Exception:  # noqa: BLE001 - 이미 원하는 상태(프로세스 종료됨/응답없음)인 경우의 정상 흐름 — 무시해도 안전(2026-09-28 검토)
         pass
+
+    # 다른 worktree 복사본이 띄운 데몬이 아직 살아 있으면(락 파일 PID 기준) 여기서 바로 거부 —
+    # 자식 프로세스를 띄웠다가 자기 스스로 거부하고 조용히 종료하는 것보다 사용자에게 바로 알려준다.
+    holder = _singleton_lock_holder()
+    if holder is not None:
+        print(f"CDP 데몬이 이미 다른 프로세스(PID={holder[0]}, 시작={holder[1]})로 포트 {CDP_PORT} 을 쓰는 중 — 시작 안 함")
+        return
 
     assert_browser_launch_allowed(component="scripts.browser.cdp.cdp_daemon", action="cdp_daemon_start")
 

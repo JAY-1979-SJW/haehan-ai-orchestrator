@@ -23848,6 +23848,14 @@
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
    "source": "rule"
+  },
+  "tests/test_cdp_daemon_singleton_idle.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
