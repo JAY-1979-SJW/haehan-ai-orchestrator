@@ -330,7 +330,7 @@
         "scripts/browser/session/browser_cdp_selection_gate.py"
       ],
       "tests": [
-        "tests/test_naver_service_router.py",
+        "tests/server_features/test_naver_service_router.py",
         "tests/naver_cafe/test_naver_cafe_list_collector.py",
         "tests/browser/test_browser_cdp_selection_gate.py"
       ],

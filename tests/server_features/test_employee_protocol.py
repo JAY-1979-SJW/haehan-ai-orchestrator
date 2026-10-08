@@ -20,7 +20,7 @@ from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.vendor_directory.vendor_directory_router import vendor_directory_router
 from ai_orchestrator.vendor_directory import vendor_directory_service as service
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 PROTOCOL_TS = ROOT / "admin-web" / "src" / "components" / "chat" / "employeeProtocol.ts"
 CHAT_TSX = ROOT / "admin-web" / "src" / "components" / "chat" / "UniversalChat.tsx"
 

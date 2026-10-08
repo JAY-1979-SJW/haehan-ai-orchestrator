@@ -15417,7 +15417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_employee_protocol.py": {
+  "tests/server_features/test_employee_protocol.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17289,7 +17289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_service_router.py": {
+  "tests/server_features/test_naver_service_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17577,7 +17577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_scheduled_jobs.py": {
+  "tests/server_features/test_scheduled_jobs.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
