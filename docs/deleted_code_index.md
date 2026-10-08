@@ -1082,3 +1082,11 @@ git checkout pre-openai-removal -- <경로>
 - `scripts/ops/audit_subdomain_dns_routing_foundation.py` — autowork 서브도메인 DNS/nginx/SSL 기초 도면 감사(단계 완료용 일회성). 언급은 조정 문서의 파일 목록뿐
 - `scripts/ops/audit_windows_user_install_live_smoke.py` — WINDOWS_USER_INSTALL_LIVE_SMOKE_01 감사(단계 완료용 일회성). 언급 없음
 - `scripts/ops/smoke_app_ui_shell_readonly_api_wiring.py` — APP_UI_SHELL_READONLY_API_WIRING_01 정적 smoke. 짝 감사(audit_app_ui_shell_readonly_api_wiring)만 이를 대신 검사하며 이 파일을 부르는 곳 없음
+
+## 2026-10-08 삭제(3차) — 중복 설치기 (stage/ops-folders)
+
+`scripts/ops/quality/install_git_hooks.py` 는 `git config core.hooksPath .githooks` 만 하는 34줄짜리 설치기로, 같은 이름의 정본 `scripts/ops/hooks/install_git_hooks.py`(훅 파일 설치 + core.hooksPath 설정, 시험 보유)가 이미 같은 설정을 한다 → 정본 하나만 남기고 삭제.
+확인 ①~⑥: 코드 호출 없음(품질 게이트 오류 문구에서만 이름을 안내 → 정본 경로로 교체), 문자열 경로 호출·워크플로·훅·docs 실행 안내·사용자 스킬/조정 문서·예약 작업 모두 0, 이 파일만 검사하는 시험 없음(module_boundaries.json 의 repo_guard 파일 목록 항목은 정본 경로로 교체).
+복원: `git checkout 2687e9d0 -- scripts/ops/quality/install_git_hooks.py`
+
+- `scripts/ops/quality/install_git_hooks.py` — core.hooksPath 만 설정하는 중복 설치기

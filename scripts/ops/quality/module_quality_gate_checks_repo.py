@@ -256,7 +256,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
     hooks_path = normalize_path(config.stdout.strip()) if config.returncode == 0 else ""
     # 설치기가 절대경로(<저장소>/.githooks)로 설정하는 환경도 현행 구조로 인정한다.
     if hooks_path != ".githooks" and not hooks_path.endswith("/.githooks"):
-        return False, "core.hooksPath must be .githooks; run python scripts/ops/quality/install_git_hooks.py"
+        return False, "core.hooksPath must be .githooks; run python scripts/ops/hooks/install_git_hooks.py"
 
     return True, "required local gate is wired through pre-commit/pre-push and Actions are disabled"
 

@@ -22409,14 +22409,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/install_git_hooks.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/quality/install_quality_gate.py": {
    "layer": "L12",
    "role": "ops_tool",

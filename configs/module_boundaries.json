@@ -10,7 +10,7 @@
         ".githooks/",
         "scripts/ops/quality/required_quality_gate.py",
         "scripts/ops/quality/module_quality_gate.py",
-        "scripts/ops/quality/install_git_hooks.py",
+        "scripts/ops/hooks/install_git_hooks.py",
         "tests/test_required_quality_gate.py",
         "tests/test_module_quality_gate.py"
       ],
