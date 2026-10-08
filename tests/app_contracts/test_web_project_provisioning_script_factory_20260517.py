@@ -10,6 +10,7 @@ ASSISTANT_WEB_PROJECT_PROVISIONING_SCRIPT_FACTORY_01
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -19,6 +20,10 @@ sys.path.insert(0, str(ROOT))
 
 PROVISIONING_SCRIPT = ROOT / "scripts" / "ops" / "create_web_project_provisioning_plan.py"
 AUDIT_SCRIPT = ROOT / "scripts" / "ops" / "audit_web_project_provisioning_factory.py"
+
+# 스크립트가 한글(em dash 포함)을 print 한다 — Windows 콘솔 기본 코드페이지(cp949)로는
+# 인코딩 못 하는 문자가 있어 UnicodeEncodeError 로 죽는다. 자식 프로세스 stdio를 utf-8로 강제.
+_SUBPROC_ENV = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
 
 
 def _load_factory():
@@ -348,6 +353,7 @@ def test_json_output_valid():
         text=True,
         timeout=15,
         encoding="utf-8",
+        env=_SUBPROC_ENV,
     )
     assert result.returncode == 0
     parsed = json.loads(result.stdout)
@@ -372,6 +378,7 @@ def test_json_arbitrary_fqdn():
         text=True,
         timeout=15,
         encoding="utf-8",
+        env=_SUBPROC_ENV,
     )
     assert result.returncode == 0
     parsed = json.loads(result.stdout)
@@ -390,6 +397,7 @@ def test_check_only_exits_zero():
         text=True,
         timeout=10,
         encoding="utf-8",
+        env=_SUBPROC_ENV,
     )
     assert result.returncode == 0
     assert "check-only" in result.stdout.lower() or "CHECK-ONLY" in result.stdout
@@ -402,6 +410,7 @@ def test_check_only_no_plan_output():
         text=True,
         timeout=10,
         encoding="utf-8",
+        env=_SUBPROC_ENV,
     )
     assert "PLAN_READY" not in result.stdout
 
