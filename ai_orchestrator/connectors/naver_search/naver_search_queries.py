@@ -13,6 +13,7 @@ import logging
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from ai_orchestrator.connectors.naver_search import naver_search_db as db_mod
 
@@ -109,7 +110,8 @@ def search_blog_posts(
     if conn is None:
         return QueryPage(total=0, items=[], limit=lim, offset=off)
     try:
-        where, params = [], []
+        where: list[str] = []
+        params: list[Any] = []
         if query:
             where.append("query = ?")
             params.append(query)
@@ -177,7 +179,8 @@ def search_shopping_items(  # noqa: PLR0913 - 공개 시그니처 유지(호출�
     if conn is None:
         return QueryPage(total=0, items=[], limit=lim, offset=off)
     try:
-        where, params = [], []
+        where: list[str] = []
+        params: list[Any] = []
         if query:
             where.append("query = ?")
             params.append(query)
@@ -326,7 +329,7 @@ def get_search_status(
 
     warnings: list = []
     row_counts: dict | None = None
-    latest = {"blog": None, "shopping": None}
+    latest: dict[str, str | None] = {"blog": None, "shopping": None}
     last_blog_q: list = []
     last_shop_q: list = []
 

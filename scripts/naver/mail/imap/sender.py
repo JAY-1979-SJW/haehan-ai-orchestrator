@@ -195,7 +195,8 @@ def build_full_message(d: Draft) -> EmailMessage:
     msg.set_content(d.body)
     if d.html:
         msg.add_alternative(d.html, subtype="html")
-        html_part = msg.get_payload()[1]
+        html_part = msg.get_payload(1)
+        assert isinstance(html_part, EmailMessage)
         for img in d.inline_images:
             html_part.add_related(img.data, maintype="image", subtype=img.subtype, cid=f"<{img.cid}>")
     for u in d.uploads:

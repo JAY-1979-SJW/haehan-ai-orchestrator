@@ -27,10 +27,13 @@ import traceback
 from contextlib import contextmanager, suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from scripts.common.logger import get_logger
 from scripts.common.op_log import log_op
+
+if TYPE_CHECKING:
+    from scripts.form.bot_radar import BotRadar
 
 log = get_logger(__name__)
 
@@ -103,7 +106,7 @@ class StepWatcher:
         self.console_msgs: list[dict] = []
         self.net_failures: list[dict] = []
         self.bot_reports: list[dict] = []  # step별 봇 감지 누적
-        self._bot_radar = None  # BotRadar 인스턴스
+        self._bot_radar: BotRadar | None = None
         self.started_at = time.time()
         self._step_idx = 0
         log.info("[site-watch] 시작 site=%s 보고서=%s", site, self.report_dir)

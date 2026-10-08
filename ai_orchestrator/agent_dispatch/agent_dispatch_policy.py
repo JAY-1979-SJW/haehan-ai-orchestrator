@@ -143,11 +143,12 @@ def claim_of(task: dict[str, Any]) -> ResourceClaim:
     read_only = task.get("read_only") is True
     declared = isinstance(raw, (list, tuple, set, frozenset))
     tokens: set[str] = set()
-    for item in raw if declared else []:
-        token = _normalize_token(item) if isinstance(item, str) else None
-        if token is None:
-            return _UNKNOWN_CLAIM
-        tokens.add(token)
+    if isinstance(raw, (list, tuple, set, frozenset)):
+        for item in raw:
+            token = _normalize_token(item) if isinstance(item, str) else None
+            if token is None:
+                return _UNKNOWN_CLAIM
+            tokens.add(token)
 
     if not tokens:
         if read_only and declared:

@@ -39,7 +39,7 @@ def record_auth_event(
 ) -> None:
     """인증 이벤트 1줄 기록. 예외는 전파하지 않는다."""
     try:
-        row = {
+        row: dict[str, str | int | None] = {
             "ts": datetime.now(UTC).isoformat(),
             "event": event,
             "outcome": outcome,

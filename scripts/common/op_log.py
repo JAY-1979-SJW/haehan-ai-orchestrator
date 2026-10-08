@@ -44,7 +44,7 @@ from collections.abc import Callable, Generator
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from ai_orchestrator.paths.runtime import data_dir
 from scripts.common.schemas import OpStatus  # 상태값 타입 참조
@@ -242,7 +242,7 @@ class _OpContext:
         )
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+    def __exit__(self, exc_type, exc_val, exc_tb) -> Literal[False]:
         elapsed = int((time.perf_counter() - self._t0) * 1000)
         if exc_type is not None:
             self._ok = False
@@ -318,7 +318,8 @@ def query_recent(op_name: str | None = None, limit: int = 50, status: str | None
     try:
         con = sqlite3.connect(str(DB_PATH), timeout=5)
         con.row_factory = sqlite3.Row
-        clauses, params = ["1=1"], []
+        clauses: list[str] = ["1=1"]
+        params: list[Any] = []
         if op_name:
             clauses.append("op_name LIKE ?")
             params.append(f"%{op_name}%")

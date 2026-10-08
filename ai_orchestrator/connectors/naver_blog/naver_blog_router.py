@@ -147,7 +147,7 @@ def _write_sections(bw, req: BlogWriteRequest) -> dict | None:
     """섹션별 배치 — 지정한 순서 그대로 텍스트/사진을 섞어서 삽입. 실패 시 응답 dict, 성공 시 None."""
     # 이미지 경로는 업로드 폴더 기준으로 해석(존재하지 않으면 그대로 URL 취급).
     blocks: list[dict[str, str]] = []
-    for section in req.sections:
+    for section in req.sections or []:
         if section.get("type") == "image":
             name = section.get("value", "")
             resolved = UPLOADS_DIR / Path(name).name

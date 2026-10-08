@@ -14,6 +14,8 @@ cdp_client.py 의 CLI 파서에서 라우팅 책임만 분리.
 
 from __future__ import annotations
 
+from typing import Any
+
 from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
@@ -134,7 +136,7 @@ def is_service_cmd(cmd: str) -> bool:
 def list_services() -> list[dict[str, str]]:
     """등록된 서비스 목록 반환."""
     seen: set[str] = set()
-    result = []
+    result: list[dict[str, Any]] = []
     for cmd, (module, fn) in _SERVICE_ROUTERS.items():
         if module not in seen:
             seen.add(module)

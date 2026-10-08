@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 import os
-import sqlite3
+from typing import Any, Protocol
 
 from ai_orchestrator.gates.gate_core import is_opted_out
 from ai_orchestrator.connectors.instagram import instagram_dm_db as db
@@ -31,7 +31,13 @@ def _dry_run() -> bool:
     return os.environ.get("INSTAGRAM_DM_DRY_RUN", "true").strip().lower() != "false"
 
 
-def _blocked_reason(account: sqlite3.Row | dict, rule: dict) -> str | None:
+class _KeyedRow(Protocol):
+    """sqlite3.Row·dict 공통 — storage 계층 결과를 키로만 읽는 service 레이어 용도."""
+
+    def __getitem__(self, key: str) -> Any: ...
+
+
+def _blocked_reason(account: _KeyedRow, rule: dict) -> str | None:
     """발송 차단 사유(전역/계정/룰 비활성). 차단 없으면 None."""
     if not _global_enabled():
         return "GLOBAL_DISABLED"

@@ -213,6 +213,8 @@ def _print_report(path: Path, findings: list[Finding]) -> None:
 def main(argv: list[str] | None = None) -> int:
     with contextlib.suppress(AttributeError, ValueError):
         sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+    with contextlib.suppress(AttributeError, ValueError):
+        sys.stderr.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("paths", nargs="+", type=Path, help="감사 로그 파일 경로(들)")
     ap.add_argument("--rewrite", action="store_true", help="백업 후 마스킹 재작성(기본은 읽기만)")

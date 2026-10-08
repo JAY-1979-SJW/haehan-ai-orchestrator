@@ -47,7 +47,8 @@ def _fetch_web_page_audit_extras(action_type: str, result: str) -> str:
         return ""
     if not isinstance(parsed, dict):
         return ""
-    data = parsed.get("data") if isinstance(parsed.get("data"), dict) else {}
+    raw_data = parsed.get("data")
+    data: dict = raw_data if isinstance(raw_data, dict) else {}
     final_url = data.get("final_url", "")
     http_status = data.get("http_status")
     return f" final_url={final_url} http_status={http_status}"

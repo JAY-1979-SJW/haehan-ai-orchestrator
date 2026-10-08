@@ -125,6 +125,7 @@ def list_messages(
     conn, err = _open(account, load_password(account) if password is None else password, factory)
     if err:
         return err
+    assert conn is not None
     try:
         _, data = conn.uid("SEARCH", None, "UNSEEN" if unseen_only else "ALL")
         uids = (data[0] or b"").decode().split()
@@ -150,6 +151,7 @@ def read_message(
     conn, err = _open(account, load_password(account) if password is None else password, factory)
     if err:
         return err
+    assert conn is not None
     try:
         _, parts = conn.uid("FETCH", str(uid), "(BODY.PEEK[])")
         raw = _fetched_bytes(parts)
@@ -205,6 +207,7 @@ def list_existing(  # noqa: PLR0913 - 검색 조건이 전부 키워드 전용 �
     conn, err = _open(account, load_password(account) if password is None else password, factory)
     if err:
         return err
+    assert conn is not None
     needle_from, needle_subject = from_contains.strip().lower(), subject_contains.strip().lower()
     try:
         _, data = conn.uid("SEARCH", None, *_search_criteria(since, before, unseen_only))
@@ -251,6 +254,7 @@ def read_messages(
     conn, err = _open(account, load_password(account) if password is None else password, factory)
     if err:
         return err
+    assert conn is not None
     try:
         out = []
         for uid in picked:
@@ -320,6 +324,7 @@ def list_new(
     conn, err = _open(account, load_password(account) if password is None else password, factory)
     if err:
         return err
+    assert conn is not None
     try:
         validity = _uidvalidity(conn)
         _, data = conn.uid("SEARCH", None, "ALL")

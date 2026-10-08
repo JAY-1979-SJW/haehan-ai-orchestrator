@@ -177,7 +177,8 @@ def get_draft(draft_id: str) -> dict[str, Any] | None:
 def list_drafts(
     account: str | None = None, statuses: tuple[str, ...] | None = None, limit: int = 100
 ) -> list[dict[str, Any]]:
-    sql, args = "SELECT * FROM drafts WHERE 1=1", []
+    sql = "SELECT * FROM drafts WHERE 1=1"
+    args: list[Any] = []
     if account:
         sql += " AND account = ?"
         args.append(account)

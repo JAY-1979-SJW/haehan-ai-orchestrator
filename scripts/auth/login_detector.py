@@ -32,7 +32,7 @@ import re
 import time
 from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 from urllib.parse import urlparse
 
 from scripts.browser.cdp import cdp_db
@@ -40,8 +40,15 @@ from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 
+
+class _SitePattern(TypedDict, total=False):
+    domains: list[str]
+    logged_in_signs: list[tuple[str, str]]
+    logged_out_signs: list[tuple[str, str]]
+
+
 # 사이트별 로그인 감지 패턴
-LOGIN_PATTERNS = {
+LOGIN_PATTERNS: dict[str, _SitePattern] = {
     "smartstore": {
         "domains": ["sell.smartstore.naver.com", "smartstore.naver.com"],
         "logged_in_signs": [
