@@ -13,7 +13,6 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any, Callable
 
-
 DEFAULT_CDP_HOST = "127.0.0.1"
 DEFAULT_CDP_PORT = 9222
 LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1", "[::1]"}

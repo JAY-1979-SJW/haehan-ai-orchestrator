@@ -14,7 +14,6 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # 상태 enum
 BROWSER_NOT_STARTED = "BROWSER_NOT_STARTED"
 BROWSER_RUNNING = "BROWSER_RUNNING"

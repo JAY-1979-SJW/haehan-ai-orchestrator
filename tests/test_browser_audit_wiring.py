@@ -27,9 +27,9 @@ from local_agent.browser.bridge.browser_websocket_bridge import (
     BrowserLocalWebSocketBridge,
     MockResultCallbackCollector,
 )
-from local_agent.browser_action_contract import ExecutionResult
-from local_agent.browser_task_handler import BrowserTaskHandler
-from local_agent.server_action_adapter import ServerActionAdapter
+from local_agent.browser.browser_action_contract import ExecutionResult
+from local_agent.browser.browser_task_handler import BrowserTaskHandler
+from local_agent.browser.server_action_adapter import ServerActionAdapter
 
 SECRET_TOKEN = "tok-secret-abc"
 SECRET_FINAL = "final-secret-xyz"

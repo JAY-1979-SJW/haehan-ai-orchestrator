@@ -40,7 +40,7 @@ from local_agent.browser.bridge.browser_websocket_schema import (
     BrowserWebSocketTaskPayloadSchema,
     BrowserWebSocketTaskResultSchema,
 )
-from local_agent.browser_task_handler import BrowserTaskHandler, BrowserTaskPayload, BrowserTaskResult
+from local_agent.browser.browser_task_handler import BrowserTaskHandler, BrowserTaskPayload, BrowserTaskResult
 
 logger = logging.getLogger(__name__)
 

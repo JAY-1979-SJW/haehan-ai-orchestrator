@@ -16,7 +16,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from local_agent.login_state_detector import (
+from local_agent.browser.login_state_detector import (
     GOOGLE_AUTH_HOSTS,
     LOGIN_REQUIRED,
     DetectionResult,

@@ -20,7 +20,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from local_agent.login_state_detector import (
+from local_agent.browser.login_state_detector import (
     CHALLENGE_REQUIRED,
     CONSENT_REQUIRED,
     LOGGED_IN,

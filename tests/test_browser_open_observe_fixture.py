@@ -27,8 +27,8 @@ from unittest.mock import patch
 import pytest
 
 from local_agent import actions as _actions
-from local_agent import browser_reader as _br
-from local_agent import web_reader as _wr
+from local_agent.browser import browser_reader as _br
+from local_agent.browser import web_reader as _wr
 from local_agent.common import audit as _audit_mod
 
 # ── Audit capture (모든 테스트에 자동 적용) ─────────────────────────────────

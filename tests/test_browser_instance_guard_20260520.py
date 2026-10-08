@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from local_agent import browser_instance_guard as guard
-from local_agent import browser_session_store as bss
+from local_agent.browser import browser_instance_guard as guard
+from local_agent.browser import browser_session_store as bss
 
 
 @pytest.fixture()

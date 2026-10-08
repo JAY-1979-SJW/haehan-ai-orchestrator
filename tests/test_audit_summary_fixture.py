@@ -675,7 +675,7 @@ class TestActionWebOpenUrlReadonlyAuditSummary:
 
         from local_agent import actions
 
-        with patch("local_agent.browser_reader.open_url_readonly") as mock_open:
+        with patch("local_agent.browser.browser_reader.open_url_readonly") as mock_open:
             mock_open.return_value = {
                 "ok": True,
                 "url": "http://127.0.0.1:8000",
@@ -702,7 +702,7 @@ class TestActionWebOpenUrlReadonlyAuditSummary:
 
         from local_agent import actions
 
-        with patch("local_agent.browser_reader.open_url_readonly") as mock_open:
+        with patch("local_agent.browser.browser_reader.open_url_readonly") as mock_open:
             mock_open.return_value = {
                 "ok": True,
                 "url": "http://127.0.0.1:8000",

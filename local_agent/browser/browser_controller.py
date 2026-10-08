@@ -139,7 +139,7 @@ class BrowserController:
         Raises:
             BrowserControllerError: If browser launch fails
         """
-        assert_browser_launch_allowed(component="local_agent.browser_controller", action="playwright_launch")
+        assert_browser_launch_allowed(component="local_agent.browser.browser_controller", action="playwright_launch")
         try:
             from playwright.async_api import async_playwright
 

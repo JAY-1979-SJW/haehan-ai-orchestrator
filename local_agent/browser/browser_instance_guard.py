@@ -22,7 +22,7 @@ from typing import Any
 
 # ── 고정값 (기존 cdp_daemon / config 와 일치) ───────────────────────────
 
-_ROOT = Path(__file__).resolve().parents[1]
+_ROOT = Path(__file__).resolve().parents[2]
 
 # 자동화 Chrome 식별 기준값.
 # 기존 scripts/browser/cdp/cdp_daemon.py 가 사용하는 PROFILE_DIR / CDP_PORT 와 일치.

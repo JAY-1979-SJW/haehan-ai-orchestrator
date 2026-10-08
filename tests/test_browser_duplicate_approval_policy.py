@@ -194,11 +194,11 @@ class TestVerifierStillWorks(unittest.TestCase):
         import asyncio
         from unittest.mock import MagicMock
 
-        from local_agent.browser_task_handler import (
+        from local_agent.browser.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         for store_cls in [BrowserApprovalStore, PersistentBrowserApprovalStore, SQLiteBrowserApprovalStore]:
             with self.subTest(store=store_cls.__name__):

@@ -12,7 +12,7 @@ def test_staged_paths_normalizes_out_of_scope_paths():
     staged = gate.staged_paths(
         [
             "M  scripts\\ops\\check_naver_mail.py",
-            " M local_agent\\cdp_attach.py",
+            " M local_agent\\browser\\cdp_attach.py",
             "?? tests\\test_local_agent_cdp_attach.py",
         ]
     )

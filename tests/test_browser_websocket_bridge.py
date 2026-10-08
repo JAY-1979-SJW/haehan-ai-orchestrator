@@ -31,9 +31,9 @@ from local_agent.browser.bridge.browser_websocket_bridge import (
     MockResultCallbackCollector,
 )
 from local_agent.browser.bridge.browser_websocket_schema import RESULT_DATA_FORBIDDEN_KEYS
-from local_agent.browser_action_contract import ExecutionResult
-from local_agent.browser_task_handler import BrowserTaskHandler
-from local_agent.server_action_adapter import ServerActionAdapter
+from local_agent.browser.browser_action_contract import ExecutionResult
+from local_agent.browser.browser_task_handler import BrowserTaskHandler
+from local_agent.browser.server_action_adapter import ServerActionAdapter
 
 # ---------------------------------------------------------------------------
 # Helpers

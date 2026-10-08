@@ -31,8 +31,8 @@
    "scripts/youtube/browser_transcript.py:_write_report"
   ],
   "3b98604be243aa0b1973738181e9aa36acaded45": [
-   "local_agent/site_mapper.py:_is_sensitive_name",
-   "local_agent/web_reader.py:_is_sensitive_name"
+   "local_agent/browser/site_mapper.py:_is_sensitive_name",
+   "local_agent/browser/web_reader.py:_is_sensitive_name"
   ],
   "3bd89a273c4d15fb3674b39da45fd8f10666602f": [
    "scripts/ops/audit_app_api_contract_endpoints_prep.py:AuditReport.summary",
@@ -128,8 +128,8 @@
    "ai_orchestrator/connectors/naver_search/naver_search_router.py:api_run_shopping_search"
   ],
   "cb29e64dc5c280b2a6a807e3bc8796e25ccd01fe": [
-   "local_agent/browser_login_probe.py:_normalize_str_list",
-   "local_agent/site_mapper.py:_normalize_hints"
+   "local_agent/browser/browser_login_probe.py:_normalize_str_list",
+   "local_agent/browser/site_mapper.py:_normalize_hints"
   ],
   "d8f965a8b038841763a0099900bd491ad0d0a20e": [
    "scripts/browser/navigator/popup_monitor.py:ChromeUIWatcher.start",

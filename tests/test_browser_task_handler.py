@@ -39,7 +39,7 @@ class TestBrowserTaskPayload:
     """Test task payload creation and conversion."""
 
     def test_payload_creation(self):
-        from local_agent.browser_task_handler import BrowserTaskPayload
+        from local_agent.browser.browser_task_handler import BrowserTaskPayload
 
         payload = BrowserTaskPayload(
             task_id="task-001",
@@ -54,7 +54,7 @@ class TestBrowserTaskPayload:
         assert payload.selector == "#safe-btn"
 
     def test_payload_to_server_action(self):
-        from local_agent.browser_task_handler import BrowserTaskPayload
+        from local_agent.browser.browser_task_handler import BrowserTaskPayload
 
         payload = BrowserTaskPayload(
             task_id="task-001",
@@ -74,7 +74,7 @@ class TestBrowserTaskResult:
     """Test task result creation and serialization."""
 
     def test_result_creation(self):
-        from local_agent.browser_task_handler import BrowserTaskResult
+        from local_agent.browser.browser_task_handler import BrowserTaskResult
 
         result = BrowserTaskResult(
             task_id="task-001",
@@ -89,7 +89,7 @@ class TestBrowserTaskResult:
         assert result.executed is True
 
     def test_result_redaction(self):
-        from local_agent.browser_task_handler import BrowserTaskResult
+        from local_agent.browser.browser_task_handler import BrowserTaskResult
 
         result = BrowserTaskResult(
             task_id="task-001",
@@ -114,12 +114,12 @@ class TestBrowserTaskHandlerExecution:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_controller import BrowserController
-        from local_agent.browser_task_handler import (
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -165,12 +165,12 @@ class TestBrowserTaskHandlerExecution:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_controller import BrowserController
-        from local_agent.browser_task_handler import (
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -218,9 +218,9 @@ class TestBrowserTaskHandlerExecution:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.browser_action_contract import ServerApprovalAction
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -265,12 +265,12 @@ class TestBrowserTaskHandlerExecution:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_controller import BrowserController
-        from local_agent.browser_task_handler import (
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -308,12 +308,12 @@ class TestBrowserTaskHandlerExecution:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_controller import BrowserController
-        from local_agent.browser_task_handler import (
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -358,12 +358,12 @@ class TestBrowserTaskHandlerExecution:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_controller import BrowserController
-        from local_agent.browser_task_handler import (
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -412,12 +412,12 @@ class TestBrowserTaskHandlerExecution:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_controller import BrowserController
-        from local_agent.browser_task_handler import (
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -463,12 +463,12 @@ class TestBrowserTaskHandlerExecution:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_controller import BrowserController
-        from local_agent.browser_task_handler import (
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:

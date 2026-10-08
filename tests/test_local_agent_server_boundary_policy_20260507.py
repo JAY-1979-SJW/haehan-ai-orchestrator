@@ -475,7 +475,7 @@ class TestCompatibilityWithExistingPolicies:
 
     def test_compatible_with_browser_readonly_runtime(self):
         """browser_readonly_runtime과 호환 확인 — 제한 사이트 readonly 결과."""
-        from local_agent.browser_readonly_runtime import evaluate_readonly_browser_permission
+        from local_agent.browser.browser_readonly_runtime import evaluate_readonly_browser_permission
 
         evaluate_readonly_browser_permission(
             {

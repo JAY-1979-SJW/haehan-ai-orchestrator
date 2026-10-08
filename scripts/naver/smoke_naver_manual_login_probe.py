@@ -105,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
     _root = str(Path(__file__).resolve().parents[2])  # 저장소 루트 — local_agent import 용 sys.path 부트스트랩
     if _root not in sys.path:
         sys.path.insert(0, _root)
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from local_agent.browser.browser_login_probe import probe_manual_login_flow
 
     allowed_hosts = list(DEFAULT_ALLOWED_HOSTS)
     for h in args.allow_additional_host or []:

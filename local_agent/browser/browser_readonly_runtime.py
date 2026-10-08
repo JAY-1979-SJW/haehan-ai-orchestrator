@@ -5,7 +5,7 @@
 click/type/submit/download/쿠키추출은 절대 수행하지 않는다.
 사용자 직접 인증이 필요한 화면 감지 시 USER_PRESENT_REQUIRED로 반환한다.
 
-기존 local_agent/browser_reader.py의 open_url_readonly()를 조율하는
+기존 local_agent/browser/browser_reader.py의 open_url_readonly()를 조율하는
 정책 계층 역할을 한다.
 """
 
@@ -310,7 +310,7 @@ def execute_readonly_browser_task(payload: dict[str, Any]) -> dict[str, Any]:
         )
 
     try:
-        from .browser_reader import (  # noqa: F401 - BrowserDependencyMissing은 예외 타입명 문자열 비교(type(exc).__name__)로만 쓰여 심볼 자체는 미사용, 기존 코드(이번 BLE001 작업과 무관)
+        from local_agent.browser.browser_reader import (  # noqa: F401 - BrowserDependencyMissing은 예외 타입명 문자열 비교(type(exc).__name__)로만 쓰여 심볼 자체는 미사용, 기존 코드(이번 BLE001 작업과 무관)
             BrowserDependencyMissing,
             open_url_readonly,
         )

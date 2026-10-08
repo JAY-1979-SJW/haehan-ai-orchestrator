@@ -277,8 +277,8 @@ class TestVerifierWithDbStore(unittest.TestCase):
         Verifies that the handler correctly validates approval via DB store
         and rejects a wrong token — without needing a real browser/adapter.
         """
-        from local_agent.browser_task_handler import BrowserTaskHandler, BrowserTaskPayload
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.browser_task_handler import BrowserTaskHandler, BrowserTaskPayload
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         store = SQLiteBrowserApprovalStore()
         verifier = BrowserApprovalVerifier(store)

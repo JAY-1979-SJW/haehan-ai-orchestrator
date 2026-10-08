@@ -6913,7 +6913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_action_contract.py": {
+  "local_agent/browser/browser_action_contract.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6921,7 +6921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_action_executor.py": {
+  "local_agent/browser/browser_action_executor.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6929,7 +6929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_actions.py": {
+  "local_agent/browser/browser_actions.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6977,7 +6977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_controller.py": {
+  "local_agent/browser/browser_controller.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6985,7 +6985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_instance_guard.py": {
+  "local_agent/browser/browser_instance_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -6993,7 +6993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_login_probe.py": {
+  "local_agent/browser/browser_login_probe.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7001,7 +7001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_reader.py": {
+  "local_agent/browser/browser_reader.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7009,7 +7009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_readonly_runtime.py": {
+  "local_agent/browser/browser_readonly_runtime.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7017,7 +7017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_realtime_watcher.py": {
+  "local_agent/browser/browser_realtime_watcher.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7025,7 +7025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_session_store.py": {
+  "local_agent/browser/browser_session_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -7033,7 +7033,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/browser_task_handler.py": {
+  "local_agent/browser/browser_task_handler.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7065,7 +7065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/cdp_attach.py": {
+  "local_agent/browser/cdp_attach.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7153,7 +7153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/login_auto_flow.py": {
+  "local_agent/browser/login_auto_flow.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7161,7 +7161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/login_state_detector.py": {
+  "local_agent/browser/login_state_detector.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7193,7 +7193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/server_action_adapter.py": {
+  "local_agent/browser/server_action_adapter.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7217,7 +7217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/site_mapper.py": {
+  "local_agent/browser/site_mapper.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7273,7 +7273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/web_reader.py": {
+  "local_agent/browser/web_reader.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -23378,6 +23378,14 @@
    "source": "rule"
   },
   "local_agent/common/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/browser/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

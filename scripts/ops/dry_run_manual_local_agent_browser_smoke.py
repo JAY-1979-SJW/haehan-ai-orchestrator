@@ -28,7 +28,7 @@ REQUIRED_FILES = (
     "scripts/ops/verify/verify_live_browser_readonly_dispatch.py",
     "local_agent/agent.py",
     "local_agent/websocket_client.py",
-    "local_agent/browser_readonly_runtime.py",
+    "local_agent/browser/browser_readonly_runtime.py",
     "ai_orchestrator/agent_hub/router/root.py",
     "ai_orchestrator/contracts/local_agent_actions.py",
     "ai_orchestrator/agent_hub/policy/risk_policy.py",

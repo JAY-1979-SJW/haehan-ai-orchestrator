@@ -36,14 +36,9 @@ from collections.abc import Callable
 from contextlib import suppress
 from typing import Any
 
+from local_agent.browser.browser_reader import BrowserDependencyMissing, _detect_login_required, _safe_close
+from local_agent.browser.web_reader import analyze_html_structure, validate_url_for_readonly_open
 from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed
-
-from .browser_reader import (
-    BrowserDependencyMissing,
-    _detect_login_required,
-    _safe_close,
-)
-from .web_reader import analyze_html_structure, validate_url_for_readonly_open
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +180,7 @@ def probe_manual_login_flow(  # noqa: PLR0913 - 공개 API keyword-only 시그�
 
     factory = _browser_factory
     if factory is None:
-        assert_browser_launch_allowed(component="local_agent.browser_login_probe", action="playwright_launch")
+        assert_browser_launch_allowed(component="local_agent.browser.browser_login_probe", action="playwright_launch")
         try:
             from playwright.sync_api import sync_playwright as _sync_playwright
         except ImportError:

@@ -335,9 +335,9 @@ class TestServerActionAdapterWithApprovalVerifier:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.browser_action_contract import ServerApprovalAction
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -380,9 +380,9 @@ class TestServerActionAdapterWithApprovalVerifier:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.browser_action_contract import ServerApprovalAction
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -426,9 +426,9 @@ class TestServerActionAdapterWithApprovalVerifier:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.browser_action_contract import ServerApprovalAction
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -473,9 +473,9 @@ class TestServerActionAdapterWithApprovalVerifier:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.browser_action_contract import ServerApprovalAction
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -523,9 +523,9 @@ class TestServerActionAdapterWithApprovalVerifier:
         asyncio.run(run_test())
 
     def test_adapter_without_verifier_still_works(self):
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.browser_action_contract import ServerApprovalAction
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -555,9 +555,9 @@ class TestServerActionAdapterWithApprovalVerifier:
             BrowserApprovalStore,
             BrowserApprovalVerifier,
         )
-        from local_agent.browser_action_contract import ServerApprovalAction
-        from local_agent.browser_controller import BrowserController
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.browser_action_contract import ServerApprovalAction
+        from local_agent.browser.browser_controller import BrowserController
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
