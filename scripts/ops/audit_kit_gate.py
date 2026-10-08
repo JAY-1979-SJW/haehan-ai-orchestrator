@@ -437,14 +437,65 @@ def _merge(findings: list[str], typed: list[str], why: str) -> tuple[list[str], 
     return findings + typed, ("" if findings or typed or not why else why)
 
 
+def _kit_hook_old_path_keys(kit: list[str], path: Path, root: Path, old_rel: str) -> set[str]:
+    """이름 변경(R) 전 경로(old_rel)의 HEAD 내용을 audit-kit hook 으로 검사해 `finding_key` 집합을 돌려준다.
+
+    `_mypy_against_head` 와 같은 원리(T2/baseline_findings 와 같은 원칙, 대표님 17:4x 이동 커밋 audit 생략
+    승인 범위 안) — 2026-10-08, 이동 커밋에서 옛 위치(예: ai_orchestrator/gates/)부터 있던 기존 결함이
+    audit-kit 자신의 `(기존)` 판정(같은 경로의 git 이력만 봄)을 못 받고 신규로 잡히는 오탐 수정.
+    HEAD 에 옛 경로가 없거나 검사 못 하면 빈 집합(비교 기준 없음 — 기존 동작과 같이 전부 신규 취급).
+    """
+    shown = subprocess.run(
+        ["git", "show", f"HEAD:{old_rel}"], capture_output=True, cwd=str(root), check=False, **no_window_kwargs()
+    )
+    if shown.returncode != 0:
+        return set()
+    old_name = Path(old_rel).name
+    copy = path.with_name(f"_auditkit_base_{old_name}")  # 같은 폴더에 둬야 import 맥락이 새 위치와 같게 풀린다
+    try:
+        copy.write_bytes(shown.stdout)
+        findings, failed = _kit_hook(kit, copy, root)
+        if failed:
+            return set()
+        # _kit_hook 이 붙이는 `{path.name}: ` 접두사를 임시 사본 이름(copy.name)이 아니라 옛 파일 이름으로
+        # 되돌려야 새 검사 쪽(`{path.name}: ...`)과 같은 기준으로 비교된다(흔한 경우: 디렉터리만 이동, 파일명은 그대로).
+        return {finding_key(f.replace(copy.name, old_name, 1)) for f in findings}
+    finally:
+        copy.unlink(missing_ok=True)
+
+
+def _rename_old_path_keys_many(
+    kit: list[str], items: list[tuple[Path, str | None]], root: Path
+) -> dict[Path, set[str]]:
+    """items 중 old_rel 이 있는(이름 변경) 파일만 골라 `_kit_hook_old_path_keys` 를 동시에 돌린다."""
+    renamed = [(path, old_rel) for path, old_rel in items if old_rel]
+    if not renamed:
+        return {}
+    with ThreadPoolExecutor(max_workers=min(_HOOK_WORKERS, len(renamed))) as pool:
+        results = list(pool.map(lambda pr: _kit_hook_old_path_keys(kit, pr[0], root, pr[1]), renamed))
+    return {path: keys for (path, _old), keys in zip(renamed, results, strict=True) if keys}
+
+
+def _drop_old_path_findings(findings: list[str], old_keys: set[str] | None) -> list[str]:
+    if not old_keys:
+        return findings
+    return [f for f in findings if finding_key(f) not in old_keys]
+
+
 def check_file(
     kit: list[str], path: Path, root: Path | None = None, old_rel: str | None = None
 ) -> tuple[list[str], str]:
-    """한 파일 검사 → (신규 항목, 검사 못 한 이유). 이유가 있으면 항목은 비어 있다. old_rel: 이름 변경 전 경로(mypy 비교 기준)."""
+    """한 파일 검사 → (신규 항목, 검사 못 한 이유). 이유가 있으면 항목은 비어 있다.
+
+    old_rel: 이름 변경 전 경로 — mypy 비교 기준(`_mypy_against_head`)과, audit-kit hook 자체의
+    "(기존)" 판정이 놓친 옛 위치의 기존 결함(`_kit_hook_old_path_keys`) 둘 다에 쓴다.
+    """
     root = root or ROOT
     findings, failed = _kit_hook(kit, path, root)
     if failed:
         return [], failed
+    if old_rel:
+        findings = _drop_old_path_findings(findings, _kit_hook_old_path_keys(kit, path, root, old_rel))
     py = mypy_python(kit)
     if py is None:
         return findings, ""
@@ -457,18 +508,21 @@ def check_files(
     """여러 파일 검사 — 결과·순서는 파일마다 `check_file` 을 부른 것과 같다(커밋 단계용 일괄 실행).
 
     `audit-kit hook` 은 파일마다 따로지만 동시에(최대 8개) 돌리고, mypy 는 hook 이 끝난 뒤 기준 폴더별로 한 번만 돌린다
-    (예전: 파일당 현재·HEAD 2회). hook 이 실패한 파일은 예전처럼 mypy 를 보지 않는다.
+    (예전: 파일당 현재·HEAD 2회). hook 이 실패한 파일은 예전처럼 mypy 를 보지 않는다. 이름 변경 파일의 옛 경로
+    기존 결함 비교(`_rename_old_path_keys_many`)도 hook 과 같이 동시에 돈다.
     """
     root = root or ROOT
     if not items:
         return []
     with ThreadPoolExecutor(max_workers=min(_HOOK_WORKERS, len(items))) as pool:
         hooked = list(pool.map(lambda item: _kit_hook(kit, item[0], root), items))
+    old_keys_by_path = _rename_old_path_keys_many(kit, items, root)
     py = mypy_python(kit)
     ok = [item for item, (_f, failed) in zip(items, hooked, strict=True) if not failed]
     typed = mypy_against_head_many(py, ok, root) if py is not None and ok else {}
     out: list[tuple[Path, list[str], str]] = []
     for (path, _old), (findings, failed) in zip(items, hooked, strict=True):
+        findings = _drop_old_path_findings(findings, old_keys_by_path.get(path))
         if failed:
             out.append((path, [], failed))
         elif py is None:

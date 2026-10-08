@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -232,3 +233,105 @@ def test_batch_reports_not_run_when_mypy_missing_or_times_out(tmp_path, monkeypa
     monkeypatch.setattr(gate, "_head_blobs", lambda _root, rels: dict.fromkeys(rels))
     out = gate.mypy_against_head_many("py", [(f, None) for f in files], tmp_path)
     assert out == {f: ([], "mypy 를 실행하지 못했습니다") for f in files}
+
+
+# ── audit-kit hook 자체의 "(기존)" 판정이 놓치는 이동 파일의 옛 결함(F8, 2026-10-08) ──────────
+
+
+_CONTENT_AWARE_KIT = textwrap.dedent(
+    """
+    import json, pathlib, sys
+    payload = json.loads(sys.stdin.read())
+    text = pathlib.Path(payload["tool_input"]["file_path"]).read_text(encoding="utf-8")
+    findings = []
+    if "BAD_PATH_MARKER" in text:
+        findings.append("[STD-02] 14행: 하드코딩된 경로 'C:/Windows/' 가 있습니다")
+    if "BAD_NEW_MARKER" in text:
+        findings.append("[STD-03] 20행: 새 문제")
+    if findings:
+        sys.stderr.write("\\n".join(findings) + "\\n")
+        sys.exit(2)
+    sys.exit(0)
+    """
+)
+
+
+def _content_aware_kit(tmp_path: Path) -> list[str]:
+    fake = tmp_path / "fake_kit_content.py"
+    fake.write_text(_CONTENT_AWARE_KIT, encoding="utf-8")
+    return [sys.executable, str(fake)]
+
+
+def test_renamed_file_with_old_defect_reports_zero_new_findings(repo, monkeypatch):
+    """F8: 이동 전부터 있던 결함(BAD_PATH_MARKER)은 audit-kit 자신의 '(기존)' 판정 없이도 신규로 잡히지 않는다."""
+    monkeypatch.setattr(gate, "mypy_python", lambda _kit: None)  # mypy 비교는 이 시험 범위 밖
+    (repo / "old" / "mod.py").write_text("BAD_PATH_MARKER = 1\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add marker")
+    (repo / "new").mkdir()
+    _git(repo, "mv", "old/mod.py", "new/mod.py")
+    path = repo / "new" / "mod.py"
+    kit = _content_aware_kit(repo)
+
+    findings, why = gate.check_file(kit, path, repo, old_rel="old/mod.py")
+    assert why == ""
+    assert findings == []
+
+
+def test_renamed_file_without_old_rel_misreports_old_defect_as_new(repo, monkeypatch):
+    """회귀 방지: old_rel 을 안 넘기면(예전 동작) 이동 전부터 있던 결함이 신규로 잡힌다."""
+    monkeypatch.setattr(gate, "mypy_python", lambda _kit: None)
+    (repo / "old" / "mod.py").write_text("BAD_PATH_MARKER = 1\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add marker")
+    (repo / "new").mkdir()
+    _git(repo, "mv", "old/mod.py", "new/mod.py")
+    path = repo / "new" / "mod.py"
+    kit = _content_aware_kit(repo)
+
+    findings, why = gate.check_file(kit, path, repo)
+    assert why == ""
+    assert len(findings) == 1 and "STD-02" in findings[0]
+
+
+def test_renamed_file_with_old_and_new_defect_reports_only_new(repo, monkeypatch):
+    """이동 + 새 결함 추가 = 옛 결함은 빠지고 새 결함만 신규로 잡힌다."""
+    monkeypatch.setattr(gate, "mypy_python", lambda _kit: None)
+    (repo / "old" / "mod.py").write_text("BAD_PATH_MARKER = 1\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add marker")
+    (repo / "new").mkdir()
+    _git(repo, "mv", "old/mod.py", "new/mod.py")
+    path = repo / "new" / "mod.py"
+    path.write_text(path.read_text(encoding="utf-8") + "BAD_NEW_MARKER = 1\n", encoding="utf-8")
+    kit = _content_aware_kit(repo)
+
+    findings, why = gate.check_file(kit, path, repo, old_rel="old/mod.py")
+    assert why == ""
+    assert len(findings) == 1 and "STD-03" in findings[0]
+
+
+def test_renamed_file_check_files_batched_drops_old_defect_too(repo, monkeypatch):
+    """check_files(커밋 단계 일괄 실행) 에서도 같은 결과 — _kit_hook_old_path_keys 가 동시 실행된다."""
+    monkeypatch.setattr(gate, "mypy_python", lambda _kit: None)
+    (repo / "old" / "mod.py").write_text("BAD_PATH_MARKER = 1\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add marker")
+    (repo / "new").mkdir()
+    _git(repo, "mv", "old/mod.py", "new/mod.py")
+    path = repo / "new" / "mod.py"
+    _git(repo, "add", "-A")
+    kit = _content_aware_kit(repo)
+
+    items = [(path, "old/mod.py")]
+    batched = gate.check_files(kit, items, repo)
+    assert batched == [(path, [], "")]
+    assert not list(repo.rglob("_auditkit_base_*"))  # 비교용 사본은 남기지 않는다
+
+
+def test_kit_hook_old_path_keys_empty_when_old_rel_not_in_head(repo):
+    """옛 경로가 HEAD 에 없으면(예: 조작 실수) 빈 집합 — 비교 기준 없음, 전부 신규 취급(안전한 기본값)."""
+    kit = _content_aware_kit(repo)
+    path = repo / "new_only.py"
+    path.write_text("x = 1\n", encoding="utf-8")
+    assert gate._kit_hook_old_path_keys(kit, path, repo, "never/existed.py") == set()
