@@ -371,13 +371,21 @@ def _pytest(tree: Path, files: list[str], timeout: int) -> list[str]:
 
 
 def affected_tests(changed: list[str]) -> list[str]:
-    """코드맵 역방향 BFS — 바뀐 파일에 (간접적으로라도) 닿는 테스트 파일."""
+    """코드맵 역방향 BFS — 바뀐 파일에 (간접적으로라도) 닿는 테스트 파일.
+
+    출발점은 바뀐 파일 + 바뀐 비-.py(설정·정본 json 등)를 문자열로 읽는 .py 다 — 코드맵 간선은 .py import 만 따라가서, 설정만 바뀌면
+    그 설정을 여는 도구(와 그 도구를 import 하는 시험)가 빠졌다(2026-10-08 configs/folder_registry.json ↔ test_folder_gate).
+    """
+    from code_map.ref_seeds import seeds_for  # type: ignore[import-not-found]
+
     m = json.loads((ROOT / "data/code_map/map.json").read_text(encoding="utf-8"))
     rev: dict[str, set[str]] = {}
     for s, ts in m["all_edges"].items():
         for t in ts:
             rev.setdefault(t, set()).add(s)
-    seen, q = set(changed), deque(changed)
+    tracked = run(["git", "ls-files"], ROOT).stdout.splitlines()
+    seeds = seeds_for(ROOT, changed, tracked)
+    seen, q = set(seeds), deque(seeds)
     while q:
         cur = q.popleft()
         for s in rev.get(cur, ()):
