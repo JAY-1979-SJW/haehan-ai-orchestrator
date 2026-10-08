@@ -1381,6 +1381,48 @@ def action_cdp_run(params: dict) -> ActionResult:
         )
 
 
+def _frozen_mcp_config_path() -> Path | None:
+    """PyInstaller 번들(local-agent-ai.exe) 실행 중일 때 쓸 런타임 .mcp.json 경로를 만든다.
+
+    저장소의 `.mcp.json`(`py -3 -m ai_orchestrator.mcp_server`)은 설치 PC 에 파이썬 소스·venv 가
+    없으므로 쓸 수 없다. Electron(agent.js)이 번들된 haehan-mcp.exe 경로를 HAEHAN_MCP_EXE 로,
+    사용자 데이터 폴더를 HAEHAN_DATA_DIR 로 넘겨준다 — 그 둘로 데이터 폴더 아래 agent/mcp.json 을
+    (tmp+rename 원자적 쓰기로) 만들어 돌려준다. 둘 중 하나라도 없거나 쓰기 실패하면 None
+    (호출부가 --mcp-config 생략 + 경고 로그 — 조용한 실패 금지, 2026-10-08 agent_error 사고 수정).
+    """
+    mcp_exe = os.environ.get("HAEHAN_MCP_EXE", "").strip()
+    data_dir = os.environ.get("HAEHAN_DATA_DIR", "").strip()
+    if not mcp_exe or not data_dir:
+        logger.warning("[run_claude_agent] HAEHAN_MCP_EXE/HAEHAN_DATA_DIR 미설정 — MCP 없이 실행")
+        return None
+    if not Path(mcp_exe).exists():
+        logger.warning("[run_claude_agent] haehan-mcp.exe 없음: %s — MCP 없이 실행", mcp_exe)
+        return None
+    try:
+        agent_dir = Path(data_dir) / "agent"
+        agent_dir.mkdir(parents=True, exist_ok=True)
+        cfg_path = agent_dir / "mcp.json"
+        config_body = {
+            "mcpServers": {
+                "haehan-orchestrator": {
+                    "command": mcp_exe,
+                    "args": [],
+                    "env": {
+                        "HAEHAN_FASTAPI_URL": os.environ.get("HAEHAN_FASTAPI_URL", "http://127.0.0.1:8401"),
+                        "HAEHAN_DATA_DIR": data_dir,
+                    },
+                }
+            }
+        }
+        tmp = cfg_path.with_suffix(cfg_path.suffix + ".tmp")
+        tmp.write_text(json.dumps(config_body, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(cfg_path)
+    except OSError:
+        logger.warning("[run_claude_agent] 런타임 mcp.json 쓰기 실패 — MCP 없이 실행", exc_info=True)
+        return None
+    return cfg_path
+
+
 def _build_claude_command(  # noqa: PLR0913 - 키워드 전용 인자(옵션 조립 순수 함수), 묶으면 호출부만 복잡해짐
     *,
     root: Path,
@@ -1404,7 +1446,12 @@ def _build_claude_command(  # noqa: PLR0913 - 키워드 전용 인자(옵션 조
         #  --tools              : 쓸 수 있는 내장 도구를 목록으로 한정
         cmd += ["--restricted", "--strict-mcp-config"]
     else:
-        cmd += ["--mcp-config", str(root / ".mcp.json")]
+        # frozen(설치본) 에선 저장소 `.mcp.json`(파이썬 소스 실행형)을 쓸 수 없다 — 번들 exe 로 만든
+        # 런타임 설정을 쓰고, 그것도 없으면(사고 재발 방지로 조용히 건너뛰지 않고) 경고만 남기고
+        # --mcp-config 자체를 생략한다(MCP 도구 없이 기본 도구만으로 계속 진행).
+        mcp_cfg = _frozen_mcp_config_path() if getattr(sys, "frozen", False) else root / ".mcp.json"
+        if mcp_cfg is not None:
+            cmd += ["--mcp-config", str(mcp_cfg)]
     cmd += ["--output-format", "json", "--max-budget-usd", str(max_budget_usd)]
     if model:
         cmd += ["--model", model]
@@ -1513,6 +1560,17 @@ def action_run_claude_agent(params: dict) -> ActionResult:
         allowed_tools=allowed_tools,
         restricted=restricted,
     )
+    # frozen(설치본) 에선 root 가 PyInstaller 번들 내부 폴더(resources\local-agent-ai\_internal)라
+    # claude 가 그 안을 작업 폴더로 쓸 이유가 없다(2026-10-08 agent_error 사고 원인 중 하나) —
+    # 사용자 데이터 폴더(Electron 이 HAEHAN_DATA_DIR 로 넘김)를 쓴다. 없으면 기존처럼 root.
+    cwd = os.environ.get("HAEHAN_DATA_DIR", "").strip() if getattr(sys, "frozen", False) else ""
+    if cwd:
+        try:
+            Path(cwd).mkdir(parents=True, exist_ok=True)
+        except OSError:
+            cwd = ""
+    if not cwd:
+        cwd = str(root)
 
     try:
         proc = subprocess.run(
@@ -1521,7 +1579,7 @@ def action_run_claude_agent(params: dict) -> ActionResult:
             text=True,
             encoding="utf-8",
             timeout=timeout,
-            cwd=str(root),
+            cwd=cwd,
             # 에이전트는 Electron(Node spawn)이 stdin 을 열린 빈 파이프로 넘겨 띄운다 — 그대로 상속하면
             # claude -p 가 입력을 3초 기다린 뒤 시작한다(2026-10-04 실측: 18.6초 → 15.1초).
             stdin=subprocess.DEVNULL,

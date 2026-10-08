@@ -12,6 +12,7 @@ docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md 참고
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from unittest.mock import patch
 
 from local_agent.actions import action_run_claude_agent
@@ -161,6 +162,93 @@ def test_restricted_requires_literal_true() -> None:
     for value in ("true", 1, "yes", None):
         cmd = _capture_cmd({"restricted": value, "allowed_tools": ["Read"]})
         assert "--restricted" not in cmd  # 느슨한 값으로 제한 모드를 켜거나 끄는 혼동 방지(True 만 인정)
+
+
+def test_frozen_without_mcp_exe_env_omits_mcp_config_with_warning(monkeypatch, caplog) -> None:
+    """2026-10-08 agent_error 사고: frozen exe 는 저장소 .mcp.json 을 못 쓴다. HAEHAN_MCP_EXE 가
+    없으면 --mcp-config 를 조용히 생략하지 않고 경고를 남긴 뒤 생략해야 한다(claude 는 MCP 없이도 뜬다)."""
+    import local_agent.actions as actions_mod
+
+    monkeypatch.setattr(actions_mod.sys, "frozen", True, raising=False)
+    monkeypatch.delenv("HAEHAN_MCP_EXE", raising=False)
+    monkeypatch.delenv("HAEHAN_DATA_DIR", raising=False)
+    with caplog.at_level("WARNING"):
+        cmd = _capture_cmd({"prompt": "조사해"})
+    assert "--mcp-config" not in cmd
+    assert any("MCP" in r.message for r in caplog.records)
+
+
+def test_frozen_with_mcp_exe_builds_runtime_mcp_config(monkeypatch, tmp_path) -> None:
+    """HAEHAN_MCP_EXE·HAEHAN_DATA_DIR 가 있으면 데이터 폴더 아래 agent/mcp.json 을 만들어
+    --mcp-config 로 넘긴다(저장소 .mcp.json 대신 번들 exe 를 가리킴)."""
+    import local_agent.actions as actions_mod
+
+    fake_exe = tmp_path / "haehan-mcp.exe"
+    fake_exe.write_bytes(b"fake")
+    data_dir = tmp_path / "data"
+
+    monkeypatch.setattr(actions_mod.sys, "frozen", True, raising=False)
+    monkeypatch.setenv("HAEHAN_MCP_EXE", str(fake_exe))
+    monkeypatch.setenv("HAEHAN_DATA_DIR", str(data_dir))
+
+    cmd = _capture_cmd({"prompt": "조사해"})
+
+    idx = cmd.index("--mcp-config")
+    cfg_path = Path(cmd[idx + 1])
+    assert cfg_path == data_dir / "agent" / "mcp.json"
+    body = json.loads(cfg_path.read_text(encoding="utf-8"))
+    assert body["mcpServers"]["haehan-orchestrator"]["command"] == str(fake_exe)
+
+
+def test_frozen_with_missing_mcp_exe_file_omits_mcp_config(monkeypatch, tmp_path) -> None:
+    """HAEHAN_MCP_EXE 가 가리키는 파일이 실제로 없으면(설치 손상 등) --mcp-config 를 생략한다."""
+    import local_agent.actions as actions_mod
+
+    monkeypatch.setattr(actions_mod.sys, "frozen", True, raising=False)
+    monkeypatch.setenv("HAEHAN_MCP_EXE", str(tmp_path / "missing-haehan-mcp.exe"))
+    monkeypatch.setenv("HAEHAN_DATA_DIR", str(tmp_path / "data"))
+
+    cmd = _capture_cmd({"prompt": "조사해"})
+    assert "--mcp-config" not in cmd
+
+
+def test_frozen_cwd_uses_data_dir_not_bundle_internal_dir(monkeypatch, tmp_path) -> None:
+    """frozen 일 때 작업 폴더는 PyInstaller 내부 폴더(_internal)가 아니라 HAEHAN_DATA_DIR 이어야 한다
+    (2026-10-08 agent_error 사고: _internal 안에서 claude 를 돌릴 이유가 없고 쓰기 권한도 불확실)."""
+    import local_agent.actions as actions_mod
+
+    data_dir = tmp_path / "data"
+    monkeypatch.setattr(actions_mod.sys, "frozen", True, raising=False)
+    monkeypatch.setenv("HAEHAN_DATA_DIR", str(data_dir))
+    monkeypatch.delenv("HAEHAN_MCP_EXE", raising=False)
+
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["kwargs"] = kwargs
+        return _FakeCompletedProcess(_ok_payload("1"))
+
+    with patch("local_agent.actions.subprocess.run", side_effect=fake_run):
+        action_run_claude_agent({"prompt": "조사해"})
+
+    assert captured["kwargs"]["cwd"] == str(data_dir)
+    assert data_dir.is_dir()  # 호출 전에 만들어져 있어야 한다(없으면 subprocess 가 FileNotFoundError)
+
+
+def test_not_frozen_cwd_unchanged() -> None:
+    """dev 모드(sys.frozen 미설정)는 기존처럼 저장소 루트를 cwd 로 쓴다(회귀 방지)."""
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["kwargs"] = kwargs
+        return _FakeCompletedProcess(_ok_payload("1"))
+
+    with patch("local_agent.actions.subprocess.run", side_effect=fake_run):
+        action_run_claude_agent({"prompt": "조사해"})
+
+    import local_agent.actions as actions_mod
+
+    assert captured["kwargs"]["cwd"] == str(Path(actions_mod.__file__).parents[1])
 
 
 def test_stdin_is_devnull_so_claude_does_not_wait_for_input() -> None:

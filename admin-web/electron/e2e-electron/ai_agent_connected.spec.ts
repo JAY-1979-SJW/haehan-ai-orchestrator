@@ -45,6 +45,48 @@ test("앱 시작 후 AI 작업 콘솔 로컬 에이전트가 연결된다", asyn
       connected.length,
       `AI 콘솔 로컬 에이전트가 ${CONNECT_TIMEOUT_MS / 1000}초 안에 연결되지 않음(${last}) — userData\logs\local-agent-ai.log·startup.log 확인`
     ).toBeGreaterThanOrEqual(1);
+
+    // 2026-10-08 agent_error 사고: 연결만 보고 실제 작업 실행은 안 봐서 못 잡았다(frozen exe 가
+    // --mcp-config 로 존재하지 않는 경로를 넘겨 claude CLI 가 즉시 종료). 짧은 프롬프트로 실제 한 건을
+    // 돌려 "agent_error" 같은 뭉뚱그린 사유가 아니라 구체적인 결과/오류가 나오는지 확인한다.
+    // HAEHAN_E2E_SKIP_PAID_API=1(CI 기본)이면 claude CLI 가 실제로 있을 가능성(향후 이미지 변경 등)에
+    // 대비해 유료 호출 자체를 쏘지 않는다 — user_flow.spec.ts의 AI 채팅 스킵과 같은 원칙.
+    if (process.env.HAEHAN_E2E_SKIP_PAID_API === "1") {
+      console.log("⏭️ 실제 작업 실행 — HAEHAN_E2E_SKIP_PAID_API=1, 유료 API 스킵(연결 확인만으로 종료)");
+      return;
+    }
+    const runRes = await fetch(`${BACKEND}/api/v1/ai-agent/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: "1+1은? 숫자만 답해.", timeout: 60, max_budget_usd: 0.2 }),
+    });
+    expect(runRes.ok, `POST /ai-agent/run 실패: HTTP ${runRes.status}`).toBe(true);
+    const runBody: any = await runRes.json();
+    const { agent_id: taskAgentId, task_id: taskId } = runBody;
+    expect(taskAgentId && taskId, `작업 큐잉 응답에 agent_id/task_id 없음: ${JSON.stringify(runBody)}`).toBeTruthy();
+
+    const taskDeadline = Date.now() + 60_000;
+    let task: any = null;
+    while (Date.now() < taskDeadline) {
+      const r = await fetch(`${BACKEND}/api/v1/local-agents/${taskAgentId}/tasks/${taskId}`);
+      if (r.ok) {
+        task = await r.json();
+        if (["completed", "failed", "timed_out", "cancelled"].includes(task.status)) break;
+      }
+      await new Promise((res) => setTimeout(res, 1000));
+    }
+    expect(task, "작업 상태를 끝까지 못 받음(타임아웃)").not.toBeNull();
+    console.log("[ai-agent run] status=%s failure_reason=%s error_summary=%s", task.status, task.failure_reason, task.error_summary);
+    // "agent_error" 뭉뚱그림이 아니라(UniversalChat.tsx 가 error_summary 를 우선하도록도 고쳤지만,
+    // 서버가 애초에 failure_reason 을 쓸모없는 값으로만 남기고 있지 않은지도 여기서 같이 본다).
+    if (task.status !== "completed") {
+      expect(
+        task.error_summary && task.error_summary !== "agent_error",
+        `실패 사유가 구체적이지 않음(agent_error 뭉뚱그림): ${JSON.stringify(task)}`
+      ).toBeTruthy();
+    } else {
+      expect(task.result_summary, "완료인데 결과 요약이 비어 있음").toBeTruthy();
+    }
   } finally {
     await app.close();
     for (let i = 0; i < 10; i++) {

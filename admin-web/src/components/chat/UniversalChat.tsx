@@ -242,7 +242,10 @@ export function UniversalChat({ title, agentHint, presets, extraCards, className
         return;
       }
       if (data.status === "failed" || data.status === "timed_out" || data.status === "cancelled") {
-        const reason = data.failure_reason || data.error_summary || data.status;
+        // error_summary 가 실제 원인(예: claude CLI stderr 앞부분)을 담고 있고, failure_reason 은
+        // "agent_error" 같은 범용 코드라 먼저 보여주면 원인이 묻힌다(2026-10-08 실사용 중 발견:
+        // "작업 실패: agent_error"만 보이고 진짜 원인이 안 보임) — 구체적인 쪽을 먼저 쓴다.
+        const reason = data.error_summary || data.failure_reason || data.status;
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantId ? { ...m, text: `작업 실패: ${reason}`, status: "error" } : m)),
         );

@@ -117,6 +117,11 @@ function startPackagedMcpAgent() {
       // 등록 정보(agent_id·서버 주소)는 이 userData 전용 — 다른 프로필/점검 실행과 섞이지 않게(토큰은 Windows 자격증명 저장소)
       HAEHAN_AGENT_DESKTOP_CONFIG: path.join(agentDir, "config.json"),
       HAEHAN_AGENT_TOKEN_DIR: path.join(agentDir, "tokens"),
+      // action_run_claude_agent(헤드리스 claude -p 호출)가 --mcp-config 로 쓸 번들 MCP exe 경로.
+      // 저장소 .mcp.json(파이썬 소스 실행형)은 설치 PC 에 없으므로, 이 경로로 런타임 설정을 만든다
+      // (2026-10-08 agent_error 사고 수정 — claudeCtx().srcDir 과 같은 번들 경로).
+      HAEHAN_MCP_EXE: path.join(process.resourcesPath, "mcp", "haehan-mcp", "haehan-mcp.exe"),
+      HAEHAN_FASTAPI_URL: FASTAPI_URL,
       PYTHONUTF8: "1",
       PYTHONIOENCODING: "utf-8",
     },
