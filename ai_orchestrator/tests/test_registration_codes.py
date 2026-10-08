@@ -61,6 +61,32 @@ def viewer_user():
     return {"actor": "viewer_test", "role": "viewer"}
 
 
+class _AnyCurrentUserOverrides(dict):
+    """이름이 get_current_user 인 의존성은 어느 객체든 같은 사용자로 대체하는 dependency_overrides."""
+
+    def __init__(self, user: dict):
+        super().__init__()
+        self._user = user
+
+    def __bool__(self) -> bool:  # FastAPI 는 빈 dict 면 override 조회 자체를 건너뛴다
+        return True
+
+    def get(self, key, default=None):
+        if getattr(key, "__name__", "") == "get_current_user":
+            return lambda: self._user
+        return super().get(key, default)
+
+
+def _override_current_user(app, current_get_current_user, user: dict) -> None:
+    """앱 라우트가 실제로 묶고 있는 get_current_user 를 객체 동일성과 무관하게 override 한다.
+
+    다른 시험 파일의 fixture 가 importlib.reload(gates.auth) 를 하면 gates.auth.get_current_user 는 새 객체가
+    되지만 이미 import 된 라우터는 옛 객체에 묶여 남는다. 그 상태에서 새 객체만 override 하면 라우터는 실제
+    의존성(AUTH_ENABLED=False → 고정 owner)을 쓰게 되어 시험 실행 순서에 따라 결과가 달라진다.
+    """
+    app.dependency_overrides = _AnyCurrentUserOverrides(user)
+
+
 def _make_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
@@ -70,7 +96,7 @@ def _make_client(user_override: dict):
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
-    app.dependency_overrides[get_current_user] = lambda: user_override
+    _override_current_user(app, get_current_user, user_override)
     return TestClient(app, raise_server_exceptions=True)
 
 
@@ -127,6 +153,44 @@ def test_viewer_cannot_revoke(viewer_user, admin_user):
     v_client = _make_client(viewer_user)
     resp = v_client.post(f"/api/v1/local-agents/registration-codes/{issued['code_id']}/revoke")
     assert resp.status_code == 403
+
+
+def test_server_mode_real_auth_enforces_roles_without_override(monkeypatch):
+    """dependency_overrides 없이 실제 Basic 인증(AUTH_ENABLED=True)으로 role 검사가 동작하는지 확인한다.
+
+    gates.auth 모듈 전역(config·_load_users)만 바꾸므로 다른 시험의 importlib.reload 로 라우터가 옛 함수에 묶여
+    있어도 같은 모듈 전역을 읽어 순서와 무관하다.
+    """
+    import base64
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    import ai_orchestrator.gates.auth as _auth
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
+
+    monkeypatch.setattr(_auth.config, "AUTH_ENABLED", True)
+    monkeypatch.setattr(
+        _auth,
+        "_load_users",
+        lambda: {
+            "v_user": {"password_hash": "pw-v", "role": "viewer", "enabled": True},
+            "a_user": {"password_hash": "pw-a", "role": "admin", "enabled": True},
+        },
+    )
+
+    def _hdr(u, p):
+        return {"Authorization": "Basic " + base64.b64encode(f"{u}:{p}".encode()).decode()}
+
+    app = FastAPI()
+    app.include_router(local_agent_router, prefix="/api/v1")
+    client = TestClient(app, raise_server_exceptions=True)
+    url = "/api/v1/local-agents/registration-codes"
+
+    assert client.get(url).status_code == 401
+    assert client.get(url, headers=_hdr("v_user", "pw-v")).status_code == 403
+    assert client.post(url, json={"label": "X"}, headers=_hdr("v_user", "pw-v")).status_code == 403
+    assert client.post(url, json={"label": "X"}, headers=_hdr("a_user", "pw-a")).status_code == 200
 
 
 # ── 2. 발급 입력 검증 ───────────────────────────────────────────────────
