@@ -17,8 +17,7 @@ EMAIL = "alice@example.com"
 
 @pytest.fixture
 def env(tmp_path, monkeypatch):
-    # 다른 테스트(test_auth_enforcement)가 gates.auth 를 reload 하므로, 항상 현재 모듈을 잡고 라우터를 다시 바인딩한다
-    gauth = importlib.import_module("ai_orchestrator.gates.auth")
+    import ai_orchestrator.gates.auth as gauth
     ur = importlib.reload(importlib.import_module("ai_orchestrator.auth.user_auth_router"))
     global _gauth
     _gauth = gauth

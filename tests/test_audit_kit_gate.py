@@ -313,9 +313,7 @@ def test_verify_includes_mypy_diff_against_base(tmp_path, tree_aware_kit, monkey
     import importlib
 
     from scripts.ops import verify_change as vc
-
-    # verify_change 는 scripts/ops 를 경로에 넣고 `audit_kit_gate` 를 최상위 이름으로 가져온다 — 그 모듈 객체를 패치해야 한다
-    akg = importlib.import_module("audit_kit_gate")
+    import audit_kit_gate as akg
     base, head = _two_trees(tmp_path)
     monkeypatch.setattr(akg, "mypy_python", lambda _kit: "py")
     calls = []
@@ -376,8 +374,7 @@ def test_verify_fails_when_real_kit_has_no_python_for_mypy(tmp_path, tree_aware_
     import importlib
 
     from scripts.ops import verify_change as vc
-
-    akg = importlib.import_module("audit_kit_gate")
+    import audit_kit_gate as akg
     base, head = _two_trees(tmp_path)
     monkeypatch.setattr(akg, "is_real_kit", lambda _kit: True)
     monkeypatch.setattr(akg, "mypy_python", lambda _kit: None)

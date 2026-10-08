@@ -601,8 +601,7 @@ def test_blog_batch_scripts_exit_before_browser_without_phrase(script, monkeypat
 
 def test_blog_ai_batch_20_blocks_before_any_work_without_phrase():
     import importlib
-
-    mod = importlib.import_module("scripts.naver.blog.cli.blog_ai_batch_20")
+    import scripts.naver.blog.cli.blog_ai_batch_20 as mod
     with pytest.raises(gate.GateBlocked):
         mod.run(count=1, dry_run=False)
 

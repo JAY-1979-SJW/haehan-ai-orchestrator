@@ -287,8 +287,7 @@ def test_audit_verdict_ready_or_warn(design, audit_report):
 # ── 10. MVP Prep 충돌 없음 ────────────────────────────────────────────────────
 
 def test_no_conflict_with_mvp_prep(design):
-    prep = __import__("scripts.ops.audit_app_foundation_mvp_prep",
-                      fromlist=["MVP_SCREENS"])
+    import scripts.ops.audit_app_foundation_mvp_prep as prep
     prep_screen_ids = {s["id"] for s in prep.MVP_SCREENS}
     design_screen_ids = {s["id"] for s in design.SCREEN_DESIGN_MATRIX}
     assert prep_screen_ids == design_screen_ids, \

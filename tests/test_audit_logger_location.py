@@ -76,4 +76,4 @@ def test_log_event_still_masks_the_note_and_keeps_identifying_fields(tmp_path, m
 
 def test_old_import_path_is_gone():
     with pytest.raises(ImportError):
-        __import__("ai_orchestrator.audit_logger")
+        import ai_orchestrator.audit_logger  # noqa: F401 - 원래 결과를 버리는 호출문(부수효과만 보려던 import)

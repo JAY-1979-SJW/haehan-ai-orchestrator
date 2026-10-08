@@ -11,7 +11,7 @@ NEW = "scripts.naver.smartstore.automation."
 
 
 def test_compat_reexports_still_work():
-    csv_old = importlib.import_module("scripts.naver.automation.csv_import")
+    import scripts.naver.automation.csv_import as csv_old
     csv_new = importlib.import_module(NEW + "csv_import")
     assert csv_old.CSVImporter is csv_new.CSVImporter
 

@@ -15,5 +15,5 @@ def test_root_constant_is_the_repo_root(module, attr):
 
 
 def test_setup_state_path_is_unchanged():
-    mod = importlib.import_module("ai_orchestrator.connectors.kakao.setup_router")
+    import ai_orchestrator.connectors.kakao.setup_router as mod
     assert mod.STATE_PATH == repo_root() / "data" / "kakao_setup_state.json"
