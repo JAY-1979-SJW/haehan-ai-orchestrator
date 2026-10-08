@@ -176,6 +176,11 @@ def moved_location_deps(base: str, head: str | None) -> list[str]:
             s = line.strip()
             if s.startswith("#") or not any(k in s for k in LOCATION_DEP):
                 continue
+            # "__file__" 단독(.parent/.parents 체인 없음)은 자기 경로를 그대로 재실행/참조하는
+            # 용도라 이동 깊이와 무관 — 상대 import("from .")만 깊이에 의존하므로 그것만 본다
+            # (실측: browser_rpc_server.py·cdp_daemon.py 의 자기 재실행 줄이 깊이 변화마다 오탐).
+            if "__file__" in s and ".parent" not in s and "from ." not in s and "import ." not in s:
+                continue
             if line in old_lines and not _same_relative_target(s, old, new, base, head, moved):
                 out.append(f"{new}:{i}: {s[:100]}")
     return out
