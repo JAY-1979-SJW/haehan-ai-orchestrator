@@ -152,6 +152,49 @@ def test_init_baseline_refuses_to_overwrite(repo):
     assert gate.main(["--init-baseline", "--root", str(repo)]) == 2
 
 
+def test_sync_baseline_requires_reason(repo, capsys):
+    rc = gate.main(["--sync-baseline", "--root", str(repo)])
+    assert rc == 2
+    assert "--reason" in capsys.readouterr().err
+
+
+def test_sync_baseline_rejects_file_not_in_verify_ref(repo, capsys):
+    """CI #164 류 재발 방지: 이번 브랜치가 새로 만든 평면 파일은 --sync-baseline 으로
+    절대 기준선에 섞여 들어가면 안 된다 — verify-in-ref 에 없으면 거부."""
+    _w(repo, "scripts/brandnew_flat.py")
+    _git(repo, "add", "-A")
+    rc = gate.main([
+        "--sync-baseline", "--root", str(repo), "--reason", "테스트", "--verify-in-ref", "HEAD",
+    ])
+    assert rc == 1
+    assert "scripts/brandnew_flat.py" in capsys.readouterr().err
+    base = json.loads((repo / gate.BASELINE).read_text(encoding="utf-8"))
+    assert "scripts/brandnew_flat.py" not in base["files"]
+
+
+def test_sync_baseline_grows_when_rule_change_adds_preexisting_flat_file(repo):
+    """configs/flat_root_gate.json 규칙 변경으로 기존(커밋된) 파일이 새로 flat 이 되면,
+    과거 커밋(HEAD)에도 있었다는 전제로 --sync-baseline 이 기준선을 늘려야 한다."""
+    _w(repo, "scripts/common/existing_helper.py")  # 지금은 하위 폴더라 대상 아님
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add existing nested file before rule change")
+
+    cfg = json.loads((repo / gate.CONFIG).read_text(encoding="utf-8"))
+    cfg["flat_dirs"].append("scripts/common")  # 이제 scripts/common 바로 아래도 평면 금지 대상
+    (repo / gate.CONFIG).write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "flat_dirs 확장 — scripts/common/existing_helper.py 가 새로 flat")
+
+    rc = gate.main([
+        "--sync-baseline", "--root", str(repo), "--reason", "flat_dirs 확장으로 재분류",
+        "--verify-in-ref", "HEAD",
+    ])
+    assert rc == 0
+    files = set(json.loads((repo / gate.BASELINE).read_text(encoding="utf-8"))["files"])
+    assert "scripts/common/existing_helper.py" in files
+    assert "scripts/legacy_flat.py" in files  # 기존 기준선 유지
+
+
 def test_real_repo_check_all_matches_committed_baseline():
     """이 저장소의 추적 파일 전체가 기준선 안에 있다(새 평면 파일이 몰래 들어오지 않았다)."""
     assert gate.main(["--check-all", "--root", str(REAL_ROOT)]) == 0

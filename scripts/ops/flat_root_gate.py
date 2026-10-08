@@ -11,6 +11,12 @@ G11(tool_home_gate)과 같은 방식: pre-commit --staged, CI --check-all.
     python scripts/ops/flat_root_gate.py --check-all       # CI: 추적 파일 전체 — 기준선에 없는 평면 파일이 있으면 실패
     python scripts/ops/flat_root_gate.py --update-baseline # 기준선 줄이기(없어졌거나 하위 폴더로 옮긴 항목만 제거). 늘리기는 불가
     python scripts/ops/flat_root_gate.py --init-baseline   # 기준선 파일이 없을 때 현재 상태로 최초 생성
+    python scripts/ops/flat_root_gate.py --sync-baseline --reason "..."
+                                                            # configs/flat_root_gate.json 규칙 변경으로 "이미 master 에
+                                                            # 있던" 파일이 새로 flat 판정이 됐을 때만 기준선에 추가(각
+                                                            # 파일이 --verify-in-ref 에도 있어야 함 — 이번 브랜치가 새로
+                                                            # 만든 flat 파일은 거부). 판정을 완화하지 않는다: classify()
+                                                            # 규칙은 그대로, 기록만 최신화(tool_home_gate.py 와 동일 패턴).
     python scripts/ops/flat_root_gate.py --classify <경로...>
 
 판정:
@@ -33,7 +39,7 @@ if str(_BOOT) not in sys.path:
     sys.path.insert(0, str(_BOOT))
 
 from scripts.common.app_paths import repo_root  # noqa: E402
-from scripts.ops.tool_home_gate import staged_added, tracked_files  # noqa: E402
+from scripts.ops.tool_home_gate import _exists_in_ref, staged_added, tracked_files  # noqa: E402
 
 ROOT = repo_root()
 CONFIG = "configs/flat_root_gate.json"
@@ -119,6 +125,12 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912 - CLI 모
     ap.add_argument("--check-all", action="store_true")
     ap.add_argument("--update-baseline", action="store_true")
     ap.add_argument("--init-baseline", action="store_true")
+    ap.add_argument("--sync-baseline", action="store_true",
+                     help="configs/flat_root_gate.json 규칙 변경으로 기존 파일이 새로 flat 판정이 "
+                          "된 경우만 기준선에 추가(줄이기도 같이 함). --reason 필수, 각 파일이 "
+                          "--verify-in-ref 에도 이미 있어야 허용(판정 완화 아님).")
+    ap.add_argument("--reason", default=None)
+    ap.add_argument("--verify-in-ref", default="origin/master")
     ap.add_argument("--classify", action="store_true")
     ap.add_argument("--root", type=Path, default=ROOT)
     a = ap.parse_args(argv)
@@ -151,6 +163,28 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912 - CLI 모
             return 1
         _write_baseline(root, kept, f"하향 갱신: {len(baseline)} → {len(kept)}")
         print(f"기준선 {len(baseline)} → {len(kept)}")
+        return 0
+    if a.sync_baseline:
+        if not a.reason:
+            print("[flat_root_gate] --sync-baseline 은 --reason 이 필수(왜 기준선이 느는지 기록)", file=sys.stderr)
+            return 2
+        flat_set = set(current_flat(root, cfg))
+        added = flat_set - baseline
+        removed = baseline - flat_set
+        if added:
+            not_in_ref = sorted(f for f in added if not _exists_in_ref(root, a.verify_in_ref, f))
+            if not_in_ref:
+                print(
+                    f"[flat_root_gate] --sync-baseline 거부: {len(not_in_ref)}개가 {a.verify_in_ref} 에 없음"
+                    " — 이번 브랜치가 새로 만든 평면 파일일 수 있다(판정 완화 금지):",
+                    file=sys.stderr,
+                )
+                for f in not_in_ref[:20]:
+                    print("  " + f, file=sys.stderr)
+                return 1
+        kept = sorted(flat_set)
+        _write_baseline(root, kept, f"규칙 변경 동기화({a.reason}): +{len(added)} -{len(removed)} = {len(kept)}")
+        print(f"[flat_root_gate] 기준선 동기화: {len(baseline)} → {len(kept)} (+{len(added)} -{len(removed)})")
         return 0
     if a.check_all:
         flat = current_flat(root, cfg)
