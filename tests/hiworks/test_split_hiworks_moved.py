@@ -27,8 +27,7 @@ def test_routes_unchanged():
 def test_inbox_still_reaches_the_reader_after_the_move(monkeypatch):
     """라우트가 hiworks_mail_reader 를 정적으로 import 해 이동 뒤에도 실제 모듈의 fetch_recent_mails 를 쓴다(회귀 방지)."""
     import orchestrator_v1.inbox.hiworks_mail_reader as real
-
-    mod = importlib.import_module("ai_orchestrator.connectors.hiworks.mail_router")
+    import ai_orchestrator.connectors.hiworks.mail_router as mod
     monkeypatch.setattr(real, "fetch_recent_mails", lambda limit=20: [{"subject": "ok"}])
     monkeypatch.setattr(mod, "log_event", lambda *a, **k: None)
     assert mod.api_inbox(limit=3, user={"actor": "a", "role": "admin"})["items"] == [{"subject": "ok"}]
@@ -37,8 +36,7 @@ def test_inbox_still_reaches_the_reader_after_the_move(monkeypatch):
 def test_send_gate_survives_the_move():
     """R2: 하이웍스 /send 는 승인 문구 없이는 403(브라우저 접근 전)."""
     from fastapi import HTTPException
-
-    mod = importlib.import_module("ai_orchestrator.connectors.hiworks.mail_router")
+    import ai_orchestrator.connectors.hiworks.mail_router as mod
     with pytest.raises(HTTPException) as exc:
         mod.api_send(mod.HWMailSendRequest(confirmed=True), user={"actor": "a", "role": "admin"})
     assert exc.value.status_code == 403

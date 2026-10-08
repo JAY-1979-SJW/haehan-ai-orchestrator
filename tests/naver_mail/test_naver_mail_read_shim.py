@@ -15,7 +15,7 @@ SUBMODULES = ("cdp", "body_reader", "classify", "entry", "list_collector", "pipe
 
 
 def test_old_package_path_imports():
-    mod = importlib.import_module("scripts.naver.mail.read")
+    import scripts.naver.mail.read as mod
     assert mod.__name__ == "scripts.naver.mail.read"
 
 

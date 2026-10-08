@@ -13,7 +13,7 @@ BEFORE = json.loads((Path(__file__).parent.parent / "data" / "split_w3c_before.j
 
 
 def test_cdp_reader_public_names_unchanged():
-    mod = importlib.import_module("ai_orchestrator.connectors.google.gmail_cdp_reader")
+    import ai_orchestrator.connectors.google.gmail_cdp_reader as mod
     assert sorted(n for n in dir(mod) if not n.startswith("__")) == BEFORE["names"]["gmail_cdp_reader"]
 
 
@@ -27,8 +27,7 @@ def test_routes_unchanged():
 def test_send_gates_survive_the_move():
     """R2: Gmail 실제 발송(/reply dry_run=False)·/send 는 승인 문구 없이는 403(Gmail API·브라우저 접근 전)."""
     from fastapi import HTTPException
-
-    g = importlib.import_module("ai_orchestrator.connectors.google.gmail_router")
+    import ai_orchestrator.connectors.google.gmail_router as g
     user = {"actor": "a", "role": "admin"}
     with pytest.raises(HTTPException) as exc:
         g.api_reply(g.GmailReplyRequest(thread_id="t", to="a@b.c", subject="s", body="b", dry_run=False), user=user)

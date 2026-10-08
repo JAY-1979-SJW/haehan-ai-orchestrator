@@ -34,7 +34,7 @@ def test_router_root_and_script_exist():
 
 
 def test_watch_public_names_unchanged():
-    mod = importlib.import_module("scripts.gabia.login_watch")
+    import scripts.gabia.login_watch as mod
     names = {n for n in dir(mod) if not n.startswith("__")}
     missing = set(BEFORE["watch_names"]) - names
     assert not missing, missing

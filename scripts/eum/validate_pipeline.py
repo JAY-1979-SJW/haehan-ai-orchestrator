@@ -126,8 +126,7 @@ def stage_openpyxl() -> StageResult:
 def stage_live() -> StageResult:
     try:
         import importlib
-
-        mod = importlib.import_module("scripts.eum.excel_live")
+        import scripts.eum.excel_live as mod
 
         # 필수 속성 존재 여부만 확인 (실제 Excel 연결 없이)
         missing = []
@@ -156,8 +155,7 @@ def stage_live() -> StageResult:
 def stage_generator() -> StageResult:
     try:
         import importlib
-
-        mod = importlib.import_module("scripts.eum.quote_generator")
+        import scripts.eum.quote_generator as mod
 
         missing = []
         for attr in ("generate_quote_xlsx",):

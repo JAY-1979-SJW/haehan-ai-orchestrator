@@ -256,7 +256,7 @@ def test_dns_draft_safe_dict_no_secrets():
 
 def test_autowork_plan_no_forbidden_imports():
     import importlib
-    mod = importlib.import_module("ai_orchestrator.connectors.gabia.autowork_subdomain_plan")
+    import ai_orchestrator.connectors.gabia.autowork_subdomain_plan as mod
     assert mod is not None
 
 
