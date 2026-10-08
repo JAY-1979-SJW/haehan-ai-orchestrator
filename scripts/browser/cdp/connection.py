@@ -1,4 +1,4 @@
-"""CDP 공유 연결 계층 — 데몬 기동/연결/페이지 획득 전담.
+"""CDP 공유 연결 계층 — 연결/페이지 획득 전담(데몬·브라우저는 기동하지 않는다).
 
 web_connector.py(scripts/browser/page/)에서 분리(S1-b, 2026-10-07). cdp_client.py
 등 CDP 라이브러리가 "페이지 조작"(web_connector.py의 나머지)이 아니라 "연결"만
@@ -22,7 +22,6 @@ from pathlib import Path
 from playwright.sync_api import Page, sync_playwright
 
 from ai_orchestrator.paths.runtime import data_dir
-from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed
 from scripts.browser.session.browser_task_session import BrowserTaskPolicy, mark_task_owned
 from scripts.common.config import CDP_HOST as _DEFAULT_CDP_HOST
 from scripts.common.config import CDP_PORT as _DEFAULT_CDP_PORT
@@ -68,44 +67,6 @@ def run_on_browser_thread(fn, *args, timeout: float = 300, **kwargs):
     return fut.result(timeout=timeout)
 
 
-def _ensure_cdp_daemon() -> None:
-    """CDP 데몬이 꺼져 있으면 앱 요청 시점에 자동 기동.
-
-    PC 부팅 자동 시작 아님 — 앱/기능이 브라우저를 필요로 할 때만 실행.
-    """
-    if _DAEMON_STATE.exists():
-        try:
-            state = json.loads(_DAEMON_STATE.read_text(encoding="utf-8"))
-            if state.get("running"):
-                return  # 이미 실행 중
-        except Exception:  # noqa: BLE001 - 탭 상태 확인/뷰포트 계산 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
-            pass
-
-    log.info("[connection] CDP 데몬 미실행 — 앱 요청으로 자동 기동")
-    assert_browser_launch_allowed(component="scripts.browser.cdp.connection", action="cdp_daemon_autostart")
-    daemon_script = ROOT / "scripts" / "browser" / "cdp" / "cdp_daemon.py"
-    import subprocess
-
-    subprocess.Popen(
-        [sys.executable, str(daemon_script), "start"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0,
-    )
-    # 데몬 준비 대기 (최대 15초)
-    for _ in range(15):
-        time.sleep(1)
-        if _DAEMON_STATE.exists():
-            try:
-                state = json.loads(_DAEMON_STATE.read_text(encoding="utf-8"))
-                if state.get("running"):
-                    log.info("[connection] CDP 데몬 기동 완료")
-                    return
-            except Exception:  # noqa: BLE001 - 탭 상태 확인/뷰포트 계산 등 보조 동작 — 실패해도 계속 진행(2026-09-28 검토)
-                pass
-    raise RuntimeError("CDP 데몬 자동 기동 실패 — 수동으로 'python scripts/browser/cdp/cdp_daemon.py start' 실행하세요")
-
-
 def _is_cdp_live(port: int) -> bool:
     """해당 포트에 CDP 브라우저가 이미 떠 있는지 빠르게 확인."""
     import urllib.request
@@ -117,19 +78,30 @@ def _is_cdp_live(port: int) -> bool:
         return False
 
 
-def _get_cdp_port() -> int:
-    """CDP 포트 결정.
+class CdpNotRunningError(RuntimeError):
+    """CDP 브라우저가 떠 있지 않다 — 라이브러리는 브라우저·데몬을 스스로 띄우지 않는다."""
 
-    1순위: 기본 포트(9222)에 앱 watchdog 브라우저가 이미 떠 있으면 그대로 사용
-            (블로그·스마트스토어 도구와 동일 경로 — 데몬 불필요).
-    2순위: cdp_daemon_state.json 기반 데몬 포트 (없으면 자동 기동).
+
+def _get_cdp_port() -> int:
+    """CDP 포트 결정. 이 함수는 어떤 프로세스도 기동하지 않는다(2026-10-08 대표님 지시: 자동 기동 제거).
+
+    1순위: 기본 포트(9222)에 CDP 브라우저가 떠 있으면 그대로 사용.
+    2순위: cdp_daemon_state.json 에 기록된 포트가 실제로 응답하면 사용.
+    둘 다 아니면 CdpNotRunningError — 호출자가 명시적으로 기동한 뒤 다시 시도해야 한다.
     """
     if _is_cdp_live(_DEFAULT_CDP_PORT):
-        log.debug("[connection] 기본 포트 %s CDP 활성 — 데몬 생략", _DEFAULT_CDP_PORT)
         return _DEFAULT_CDP_PORT
-    _ensure_cdp_daemon()
-    state = json.loads(_DAEMON_STATE.read_text(encoding="utf-8"))
-    return state.get("cdp_port", _DEFAULT_CDP_PORT)
+    try:
+        state = json.loads(_DAEMON_STATE.read_text(encoding="utf-8"))
+        port = int(state.get("cdp_port", _DEFAULT_CDP_PORT))
+    except Exception:  # noqa: BLE001 - 상태 파일이 없거나 깨졌으면 "데몬 없음"과 같다 — 아래에서 명확한 오류로 알린다
+        port = _DEFAULT_CDP_PORT
+    if port != _DEFAULT_CDP_PORT and _is_cdp_live(port):
+        return port
+    raise CdpNotRunningError(
+        f"CDP 브라우저가 실행 중이 아닙니다(포트 {_DEFAULT_CDP_PORT}). 자동으로 기동하지 않습니다 — "
+        "'python scripts/browser/cdp/cdp_daemon.py start' 로 직접 시작하거나 Haehan AI 앱을 실행하세요."
+    )
 
 
 def _connect_browser():
