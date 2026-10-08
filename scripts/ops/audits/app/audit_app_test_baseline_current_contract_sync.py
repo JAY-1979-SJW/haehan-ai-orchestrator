@@ -53,7 +53,7 @@ def run_audit() -> None:
     _add("storage/status read-only endpoint 존재", "storage/status" in app_status_src)
 
     # GROUP C — UI allowlist 반영 (test 파일이 현재 계약 기반으로 갱신됨)
-    status_cards_test = _test_src("test_app_ui_readonly_backend_status_cards_20260518.py")
+    status_cards_test = _test_src("app_contracts/test_app_ui_readonly_backend_status_cards_20260518.py")
     _add("status_cards_test getAppHealthSummary 기대", "getAppHealthSummary" in status_cards_test)
     # 주석에 legacy 명칭이 남을 수 있으므로 assert 문 기준으로 확인
     _add("status_cards_test getAssistantHealth assert 없음", 'assert "getAssistantHealth"' not in status_cards_test)
@@ -63,9 +63,9 @@ def run_audit() -> None:
     )
 
     # GROUP D — endpoint count +3 반영
-    domain_test = _test_src("test_backend_domain_core_models_20260516.py")
-    legacy_test = _test_src("test_backend_legacy_router_direct_dict_audit_20260516.py")
-    cycle_test = _test_src("test_backend_router_server_cycle_break_20260516.py")
+    domain_test = _test_src("app_contracts/test_backend_domain_core_models_20260516.py")
+    legacy_test = _test_src("app_contracts/test_backend_legacy_router_direct_dict_audit_20260516.py")
+    cycle_test = _test_src("app_contracts/test_backend_router_server_cycle_break_20260516.py")
 
     # 현행 기준(tests/test_app_test_baseline_current_contract_sync 와 동일): 숫자를 직접 적지 않고 단일 정본(configs/route_count_expectation.json)을 읽는지 확인, cycle_test 는 audit 기준에 위임
     _add("domain_test endpoint count 정본 참조", "EXPECTED_RUNTIME_ROUTES" in domain_test)

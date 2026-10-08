@@ -5409,7 +5409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_admin_ui_capture_screenshot.py": {
+  "tests/server_features/test_admin_ui_capture_screenshot.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5417,7 +5417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_agent_result_limits.py": {
+  "tests/server_core/test_agent_result_limits.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5425,7 +5425,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_alert_dev_reg.py": {
+  "tests/server_core/test_alert_dev_reg.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5433,7 +5433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_approval.py": {
+  "tests/approval/test_approval.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5441,7 +5441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_approval_audit_log.py": {
+  "tests/approval/test_approval_audit_log.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5449,7 +5449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_approval_execution_flow.py": {
+  "tests/approval/test_approval_execution_flow.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5457,7 +5457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_approval_public_id.py": {
+  "tests/approval/test_approval_public_id.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5465,7 +5465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_approval_read_api.py": {
+  "tests/approval/test_approval_read_api.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5473,7 +5473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_approval_v2.py": {
+  "tests/approval/test_approval_v2.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5481,7 +5481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_audit_dev_reg_approvals.py": {
+  "tests/server_core/test_audit_dev_reg_approvals.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5489,7 +5489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_audit_logger.py": {
+  "tests/server_core/test_audit_logger.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5497,7 +5497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_auth_basic_enforcement.py": {
+  "tests/auth/test_auth_basic_enforcement.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5505,7 +5505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_auth_enforcement.py": {
+  "tests/auth/test_auth_enforcement.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5513,7 +5513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_auth_foundation.py": {
+  "tests/auth/test_auth_foundation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5521,7 +5521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_auth_me.py": {
+  "tests/auth/test_auth_me.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5577,7 +5577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_capture_screenshot_approval.py": {
+  "tests/server_features/test_capture_screenshot_approval.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5585,7 +5585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_capture_screenshot_dry_run.py": {
+  "tests/server_features/test_capture_screenshot_dry_run.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5593,7 +5593,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_capture_screenshot_request_api.py": {
+  "tests/server_features/test_capture_screenshot_request_api.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5601,7 +5601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_capture_screenshot_telegram.py": {
+  "tests/server_features/test_capture_screenshot_telegram.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5625,7 +5625,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_dev_reg_adapters.py": {
+  "tests/server_core/test_dev_reg_adapters.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5633,7 +5633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_dev_reg_approval_gate.py": {
+  "tests/server_core/test_dev_reg_approval_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5641,7 +5641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_dev_reg_audit_log_unit.py": {
+  "tests/server_core/test_dev_reg_audit_log_unit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5649,7 +5649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_dev_reg_cli.py": {
+  "tests/server_core/test_dev_reg_cli.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5657,7 +5657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_example_portal_adapter.py": {
+  "tests/server_features/test_example_portal_adapter.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5665,7 +5665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_execution_limits.py": {
+  "tests/server_core/test_execution_limits.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5673,7 +5673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_execution_limits_extended.py": {
+  "tests/server_core/test_execution_limits_extended.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5681,7 +5681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_executor_policy_flow.py": {
+  "tests/server_core/test_executor_policy_flow.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5689,7 +5689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_fetch_web_page.py": {
+  "tests/server_features/test_fetch_web_page.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5697,7 +5697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_gmail_reader.py": {
+  "tests/google/test_gmail_reader.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -5705,7 +5705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_hiworks_integration.py": {
+  "tests/hiworks/test_hiworks_integration.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -5713,7 +5713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_inbox.py": {
+  "tests/server_core/test_inbox_orchestrator_tasks.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5721,7 +5721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_instagram_dm.py": {
+  "tests/instagram/test_instagram_dm.py": {
    "layer": "L11",
    "role": "test",
    "domain": "instagram",
@@ -5729,7 +5729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_job_state_unit.py": {
+  "tests/server_core/test_job_state_unit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5833,7 +5833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_cafe_adapter.py": {
+  "tests/naver_cafe/test_naver_cafe_adapter.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -5841,7 +5841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_cafe_adapter_no_write.py": {
+  "tests/naver_cafe/test_naver_cafe_adapter_no_write.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -5849,7 +5849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_cafe_collection.py": {
+  "tests/naver_cafe/test_naver_cafe_collection.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -5857,7 +5857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_cafe_collection_parse_only.py": {
+  "tests/naver_cafe/test_naver_cafe_collection_parse_only.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -5865,7 +5865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_openapi_collection.py": {
+  "tests/naver_search/test_naver_openapi_collection.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -5873,7 +5873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_search_db.py": {
+  "tests/naver_search/test_naver_search_db.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -5881,7 +5881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_search_incremental.py": {
+  "tests/naver_search/test_naver_search_incremental.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -5889,7 +5889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_search_router.py": {
+  "tests/naver_search/test_naver_search_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -5897,7 +5897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_naver_search_schedule.py": {
+  "tests/naver_search/test_naver_search_schedule.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -5905,7 +5905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_open_url_execute.py": {
+  "tests/server_features/test_open_url_execute.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5913,7 +5913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_policy_gate.py": {
+  "tests/server_core/test_policy_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5921,7 +5921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_registration_code_store.py": {
+  "tests/server_core/test_registration_code_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5929,7 +5929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_registration_codes.py": {
+  "tests/server_core/test_registration_codes.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5937,7 +5937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_risk_classifier.py": {
+  "tests/server_core/test_risk_classifier.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5945,7 +5945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_router_smoke.py": {
+  "tests/server_core/test_router_smoke.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5953,7 +5953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_session_manager_unit.py": {
+  "tests/server_core/test_session_manager_unit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5961,7 +5961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_site_adapter_interface_unit.py": {
+  "tests/site_engine/test_site_adapter_interface_unit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5969,7 +5969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_site_adapter_runner.py": {
+  "tests/site_engine/test_site_adapter_runner.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5977,7 +5977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_site_job_state.py": {
+  "tests/site_engine/test_site_job_state.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5985,7 +5985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_site_mapper.py": {
+  "tests/site_engine/test_site_mapper.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -5993,7 +5993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_site_session_manager.py": {
+  "tests/site_engine/test_site_session_manager.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6001,7 +6001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_sites_endpoints.py": {
+  "tests/site_engine/test_sites_endpoints.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6009,7 +6009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_sites_health.py": {
+  "tests/site_engine/test_sites_health.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6017,7 +6017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_sites_import_smoke.py": {
+  "tests/site_engine/test_sites_import_smoke.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6025,7 +6025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_sites_models.py": {
+  "tests/site_engine/test_sites_models.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6033,7 +6033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_sites_registry.py": {
+  "tests/site_engine/test_sites_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6041,7 +6041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_sites_secrets_policy.py": {
+  "tests/site_engine/test_sites_secrets_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6049,7 +6049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_task_state.py": {
+  "tests/server_core/test_task_state.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6057,7 +6057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_telegram_callback.py": {
+  "tests/server_features/test_telegram_callback.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6065,7 +6065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_telegram_webhook.py": {
+  "tests/server_features/test_telegram_webhook.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6073,7 +6073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_web_automation_standard.py": {
+  "tests/server_features/test_web_automation_standard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6081,7 +6081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_web_reader.py": {
+  "tests/server_features/test_web_reader.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6089,7 +6089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_web_task_registry.py": {
+  "tests/server_features/test_web_task_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6097,7 +6097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_web_task_router_policy_flow.py": {
+  "tests/server_features/test_web_task_router_policy_flow.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6105,7 +6105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_web_task_templates.py": {
+  "tests/server_features/test_web_task_templates.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -7226,14 +7226,6 @@
    "source": "rule"
   },
   "scripts/archive/one_off/generate_policy_smoke_report.py": {
-   "layer": "L12",
-   "role": "archive",
-   "domain": "common",
-   "reason": "문서·보관 경로",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/archive/one_off/validate_site_policy_config.py": {
    "layer": "L12",
    "role": "archive",
    "domain": "common",
@@ -13905,7 +13897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_admin_legacy_redirect.py": {
+  "tests/app_contracts/test_admin_legacy_redirect.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13913,7 +13905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_admin_ui_fallback_default.py": {
+  "tests/app_contracts/test_admin_ui_fallback_default.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13921,7 +13913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_admin_web_ops_dashboard_boundary_20260516.py": {
+  "tests/app_contracts/test_admin_web_ops_dashboard_boundary_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13929,7 +13921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_dispatch_paths.py": {
+  "tests/site_work/test_agent_dispatch_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13937,7 +13929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_dispatch_policy.py": {
+  "tests/site_work/test_agent_dispatch_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13945,7 +13937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_dispatch_races.py": {
+  "tests/site_work/test_agent_dispatch_races.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13953,7 +13945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_dispatch_router.py": {
+  "tests/site_work/test_agent_dispatch_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13961,7 +13953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_dispatch_service.py": {
+  "tests/site_work/test_agent_dispatch_service.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13977,7 +13969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_agent_usage.py": {
+  "tests/server_core/test_agent_usage.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13985,7 +13977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ai_agent_allowed_tools.py": {
+  "tests/site_work/test_ai_agent_allowed_tools.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13993,7 +13985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ai_agent_app_structure_design_baseline.py": {
+  "tests/quality_gates/test_ai_agent_app_structure_design_baseline.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14001,7 +13993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ai_agent_ui_structure_blueprint.py": {
+  "tests/quality_gates/test_ai_agent_ui_structure_blueprint.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14009,7 +14001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ai_quality_gate_hooks.py": {
+  "tests/quality_gates/test_ai_quality_gate_hooks.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14017,7 +14009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ai_work_session_gate.py": {
+  "tests/quality_gates/test_ai_work_session_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14025,7 +14017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_action_coverage.py": {
+  "tests/app_contracts/test_app_action_coverage.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14033,7 +14025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_api_contract_endpoints_prep_20260518.py": {
+  "tests/app_contracts/test_app_api_contract_endpoints_prep_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14041,7 +14033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_api_readonly_endpoints_browser_smoke_20260518.py": {
+  "tests/app_contracts/test_app_api_readonly_endpoints_browser_smoke_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14049,7 +14041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_api_readonly_endpoints_implementation_20260518.py": {
+  "tests/app_contracts/test_app_api_readonly_endpoints_implementation_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14057,7 +14049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_api_readonly_endpoints_implementation_plan_20260518.py": {
+  "tests/app_contracts/test_app_api_readonly_endpoints_implementation_plan_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14065,7 +14057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_approval_gate_readonly_polish_20260518.py": {
+  "tests/app_contracts/test_app_approval_gate_readonly_polish_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14073,7 +14065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_baseline_contract.py": {
+  "tests/app_contracts/test_app_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14081,7 +14073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_construction_schedule.py": {
+  "tests/app_contracts/test_app_construction_schedule.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14089,7 +14081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_deployment_readonly_polish_20260518.py": {
+  "tests/app_contracts/test_app_deployment_readonly_polish_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14097,7 +14089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_development_standard.py": {
+  "tests/app_contracts/test_app_development_standard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14105,7 +14097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_external_sites_readonly_polish_20260518.py": {
+  "tests/app_contracts/test_app_external_sites_readonly_polish_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14113,7 +14105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_foundation_governance.py": {
+  "tests/app_contracts/test_app_foundation_governance.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14121,7 +14113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_foundation_mvp_design_20260518.py": {
+  "tests/app_contracts/test_app_foundation_mvp_design_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14129,7 +14121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_foundation_mvp_prep_20260518.py": {
+  "tests/app_contracts/test_app_foundation_mvp_prep_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14137,7 +14129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_foundation_p1_gates.py": {
+  "tests/app_contracts/test_app_foundation_p1_gates.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14145,7 +14137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_llm_boundary.py": {
+  "tests/server_core/test_app_llm_boundary.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14153,7 +14145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_logs_audit_readonly_view_20260518.py": {
+  "tests/app_contracts/test_app_logs_audit_readonly_view_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14161,7 +14153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_nav_active_state_polish_20260518.py": {
+  "tests/app_contracts/test_app_nav_active_state_polish_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14169,7 +14161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_paths.py": {
+  "tests/common/test_app_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14177,7 +14169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_paths_migrate.py": {
+  "tests/common/test_app_paths_migrate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14185,7 +14177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_realtime_check.py": {
+  "tests/app_contracts/test_app_realtime_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14193,7 +14185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_scope_web_desktop_boundary_20260516.py": {
+  "tests/app_contracts/test_app_scope_web_desktop_boundary_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14201,7 +14193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_standard_ui_dashboard.py": {
+  "tests/app_contracts/test_app_standard_ui_dashboard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14209,7 +14201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_storage_readonly_polish_20260518.py": {
+  "tests/app_contracts/test_app_storage_readonly_polish_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14217,7 +14209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_structure_contract.py": {
+  "tests/app_contracts/test_app_structure_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14225,7 +14217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_task_detail_readonly_polish_20260518.py": {
+  "tests/app_contracts/test_app_task_detail_readonly_polish_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14233,7 +14225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_task_queue_readonly_list_polish_20260518.py": {
+  "tests/app_contracts/test_app_task_queue_readonly_list_polish_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14241,7 +14233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_test_baseline_current_contract_sync_20260518.py": {
+  "tests/app_contracts/test_app_test_baseline_current_contract_sync_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14249,7 +14241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_ui_readonly_backend_status_cards_20260518.py": {
+  "tests/app_contracts/test_app_ui_readonly_backend_status_cards_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14257,7 +14249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_ui_readonly_status_cards_api_bind_20260518.py": {
+  "tests/app_contracts/test_app_ui_readonly_status_cards_api_bind_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14265,7 +14257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_ui_shell_browser_smoke_20260518.py": {
+  "tests/app_contracts/test_app_ui_shell_browser_smoke_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14273,7 +14265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_ui_shell_readonly_api_wiring_20260518.py": {
+  "tests/app_contracts/test_app_ui_shell_readonly_api_wiring_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14281,7 +14273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_app_ui_shell_skeleton_20260518.py": {
+  "tests/app_contracts/test_app_ui_shell_skeleton_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14289,7 +14281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_approval_audit_log_20260508.py": {
+  "tests/approval/test_approval_audit_log_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14297,7 +14289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_approval_flow_baseline_contract.py": {
+  "tests/approval/test_approval_flow_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14305,7 +14297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_audit_kit_gate.py": {
+  "tests/quality_gates/test_audit_kit_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14321,7 +14313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_auth_window_gate.py": {
+  "tests/common/test_auth_window_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14337,7 +14329,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_autowork_frontdoor_operation_checklist_20260517.py": {
+  "tests/app_contracts/test_autowork_frontdoor_operation_checklist_20260517.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14345,7 +14337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_api_contract_audit_20260516.py": {
+  "tests/app_contracts/test_backend_api_contract_audit_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14353,7 +14345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_audit_evidence_standardization_20260516.py": {
+  "tests/app_contracts/test_backend_audit_evidence_standardization_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14361,7 +14353,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_core_baseline_contract.py": {
+  "tests/app_contracts/test_backend_core_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14369,7 +14361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_direct_dict_boundary_lock_20260516.py": {
+  "tests/app_contracts/test_backend_direct_dict_boundary_lock_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14377,7 +14369,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_domain_core_models_20260516.py": {
+  "tests/app_contracts/test_backend_domain_core_models_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14385,7 +14377,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_domain_enums_alignment_20260516.py": {
+  "tests/app_contracts/test_backend_domain_enums_alignment_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14393,7 +14385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_endpoint_inventory_recount_20260516.py": {
+  "tests/app_contracts/test_backend_endpoint_inventory_recount_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14401,7 +14393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_external_app_bridge_contract_20260516.py": {
+  "tests/app_contracts/test_backend_external_app_bridge_contract_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14409,7 +14401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_frontend_dependency_audit_20260516.py": {
+  "tests/app_contracts/test_backend_frontend_dependency_audit_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14417,7 +14409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_legacy_router_direct_dict_audit_20260516.py": {
+  "tests/app_contracts/test_backend_legacy_router_direct_dict_audit_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14425,7 +14417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_operation_final_closeout_20260518.py": {
+  "tests/app_contracts/test_backend_operation_final_closeout_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14433,7 +14425,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_operation_stabilization_checklist_20260516.py": {
+  "tests/app_contracts/test_backend_policy_layer_safety_registry_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14441,7 +14433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_policy_layer_safety_registry_20260516.py": {
+  "tests/app_contracts/test_backend_premium_architecture_classification_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14449,7 +14441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_premium_architecture_classification_20260516.py": {
+  "tests/app_contracts/test_backend_router_server_cycle_break_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14457,7 +14449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_premium_audit_scripts_20260516.py": {
+  "tests/app_contracts/test_backend_runtime_contract_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14465,7 +14457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_router_server_cycle_break_20260516.py": {
+  "tests/app_contracts/test_backend_runtime_storage_persistence_audit_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14473,7 +14465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_runtime_contract_gate.py": {
+  "tests/app_contracts/test_backend_service_layer_task_policy_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14481,7 +14473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_runtime_storage_persistence_audit_20260518.py": {
+  "tests/server_features/test_backend_web_task_approval_flow_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -14489,23 +14481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_backend_service_layer_task_policy_20260516.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_backend_web_task_approval_flow_20260516.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_blog_automation_gates.py": {
+  "tests/naver_blog/test_blog_automation_gates.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14513,7 +14489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_llm.py": {
+  "tests/naver_blog/test_blog_automation_llm.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14521,7 +14497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_router.py": {
+  "tests/naver_blog/test_blog_automation_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14529,7 +14505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_rules.py": {
+  "tests/naver_blog/test_blog_automation_rules.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14537,7 +14513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_runner.py": {
+  "tests/naver_blog/test_blog_automation_runner.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14545,7 +14521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_store.py": {
+  "tests/naver_blog/test_blog_automation_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14553,7 +14529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_blog_automation_writer.py": {
+  "tests/naver_blog/test_blog_automation_writer.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -14561,7 +14537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_action_contract.py": {
+  "tests/browser/test_browser_action_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14569,7 +14545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_action_execution_pipeline_20260520.py": {
+  "tests/browser/test_browser_action_execution_pipeline_20260520.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14577,7 +14553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_action_policy_registry_optin_20260509.py": {
+  "tests/browser/test_browser_action_policy_registry_optin_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14585,7 +14561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_action_registry_preflight_20260507.py": {
+  "tests/browser/test_browser_action_registry_preflight_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14593,7 +14569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_action_registry_risk_mapping_20260506.py": {
+  "tests/browser/test_browser_action_registry_risk_mapping_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14601,7 +14577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_action_risk_tier_policy_20260506.py": {
+  "tests/browser/test_browser_action_risk_tier_policy_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14609,7 +14585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_admin_approval_contract.py": {
+  "tests/browser/test_browser_admin_approval_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14617,7 +14593,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_agent_page_guard.py": {
+  "tests/browser/test_browser_agent_page_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14625,7 +14601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_allowlist_expansion_preflight_20260509.py": {
+  "tests/browser/test_browser_allowlist_expansion_preflight_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14633,7 +14609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_allowlist_policy_design_20260506.py": {
+  "tests/browser/test_browser_allowlist_policy_design_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14641,7 +14617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_allowlist_preflight_20260507.py": {
+  "tests/browser/test_browser_allowlist_preflight_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14649,7 +14625,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_approval_api_client.py": {
+  "tests/browser/test_browser_approval_api_client.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14657,7 +14633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_approval_policy.py": {
+  "tests/browser/test_browser_approval_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14665,7 +14641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_approval_record_implementation_20260507.py": {
+  "tests/browser/test_browser_approval_record_implementation_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14673,7 +14649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_approval_server_api_default.py": {
+  "tests/browser/test_browser_approval_server_api_default.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14681,7 +14657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_approval_ui_implementation_20260507.py": {
+  "tests/browser/test_browser_approval_ui_implementation_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14689,7 +14665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_approval_verifier.py": {
+  "tests/browser/test_browser_approval_verifier.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14697,7 +14673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_audit_contract.py": {
+  "tests/browser/test_browser_audit_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14705,7 +14681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_audit_module_design_20260506.py": {
+  "tests/browser/test_browser_audit_module_design_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14713,7 +14689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_audit_wiring.py": {
+  "tests/browser/test_browser_audit_wiring.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14721,7 +14697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_audit_writer_implementation_20260507.py": {
+  "tests/browser/test_browser_audit_writer_implementation_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14729,7 +14705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_cdp_selection_gate.py": {
+  "tests/browser/test_browser_cdp_selection_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14737,7 +14713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_db_approval_store.py": {
+  "tests/browser/test_browser_db_approval_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14745,7 +14721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_discovery_candidates_20260509.py": {
+  "tests/browser/test_browser_discovery_candidates_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14753,7 +14729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_download_attach_policy_optin_20260509.py": {
+  "tests/browser/test_browser_download_attach_policy_optin_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14761,7 +14737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_duplicate_approval_policy.py": {
+  "tests/browser/test_browser_duplicate_approval_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14769,7 +14745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_engine_capability_classification_20260507.py": {
+  "tests/browser/test_browser_engine_capability_classification_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14777,7 +14753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_engine_routing_dispatch_dryrun_20260507.py": {
+  "tests/browser/test_browser_engine_routing_dispatch_dryrun_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14785,7 +14761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_engine_routing_policy_20260507.py": {
+  "tests/browser/test_browser_engine_routing_policy_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14793,7 +14769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_engine_routing_preflight_chain_20260507.py": {
+  "tests/browser/test_browser_engine_routing_preflight_chain_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14801,7 +14777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_execute_integration.py": {
+  "tests/browser/test_browser_execute_integration.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14809,7 +14785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_gate_approval_preflight_20260507.py": {
+  "tests/browser/test_browser_gate_approval_preflight_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14817,7 +14793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_gate_module_design_20260506.py": {
+  "tests/browser/test_browser_gate_module_design_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14825,7 +14801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_guard_navigate_clean_start_fix_20260520.py": {
+  "tests/browser/test_browser_inspect_action.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14833,7 +14809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_inspect_action.py": {
+  "tests/browser/test_browser_inspect_approval_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14841,7 +14817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_inspect_approval_policy.py": {
+  "tests/browser/test_browser_inspect_task_flow.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14849,7 +14825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_inspect_task_flow.py": {
+  "tests/browser/test_browser_instance_guard_20260520.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14857,7 +14833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_instance_guard_20260520.py": {
+  "tests/browser/test_browser_open_observe_fixture.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14865,7 +14841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_open_observe_fixture.py": {
+  "tests/browser/test_browser_open_policy_optin_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14873,7 +14849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_open_policy_optin_20260509.py": {
+  "tests/browser/test_browser_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14881,7 +14857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_paths.py": {
+  "tests/browser/test_browser_persistent_approval_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14889,7 +14865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_persistent_approval_store.py": {
+  "tests/browser/test_browser_prepare_submit_action_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14897,7 +14873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_prepare_submit_action_20260509.py": {
+  "tests/browser/test_browser_read_navigate_action_registry_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14905,7 +14881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_read_navigate_action_registry_20260506.py": {
+  "tests/browser/test_browser_real_workflow_policy_pack_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14913,7 +14889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_real_workflow_policy_pack_20260507.py": {
+  "tests/browser/test_browser_realtime_login_auto_flow_20260520.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14921,7 +14897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_realtime_login_auto_flow_20260520.py": {
+  "tests/browser/test_browser_sandbox_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14929,7 +14905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_sandbox_gate.py": {
+  "tests/browser/test_browser_selector_resolver_policy_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14937,7 +14913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_selector_resolver_policy_20260509.py": {
+  "tests/browser/test_browser_site_compliance_policy_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14945,7 +14921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_site_compliance_policy_20260507.py": {
+  "tests/browser/test_browser_site_registry_policy_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14953,7 +14929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_site_registry_policy_20260509.py": {
+  "tests/browser/test_browser_submit_api_flow_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14961,7 +14937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_api_flow_20260509.py": {
+  "tests/browser/test_browser_submit_approval_state_persistence_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14969,7 +14945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_approval_state_persistence_20260506.py": {
+  "tests/browser/test_browser_submit_audit_log_persistence_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14977,7 +14953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_audit_log_persistence_20260506.py": {
+  "tests/browser/test_browser_submit_controlled_browser_smoke_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14985,7 +14961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_controlled_browser_smoke_20260506.py": {
+  "tests/browser/test_browser_submit_controlled_internal_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -14993,7 +14969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_controlled_internal_20260506.py": {
+  "tests/browser/test_browser_submit_execution_gate_schema_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15001,7 +14977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_execution_gate_schema_20260506.py": {
+  "tests/browser/test_browser_submit_execution_gate_validator_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15009,7 +14985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_execution_gate_validator_20260506.py": {
+  "tests/browser/test_browser_submit_gate_controlled_integration_smoke_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15017,7 +14993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_gate_controlled_integration_smoke_20260506.py": {
+  "tests/browser/test_browser_submit_policy_design_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15025,7 +15001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_policy_design_20260506.py": {
+  "tests/browser/test_browser_submit_policy_optin_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15033,7 +15009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_policy_optin_20260509.py": {
+  "tests/browser/test_browser_submit_policy_validator_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15041,7 +15017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_policy_validator_20260506.py": {
+  "tests/browser/test_browser_submit_preview_schema_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15049,7 +15025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_preview_schema_20260506.py": {
+  "tests/browser/test_browser_submit_real_browser_audit_integration_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15057,7 +15033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_real_browser_audit_integration_20260506.py": {
+  "tests/browser/test_browser_submit_real_browser_controlled_click_smoke_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15065,7 +15041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_real_browser_controlled_click_smoke_20260506.py": {
+  "tests/browser/test_browser_submit_type_risk_reclassification_20260506.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15073,7 +15049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_type_risk_reclassification_20260506.py": {
+  "tests/browser/test_browser_submit_with_user_approval_action_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15081,7 +15057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_submit_with_user_approval_action_20260509.py": {
+  "tests/browser/test_browser_task_handler.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15089,7 +15065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_task_handler.py": {
+  "tests/browser/test_browser_task_session.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15097,7 +15073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_task_session.py": {
+  "tests/browser/test_browser_tool_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15105,7 +15081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_tool_router.py": {
+  "tests/browser/test_browser_tool_worker_backend.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15113,7 +15089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_tool_worker_backend.py": {
+  "tests/browser/test_browser_type_policy_optin_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15121,7 +15097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_type_policy_optin_20260509.py": {
+  "tests/browser/test_browser_value_registry_policy_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15129,7 +15105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_value_registry_policy_20260509.py": {
+  "tests/browser/test_browser_watch.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15137,7 +15113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_watch.py": {
+  "tests/browser/test_browser_websocket_bridge.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15145,7 +15121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_websocket_bridge.py": {
+  "tests/browser/test_browser_websocket_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15153,7 +15129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_websocket_contract.py": {
+  "tests/browser/test_browser_websocket_handshake.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15161,7 +15137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_websocket_handshake.py": {
+  "tests/browser/test_browser_websocket_payload_schema.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15169,7 +15145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_websocket_payload_schema.py": {
+  "tests/browser/test_browser_worker_mock_backend.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15177,7 +15153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_worker_mock_backend.py": {
+  "tests/browser/test_browser_worker_real_backend.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15185,15 +15161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_worker_real_backend.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "browser",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_browser_worker_schemas.py": {
+  "tests/browser/test_browser_worker_schemas.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15209,7 +15177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_business_api_flow_20260509.py": {
+  "tests/approval/test_business_api_flow_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15249,7 +15217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_candidate_to_task.py": {
+  "tests/legacy_v1/test_candidate_to_task.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15257,7 +15225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cdp_daemon_status.py": {
+  "tests/browser/test_cdp_daemon_status.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15265,7 +15233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cdp_lanes_tabs.py": {
+  "tests/browser/test_cdp_lanes_tabs.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15273,7 +15241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cdp_playwright_smoke_20260607.py": {
+  "tests/browser/test_cdp_playwright_smoke_20260607.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15281,7 +15249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cdp_session_selector.py": {
+  "tests/browser/test_cdp_session_selector.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15289,7 +15257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cdp_verify.py": {
+  "tests/browser/test_cdp_verify.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -15297,7 +15265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_chat_sessions.py": {
+  "tests/server_core/test_chat_sessions.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15313,7 +15281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_code_map_query.py": {
+  "tests/quality_gates/test_code_map_query.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15321,7 +15289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_code_map_reach_resolver.py": {
+  "tests/quality_gates/test_code_map_reach_resolver.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15337,7 +15305,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_command_adapter.py": {
+  "tests/legacy_v1/test_command_adapter.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15345,7 +15313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_common_engine_commercialization_baseline.py": {
+  "tests/app_contracts/test_common_engine_commercialization_baseline.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15353,7 +15321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_common_operations_index.py": {
+  "tests/quality_gates/test_common_operations_index.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15369,7 +15337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_common_tool_runtime_baseline_contract.py": {
+  "tests/app_contracts/test_common_tool_runtime_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15377,7 +15345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_community_scheduler_cdp.py": {
+  "tests/server_features/test_community_scheduler_cdp.py": {
    "layer": "L11",
    "role": "test",
    "domain": "community",
@@ -15385,7 +15353,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_competitor_detail.py": {
+  "tests/naver_search/test_competitor_detail.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15393,7 +15361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_conftest_dotenv_isolation.py": {
+  "tests/quality_gates/test_conftest_dotenv_isolation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15401,7 +15369,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_connection_inventory_lock.py": {
+  "tests/server_core/test_connection_inventory_lock.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15417,7 +15385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_credentials_cli_security.py": {
+  "tests/auth/test_credentials_cli_security.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15425,7 +15393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_credentials_key_protection.py": {
+  "tests/auth/test_credentials_key_protection.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15433,7 +15401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_dashboard_routes.py": {
+  "tests/legacy_v1/test_dashboard_routes.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15473,7 +15441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_desktop_auth_runtime_baseline_contract.py": {
+  "tests/desktop/test_desktop_auth_runtime_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15489,7 +15457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_domain_room_allocation.py": {
+  "tests/quality_gates/test_domain_room_allocation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15521,7 +15489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_duplicate_code_check.py": {
+  "tests/quality_gates/test_duplicate_code_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15529,7 +15497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_email_classifier.py": {
+  "tests/legacy_v1/test_email_classifier.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15537,7 +15505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_email_task_approval.py": {
+  "tests/approval/test_email_task_approval.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15545,7 +15513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_email_task_executor.py": {
+  "tests/legacy_v1/test_email_task_executor.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15553,7 +15521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_employee_protocol.py": {
+  "tests/server_features/test_employee_protocol.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15561,7 +15529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_access_explorer.py": {
+  "tests/eum/test_eum_access_explorer.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15569,7 +15537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_action_prepare.py": {
+  "tests/eum/test_eum_action_prepare.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15577,7 +15545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_auth_selectors.py": {
+  "tests/eum/test_eum_auth_selectors.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15585,7 +15553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_capabilities.py": {
+  "tests/eum/test_eum_capabilities.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15593,7 +15561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_menu_actions.py": {
+  "tests/eum/test_eum_menu_actions.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15601,7 +15569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_navigation.py": {
+  "tests/eum/test_eum_navigation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15609,7 +15577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_router_work.py": {
+  "tests/eum/test_eum_router_work.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15617,7 +15585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_run_log.py": {
+  "tests/eum/test_eum_run_log.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15625,7 +15593,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_sales_mail.py": {
+  "tests/eum/test_eum_sales_mail.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15633,7 +15601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_work_plan.py": {
+  "tests/eum/test_eum_work_plan.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15641,7 +15609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_workspace.py": {
+  "tests/eum/test_eum_workspace.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15657,7 +15625,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_executor.py": {
+  "tests/legacy_v1/test_executor.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15665,7 +15633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_external_site_canonical_registry_20260517.py": {
+  "tests/app_contracts/test_external_site_canonical_registry_20260517.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15673,7 +15641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_external_web_work_connectors_20260516.py": {
+  "tests/app_contracts/test_external_web_work_connectors_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15689,7 +15657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_fax_authorization_store.py": {
+  "tests/hanafax/test_fax_authorization_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -15697,7 +15665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_fax_send_policy.py": {
+  "tests/hanafax/test_fax_send_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -15705,7 +15673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_file_adapter.py": {
+  "tests/legacy_v1/test_file_adapter.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15713,7 +15681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_domain_normalization_policy_20260507.py": {
+  "tests/g2b/test_g2b_domain_normalization_policy_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15721,7 +15689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_existing_openapi_bridge_20260508.py": {
+  "tests/g2b/test_g2b_existing_openapi_bridge_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15729,7 +15697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_existing_openapi_bridge_contract_20260508.py": {
+  "tests/g2b/test_g2b_existing_openapi_bridge_contract_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15737,7 +15705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_host_proof_schema_20260508.py": {
+  "tests/g2b/test_g2b_host_proof_schema_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15745,7 +15713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_import_contamination_regression_20260507.py": {
+  "tests/g2b/test_g2b_import_contamination_regression_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15753,7 +15721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_actual_live_mode_20260507.py": {
+  "tests/g2b/test_g2b_public_notice_actual_live_mode_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15761,7 +15729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_content_validator_20260508.py": {
+  "tests/g2b/test_g2b_public_notice_content_validator_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15769,7 +15737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_readonly_live_execution_20260507.py": {
+  "tests/g2b/test_g2b_public_notice_readonly_live_execution_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15777,7 +15745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_readonly_matrix_20260507.py": {
+  "tests/g2b/test_g2b_public_notice_readonly_matrix_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15785,7 +15753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_valid_url_discovery_20260508.py": {
+  "tests/g2b/test_g2b_public_notice_valid_url_discovery_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15793,7 +15761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_workflow_20260507.py": {
+  "tests/g2b/test_g2b_public_notice_workflow_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15801,7 +15769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_public_notice_workflow_dryrun_integration_20260507.py": {
+  "tests/g2b/test_g2b_public_notice_workflow_dryrun_integration_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15809,7 +15777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_readonly_download_manifest_20260508.py": {
+  "tests/g2b/test_g2b_readonly_download_manifest_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15817,7 +15785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_readonly_local_e2e_task_20260508.py": {
+  "tests/g2b/test_g2b_readonly_local_e2e_task_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15825,7 +15793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_readonly_policy_guard_20260508.py": {
+  "tests/g2b/test_g2b_readonly_policy_guard_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15833,7 +15801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_readonly_safe_result_20260508.py": {
+  "tests/g2b/test_g2b_readonly_safe_result_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15841,7 +15809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_g2b_site_engine_skeleton.py": {
+  "tests/g2b/test_g2b_site_engine_skeleton.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -15849,7 +15817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gabia_browser_user_present_automation_20260516.py": {
+  "tests/gabia/test_gabia_browser_user_present_automation_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -15857,7 +15825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gabia_dns_user_approval_workflow_20260516.py": {
+  "tests/gabia/test_gabia_dns_user_approval_workflow_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -15865,7 +15833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gabia_domain_registration_assist.py": {
+  "tests/gabia/test_gabia_domain_registration_assist.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -15873,7 +15841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gabia_site_engine.py": {
+  "tests/gabia/test_gabia_site_engine.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -15881,7 +15849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gabia_site_settings_canonical_registry_20260517.py": {
+  "tests/gabia/test_gabia_site_settings_canonical_registry_20260517.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -15889,7 +15857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gate_eum_approval.py": {
+  "tests/common/test_gate_eum_approval.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15913,7 +15881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gongmu_policy.py": {
+  "tests/server_features/test_gongmu_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15921,7 +15889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_gongmu_service.py": {
+  "tests/server_features/test_gongmu_service.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15929,7 +15897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_ads_signup.py": {
+  "tests/google/test_google_ads_signup.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15937,7 +15905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_ai_usage_labels.py": {
+  "tests/google/test_google_ai_usage_labels.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15945,7 +15913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_android_app_dev.py": {
+  "tests/google/test_google_android_app_dev.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15953,7 +15921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_cloud_live_console_explorer.py": {
+  "tests/google/test_google_cloud_live_console_explorer.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15961,7 +15929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_cloud_wrapper.py": {
+  "tests/google/test_google_cloud_wrapper.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15969,7 +15937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_domain_readiness_audit.py": {
+  "tests/google/test_google_domain_readiness_audit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15977,7 +15945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_domain_taxonomy.py": {
+  "tests/google/test_google_domain_taxonomy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15985,7 +15953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_gmail_analysis.py": {
+  "tests/google/test_google_gmail_analysis.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -15993,7 +15961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_gmail_function_contract.py": {
+  "tests/google/test_google_gmail_function_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16001,7 +15969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_home_login_gate.py": {
+  "tests/google/test_google_home_login_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16009,7 +15977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_live_input_representative_preflight.py": {
+  "tests/google/test_google_live_input_representative_preflight.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16017,7 +15985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_live_surface_explorer.py": {
+  "tests/google/test_google_live_surface_explorer.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16025,7 +15993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_managed_console.py": {
+  "tests/google/test_google_managed_console.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16033,7 +16001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_module_check.py": {
+  "tests/google/test_google_module_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16041,7 +16009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_precision_report.py": {
+  "tests/google/test_google_precision_report.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16049,7 +16017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_prefill_maturity.py": {
+  "tests/google/test_google_prefill_maturity.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16057,7 +16025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_router_workspace_integration.py": {
+  "tests/google/test_google_router_workspace_integration.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16065,7 +16033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_secret_action_gate.py": {
+  "tests/google/test_google_secret_action_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16073,7 +16041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_site_engine.py": {
+  "tests/google/test_google_site_engine.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16081,7 +16049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_subdomain_logic.py": {
+  "tests/google/test_google_subdomain_logic.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16089,7 +16057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_surfaces.py": {
+  "tests/google/test_google_surfaces.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16097,7 +16065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_tab_logic.py": {
+  "tests/google/test_google_tab_logic.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16105,7 +16073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_tab_registry.py": {
+  "tests/google/test_google_tab_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16113,7 +16081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_user_present_session_auth.py": {
+  "tests/google/test_google_user_present_session_auth.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16121,7 +16089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_vision_usage_gate.py": {
+  "tests/google/test_google_vision_usage_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16129,7 +16097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_work_mode_gate.py": {
+  "tests/google/test_google_work_mode_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16137,7 +16105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_workflows.py": {
+  "tests/google/test_google_workflows.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16145,7 +16113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_workspace_basic.py": {
+  "tests/google/test_google_workspace_basic.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16153,7 +16121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_workspace_wrapper.py": {
+  "tests/google/test_google_workspace_wrapper.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -16161,7 +16129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_youtube_search.py": {
+  "tests/google/test_google_youtube_search.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -16169,7 +16137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_youtube_upload.py": {
+  "tests/google/test_google_youtube_upload.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -16177,7 +16145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_grant_radar_router_contract.py": {
+  "tests/server_features/test_grant_radar_router_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "grant_radar",
@@ -16185,7 +16153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_haehan_single_exe_mode_consolidation_spec.py": {
+  "tests/app_contracts/test_haehan_single_exe_mode_consolidation_spec.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16193,7 +16161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_attachments.py": {
+  "tests/hanafax/test_hanafax_attachments.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16201,7 +16169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_auto_send.py": {
+  "tests/hanafax/test_hanafax_auto_send.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16209,7 +16177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_bulk_send_smoke.py": {
+  "tests/hanafax/test_hanafax_bulk_send_smoke.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16217,7 +16185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_hardening.py": {
+  "tests/hanafax/test_hanafax_hardening.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16225,7 +16193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_p3.py": {
+  "tests/hanafax/test_hanafax_p3.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16233,7 +16201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_reconcile.py": {
+  "tests/hanafax/test_hanafax_reconcile.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16241,7 +16209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_resolve.py": {
+  "tests/hanafax/test_hanafax_resolve.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16249,7 +16217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_site_group.py": {
+  "tests/hanafax/test_hanafax_site_group.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16257,7 +16225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_status_failure.py": {
+  "tests/hanafax/test_hanafax_status_failure.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -16265,7 +16233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hiworks_actions.py": {
+  "tests/hiworks/test_hiworks_actions.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -16273,7 +16241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hiworks_mail_batch.py": {
+  "tests/hiworks/test_hiworks_mail_batch.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -16281,7 +16249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hiworks_profile_validators.py": {
+  "tests/hiworks/test_hiworks_profile_validators.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -16289,7 +16257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hiworks_run_log.py": {
+  "tests/hiworks/test_hiworks_run_log.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -16297,7 +16265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hiworks_service_explorer.py": {
+  "tests/hiworks/test_hiworks_service_explorer.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -16305,7 +16273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hiworks_workflows.py": {
+  "tests/hiworks/test_hiworks_workflows.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -16313,7 +16281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hook_utf8_output.py": {
+  "tests/quality_gates/test_hook_utf8_output.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16321,7 +16289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_human_input.py": {
+  "tests/browser/test_human_input.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16329,7 +16297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_inbox.py": {
+  "tests/legacy_v1/test_inbox.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16337,7 +16305,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_instagram_api_publish_smoke.py": {
+  "tests/instagram/test_instagram_api_publish_smoke.py": {
    "layer": "L11",
    "role": "test",
    "domain": "instagram",
@@ -16345,7 +16313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_instagram_dm_contract.py": {
+  "tests/instagram/test_instagram_dm_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "instagram",
@@ -16353,7 +16321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_install_git_hooks.py": {
+  "tests/quality_gates/test_install_git_hooks.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16377,7 +16345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_kakao_webhooks.py": {
+  "tests/kakao/test_kakao_webhooks.py": {
    "layer": "L11",
    "role": "test",
    "domain": "kakao",
@@ -16409,14 +16377,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_live_inputs_split.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "tests/test_local_agent_actions_run_claude_agent.py": {
    "layer": "L11",
    "role": "test",
@@ -16433,7 +16393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_local_agent_approval_fixture.py": {
+  "tests/approval/test_local_agent_approval_fixture.py": {
    "layer": "L11",
    "role": "test",
    "domain": "local_agent",
@@ -16897,7 +16857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_local_user_secret_store.py": {
+  "tests/auth/test_local_user_secret_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16913,7 +16873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_log_analyzer.py": {
+  "tests/common/test_log_analyzer.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16921,7 +16881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_log_masking.py": {
+  "tests/common/test_log_masking.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16929,7 +16889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_logger.py": {
+  "tests/common/test_logger.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16937,7 +16897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_login_auto_resume_wiring_20260520.py": {
+  "tests/auth/test_login_auto_resume_wiring_20260520.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16945,7 +16905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_login_detector_realtime.py": {
+  "tests/auth/test_login_detector_realtime.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16953,7 +16913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_login_pipeline_integrity_audit_20260520.py": {
+  "tests/auth/test_login_pipeline_integrity_audit_20260520.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16961,7 +16921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_login_session_monitor.py": {
+  "tests/auth/test_login_session_monitor.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16969,7 +16929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_login_state_by_elements.py": {
+  "tests/naver_auth/test_login_state_by_elements.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16977,7 +16937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mail_bulk_policy_store.py": {
+  "tests/naver_mail/test_mail_bulk_policy_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16985,7 +16945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mail_bulk_run.py": {
+  "tests/naver_mail/test_mail_bulk_run.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16993,7 +16953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mail_bulk_service.py": {
+  "tests/naver_mail/test_mail_bulk_service.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17001,7 +16961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mail_bulk_smtp.py": {
+  "tests/naver_mail/test_mail_bulk_smtp.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17009,7 +16969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mail_draft_policy_store.py": {
+  "tests/naver_mail/test_mail_draft_policy_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17017,7 +16977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mailbox_ai_window.py": {
+  "tests/naver_mail/test_mailbox_ai_window.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17025,7 +16985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mailbox_new_alert.py": {
+  "tests/naver_mail/test_mailbox_new_alert.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17033,7 +16993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mcp_gateway_baseline.py": {
+  "tests/server_core/test_mcp_gateway_baseline.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17041,7 +17001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mcp_naver_login_registry.py": {
+  "tests/naver_auth/test_mcp_naver_login_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17057,7 +17017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_merge_stage.py": {
+  "tests/quality_gates/test_merge_stage.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17065,7 +17025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_message_classifier.py": {
+  "tests/legacy_v1/test_message_classifier.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17073,7 +17033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mk_catalog_append.py": {
+  "tests/common/test_mk_catalog_append.py": {
    "layer": "L11",
    "role": "test",
    "domain": "marketing",
@@ -17081,7 +17041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_module_baseline_contract.py": {
+  "tests/app_contracts/test_module_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17089,7 +17049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_module_boundaries.py": {
+  "tests/quality_gates/test_module_boundaries.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17097,7 +17057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_module_quality_gate.py": {
+  "tests/quality_gates/test_module_quality_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17105,7 +17065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_module_separation_gate.py": {
+  "tests/quality_gates/test_module_separation_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17113,7 +17073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_monitor.py": {
+  "tests/legacy_v1/test_monitor.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17129,7 +17089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_auth_input_timeout.py": {
+  "tests/naver_auth/test_naver_auth_input_timeout.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17137,7 +17097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_auth_redaction.py": {
+  "tests/naver_auth/test_naver_auth_redaction.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17145,7 +17105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_blog_assets.py": {
+  "tests/naver_blog/test_naver_blog_assets.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -17153,7 +17113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_blog_images.py": {
+  "tests/naver_blog/test_naver_blog_images.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -17161,7 +17121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_blog_workflow_20260508.py": {
+  "tests/naver_blog/test_naver_blog_workflow_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -17169,7 +17129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_browser_gate.py": {
+  "tests/naver_auth/test_naver_browser_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17177,7 +17137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_cafe_list_collector.py": {
+  "tests/naver_cafe/test_naver_cafe_list_collector.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -17185,7 +17145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_cafe_to_blog_workflow_20260508.py": {
+  "tests/naver_cafe/test_naver_cafe_to_blog_workflow_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -17193,7 +17153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_cafe_workflow_20260508.py": {
+  "tests/naver_cafe/test_naver_cafe_workflow_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -17201,7 +17161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_cafe_write_router.py": {
+  "tests/naver_cafe/test_naver_cafe_write_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -17217,7 +17177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_company_seo_and_shopping.py": {
+  "tests/naver_search/test_naver_company_seo_and_shopping.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -17225,7 +17185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_content.py": {
+  "tests/naver_blog/test_naver_content.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17249,7 +17209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_excel_and_mail_attach.py": {
+  "tests/naver_mail/test_naver_excel_and_mail_attach.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17257,7 +17217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_live_safety.py": {
+  "tests/naver_auth/test_naver_live_safety.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17265,7 +17225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_login_entry_policy.py": {
+  "tests/naver_auth/test_naver_login_entry_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17273,7 +17233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_action_gate_policy.py": {
+  "tests/naver_mail/test_naver_mail_action_gate_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17281,7 +17241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_action_item_dashboard.py": {
+  "tests/naver_mail/test_naver_mail_action_item_dashboard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17289,7 +17249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_background_runner.py": {
+  "tests/naver_mail/test_naver_mail_background_runner.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17297,7 +17257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_body_pipeline_batch.py": {
+  "tests/naver_mail/test_naver_mail_body_pipeline_batch.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17305,7 +17265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_body_pipeline_v2.py": {
+  "tests/naver_mail/test_naver_mail_body_pipeline_v2.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17313,7 +17273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_business_report.py": {
+  "tests/naver_mail/test_naver_mail_business_report.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17321,7 +17281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_dynamic_folder_discovery.py": {
+  "tests/naver_mail/test_naver_mail_dynamic_folder_discovery.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17329,7 +17289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_dynamic_folder_discovery_closeout.py": {
+  "tests/naver_mail/test_naver_mail_dynamic_folder_discovery_closeout.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17337,7 +17297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_html.py": {
+  "tests/naver_mail/test_naver_mail_html.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17345,7 +17305,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_imap.py": {
+  "tests/naver_mail/test_naver_mail_imap.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17353,7 +17313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_inbox_p0_complete.py": {
+  "tests/naver_mail/test_naver_mail_inbox_p0_complete.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17361,7 +17321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_read_pipeline_20260520.py": {
+  "tests/naver_mail/test_naver_mail_read_pipeline_20260520.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17369,7 +17329,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_rw.py": {
+  "tests/naver_mail/test_naver_mail_rw.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17377,7 +17337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_settings_panel.py": {
+  "tests/naver_mail/test_naver_mail_settings_panel.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17385,7 +17345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_smart_folder_coverage.py": {
+  "tests/naver_mail/test_naver_mail_smart_folder_coverage.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17393,7 +17353,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_unknown_classification_rules.py": {
+  "tests/naver_mail/test_naver_mail_unknown_classification_rules.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17401,7 +17361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_unread_pagination_depth.py": {
+  "tests/naver_mail/test_naver_mail_unread_pagination_depth.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17409,7 +17369,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mailbox.py": {
+  "tests/naver_mail/test_naver_mailbox.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -17417,7 +17377,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_search_table_guard.py": {
+  "tests/naver_search/test_naver_search_table_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -17425,7 +17385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_service_router.py": {
+  "tests/server_features/test_naver_service_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17433,7 +17393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_session_guard.py": {
+  "tests/naver_auth/test_naver_session_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17441,7 +17401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_session_router_guard.py": {
+  "tests/naver_auth/test_naver_session_router_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17449,7 +17409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_shopping_search_fixes.py": {
+  "tests/naver_search/test_naver_shopping_search_fixes.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -17457,7 +17417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_talk_approval.py": {
+  "tests/smartstore/test_naver_talk_approval.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17481,7 +17441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_notice_radar.py": {
+  "tests/legacy_v1/test_notice_radar.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -17489,7 +17449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_notice_router.py": {
+  "tests/legacy_v1/test_notice_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17505,7 +17465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ops_router_read_only_20260516.py": {
+  "tests/app_contracts/test_ops_router_read_only_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17513,7 +17473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_page_analysis.py": {
+  "tests/site_work/test_page_analysis.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17529,7 +17489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_playwright_ai_baseline_contract.py": {
+  "tests/app_contracts/test_playwright_ai_baseline_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17537,7 +17497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_popup_probe.py": {
+  "tests/site_work/test_popup_probe.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -17545,7 +17505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_popup_watcher.py": {
+  "tests/browser/test_popup_watcher.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -17553,7 +17513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_portability_standard.py": {
+  "tests/quality_gates/test_portability_standard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17561,7 +17521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_post_edit_fast_gate_baseline.py": {
+  "tests/quality_gates/test_post_edit_fast_gate_baseline.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17569,7 +17529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_post_edit_gate_python.py": {
+  "tests/quality_gates/test_post_edit_gate_python.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17577,7 +17537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_post_tasks_dry_run_flag_implementation_20260518.py": {
+  "tests/app_contracts/test_post_tasks_dry_run_flag_implementation_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17585,7 +17545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_post_tasks_medium_approve_gate_preflight_20260518.py": {
+  "tests/app_contracts/test_post_tasks_medium_approve_gate_preflight_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17593,7 +17553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_post_tasks_medium_isolation_smoke_20260518.py": {
+  "tests/app_contracts/test_post_tasks_medium_isolation_smoke_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17601,7 +17561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_post_tasks_side_effect_gate_design_20260518.py": {
+  "tests/app_contracts/test_post_tasks_side_effect_gate_design_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17609,7 +17569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_postflight.py": {
+  "tests/smartstore/test_postflight.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17617,7 +17577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_pre_change_dry_run.py": {
+  "tests/quality_gates/test_pre_change_dry_run.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17625,7 +17585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_preflight.py": {
+  "tests/quality_gates/test_preflight.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17633,15 +17593,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_prewrite_capability_check_blog_gate.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "naver_blog",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_public_media_router.py": {
+  "tests/server_features/test_public_media_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17649,7 +17601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_publish_guard.py": {
+  "tests/common/test_publish_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17657,7 +17609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_quality_gate.py": {
+  "tests/quality_gates/test_quality_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17665,15 +17617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_realtime_audit.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_required_quality_gate.py": {
+  "tests/common/test_realtime_audit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17689,7 +17633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_root_legacy_scripts_audit.py": {
+  "tests/quality_gates/test_root_legacy_scripts_audit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17697,7 +17641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_runtime_drift_watch.py": {
+  "tests/quality_gates/test_runtime_drift_watch.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17705,7 +17649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_runtime_storage_bind_mount_design_20260518.py": {
+  "tests/app_contracts/test_runtime_storage_bind_mount_design_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17713,7 +17657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_scheduled_jobs.py": {
+  "tests/server_features/test_scheduled_jobs.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17721,7 +17665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_scripts_logger_rotation.py": {
+  "tests/common/test_scripts_logger_rotation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17729,7 +17673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_security.py": {
+  "tests/common/test_security.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17801,7 +17745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_selector_health.py": {
+  "tests/site_engine/test_selector_health.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17809,7 +17753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_selector_health_weekly.py": {
+  "tests/site_engine/test_selector_health_weekly.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17825,7 +17769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_server_action_approval_audit_store_20260509.py": {
+  "tests/app_contracts/test_server_action_approval_audit_store_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17833,7 +17777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_server_action_evidence_store_20260509.py": {
+  "tests/app_contracts/test_server_action_evidence_store_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17841,7 +17785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_server_action_fastapi_router_20260509.py": {
+  "tests/app_contracts/test_server_action_fastapi_router_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17849,7 +17793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_server_action_task_api_wiring_20260509.py": {
+  "tests/app_contracts/test_server_action_task_api_wiring_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17857,7 +17801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_server_browser_boundary_runtime_enforcement_20260507.py": {
+  "tests/app_contracts/test_server_browser_boundary_runtime_enforcement_20260507.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -17865,7 +17809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_server_egress_policy_20260508.py": {
+  "tests/app_contracts/test_server_egress_policy_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17873,7 +17817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_server_local_agent_task_api_20260508.py": {
+  "tests/app_contracts/test_server_local_agent_task_api_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "local_agent",
@@ -17881,7 +17825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_server_side_external_web_execution_guard_20260508.py": {
+  "tests/app_contracts/test_server_side_external_web_execution_guard_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17889,7 +17833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_server_task_api_action_registry_handoff_20260509.py": {
+  "tests/app_contracts/test_server_task_api_action_registry_handoff_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17897,7 +17841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_server_task_api_approval_gate_20260509.py": {
+  "tests/app_contracts/test_server_task_api_approval_gate_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17905,7 +17849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_server_task_api_unimplemented_actions_20260509.py": {
+  "tests/app_contracts/test_server_task_api_unimplemented_actions_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17913,7 +17857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_session_guard.py": {
+  "tests/browser/test_session_tracker_change.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17921,7 +17865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_session_tracker_change.py": {
+  "tests/quality_gates/test_shared_warehouse_physical_skeleton.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17929,15 +17873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_shared_warehouse_physical_skeleton.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_shared_warehouse_policy.py": {
+  "tests/quality_gates/test_shared_warehouse_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17953,7 +17889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_access_login_flow_helpers.py": {
+  "tests/site_engine/test_site_access_login_flow_helpers.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17969,7 +17905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_catalog.py": {
+  "tests/site_work/test_site_catalog.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17977,7 +17913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_action_planner.py": {
+  "tests/site_engine/test_site_engine_action_planner.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17985,7 +17921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_audit.py": {
+  "tests/site_engine/test_site_engine_audit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17993,7 +17929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_browser_adapter.py": {
+  "tests/site_engine/test_site_engine_browser_adapter.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -18001,7 +17937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_capability_detector.py": {
+  "tests/site_engine/test_site_engine_capability_detector.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18009,7 +17945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_execution_gate.py": {
+  "tests/site_engine/test_site_engine_execution_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18017,7 +17953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_form_resolver.py": {
+  "tests/site_engine/test_site_engine_form_resolver.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18025,7 +17961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_profiles.py": {
+  "tests/site_engine/test_site_engine_profiles.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18033,7 +17969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_registry.py": {
+  "tests/site_engine/test_site_engine_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18041,7 +17977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_validators.py": {
+  "tests/site_engine/test_site_engine_validators.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18049,7 +17985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_workflow_runner.py": {
+  "tests/site_engine/test_site_engine_workflow_runner.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18065,7 +18001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_onboarding.py": {
+  "tests/site_work/test_site_onboarding.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18073,7 +18009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_onboarding_tool_20260508.py": {
+  "tests/site_engine/test_site_onboarding_tool_20260508.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18089,7 +18025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_registry_baseline.py": {
+  "tests/site_engine/test_site_registry_baseline.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18097,7 +18033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_registry_core.py": {
+  "tests/site_engine/test_site_registry_core.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18105,7 +18041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_session_safety.py": {
+  "tests/site_engine/test_site_session_safety.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18113,7 +18049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_sso_subdomain_runtime.py": {
+  "tests/site_engine/test_site_sso_subdomain_runtime.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18121,7 +18057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_task_map.py": {
+  "tests/site_work/test_site_task_map.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18129,7 +18065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_task_map_explore.py": {
+  "tests/site_work/test_site_task_map_explore.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18137,7 +18073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_task_map_service.py": {
+  "tests/site_work/test_site_task_map_service.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18153,7 +18089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_work_function_baseline.py": {
+  "tests/site_engine/test_site_work_function_baseline.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18161,7 +18097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_skeleton_gate.py": {
+  "tests/quality_gates/test_skeleton_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18169,7 +18105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_smartstore_actions.py": {
+  "tests/smartstore/test_smartstore_actions.py": {
    "layer": "L11",
    "role": "test",
    "domain": "smartstore",
@@ -18177,7 +18113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_smartstore_category_fixes.py": {
+  "tests/smartstore/test_smartstore_category_fixes.py": {
    "layer": "L11",
    "role": "test",
    "domain": "smartstore",
@@ -18185,7 +18121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_smartstore_verify_and_abort.py": {
+  "tests/smartstore/test_smartstore_verify_and_abort.py": {
    "layer": "L11",
    "role": "test",
    "domain": "smartstore",
@@ -18193,7 +18129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_sqlite_schema.py": {
+  "tests/common/test_sqlite_schema.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18201,7 +18137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_standard_ui_package.py": {
+  "tests/common/test_standard_ui_package.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18209,7 +18145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_standard_workflow_contract.py": {
+  "tests/app_contracts/test_standard_workflow_contract.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18217,7 +18153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_state_isolation.py": {
+  "tests/server_core/test_state_isolation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18225,7 +18161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_subdomain_dns_routing_foundation_20260516.py": {
+  "tests/app_contracts/test_subdomain_dns_routing_foundation_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18233,7 +18169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tag_and_option_sections.py": {
+  "tests/smartstore/test_tag_and_option_sections.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18241,7 +18177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_task_runner.py": {
+  "tests/site_work/test_task_runner.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18249,7 +18185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_telegram_notifier.py": {
+  "tests/common/test_telegram_notifier.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18257,7 +18193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tenant4_migration_sql.py": {
+  "tests/app_contracts/test_tenant4_migration_sql.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18265,7 +18201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tenant_minimal_scope_schema.py": {
+  "tests/app_contracts/test_tenant_minimal_scope_schema.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18273,7 +18209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tenant_runtime_hooks.py": {
+  "tests/app_contracts/test_tenant_runtime_hooks.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18281,7 +18217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tenant_scope_design.py": {
+  "tests/app_contracts/test_tenant_scope_design.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18289,7 +18225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tool_registry.py": {
+  "tests/quality_gates/test_tool_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18297,7 +18233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_trusted_session_user_approval_policy_20260516.py": {
+  "tests/app_contracts/test_trusted_session_user_approval_policy_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18425,7 +18361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_user_approval_gate.py": {
+  "tests/auth/test_user_approval_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18449,7 +18385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_user_auth_audit.py": {
+  "tests/auth/test_user_auth_audit.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18457,7 +18393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_user_data_contribution_consent.py": {
+  "tests/server_features/test_user_data_contribution_consent.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18497,7 +18433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_validate_site_policy_config_20260509.py": {
+  "tests/server_features/test_vendor_api_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18505,7 +18441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_vendor_api_registry.py": {
+  "tests/quality_gates/test_verify_change_route_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18513,7 +18449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_verify_change_route_check.py": {
+  "tests/quality_gates/test_verify_runtime_drift.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18521,15 +18457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_verify_runtime_drift.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_web_connector_stale_reconnect.py": {
+  "tests/browser/test_web_connector_stale_reconnect.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18545,7 +18473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_web_project_provisioning_script_factory_20260517.py": {
+  "tests/app_contracts/test_web_project_provisioning_script_factory_20260517.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18553,7 +18481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_whitelist_executor.py": {
+  "tests/legacy_v1/test_whitelist_executor.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18569,7 +18497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_worktree_change_index.py": {
+  "tests/quality_gates/test_worktree_change_index.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18577,7 +18505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_write_gates_duplicate_impl_gate.py": {
+  "tests/quality_gates/test_write_gates_duplicate_impl_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18585,7 +18513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_write_gates_naver_blog_safety_gate.py": {
+  "tests/naver_blog/test_write_gates_naver_blog_safety_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -18593,7 +18521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_youtube_oauth.py": {
+  "tests/youtube/test_youtube_oauth.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -18601,7 +18529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_youtube_oauth_callback_route.py": {
+  "tests/youtube/test_youtube_oauth_callback_route.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -18609,7 +18537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_youtube_research.py": {
+  "tests/youtube/test_youtube_research.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -18617,7 +18545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_youtube_research_router.py": {
+  "tests/youtube/test_youtube_research_router.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -18625,7 +18553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_youtube_site_engine.py": {
+  "tests/youtube/test_youtube_site_engine.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -18633,7 +18561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_youtube_workflow.py": {
+  "tests/youtube/test_youtube_workflow.py": {
    "layer": "L11",
    "role": "test",
    "domain": "youtube",
@@ -18665,7 +18593,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "tests/test_error_recovery_log_critical.py": {
+  "tests/smartstore/test_error_recovery_log_critical.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18673,7 +18601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_map_labels.py": {
+  "tests/site_work/test_site_map_labels.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18681,7 +18609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_approval_record_concurrency.py": {
+  "tests/approval/test_approval_record_concurrency.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18689,7 +18617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_user_db_init_guard.py": {
+  "tests/auth/test_user_db_init_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18697,7 +18625,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_memory_bounds_20261005.py": {
+  "tests/instagram/test_memory_bounds_20261005.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18737,7 +18665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_engine_get_gate_policies.py": {
+  "tests/site_engine/test_site_engine_get_gate_policies.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18745,7 +18673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_approval_state_transition.py": {
+  "tests/approval/test_approval_state_transition.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18801,7 +18729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_lifecycle.py": {
+  "tests/browser/test_browser_lifecycle.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -18809,7 +18737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_browser_watch_process.py": {
+  "tests/browser/test_browser_watch_process.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -18817,7 +18745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cafe_activity.py": {
+  "tests/naver_cafe/test_cafe_activity.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -18825,7 +18753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cafe_membership.py": {
+  "tests/naver_cafe/test_cafe_membership.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_cafe",
@@ -18833,7 +18761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_cdp_daemon_restart_policy.py": {
+  "tests/browser/test_cdp_daemon_restart_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -18841,7 +18769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_chrome_launch_flags.py": {
+  "tests/browser/test_chrome_launch_flags.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18849,7 +18777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_manual_tests_never_touch_browser_on_collect.py": {
+  "tests/quality_gates/test_manual_tests_never_touch_browser_on_collect.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -18857,7 +18785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_map_menu.py": {
+  "tests/site_work/test_site_map_menu.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18865,7 +18793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_map_sources.py": {
+  "tests/site_work/test_site_map_sources.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18873,7 +18801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_collect_google_passwords_list_safe.py": {
+  "tests/google/test_collect_google_passwords_list_safe.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -18881,7 +18809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_dashboard_auth_none_guards.py": {
+  "tests/auth/test_dashboard_auth_none_guards.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18889,7 +18817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_router_submit_result.py": {
+  "tests/eum/test_eum_router_submit_result.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18897,7 +18825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_send_mail_batch_dedupe.py": {
+  "tests/eum/test_eum_send_mail_batch_dedupe.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18905,7 +18833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_hanafax_bulk_send_result_init.py": {
+  "tests/hanafax/test_hanafax_bulk_send_result_init.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hanafax",
@@ -18913,7 +18841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_instagram_dm_none_guards.py": {
+  "tests/instagram/test_instagram_dm_none_guards.py": {
    "layer": "L11",
    "role": "test",
    "domain": "instagram",
@@ -18929,7 +18857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_temp_oauth_revoke_guard.py": {
+  "tests/google/test_temp_oauth_revoke_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18945,7 +18873,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "tests/test_site_preflight.py": {
+  "tests/site_work/test_site_preflight.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18953,7 +18881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_instagram_oauth_failclosed.py": {
+  "tests/instagram/test_instagram_oauth_failclosed.py": {
    "layer": "L11",
    "role": "test",
    "domain": "instagram",
@@ -18961,7 +18889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_work_record_domain.py": {
+  "tests/site_work/test_work_record_domain.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18969,7 +18897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_work_record_store.py": {
+  "tests/site_work/test_work_record_store.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18977,7 +18905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_map_history.py": {
+  "tests/site_work/test_site_map_history.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19217,7 +19145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_health_build_info.py": {
+  "tests/server_core/test_health_build_info.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19233,7 +19161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_console_api_contract_agent_run.py": {
+  "tests/site_work/test_console_api_contract_agent_run.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19241,7 +19169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_console_api_contract_chat_sessions.py": {
+  "tests/server_core/test_console_api_contract_chat_sessions.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19249,7 +19177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_console_api_contract_user_auth.py": {
+  "tests/auth/test_console_api_contract_user_auth.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19257,7 +19185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_side_effect_gate_coverage.py": {
+  "tests/quality_gates/test_side_effect_gate_coverage.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19265,7 +19193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_side_effect_gate_r2.py": {
+  "tests/quality_gates/test_side_effect_gate_r2.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19289,7 +19217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_r1_api_contract_gate.py": {
+  "tests/app_contracts/test_r1_api_contract_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19305,7 +19233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_console_api_contract_jwt_auth.py": {
+  "tests/auth/test_console_api_contract_jwt_auth.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19313,7 +19241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_route_count_single_source.py": {
+  "tests/app_contracts/test_route_count_single_source.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19321,7 +19249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_console_api_contract_owner_emails.py": {
+  "tests/auth/test_console_api_contract_owner_emails.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19329,7 +19257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_jwt_secret_startup_check.py": {
+  "tests/server_core/test_jwt_secret_startup_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19353,7 +19281,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "tests/test_gate_core_split_r2d2.py": {
+  "tests/quality_gates/test_gate_core_split_r2d2.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19369,7 +19297,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "tests/test_marketing_ops_router_gates.py": {
+  "tests/server_features/test_marketing_ops_router_gates.py": {
    "layer": "L11",
    "role": "test",
    "domain": "marketing",
@@ -19377,7 +19305,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_console_api_contract_pending_reject.py": {
+  "tests/auth/test_console_api_contract_pending_reject.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19385,7 +19313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_security_utils_token_patterns.py": {
+  "tests/server_core/test_security_utils_token_patterns.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19401,7 +19329,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "tests/test_repo_root_canonical.py": {
+  "tests/common/test_repo_root_canonical.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19425,7 +19353,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_desktop_claude_mcp.py": {
+  "tests/desktop/test_desktop_claude_mcp.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19441,7 +19369,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_publish_release_to_nas.py": {
+  "tests/desktop/test_publish_release_to_nas.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19505,7 +19433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_move_guardrails.py": {
+  "tests/quality_gates/test_move_guardrails.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19521,7 +19449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tool_home_gate.py": {
+  "tests/quality_gates/test_tool_home_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19545,14 +19473,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_dup_gate.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/repo_gates/root_calc_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -19561,7 +19481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_root_calc_gate.py": {
+  "tests/quality_gates/test_root_calc_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19713,7 +19633,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "tests/test_split_gabia_moved.py": {
+  "tests/gabia/test_split_gabia_moved.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -19721,7 +19641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_gabia_paths.py": {
+  "tests/gabia/test_split_gabia_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "gabia",
@@ -19729,7 +19649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_gmail_moved.py": {
+  "tests/google/test_split_gmail_moved.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -19737,7 +19657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_hiworks_moved.py": {
+  "tests/hiworks/test_split_hiworks_moved.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",
@@ -19745,7 +19665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_kakao_moved.py": {
+  "tests/kakao/test_split_kakao_moved.py": {
    "layer": "L11",
    "role": "test",
    "domain": "kakao",
@@ -19753,7 +19673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_kakao_paths.py": {
+  "tests/kakao/test_split_kakao_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "kakao",
@@ -19761,7 +19681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_smartstore_automation.py": {
+  "tests/smartstore/test_split_smartstore_automation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "smartstore",
@@ -19841,7 +19761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_mail_read_shim.py": {
+  "tests/naver_mail/test_naver_mail_read_shim.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_mail",
@@ -19953,7 +19873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_desktop_fresh_run.py": {
+  "tests/desktop/test_desktop_fresh_run.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19961,7 +19881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_desktop_owner_bootstrap.py": {
+  "tests/desktop/test_desktop_owner_bootstrap.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19969,7 +19889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_electron_runtime_guards.py": {
+  "tests/desktop/test_electron_runtime_guards.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19977,7 +19897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_runtime_data_paths.py": {
+  "tests/quality_gates/test_runtime_data_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19985,7 +19905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_code_map_inert_init.py": {
+  "tests/quality_gates/test_code_map_inert_init.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19993,7 +19913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_opt_out_lock_windows.py": {
+  "tests/quality_gates/test_opt_out_lock_windows.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20001,7 +19921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_flat_root_gate.py": {
+  "tests/quality_gates/test_flat_root_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20009,7 +19929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_audit_kit_gate_rename.py": {
+  "tests/quality_gates/test_audit_kit_gate_rename.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20017,7 +19937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ruff_new_only_gate_rename.py": {
+  "tests/quality_gates/test_ruff_new_only_gate_rename.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20025,7 +19945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_verify_change_ruff_loud.py": {
+  "tests/quality_gates/test_verify_change_ruff_loud.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20041,7 +19961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_folder_gate.py": {
+  "tests/quality_gates/test_folder_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20049,7 +19969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_registry_sync_and_modules_summary.py": {
+  "tests/quality_gates/test_registry_sync_and_modules_summary.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20065,7 +19985,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "tests/test_module_cycles_import_based.py": {
+  "tests/quality_gates/test_module_cycles_import_based.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -20073,7 +19993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_workflow_utf8_env.py": {
+  "tests/quality_gates/test_workflow_utf8_env.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22473,7 +22393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_audit_log_sensitive_scan.py": {
+  "tests/quality_gates/test_audit_log_sensitive_scan.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22489,7 +22409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_bundle_entrypoints.py": {
+  "tests/desktop/test_bundle_entrypoints.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22497,7 +22417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_bundle_path_gate.py": {
+  "tests/desktop/test_bundle_path_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22505,7 +22425,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_access_handler.py": {
+  "tests/eum/test_eum_access_handler.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22513,7 +22433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_eum_shared_helpers.py": {
+  "tests/eum/test_eum_shared_helpers.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22521,7 +22441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_google_shared_helpers.py": {
+  "tests/google/test_google_shared_helpers.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -22529,7 +22449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_legacy_install_import.py": {
+  "tests/desktop/test_legacy_install_import.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22537,7 +22457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_merge_step_check.py": {
+  "tests/quality_gates/test_merge_step_check.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22553,7 +22473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_scripts_data_paths.py": {
+  "tests/quality_gates/test_scripts_data_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22561,7 +22481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_task_spec.py": {
+  "tests/site_work/test_site_task_spec.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23481,7 +23401,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "tests/test_common_http_retry.py": {
+  "tests/common/test_common_http_retry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23489,7 +23409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_import_paths_hygiene.py": {
+  "tests/quality_gates/test_import_paths_hygiene.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23497,7 +23417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_services_no_phantom_mail.py": {
+  "tests/naver_mail/test_naver_services_no_phantom_mail.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -23513,7 +23433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ops_audit_cli.py": {
+  "tests/quality_gates/test_ops_audit_cli.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23521,7 +23441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_runtime_state_isolation_targets.py": {
+  "tests/server_core/test_runtime_state_isolation_targets.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23545,7 +23465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_site_shared_helpers.py": {
+  "tests/site_engine/test_site_shared_helpers.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23569,7 +23489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_test_path_refs.py": {
+  "tests/quality_gates/test_test_path_refs.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23797,6 +23717,358 @@
    "layer": "L11",
    "role": "test",
    "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audit_5050_phase1d_adapter_dry_run_compat.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/app_contracts/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/app_contracts/test_5050_legacy_characterization_20260517.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/app_contracts/test_5050_legacy_fastapi_migration_readiness_20260516.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/app_contracts/test_5050_phase1_8400_contract_freeze_20260517.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/app_contracts/test_5050_phase1b_adapter_contract_detail_20260517.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/app_contracts/test_5050_phase1d_adapter_dry_run_compat_20260517.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/app_contracts/test_backend_operation_stabilization_checklist_20260516.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/app_contracts/test_backend_premium_audit_scripts_20260516.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/approval/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/auth/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/browser/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/browser/test_browser_guard_navigate_clean_start_fix_20260520.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/common/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/desktop/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/eum/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "eum",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/g2b/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "g2b",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/gabia/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "gabia",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/google/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "google",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/google/test_live_inputs_split.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "google",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/hanafax/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hanafax",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/hiworks/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hiworks",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/hiworks/test_split_hiworks_paths.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hiworks",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/instagram/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "instagram",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/kakao/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "kakao",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/legacy_v1/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/legacy_v1/test_root_shim_direct_run.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/naver_auth/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/naver_blog/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/naver_blog/test_prewrite_capability_check_blog_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/naver_cafe/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_cafe",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/naver_mail/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_mail",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/naver_search/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_search",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/quality_gates/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/quality_gates/test_dup_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/quality_gates/test_no_gates_auth_reload.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/quality_gates/test_required_quality_gate.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/quality_gates/test_session_guard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/server_core/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/server_features/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/site_engine/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/site_work/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/smartstore/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "smartstore",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/youtube/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "youtube",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"

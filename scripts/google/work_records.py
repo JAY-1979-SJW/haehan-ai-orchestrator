@@ -14,9 +14,9 @@ LANE = "google"
 DEFAULT_RECORD_ROOT = ai_work_session.DEFAULT_RECORD_ROOT
 DEFAULT_SCOPES = [
     "scripts/google/",
-    "scripts/ops/audits/google/audit_google_domain_module_boundaries.py",
-    "tests/test_google_module_check.py",
-    "tests/test_module_quality_gate.py",
+    "scripts/ops/audit_google_domain_module_boundaries.py",
+    "tests/google/test_google_module_check.py",
+    "tests/quality_gates/test_module_quality_gate.py",
     "docs/baseline/",
 ]
 DEFAULT_FORBIDDEN_SCOPES = [

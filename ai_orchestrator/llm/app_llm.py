@@ -5,7 +5,7 @@
   • 판단·글쓰기·에이전트 작업은 Claude Code 가 MCP(``ai_orchestrator/mcp_server.py``,
     `.mcp.json` 의 ``haehan-orchestrator``)로 앱에 붙어서 수행한다.
   • 앱은 도구·데이터만 제공한다(``list_api_endpoints``/``call_api`` 등).
-  • 경계 강제: ``tests/test_app_llm_boundary.py`` 가 경계 밖의 Anthropic 직접호출을 차단한다.
+  • 경계 강제: ``tests/server_core/test_app_llm_boundary.py`` 가 경계 밖의 Anthropic 직접호출을 차단한다.
 
 레이어: L1 공유 계약 — 순수 상수, 외부 의존 0.
 """

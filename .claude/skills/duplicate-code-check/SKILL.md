@@ -50,9 +50,9 @@ python scripts/ops/hooks/duplicate_code_check.py --json                 # 자동
 
 ## 테스트
 
-`tests/test_duplicate_code_check.py` — 8개 케이스(정확 복붙 탐지, 같은
+`tests/quality_gates/test_duplicate_code_check.py` — 8개 케이스(정확 복붙 탐지, 같은
 파일 내 반복 무시, min_lines 필터, 변수명만 다른 경우 미탐지 확인, 서로
 다른 함수 오탐 없음, 병렬 모듈 탐지, `__init__.py` 제외, 실제 저장소
-스모크 테스트). `python -m pytest tests/test_duplicate_code_check.py -q`
+스모크 테스트). `python -m pytest tests/quality_gates/test_duplicate_code_check.py -q`
 
 관련: [[feedback_check_existing_before_building]]

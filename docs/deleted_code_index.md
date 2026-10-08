@@ -1059,42 +1059,16 @@ git checkout pre-openai-removal -- <경로>
 - `scripts/session_tracker.py` — `clear_state`, `all_states`
 - `scripts/web_connector.py` — `shutdown_browser_session`(탭·브라우저 전체 종료 — 로그인 세션 보존 정책과 반대)
 
-## 2026-10-08 삭제 — scripts/ops 일회성·사용처 0 (stage/ops-folders)
+## 2026-10-08 추가 삭제 — tests-split(B12) 중 발견한 미사용 archive 스크립트
 
-대표님 방침 "쓸 곳이 없으면 확인해서 삭제". 삭제 전 확인(모두 0): ① 운영 코드 import·호출 ② 문자열 경로 호출(subprocess·command_router·importlib) ③ 워크플로·bat·ps1·spec·Electron·.mcp.json·훅 설정 ④ docs 의 실행 안내(역사 기록 docs/reports 제외) ⑤ 사용자 스킬(~/.claude/skills)·_coordination 문서의 명령 ⑥ 이 PC 예약 작업(지휘창 확인: 저장소 스크립트를 부르는 작업 0).
-복원: `git checkout 3bbe7640 -- <경로>` (삭제 직전 커밋 3bbe7640. 이 커밋에서 scripts/ops → scripts/archive/ops 로 옮겨진 상태이므로 경로는 아래 표기).
+근거: `scripts/archive/one_off/validate_site_policy_config.py` — 저장소 전체(코드·설정·CI·활성 운영 문서)에서
+정의 외 참조 0(삭제 직전 재확인: import 0, configs/registry 외 참조 0, scripts/ops 게이트·감사 스크립트
+참조 0, CI 참조 0, 활성 문서 참조 0 — docs/reports·docs/specs 의 역사적 언급만 있음, data 참조 0). 자기
+시험(`tests/test_validate_site_policy_config_20260509.py`)만 호출하고 있어 시험도 같이 지운다.
+(참고: 같은 B12 조사에서 함께 archive 로 분류됐던 `scripts/archive/misc/chrome_ui_monitor.py` 는 실제로
+`scripts/browser/cdp/cdp_daemon.py` 가 서브프로세스로 띄우고 재시작시키는 **살아있는 코드**로 확인돼
+삭제하지 않았다 — stage/no-cdp-autostart(a2ad1162) 병합 후 재확인 예정.)
+복원: `git show <삭제 커밋>^:<경로>` (삭제 직전 내용).
 
-- `scripts/archive/ops/audit_5050_legacy_characterization.py` — 5050 Flask 이관 단계 감사. 사용처: 이 스크립트만 검사하는 시험(아래)뿐. 문서 언급은 분석표·조정 문서의 목록 서술(실행 안내 아님)
-- `scripts/archive/ops/audit_5050_legacy_fastapi_migration_readiness.py` — 위와 같음
-- `scripts/archive/ops/audit_5050_phase1_8400_contract_freeze.py` — 위와 같음
-- `scripts/archive/ops/audit_5050_phase1b_adapter_contract_detail.py` — 위와 같음
-- `scripts/archive/ops/audit_5050_phase1d_adapter_dry_run_compat.py` — 위와 같음(test_test_path_refs 의 원본 파일 목록에서 항목 제거)
-- `tests/test_5050_legacy_characterization_20260517.py`, `tests/test_5050_legacy_fastapi_migration_readiness_20260516.py`, `tests/test_5050_phase1_8400_contract_freeze_20260517.py`, `tests/test_5050_phase1b_adapter_contract_detail_20260517.py`, `tests/test_5050_phase1d_adapter_dry_run_compat_20260517.py` — 위 5050 감사 스크립트만 검사하던 시험
-- `scripts/archive/ops/check_audit.py` — 2026-05-10 감사 로그 파일 이름을 박은 일회성 확인 스크립트. 문서 언급은 표의 설명 문구
-- `scripts/archive/ops/e2e_deep_scan.py` — 일회성 E2E 재점검(옛 프로젝트 위치 경로를 박아 둠). 문서 언급은 HANDOFF 의 '부수 발견' 기록
-- `scripts/archive/ops/e2e_full_report.py` — 위와 같음
-
-## 2026-10-08 삭제(2차) — scripts/ops 계약 감사 중 사용처 0 (stage/ops-folders)
-
-삭제 전 확인 ①~⑥ 은 위 절과 같다(운영 코드·문자열 경로·설정/훅·docs 실행 안내·사용자 스킬/조정 문서·예약 작업 모두 0, 이 스크립트만 검사하는 시험도 없음). 일괄 실행 글롭(`audit_*`)도 저장소에 없음을 확인했다.
-복원: `git checkout 38ee369f -- <경로>`
-
-- `scripts/ops/audit_subdomain_dns_routing_foundation.py` — autowork 서브도메인 DNS/nginx/SSL 기초 도면 감사(단계 완료용 일회성). 언급은 조정 문서의 파일 목록뿐
-- `scripts/ops/audit_windows_user_install_live_smoke.py` — WINDOWS_USER_INSTALL_LIVE_SMOKE_01 감사(단계 완료용 일회성). 언급 없음
-- `scripts/ops/smoke_app_ui_shell_readonly_api_wiring.py` — APP_UI_SHELL_READONLY_API_WIRING_01 정적 smoke. 짝 감사(audit_app_ui_shell_readonly_api_wiring)만 이를 대신 검사하며 이 파일을 부르는 곳 없음
-
-## 2026-10-08 삭제(3차) — 중복 설치기 (stage/ops-folders)
-
-`scripts/ops/quality/install_git_hooks.py` 는 `git config core.hooksPath .githooks` 만 하는 34줄짜리 설치기로, 같은 이름의 정본 `scripts/ops/hooks/install_git_hooks.py`(훅 파일 설치 + core.hooksPath 설정, 시험 보유)가 이미 같은 설정을 한다 → 정본 하나만 남기고 삭제.
-확인 ①~⑥: 코드 호출 없음(품질 게이트 오류 문구에서만 이름을 안내 → 정본 경로로 교체), 문자열 경로 호출·워크플로·훅·docs 실행 안내·사용자 스킬/조정 문서·예약 작업 모두 0, 이 파일만 검사하는 시험 없음(module_boundaries.json 의 repo_guard 파일 목록 항목은 정본 경로로 교체).
-복원: `git checkout 2687e9d0 -- scripts/ops/quality/install_git_hooks.py`
-
-- `scripts/ops/quality/install_git_hooks.py` — core.hooksPath 만 설정하는 중복 설치기
-
-## 2026-10-08 삭제(4차) — 실행 불가인 유료 OpenAI 호출 코드 (stage/ops-folders)
-
-`scripts/ops/office/ai_check_a4.py`(GPT-4o-mini 로 A4 서식 품질 평가) — CLAUDE.md "외부 유료 AI API 호출 승인제"·2026-09-24 "OpenAI 호출 코드 완전 삭제" 결정에 맞지 않고, 필요한 `shared` 패키지가 저장소에 없어 이전부터 실행되지 않았다. 지휘창 승인(2026-10-08)으로 "호출처 정리 + 삭제" 묶음 커밋.
-확인 ①~⑥: 운영 코드 호출 2곳은 함께 정리 — check_a4.py 직접 실행부의 통과 후 subprocess 호출 제거, scripts/eum/validate_pipeline.py 의 7단계(stage_ai_check, 이 스크립트가 없어 항상 FAIL 하던 단계) 제거. 문자열 경로·워크플로·훅 설정 0(hook_check_a4 는 이미 비활성으로 건너뜀, 주석만 정리), docs(openai_removal 명세·defect_index)는 "삭제됨(사유)"로 갱신, 조정 문서 언급은 PR 본문 서술뿐, 예약 작업 0.
-복원: `git checkout face69c8 -- scripts/ops/office/ai_check_a4.py`
-
-- `scripts/ops/office/ai_check_a4.py` — 실행 불가 유료 OpenAI 호출 코드
+- `scripts/archive/one_off/validate_site_policy_config.py` — 사이트 정책 설정 검증 one-off 스크립트
+- `tests/test_validate_site_policy_config_20260509.py` — 위 스크립트만 시험하던 파일

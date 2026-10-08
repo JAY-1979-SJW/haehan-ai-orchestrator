@@ -19,3 +19,6 @@ pytest-xdist==3.8.0
 import-linter==2.15
 pip-audit==2.10.1
 bandit==1.9.4
+#  - pytest-timeout: scripts/ops/run_impacted_tests.py 가 `--timeout` 으로 pytest 를 부른다(tests/quality_gates/test_move_guardrails.py).
+#  - mypy: tests/quality_gates/test_audit_kit_gate_rename.py 가 sys.executable 의 mypy 로 '편집 전 대비 새 오류'를 실제로 잰다(CI 러너에 없어 6건 실패, 시험 skip 대신 설치).
+#  - import-linter: .importlinter 계약(scripts/ops/import_contracts_gen.py 가 정본 설정에서 생성)을 CI 비차단 단계로 잰다.
