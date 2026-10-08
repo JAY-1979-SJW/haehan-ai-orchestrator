@@ -48,7 +48,7 @@
    "scripts/naver/smartstore/product/page_builder.py:render_notice"
   ],
   "46785cd7ccaaac6c3a0302940c709ed092ec10ea": [
-   "scripts/ops/live_parallel_task_dispatch_smoke.py:_start_worker",
+   "scripts/ops/smoke/live_parallel_task_dispatch_smoke.py:_start_worker",
    "scripts/ops/verify/verify_live_browser_readonly_dispatch.py:_start_worker",
    "scripts/ops/verify/verify_live_task_dispatch.py:_start_worker"
   ],
@@ -65,7 +65,7 @@
    "scripts/ops/audits/app/audit_app_ui_shell_readonly_api_wiring.py:run_audit"
   ],
   "563afd3b20d392f9574923fdde0c953cfaafbf92": [
-   "scripts/ops/live_parallel_task_dispatch_smoke.py:_register_temp_agent",
+   "scripts/ops/smoke/live_parallel_task_dispatch_smoke.py:_register_temp_agent",
    "scripts/ops/verify/verify_live_task_dispatch.py:_register_temp_agent"
   ],
   "56e7112793c4c286372377961b955a5f2e5c1bfd": [
@@ -82,7 +82,7 @@
    "scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py:_save_report"
   ],
   "76a31dc5575f6481b80fa19eec4be8d386273459": [
-   "scripts/ops/live_parallel_task_dispatch_smoke.py:_request_json",
+   "scripts/ops/smoke/live_parallel_task_dispatch_smoke.py:_request_json",
    "scripts/ops/verify/verify_live_task_dispatch.py:_request_json"
   ],
   "7977b42cf3bf386ad6ca7c4479c72ddb04dcbae0": [

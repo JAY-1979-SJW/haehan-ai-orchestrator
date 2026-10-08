@@ -1,7 +1,7 @@
 """바뀐 파일의 영향 테스트만 골라 명시 파일로 실행하고, 결과를 기준선(baseline)과 비교한다 (G6).
 
 사용:
-    python scripts/ops/run_impacted_tests.py <바뀐파일...> [--timeout 120] [--out 결과.json] [--baseline 이전결과.json]
+    python scripts/ops/devflow/run_impacted_tests.py <바뀐파일...> [--timeout 120] [--out 결과.json] [--baseline 이전결과.json]
 
 원칙:
     - 영향 테스트는 `query.py tests-for` (코드 지도) 로 모은다.
@@ -22,7 +22,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 

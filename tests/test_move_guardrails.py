@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 from scripts.ops.devflow import move_preflight as mp
-from scripts.ops import run_impacted_tests as rit
+from scripts.ops.devflow import run_impacted_tests as rit
 from scripts.ops.devflow.make_shim import make_shim
 
 

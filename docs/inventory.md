@@ -8,7 +8,7 @@
 - `data/code_map/modules.md` (2026-09-24 @2ad654ca): 모듈별 R0 실행점검(OK/SKIP/FAIL), 층 판정 불일치 다수
 - `docs/defect_index.json`: 결함 34건 (open 19 / fixed 11 / measure 4)
 - `ai_orchestrator/router.py`: 서버에 마운트된 라우터 전수(46개 include_router)
-- `scripts/ops/capability_check.py <도메인>`: 도메인별 벤더 API·CLI·Python 진입점
+- `scripts/ops/hooks/capability_check.py <도메인>`: 도메인별 벤더 API·CLI·Python 진입점
 - `C:\Users\skyjw\.claude\projects\...\memory\channel-*-worklog.md` 등: 실제 발행/발송 성공 사례(날짜·건수 기재된 것만 인용)
 
 ## 상태 판정 기준

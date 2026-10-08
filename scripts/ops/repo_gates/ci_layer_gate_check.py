@@ -6,7 +6,7 @@ threshold까지 포함해 실패할 수 있다(이 저장소에 이미 있던 �
 FORBIDDEN_IMPORT > 0 / SECURITY_PATTERN > 0 / CIRCULAR_IMPORT > 0 세 가지만
 CI 차단 조건으로 삼는다.
 
-사용: python scripts/ops/codebase_layer_audit.py; python scripts/ops/repo_gates/ci_layer_gate_check.py
+사용: python scripts/ops/repo_gates/codebase_layer_audit.py; python scripts/ops/repo_gates/ci_layer_gate_check.py
 """
 
 from __future__ import annotations

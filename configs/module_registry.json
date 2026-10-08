@@ -12465,7 +12465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/capability_check.py": {
+  "scripts/ops/hooks/capability_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12473,7 +12473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/cdp_click_watch.py": {
+  "scripts/ops/runtime/cdp_click_watch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12617,7 +12617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/codebase_layer_audit.py": {
+  "scripts/ops/repo_gates/codebase_layer_audit.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12681,7 +12681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/duplicate_code_check.py": {
+  "scripts/ops/hooks/duplicate_code_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12761,7 +12761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/guard_youtube_upload.py": {
+  "scripts/ops/hooks/guard_youtube_upload.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "youtube",
@@ -12801,7 +12801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/live_parallel_task_dispatch_smoke.py": {
+  "scripts/ops/smoke/live_parallel_task_dispatch_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12833,7 +12833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/login_sites.py": {
+  "scripts/auth/login_sites.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13209,7 +13209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/worktree_change_index.py": {
+  "scripts/ops/devflow/worktree_change_index.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19361,7 +19361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/run_impacted_tests.py": {
+  "scripts/ops/devflow/run_impacted_tests.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22393,7 +22393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/merge_step_check.py": {
+  "scripts/ops/devflow/merge_step_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",

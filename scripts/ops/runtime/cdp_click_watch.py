@@ -4,7 +4,7 @@ Monitor 도구로 stdout을 스트리밍하면, URL이나 화면 텍스트가 �
 한 줄씩 이벤트가 찍혀 AI가 실시간으로 따라가며 처리할 수 있다.
 
 사용법:
-    python scripts/ops/cdp_click_watch.py [--interval 1.5]
+    python scripts/ops/runtime/cdp_click_watch.py [--interval 1.5]
 """
 
 import argparse
@@ -14,7 +14,7 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())))  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 
 from scripts.browser.cdp.cdp_helper import CDP
 

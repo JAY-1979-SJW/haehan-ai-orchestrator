@@ -198,7 +198,7 @@ jobs:
         # 우선순위로" 스텝이 GITHUB_PATH 로 이미 고쳐뒀으므로 여긴 기본 shell: bash 사용.
         shell: bash
         run: |
-          python scripts/ops/codebase_layer_audit.py || true
+          python scripts/ops/repo_gates/codebase_layer_audit.py || true
           python scripts/ops/repo_gates/ci_layer_gate_check.py
 
       - name: Layer audit self-test

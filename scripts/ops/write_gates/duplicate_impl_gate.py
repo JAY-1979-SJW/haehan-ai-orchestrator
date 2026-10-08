@@ -85,7 +85,7 @@ def check(file_path: str, content: str) -> str | None:
         return None
 
     proc = subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "ops" / "capability_check.py"), *keywords],
+        [sys.executable, str(ROOT / "scripts" / "ops" / "hooks" / "capability_check.py"), *keywords],
         capture_output=True,
         text=True,
         cwd=str(ROOT),

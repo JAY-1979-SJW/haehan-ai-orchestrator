@@ -12,9 +12,9 @@ CLAUDE.md "기존 구현 확인 의무" 위반(같은 기능을 여러 곳에 �
      하나를 나중에 삭제한 일이 있었다. 이 신호는 그런 병렬 구현의 조기 경보.
 
 Usage:
-    python scripts/ops/duplicate_code_check.py
-    python scripts/ops/duplicate_code_check.py --path scripts --min-lines 8
-    python scripts/ops/duplicate_code_check.py --json
+    python scripts/ops/hooks/duplicate_code_check.py
+    python scripts/ops/hooks/duplicate_code_check.py --path scripts --min-lines 8
+    python scripts/ops/hooks/duplicate_code_check.py --json
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ from collections import defaultdict
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 
 EXCLUDED_DIRS = {
     ".git",

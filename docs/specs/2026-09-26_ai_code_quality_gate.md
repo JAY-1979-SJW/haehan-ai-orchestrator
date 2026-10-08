@@ -32,7 +32,7 @@ Claude가 신규 함수를 짤 때 (a) 이미 있는 유사 기능을 다시 짜
 | `.claude/agents/code-reviewer.md` | 신규 | 별도 컨텍스트 서브에이전트 정의 (Claude Code 표준 agent 파일 형식) |
 | `CLAUDE.md` | 수정 | 기존 "작업 원칙" 절 아래 문단 추가(신규 섹션 만들지 않음 — 기존 "기준서→드라이런→승인", "게이트 실행 의무"와 중복 방지) |
 
-기존 파일은 **수정하지 않는다**: `scripts/ops/duplicate_code_check.py`,
+기존 파일은 **수정하지 않는다**: `scripts/ops/hooks/duplicate_code_check.py`,
 `scripts/ops/code_map/query.py`, `scripts/ops/verify_change.py`, `.githooks/pre-commit.orig`,
 `configs/ruff.toml` — 그대로 재사용.
 
@@ -114,7 +114,7 @@ model: sonnet
 
 ## 점검 항목
 1. **중복 구현** — 이 변경이 추가한 함수/클래스가 저장소 다른 곳에 이미 있는 기능을
-   다시 짠 것인가. `scripts/ops/capability_check.py`, `scripts/ops/duplicate_code_check.py`
+   다시 짠 것인가. `scripts/ops/hooks/capability_check.py`, `scripts/ops/hooks/duplicate_code_check.py`
    결과를 참고해 확인한다.
 2. **테스트 존재/동작 검증** — 이 변경에 대응하는 테스트가 있는가. 없다면 "테스트 없음"으로
    명시한다. 있다면 실제로 실행해 통과하는지 확인한다(주장만 보지 않는다).
@@ -148,7 +148,7 @@ model: sonnet
 ## 코딩 컨벤션 및 완료 보고 기준 (2026-09-26 추가)
 
 ### 재사용 우선
-새 함수/유틸을 만들기 전 `scripts/ops/capability_check.py`, `scripts/ops/duplicate_code_check.py`,
+새 함수/유틸을 만들기 전 `scripts/ops/hooks/capability_check.py`, `scripts/ops/hooks/duplicate_code_check.py`,
 Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/import, 없을 때만 신규 작성.
 검증 안 된 추측성 코드 금지 — 불확실하면 Grep/Read로 실제 시그니처·동작을 확인한 뒤 작성한다.
 
@@ -265,7 +265,7 @@ python 스크립트만 import).
   `prewrite_capability_check.py`(PreToolUse Write), `log_code_change.py`, `hook_check_a4.py`
   (PostToolUse), `behavior_gate.py`(Stop), `install_git_hooks.py`(SessionStart).
 - `.claude/agents/` 디렉터리 없음 (신규 생성 필요, 삭제/충돌 없음).
-- `scripts/ops/duplicate_code_check.py` — 본문 해시 기반 사후 전체 스캔, PreToolUse 실시간
+- `scripts/ops/hooks/duplicate_code_check.py` — 본문 해시 기반 사후 전체 스캔, PreToolUse 실시간
   이름 매칭과 목적이 달라 별도 스크립트 필요하나 세션 종료 시 참고용으로 그대로 재사용 가능.
 - `scripts/ops/verify_change.py` — 9개 판정 항목 이미 구현(기준 커밋과 비교, 영향 테스트 포함).
   전체 검증은 이것을 그대로 쓰고 신규 로직 불필요.

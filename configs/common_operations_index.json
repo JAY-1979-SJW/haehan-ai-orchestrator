@@ -3,7 +3,7 @@
   "updated_at": "2026-05-13",
   "purpose": "Common operating index for all site automation and homepage operations.",
   "mandatory_before_new_work": [
-    "Run scripts/ops/worktree_change_index.py.",
+    "Run scripts/ops/devflow/worktree_change_index.py.",
     "Check docs/worktree_management_index.md.",
     "Check this common operations index.",
     "Record pre-change dry-run evidence for code changes.",
@@ -12,7 +12,7 @@
   "global_gates": [
     {
       "gate_id": "worktree_index",
-      "command": "python scripts/ops/worktree_change_index.py",
+      "command": "python scripts/ops/devflow/worktree_change_index.py",
       "required_for": ["new_work", "error_triage", "before_commit"]
     },
     {

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops import merge_step_check as msc
+from scripts.ops.devflow import merge_step_check as msc
 
 
 def _git(root: Path, *args: str) -> str:

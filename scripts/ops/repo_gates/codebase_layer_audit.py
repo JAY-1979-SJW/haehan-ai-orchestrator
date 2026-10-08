@@ -1,9 +1,9 @@
 """Classify repository files by architecture layer and audit drift.
 
 Usage:
-    python scripts/ops/codebase_layer_audit.py --once
-    python scripts/ops/codebase_layer_audit.py --json
-    python scripts/ops/codebase_layer_audit.py --watch --interval 2
+    python scripts/ops/repo_gates/codebase_layer_audit.py --once
+    python scripts/ops/repo_gates/codebase_layer_audit.py --json
+    python scripts/ops/repo_gates/codebase_layer_audit.py --watch --interval 2
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 DEFAULT_OUTPUT = ROOT / "data" / "codebase_layer_audit_latest.json"
 DEFAULT_CONFIG = ROOT / "configs" / "codebase_layer_audit.json"
 LAYER_DOC = ROOT / "docs" / "layer_classification.md"
@@ -381,7 +381,7 @@ def check_security_patterns(rows: list[ClassifiedFile], root: Path = ROOT) -> li
     """보안 금지 패턴 스캔 (secret/token 출력, env 직접 노출 등)."""
     issues: list[AuditIssue] = []
     skip_prefixes = ("tests/", "docs/", "scripts/archive/", "data/")
-    skip_exact = {"scripts/ops/codebase_layer_audit.py"}  # 패턴 정의 자체를 스캔 제외
+    skip_exact = {"scripts/ops/repo_gates/codebase_layer_audit.py"}  # 패턴 정의 자체를 스캔 제외
     for row in rows:
         if not row.path.endswith(".py"):
             continue
@@ -748,7 +748,7 @@ _STORAGE_ALLOWED_PREFIXES = (
 
 # session 접근 검사에서 제외할 경로 (constants 정의만 있는 파일)
 _SESSION_SCAN_SKIP = {
-    "scripts/ops/codebase_layer_audit.py",
+    "scripts/ops/repo_gates/codebase_layer_audit.py",
     "scripts/gabia/domain_assist.py",  # _FORBIDDEN_SESSION_PATHS 상수 정의만
 }
 
@@ -917,7 +917,7 @@ _BROWSER_GUARD_SKIP_PREFIXES = (
     "docs/",
     "scripts/archive/",
     "data/",
-    "scripts/ops/codebase_layer_audit.py",
+    "scripts/ops/repo_gates/codebase_layer_audit.py",
 )
 
 
@@ -935,7 +935,7 @@ def check_server_browser_guard(rows: list[ClassifiedFile], root: Path = ROOT) ->
             continue
         if any(row.path.startswith(p) for p in _BROWSER_GUARD_SKIP_PREFIXES):
             continue
-        if row.path == "scripts/ops/codebase_layer_audit.py":
+        if row.path == "scripts/ops/repo_gates/codebase_layer_audit.py":
             continue
         path = root / row.path
         try:

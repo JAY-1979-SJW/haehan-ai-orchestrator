@@ -144,7 +144,7 @@ def test_capability_check_runs_vendor_section_first():
     """벤더 API 는 저장소 스캔보다 **먼저** 나와야 의미가 있다."""
     import inspect
 
-    from scripts.ops import capability_check as cc
+    from scripts.ops.hooks import capability_check as cc
 
     src = inspect.getsource(cc.run)
     assert "find_vendor_apis" in src

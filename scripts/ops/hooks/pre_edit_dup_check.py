@@ -1,7 +1,7 @@
 """PreToolUse(Edit|Write) — 편집으로 새로 생기는 함수/클래스명이 저장소 다른 곳에
 이미 있는지 빠르게 확인해 additionalContext 로 경고만 준다(차단하지 않음).
 
-기존 scripts/ops/duplicate_code_check.py 는 커밋된 전체 저장소를 본문 해시로 비교하는
+기존 scripts/ops/hooks/duplicate_code_check.py 는 커밋된 전체 저장소를 본문 해시로 비교하는
 사후 스캔용이라, 여기서 필요한 "편집 직전 이름 매칭"과는 신호가 다르다. 그래서 별도
 스크립트로 둔다(§2 기준서 참조: docs/specs/2026-09-26_ai_code_quality_gate.md).
 

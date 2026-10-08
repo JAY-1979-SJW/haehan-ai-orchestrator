@@ -1,4 +1,4 @@
-from scripts.ops import worktree_change_index as wt
+from scripts.ops.devflow import worktree_change_index as wt
 
 
 def test_parse_porcelain_handles_rename_and_untracked():

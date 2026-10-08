@@ -1,11 +1,11 @@
 """기존 구현 조회 — 자동화/수집/사이트 코드 작성 전 필수 실행.
 
 사용:
-    python scripts/ops/capability_check.py <키워드>
-    python scripts/ops/capability_check.py cafe
-    python scripts/ops/capability_check.py smartstore
-    python scripts/ops/capability_check.py naver mail
-    python scripts/ops/capability_check.py eum
+    python scripts/ops/hooks/capability_check.py <키워드>
+    python scripts/ops/hooks/capability_check.py cafe
+    python scripts/ops/hooks/capability_check.py smartstore
+    python scripts/ops/hooks/capability_check.py naver mail
+    python scripts/ops/hooks/capability_check.py eum
 
 출력:
     - API 엔드포인트 (ai_orchestrator/connectors/)
@@ -21,9 +21,9 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 
-# 이 스크립트는 `python scripts/ops/capability_check.py` 로 직접 실행된다.
+# 이 스크립트는 `python scripts/ops/hooks/capability_check.py` 로 직접 실행된다.
 # 그때는 저장소 루트가 sys.path 에 없어 scripts 패키지를 import 할 수 없다.
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
