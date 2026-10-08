@@ -6,6 +6,7 @@ ASSISTANT_BACKEND_5050_LEGACY_FASTAPI_MIGRATION_PLAN_01
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -15,12 +16,17 @@ SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_legacy_fastapi_migration_readine
 
 
 def _run_json() -> dict:
+    # 스크립트가 한글이 섞인 JSON을 print 한다 — Windows 콘솔 기본 코드페이지(cp949)로는
+    # 인코딩 못 하는 문자(em dash 등)가 있어 UnicodeEncodeError 로 죽어 stdout 이 빈다.
+    # 자식 프로세스 stdio 를 utf-8 로 강제한다.
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "--json"],
         capture_output=True,
         text=True,
         cwd=ROOT,
         encoding="utf-8",
+        env=env,
     )
     return json.loads(result.stdout)
 
