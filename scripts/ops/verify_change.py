@@ -601,17 +601,18 @@ def main() -> int:
         reg = ROOT / "configs/module_registry.json"
         reg_bytes = reg.read_bytes() if head_tree == ROOT and reg.exists() else None
         # 기준·변경 후는 서로 다른 폴더라 동시에 잰다(대기 시간 절반)
+        py_changed = [c for c in changed if c.endswith(".py") and (head_tree / c).exists()]
         try:
-            _log("기준·변경 후 측정 시작(코드맵·수집·영향 시험)")
-            with ThreadPoolExecutor(2) as ex:
+            _log("기준·변경 후 측정 + audit-kit 파일 검사 시작(셋을 동시에: 서로 파일을 읽기만 한다)")
+            with ThreadPoolExecutor(3) as ex:
                 fb, fa = ex.submit(measure, trees[0], tests), ex.submit(measure, head_tree, tests)
+                fk = ex.submit(_audit_kit_new_findings, py_changed, trees[0], head_tree)  # 시험(약 20분)과 겹쳐 돌려 직렬 대기를 없앤다
                 before, after = fb.result(), fa.result()
-            _log("기준·변경 후 측정 끝")
+                kit_errors, kit_note = fk.result()
+            _log("기준·변경 후 측정 + audit-kit 끝")
         finally:
             if reg_bytes is not None:
                 reg.write_bytes(reg_bytes)
-        py_changed = [c for c in changed if c.endswith(".py") and (head_tree / c).exists()]
-        kit_errors, kit_note = _audit_kit_new_findings(py_changed, trees[0], head_tree)
         if kit_note:
             print(kit_note)
         _log("ruff 검사")
