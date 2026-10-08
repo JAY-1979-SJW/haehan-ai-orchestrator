@@ -14,7 +14,7 @@
 from __future__ import annotations
 from pathlib import Path
 
-ROOT = Path(__file__).parent.parent
+ROOT = Path(__file__).parent.parent.parent
 SPEC = ROOT / "docs/design/HAEHAN_SINGLE_EXE_MODE_CONSOLIDATION_SPEC_01.md"
 AUDIT = ROOT / "scripts/ops/audit_haehan_single_exe_mode_consolidation_spec.py"
 

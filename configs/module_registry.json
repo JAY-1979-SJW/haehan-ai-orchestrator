@@ -13761,7 +13761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_admin_legacy_redirect.py": {
+  "tests/app_contracts/test_admin_legacy_redirect.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13769,7 +13769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_admin_ui_fallback_default.py": {
+  "tests/app_contracts/test_admin_ui_fallback_default.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -13777,7 +13777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_admin_web_ops_dashboard_boundary_20260516.py": {
+  "tests/app_contracts/test_admin_web_ops_dashboard_boundary_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15521,7 +15521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_external_site_canonical_registry_20260517.py": {
+  "tests/app_contracts/test_external_site_canonical_registry_20260517.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15529,7 +15529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_external_web_work_connectors_20260516.py": {
+  "tests/app_contracts/test_external_web_work_connectors_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16041,7 +16041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_haehan_single_exe_mode_consolidation_spec.py": {
+  "tests/app_contracts/test_haehan_single_exe_mode_consolidation_spec.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17361,7 +17361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_ops_router_read_only_20260516.py": {
+  "tests/app_contracts/test_ops_router_read_only_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17433,7 +17433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_post_tasks_dry_run_flag_implementation_20260518.py": {
+  "tests/app_contracts/test_post_tasks_dry_run_flag_implementation_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17441,7 +17441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_post_tasks_medium_approve_gate_preflight_20260518.py": {
+  "tests/app_contracts/test_post_tasks_medium_approve_gate_preflight_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17449,7 +17449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_post_tasks_medium_isolation_smoke_20260518.py": {
+  "tests/app_contracts/test_post_tasks_medium_isolation_smoke_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17457,7 +17457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_post_tasks_side_effect_gate_design_20260518.py": {
+  "tests/app_contracts/test_post_tasks_side_effect_gate_design_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17561,7 +17561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_runtime_storage_bind_mount_design_20260518.py": {
+  "tests/app_contracts/test_runtime_storage_bind_mount_design_20260518.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18081,7 +18081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_subdomain_dns_routing_foundation_20260516.py": {
+  "tests/app_contracts/test_subdomain_dns_routing_foundation_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18113,7 +18113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tenant4_migration_sql.py": {
+  "tests/app_contracts/test_tenant4_migration_sql.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18121,7 +18121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tenant_minimal_scope_schema.py": {
+  "tests/app_contracts/test_tenant_minimal_scope_schema.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18129,7 +18129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tenant_runtime_hooks.py": {
+  "tests/app_contracts/test_tenant_runtime_hooks.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18137,7 +18137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_tenant_scope_design.py": {
+  "tests/app_contracts/test_tenant_scope_design.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18153,7 +18153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_trusted_session_user_approval_policy_20260516.py": {
+  "tests/app_contracts/test_trusted_session_user_approval_policy_20260516.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18393,7 +18393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_web_project_provisioning_script_factory_20260517.py": {
+  "tests/app_contracts/test_web_project_provisioning_script_factory_20260517.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

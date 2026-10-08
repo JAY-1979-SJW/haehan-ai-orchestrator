@@ -477,7 +477,7 @@
         "ai_orchestrator/external_sites/provider_registry.py"
       ],
       "tests": [
-        "tests/test_external_site_canonical_registry_20260517.py"
+        "tests/app_contracts/test_external_site_canonical_registry_20260517.py"
       ],
       "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
       "notes": [
@@ -503,7 +503,7 @@
         "ai_orchestrator/external_sites/provider_registry.py"
       ],
       "tests": [
-        "tests/test_external_site_canonical_registry_20260517.py"
+        "tests/app_contracts/test_external_site_canonical_registry_20260517.py"
       ],
       "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
       "notes": [
@@ -530,7 +530,7 @@
         "scripts/sites"
       ],
       "tests": [
-        "tests/test_external_site_canonical_registry_20260517.py"
+        "tests/app_contracts/test_external_site_canonical_registry_20260517.py"
       ],
       "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
       "notes": [
@@ -554,7 +554,7 @@
         "ai_orchestrator/external_sites/provider_registry.py"
       ],
       "tests": [
-        "tests/test_external_site_canonical_registry_20260517.py"
+        "tests/app_contracts/test_external_site_canonical_registry_20260517.py"
       ],
       "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
       "notes": [
@@ -578,7 +578,7 @@
         "ai_orchestrator/external_sites/provider_registry.py"
       ],
       "tests": [
-        "tests/test_external_site_canonical_registry_20260517.py"
+        "tests/app_contracts/test_external_site_canonical_registry_20260517.py"
       ],
       "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
       "notes": [

@@ -11,7 +11,7 @@ import importlib.util
 import pytest
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).parent.parent
+REPO_ROOT = Path(__file__).parent.parent.parent
 
 
 def _load_module(name, rel_path):

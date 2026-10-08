@@ -23,7 +23,7 @@ import pathlib
 
 import pytest
 
-REPO_ROOT = pathlib.Path(__file__).parent.parent
+REPO_ROOT = pathlib.Path(__file__).parent.parent.parent
 
 
 # ── Naver 분류 계약 ─────────────────────────────────────────────────────────

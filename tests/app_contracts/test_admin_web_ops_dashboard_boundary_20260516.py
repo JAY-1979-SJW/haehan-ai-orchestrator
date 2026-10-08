@@ -12,7 +12,7 @@ STEP 14 — /ops 운영센터 페이지 백엔드 경계 테스트
 import re
 from pathlib import Path
 
-ADMIN_WEB = Path(__file__).parent.parent / "admin-web" / "src" / "app" / "ops"
+ADMIN_WEB = Path(__file__).parent.parent.parent / "admin-web" / "src" / "app" / "ops"
 
 LIB_FILES = [
     "lib/types.ts",
