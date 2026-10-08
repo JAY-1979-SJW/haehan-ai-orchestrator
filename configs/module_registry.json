@@ -7097,7 +7097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/file_scanner.py": {
+  "local_agent/tools/file_scanner.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7145,7 +7145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/kras_connector.py": {
+  "local_agent/tools/kras_connector.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -23346,6 +23346,14 @@
    "source": "rule"
   },
   "local_agent/policy/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/tools/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

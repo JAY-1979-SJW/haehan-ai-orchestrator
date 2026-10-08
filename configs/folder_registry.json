@@ -1,6 +1,6 @@
 {
  "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
- "count": 353,
+ "count": 354,
  "folders": [
   {
    "path": ".",
@@ -2821,6 +2821,14 @@
   },
   {
    "path": "local_agent/policy",
+   "purpose": "x",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/tools",
    "purpose": "x",
    "kind": "기능",
    "status": "approved",

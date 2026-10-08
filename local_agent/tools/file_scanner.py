@@ -96,13 +96,11 @@ EXCLUDED_DIRS: frozenset[str] = frozenset(
     }
 )
 
-_BLOCKED_PATH_PREFIXES: tuple[str, ...] = (
-    "c:/windows",
-    "c:/program files",
-    "c:/program files (x86)",
-    "c:/programdata",
-    "c:/$recycle.bin",
-    "c:/system volume information",
+# 시스템 드라이브(기본 C:)의 보호 폴더 — 드라이브 문자를 문서에 박지 않고 환경변수에서 읽는다(없으면 C:)
+_SYSTEM_DRIVE = os.environ.get("SystemDrive", "C:").lower()
+_BLOCKED_PATH_PREFIXES: tuple[str, ...] = tuple(
+    f"{_SYSTEM_DRIVE}/{name}"
+    for name in ("windows", "program files", "program files (x86)", "programdata", "$recycle.bin", "system volume information")
 )
 
 _DRIVE_ROOT_PATTERN = re.compile(r"^[A-Za-z]:[\\/]?$")
