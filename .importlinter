@@ -541,9 +541,9 @@ forbidden_modules =
     local_agent.browser_realtime_watcher
     local_agent.browser_session_store
     local_agent.browser_task_handler
-    local_agent.browser_websocket_bridge
-    local_agent.browser_websocket_handshake
-    local_agent.browser_websocket_schema
+    local_agent.browser.bridge.browser_websocket_bridge
+    local_agent.browser.bridge.browser_websocket_handshake
+    local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
     local_agent.desktop_config
@@ -1664,9 +1664,9 @@ forbidden_modules =
     local_agent.browser_readonly_runtime
     local_agent.browser_realtime_watcher
     local_agent.browser_task_handler
-    local_agent.browser_websocket_bridge
-    local_agent.browser_websocket_handshake
-    local_agent.browser_websocket_schema
+    local_agent.browser.bridge.browser_websocket_bridge
+    local_agent.browser.bridge.browser_websocket_handshake
+    local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
     local_agent.desktop_config
@@ -2719,9 +2719,9 @@ forbidden_modules =
     local_agent.browser_realtime_watcher
     local_agent.browser_session_store
     local_agent.browser_task_handler
-    local_agent.browser_websocket_bridge
-    local_agent.browser_websocket_handshake
-    local_agent.browser_websocket_schema
+    local_agent.browser.bridge.browser_websocket_bridge
+    local_agent.browser.bridge.browser_websocket_handshake
+    local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
     local_agent.desktop_config
@@ -3815,9 +3815,9 @@ forbidden_modules =
     local_agent.browser_readonly_runtime
     local_agent.browser_realtime_watcher
     local_agent.browser_task_handler
-    local_agent.browser_websocket_bridge
-    local_agent.browser_websocket_handshake
-    local_agent.browser_websocket_schema
+    local_agent.browser.bridge.browser_websocket_bridge
+    local_agent.browser.bridge.browser_websocket_handshake
+    local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
     local_agent.desktop_config
@@ -4977,9 +4977,9 @@ forbidden_modules =
     local_agent.browser_readonly_runtime
     local_agent.browser_realtime_watcher
     local_agent.browser_task_handler
-    local_agent.browser_websocket_bridge
-    local_agent.browser_websocket_handshake
-    local_agent.browser_websocket_schema
+    local_agent.browser.bridge.browser_websocket_bridge
+    local_agent.browser.bridge.browser_websocket_handshake
+    local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
     local_agent.desktop_config
@@ -5264,9 +5264,9 @@ forbidden_modules =
     local_agent.browser_readonly_runtime
     local_agent.browser_realtime_watcher
     local_agent.browser_task_handler
-    local_agent.browser_websocket_bridge
-    local_agent.browser_websocket_handshake
-    local_agent.browser_websocket_schema
+    local_agent.browser.bridge.browser_websocket_bridge
+    local_agent.browser.bridge.browser_websocket_handshake
+    local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
     local_agent.desktop_config
@@ -5755,9 +5755,9 @@ forbidden_modules =
     local_agent.browser_readonly_runtime
     local_agent.browser_realtime_watcher
     local_agent.browser_task_handler
-    local_agent.browser_websocket_bridge
-    local_agent.browser_websocket_handshake
-    local_agent.browser_websocket_schema
+    local_agent.browser.bridge.browser_websocket_bridge
+    local_agent.browser.bridge.browser_websocket_handshake
+    local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
     local_agent.desktop_config
@@ -6435,9 +6435,9 @@ source_modules =
     local_agent.browser_readonly_runtime
     local_agent.browser_realtime_watcher
     local_agent.browser_task_handler
-    local_agent.browser_websocket_bridge
-    local_agent.browser_websocket_handshake
-    local_agent.browser_websocket_schema
+    local_agent.browser.bridge.browser_websocket_bridge
+    local_agent.browser.bridge.browser_websocket_handshake
+    local_agent.browser.bridge.browser_websocket_schema
     local_agent.cdp_attach
     local_agent.connection_diagnostics
     local_agent.desktop_config

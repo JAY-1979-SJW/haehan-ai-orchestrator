@@ -132,7 +132,7 @@ class TestWebSocketHandshakeScopeRule:
 
     def test_agent_hello_message_lacks_organization_id(self):
         """AgentHelloMessage에 organization_id가 구현되어 있음 (Gap G9 해소)"""
-        from local_agent.browser_websocket_handshake import AgentHelloMessage
+        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
             agent_id="agent-1",
@@ -146,7 +146,7 @@ class TestWebSocketHandshakeScopeRule:
 
     def test_agent_hello_message_lacks_registration_user_id(self):
         """AgentHelloMessage에 registration_user_id가 구현되어 있음 (Gap G9 해소)"""
-        from local_agent.browser_websocket_handshake import AgentHelloMessage
+        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
             agent_id="agent-1",
@@ -162,7 +162,7 @@ class TestWebSocketHandshakeScopeRule:
 
     def test_server_policy_message_lacks_organization_id(self):
         """ServerPolicyMessage에 organization_id가 구현되어 있음 (Gap G9 해소)"""
-        from local_agent.browser_websocket_handshake import ServerPolicyMessage
+        from local_agent.browser.bridge.browser_websocket_handshake import ServerPolicyMessage
 
         msg = ServerPolicyMessage()
         msg_dict = msg.to_dict()
@@ -176,7 +176,7 @@ class TestWebSocketSafeDict:
 
     def test_safe_dict_removes_approval_token(self):
         """safe_dict가 approval_token 제거"""
-        from local_agent.browser_websocket_handshake import safe_dict
+        from local_agent.browser.bridge.browser_websocket_handshake import safe_dict
 
         data = {"agent_id": "agent-1", "approval_token": "secret-token-xyz", "safe_field": "value"}
 
@@ -186,7 +186,7 @@ class TestWebSocketSafeDict:
 
     def test_safe_dict_removes_final_approval_token(self):
         """safe_dict가 final_approval_token 제거"""
-        from local_agent.browser_websocket_handshake import safe_dict
+        from local_agent.browser.bridge.browser_websocket_handshake import safe_dict
 
         data = {"agent_id": "agent-1", "final_approval_token": "final-secret", "other": "ok"}
 
@@ -196,7 +196,7 @@ class TestWebSocketSafeDict:
 
     def test_safe_dict_removes_token_hash(self):
         """safe_dict가 token_hash 제거"""
-        from local_agent.browser_websocket_handshake import safe_dict
+        from local_agent.browser.bridge.browser_websocket_handshake import safe_dict
 
         data = {"token_hash": "sha256:...", "safe": "value"}
 
@@ -205,7 +205,7 @@ class TestWebSocketSafeDict:
 
     def test_safe_dict_removes_password(self):
         """safe_dict가 password 제거"""
-        from local_agent.browser_websocket_handshake import safe_dict
+        from local_agent.browser.bridge.browser_websocket_handshake import safe_dict
 
         data = {"password": "secret123", "otp": "123456", "safe": "value"}
 
@@ -216,7 +216,7 @@ class TestWebSocketSafeDict:
 
     def test_safe_dict_removes_raw_hostname(self):
         """safe_dict가 raw hostname 제거"""
-        from local_agent.browser_websocket_handshake import safe_dict
+        from local_agent.browser.bridge.browser_websocket_handshake import safe_dict
 
         data = {
             "hostname": "my-computer.local",
@@ -230,7 +230,7 @@ class TestWebSocketSafeDict:
 
     def test_safe_dict_removes_raw_username(self):
         """safe_dict가 raw username 제거"""
-        from local_agent.browser_websocket_handshake import safe_dict
+        from local_agent.browser.bridge.browser_websocket_handshake import safe_dict
 
         data = {
             "username": "john.doe",
@@ -245,7 +245,7 @@ class TestWebSocketSafeDict:
 
     def test_safe_dict_removes_raw_ip(self):
         """safe_dict가 raw IP address 제거"""
-        from local_agent.browser_websocket_handshake import safe_dict
+        from local_agent.browser.bridge.browser_websocket_handshake import safe_dict
 
         data = {"ip_address": "192.168.1.100", "safe": "ok"}
 
@@ -254,7 +254,7 @@ class TestWebSocketSafeDict:
 
     def test_safe_dict_keeps_safe_fields(self):
         """safe_dict가 안전한 필드는 유지"""
-        from local_agent.browser_websocket_handshake import safe_dict
+        from local_agent.browser.bridge.browser_websocket_handshake import safe_dict
 
         data = {
             "agent_id": "agent-123",

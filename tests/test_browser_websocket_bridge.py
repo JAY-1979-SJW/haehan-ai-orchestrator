@@ -26,13 +26,13 @@ from local_agent.browser.approval.browser_approval_verifier import (
     BrowserApprovalStore,
     BrowserApprovalVerifier,
 )
-from local_agent.browser_action_contract import ExecutionResult
-from local_agent.browser_task_handler import BrowserTaskHandler
-from local_agent.browser_websocket_bridge import (
+from local_agent.browser.bridge.browser_websocket_bridge import (
     BrowserLocalWebSocketBridge,
     MockResultCallbackCollector,
 )
-from local_agent.browser_websocket_schema import RESULT_DATA_FORBIDDEN_KEYS
+from local_agent.browser.bridge.browser_websocket_schema import RESULT_DATA_FORBIDDEN_KEYS
+from local_agent.browser_action_contract import ExecutionResult
+from local_agent.browser_task_handler import BrowserTaskHandler
 from local_agent.server_action_adapter import ServerActionAdapter
 
 # ---------------------------------------------------------------------------
@@ -330,7 +330,7 @@ class TestBridgeContract(unittest.TestCase):
 
     def test_bridge_never_connects_to_real_websocket(self):
         """Executable code (not docstrings) must not call websockets/aiohttp ws clients."""
-        from local_agent import browser_websocket_bridge as bwb
+        from local_agent.browser.bridge import browser_websocket_bridge as bwb
 
         code = self._strip_strings_and_comments(inspect.getsource(bwb))
         for forbidden in ["websockets.connect", "aiohttp.ClientSession", "websockets.client"]:
@@ -338,7 +338,7 @@ class TestBridgeContract(unittest.TestCase):
 
     def test_bridge_uses_schema_before_handler(self):
         """Schema validation MUST appear before handler dispatch in source order."""
-        from local_agent import browser_websocket_bridge as bwb
+        from local_agent.browser.bridge import browser_websocket_bridge as bwb
 
         src = inspect.getsource(bwb)
         idx_schema = src.find("BrowserWebSocketTaskPayloadSchema.from_dict(")
@@ -349,7 +349,7 @@ class TestBridgeContract(unittest.TestCase):
 
     def test_bridge_uses_task_handler_not_controller_directly(self):
         """Executable code must not reference BrowserController."""
-        from local_agent import browser_websocket_bridge as bwb
+        from local_agent.browser.bridge import browser_websocket_bridge as bwb
 
         code = self._strip_strings_and_comments(inspect.getsource(bwb))
         self.assertNotIn("BrowserController", code, "Bridge must not call BrowserController directly")

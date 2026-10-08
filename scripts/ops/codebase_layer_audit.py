@@ -95,7 +95,7 @@ PYDANTIC_SCHEMA_MODULES = (
     "ai_orchestrator.browser_tool.unified_browser_task_schema",
     "ai_orchestrator.server.task_queue_schema",
     "ai_orchestrator.agent_hub.action_schemas",
-    "local_agent.browser_websocket_schema",
+    "local_agent.browser.bridge.browser_websocket_schema",
 )  # scripts.archive.misc.agent_models 는 2026-10-07 scripts/archive/misc 로 보관(가져다 쓰는 곳 없음) — 목록에서 뺌
 
 

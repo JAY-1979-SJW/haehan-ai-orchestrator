@@ -413,7 +413,7 @@ class TestCompatibility:
         assert task["state"] == STATE_WAITING_FOR_USER
 
     def test_ws_schema_no_conflict_with_browser_websocket_schema(self):
-        from local_agent.browser_websocket_schema import VALID_TASK_STATUS
+        from local_agent.browser.bridge.browser_websocket_schema import VALID_TASK_STATUS
 
         # browser_websocket_schema의 task status와 user_present status는 별개 enum
         assert "USER_CONFIRMED" not in VALID_TASK_STATUS

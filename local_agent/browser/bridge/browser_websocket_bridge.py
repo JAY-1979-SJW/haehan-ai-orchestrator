@@ -34,18 +34,13 @@ from local_agent.browser.approval.browser_audit_contract import (
     build_browser_result_audit_event,
     build_browser_task_audit_event,
 )
-
-from .browser_task_handler import (
-    BrowserTaskHandler,
-    BrowserTaskPayload,
-    BrowserTaskResult,
-)
-from .browser_websocket_schema import (
+from local_agent.browser.bridge.browser_websocket_schema import (
     RESULT_DATA_FORBIDDEN_KEYS,
     VALID_TASK_STATUS,
     BrowserWebSocketTaskPayloadSchema,
     BrowserWebSocketTaskResultSchema,
 )
+from local_agent.browser_task_handler import BrowserTaskHandler, BrowserTaskPayload, BrowserTaskResult
 
 logger = logging.getLogger(__name__)
 

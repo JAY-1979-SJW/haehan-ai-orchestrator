@@ -19,7 +19,7 @@ concern IS actually covered elsewhere: see `TestStatusVocabulary` in
 `test_browser_websocket_payload_schema.py`, which asserts against the real schema.
 """
 
-from local_agent.browser_websocket_schema import (
+from local_agent.browser.bridge.browser_websocket_schema import (
     ALLOWED_ACTION_TYPES,
     BLOCKED_ACTION_TYPES,
     RESULT_DATA_ALLOWED_KEYS,

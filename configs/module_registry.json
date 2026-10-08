@@ -7041,7 +7041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_websocket_bridge.py": {
+  "local_agent/browser/bridge/browser_websocket_bridge.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7049,7 +7049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_websocket_handshake.py": {
+  "local_agent/browser/bridge/browser_websocket_handshake.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7057,7 +7057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_websocket_schema.py": {
+  "local_agent/browser/bridge/browser_websocket_schema.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -23362,6 +23362,14 @@
    "source": "rule"
   },
   "local_agent/browser/approval/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/browser/bridge/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
