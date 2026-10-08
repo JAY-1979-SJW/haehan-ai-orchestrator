@@ -22337,7 +22337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/_proc.py": {
+  "scripts/common/no_window.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
