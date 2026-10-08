@@ -6,7 +6,7 @@
   3. 저장
 
 그 다음:
-  python scripts/ops/inspect_excel.py data/견적서_기준템플릿.xlsx
+  python scripts/ops/office/inspect_excel.py data/견적서_기준템플릿.xlsx --layout
 로 서식 값을 추출하면 quote_generator.py 에 반영 가능.
 """
 
@@ -297,5 +297,5 @@ print()
 print("다음 단계:")
 print("  1. 파일을 엑셀에서 열어 열너비/행높이/테두리/폰트 등 원하는 대로 조정")
 print("  2. 저장")
-print("  3. python scripts/ops/inspect_excel.py data/견적서_기준템플릿.xlsx")
+print("  3. python scripts/ops/office/inspect_excel.py data/견적서_기준템플릿.xlsx --layout")
 print("  4. 출력된 값을 quote_generator.py 에 반영")
