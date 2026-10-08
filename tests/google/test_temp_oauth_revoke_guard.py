@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-TARGET = Path(__file__).resolve().parents[1] / "scripts" / "archive" / "one_off" / "temp_oauth_revoke.py"
+TARGET = Path(__file__).resolve().parents[2] / "scripts" / "archive" / "one_off" / "temp_oauth_revoke.py"
 ENV_KEYS = ("YOUTUBE_CLIENT_SECRETS_FILE", "YOUTUBE_OAUTH_TOKEN_FILE")
 
 

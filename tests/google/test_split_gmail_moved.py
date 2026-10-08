@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-BEFORE = json.loads((Path(__file__).parent / "data" / "split_w3c_before.json").read_text(encoding="utf-8"))
+BEFORE = json.loads((Path(__file__).parent.parent / "data" / "split_w3c_before.json").read_text(encoding="utf-8"))
 # gmail_router 옛 경로 shim 은 정리됨(SHIM_CLEANUP_2) — 새 경로만 확인한다
 
 

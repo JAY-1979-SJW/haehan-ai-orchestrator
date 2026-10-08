@@ -14193,7 +14193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_autowork_frontdoor_operation_checklist_20260517.py": {
+  "tests/app_contracts/test_autowork_frontdoor_operation_checklist_20260517.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -15393,7 +15393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_email_task_approval.py": {
+  "tests/approval/test_email_task_approval.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16769,7 +16769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_log_analyzer.py": {
+  "tests/common/test_log_analyzer.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16777,7 +16777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_log_masking.py": {
+  "tests/common/test_log_masking.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16785,7 +16785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_logger.py": {
+  "tests/common/test_logger.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16897,7 +16897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_mcp_naver_login_registry.py": {
+  "tests/naver_auth/test_mcp_naver_login_registry.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver",
@@ -17305,7 +17305,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_naver_shopping_search_fixes.py": {
+  "tests/naver_search/test_naver_shopping_search_fixes.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_search",
@@ -17489,7 +17489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_prewrite_capability_check_blog_gate.py": {
+  "tests/naver_blog/test_prewrite_capability_check_blog_gate.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -18057,7 +18057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_standard_ui_package.py": {
+  "tests/common/test_standard_ui_package.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18105,7 +18105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_telegram_notifier.py": {
+  "tests/common/test_telegram_notifier.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -18697,7 +18697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_manual_tests_never_touch_browser_on_collect.py": {
+  "tests/quality_gates/test_manual_tests_never_touch_browser_on_collect.py": {
    "layer": "L11",
    "role": "test",
    "domain": "browser",
@@ -18721,7 +18721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_collect_google_passwords_list_safe.py": {
+  "tests/google/test_collect_google_passwords_list_safe.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",
@@ -18777,7 +18777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_temp_oauth_revoke_guard.py": {
+  "tests/google/test_temp_oauth_revoke_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19633,7 +19633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_split_gmail_moved.py": {
+  "tests/google/test_split_gmail_moved.py": {
    "layer": "L11",
    "role": "test",
    "domain": "google",

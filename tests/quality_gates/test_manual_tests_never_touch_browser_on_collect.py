@@ -11,7 +11,7 @@ import ast
 import importlib.util
 from pathlib import Path
 
-MANUAL = Path(__file__).resolve().parent / "integration" / "manual"
+MANUAL = Path(__file__).resolve().parent.parent / "integration" / "manual"
 BROWSER_CALLS = ("get_page", "open_page", "goto", "connect_over_cdp", "sync_playwright", "close(")
 
 
