@@ -7057,7 +7057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/app_realtime_check.py": {
+  "scripts/ops/runtime/app_realtime_check.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -7385,7 +7385,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/deploy_dry_run.py": {
+  "scripts/ops/deploy/deploy_dry_run.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -7399,22 +7399,6 @@
    "domain": "common",
    "reason": "근거 부족 — 기본값",
    "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/ops/e2e_deep_scan.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/e2e_full_report.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
    "source": "rule"
   },
   "scripts/eum/__init__.py": {
@@ -9353,7 +9337,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/ops/check_playwright_bootstrap.py": {
+  "scripts/ops/verify/check_playwright_bootstrap.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -9369,7 +9353,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/create_site_profile.py": {
+  "scripts/site_engine/create_site_profile.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -9425,7 +9409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/run_playwright_smoke.py": {
+  "scripts/ops/smoke/run_playwright_smoke.py": {
    "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -9433,7 +9417,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/ops/run_security_install_discovery.py": {
+  "scripts/ops/smoke/run_security_install_discovery.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -9441,7 +9425,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/run_universal_ai_real_site_smoke.py": {
+  "scripts/ops/smoke/run_universal_ai_real_site_smoke.py": {
    "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -9465,7 +9449,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/validate_site_profile.py": {
+  "scripts/site_engine/validate_site_profile.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -11681,7 +11665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/agent_dispatch_e2e.py": {
+  "scripts/ops/smoke/agent_dispatch_e2e.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11689,7 +11673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/agent_usage.py": {
+  "scripts/ops/hooks/agent_usage.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11697,15 +11681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/ai_check_a4.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/ai_code_review_gate.py": {
+  "scripts/ops/hooks/ai_code_review_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11729,7 +11705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_5050_legacy_characterization.py": {
+  "scripts/ops/audits/app/audit_ai_agent_app_structure_design_baseline.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11737,7 +11713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_5050_legacy_fastapi_migration_readiness.py": {
+  "scripts/ops/audits/app/audit_ai_agent_ui_structure_blueprint.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11745,7 +11721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_5050_phase1_8400_contract_freeze.py": {
+  "scripts/ops/audits/app/audit_ai_work_session_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11753,7 +11729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_5050_phase1b_adapter_contract_detail.py": {
+  "scripts/ops/audits/app/audit_app_api_contract_endpoints_prep.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11761,47 +11737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_5050_phase1d_adapter_dry_run_compat.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_ai_agent_app_structure_design_baseline.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_ai_agent_ui_structure_blueprint.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_ai_work_session_gate.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_app_api_contract_endpoints_prep.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_app_api_readonly_endpoints_browser_smoke.py": {
+  "scripts/ops/audits/app/audit_app_api_readonly_endpoints_browser_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -11809,7 +11745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_api_readonly_endpoints_implementation.py": {
+  "scripts/ops/audits/app/audit_app_api_readonly_endpoints_implementation.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11817,7 +11753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_api_readonly_endpoints_implementation_plan.py": {
+  "scripts/ops/audits/app/audit_app_api_readonly_endpoints_implementation_plan.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11825,7 +11761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_baseline_contract.py": {
+  "scripts/ops/audits/app/audit_app_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11833,7 +11769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_construction_schedule.py": {
+  "scripts/ops/audits/app/audit_app_construction_schedule.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11841,7 +11777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_development_standard.py": {
+  "scripts/ops/audits/app/audit_app_development_standard.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11849,7 +11785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_foundation_governance.py": {
+  "scripts/ops/audits/app/audit_app_foundation_governance.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11857,7 +11793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_foundation_mvp_design.py": {
+  "scripts/ops/audits/app/audit_app_foundation_mvp_design.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11865,7 +11801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_foundation_mvp_prep.py": {
+  "scripts/ops/audits/app/audit_app_foundation_mvp_prep.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11873,7 +11809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_structure_contract.py": {
+  "scripts/ops/audits/app/audit_app_structure_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11881,7 +11817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_task_queue_readonly_list_polish.py": {
+  "scripts/ops/audits/app/audit_app_task_queue_readonly_list_polish.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11889,7 +11825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_test_baseline_current_contract_sync.py": {
+  "scripts/ops/audits/app/audit_app_test_baseline_current_contract_sync.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11897,7 +11833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_ui_readonly_backend_status_cards.py": {
+  "scripts/ops/audits/app/audit_app_ui_readonly_backend_status_cards.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11905,7 +11841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py": {
+  "scripts/ops/audits/app/audit_app_ui_readonly_status_cards_api_bind.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11913,7 +11849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_ui_shell_browser_smoke.py": {
+  "scripts/ops/audits/app/audit_app_ui_shell_browser_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -11921,7 +11857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_ui_shell_readonly_api_wiring.py": {
+  "scripts/ops/audits/app/audit_app_ui_shell_readonly_api_wiring.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11929,7 +11865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_app_ui_shell_skeleton.py": {
+  "scripts/ops/audits/app/audit_app_ui_shell_skeleton.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11937,7 +11873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_approval_flow_baseline_contract.py": {
+  "scripts/ops/audits/app/audit_approval_flow_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11945,7 +11881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_authed_local_agent_dispatch_dry_run.py": {
+  "scripts/ops/audits/agent/audit_authed_local_agent_dispatch_dry_run.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -11953,7 +11889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_autowork_frontdoor_operation.py": {
+  "scripts/ops/audits/backend/audit_autowork_frontdoor_operation.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11961,7 +11897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_core_baseline_contract.py": {
+  "scripts/ops/audits/backend/audit_backend_core_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11969,7 +11905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_operation_final_closeout.py": {
+  "scripts/ops/audits/backend/audit_backend_operation_final_closeout.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11977,7 +11913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_operation_stabilization.py": {
+  "scripts/ops/audits/backend/audit_backend_operation_stabilization.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11985,7 +11921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_premium_api_contract.py": {
+  "scripts/ops/audits/backend/audit_backend_premium_api_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11993,7 +11929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_premium_audit_evidence.py": {
+  "scripts/ops/audits/backend/audit_backend_premium_audit_evidence.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12001,7 +11937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_premium_domain_core.py": {
+  "scripts/ops/audits/backend/audit_backend_premium_domain_core.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12009,7 +11945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_premium_endpoint_inventory.py": {
+  "scripts/ops/audits/backend/audit_backend_premium_endpoint_inventory.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12017,7 +11953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_premium_external_app_bridge.py": {
+  "scripts/ops/audits/backend/audit_backend_premium_external_app_bridge.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12025,7 +11961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_premium_external_app_hold.py": {
+  "scripts/ops/audits/backend/audit_backend_premium_external_app_hold.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12033,7 +11969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_premium_integrated_runner.py": {
+  "scripts/ops/audits/backend/audit_backend_premium_integrated_runner.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12041,7 +11977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_premium_policy_layer.py": {
+  "scripts/ops/audits/backend/audit_backend_premium_policy_layer.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12049,7 +11985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_premium_security_boundary.py": {
+  "scripts/ops/audits/backend/audit_backend_premium_security_boundary.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12057,7 +11993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_premium_service_layer.py": {
+  "scripts/ops/audits/backend/audit_backend_premium_service_layer.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12065,7 +12001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_runtime_contract.py": {
+  "scripts/ops/audits/backend/audit_backend_runtime_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12073,7 +12009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_backend_runtime_storage_persistence.py": {
+  "scripts/ops/audits/backend/audit_backend_runtime_storage_persistence.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12081,7 +12017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_cdp_tab_lifecycle_gate.py": {
+  "scripts/ops/repo_gates/audit_cdp_tab_lifecycle_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12089,7 +12025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_common_engine_commercialization_baseline.py": {
+  "scripts/ops/audits/app/audit_common_engine_commercialization_baseline.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12097,7 +12033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_common_tool_runtime.py": {
+  "scripts/ops/audits/agent/audit_common_tool_runtime.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12105,7 +12041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_common_tool_runtime_baseline_contract.py": {
+  "scripts/ops/audits/agent/audit_common_tool_runtime_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12113,7 +12049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py": {
+  "scripts/ops/audits/agent/audit_desktop_auth_runtime_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12121,7 +12057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_domain_room_allocation.py": {
+  "scripts/ops/audits/app/audit_domain_room_allocation.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12129,7 +12065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_external_site_canonical_registry.py": {
+  "scripts/ops/audits/app/audit_external_site_canonical_registry.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12169,7 +12105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_automation_baseline_contract.py": {
+  "scripts/ops/audits/google/audit_google_automation_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12177,7 +12113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_cloud_action_policy_baseline_contract.py": {
+  "scripts/ops/audits/google/audit_google_cloud_action_policy_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12185,7 +12121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_cloud_module_baseline_contract.py": {
+  "scripts/ops/audits/google/audit_google_cloud_module_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12193,7 +12129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_cloud_readonly_local_browser_dryrun.py": {
+  "scripts/ops/audits/google/audit_google_cloud_readonly_local_browser_dryrun.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12201,7 +12137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_cloud_router_compatibility.py": {
+  "scripts/ops/audits/google/audit_google_cloud_router_compatibility.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12209,7 +12145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_domain_module_boundaries.py": {
+  "scripts/ops/audits/google/audit_google_domain_module_boundaries.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12225,7 +12161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_home_login_gate.py": {
+  "scripts/ops/audits/google/audit_google_home_login_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12233,7 +12169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_live_input_representative.py": {
+  "scripts/ops/audits/google/audit_google_live_input_representative.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12241,7 +12177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_prefill_maturity.py": {
+  "scripts/ops/audits/google/audit_google_prefill_maturity.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12249,7 +12185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_workspace_module_baseline_contract.py": {
+  "scripts/ops/audits/google/audit_google_workspace_module_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12257,7 +12193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_workspace_router_compatibility.py": {
+  "scripts/ops/audits/google/audit_google_workspace_router_compatibility.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12265,7 +12201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_haehan_single_exe_mode_consolidation_spec.py": {
+  "scripts/ops/audits/agent/audit_haehan_single_exe_mode_consolidation_spec.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12273,7 +12209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_kit_gate.py": {
+  "scripts/ops/audits/backend/audit_legacy_app_runtime_cleanup.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12281,7 +12217,63 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_legacy_app_runtime_cleanup.py": {
+  "scripts/ops/audits/agent/audit_local_agent_connection_recovery_baseline.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "local_agent",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audits/agent/audit_local_agent_e2e_baseline_contract.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "local_agent",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "local_agent",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audits/agent/audit_local_agent_gui_ux_design_spec.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "local_agent",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audits/agent/audit_local_agent_gui_ux_design_spec_ai_chat_amend.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "local_agent",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audits/agent/audit_local_agent_ip_allowlist_policy.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "local_agent",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audits/agent/audit_local_agent_user_field_test.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "local_agent",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audits/agent/audit_local_desktop_agent_connection.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12289,63 +12281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_local_agent_connection_recovery_baseline.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "local_agent",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_local_agent_e2e_baseline_contract.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "local_agent",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_local_agent_e2e_flow_contract.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "local_agent",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_local_agent_gui_ux_design_spec.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "local_agent",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_local_agent_gui_ux_design_spec_ai_chat_amend.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "local_agent",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_local_agent_ip_allowlist_policy.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "local_agent",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_local_agent_user_field_test.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "local_agent",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_local_desktop_agent_connection.py": {
+  "scripts/ops/audits/agent/audit_mcp_gateway_baseline.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12353,7 +12289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_mcp_gateway_baseline.py": {
+  "scripts/ops/audits/app/audit_module_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12361,15 +12297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_module_baseline_contract.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_module_boundaries.py": {
+  "scripts/ops/audits/app/audit_module_boundaries.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12465,7 +12393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_playwright_ai_baseline_contract.py": {
+  "scripts/ops/audits/agent/audit_playwright_ai_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12473,7 +12401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_post_tasks_dry_run_flag_implementation.py": {
+  "scripts/ops/audits/backend/audit_post_tasks_dry_run_flag_implementation.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12481,7 +12409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_post_tasks_medium_approve_gate_preflight.py": {
+  "scripts/ops/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12489,7 +12417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_post_tasks_medium_isolation_smoke.py": {
+  "scripts/ops/audits/backend/audit_post_tasks_medium_isolation_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12497,7 +12425,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_post_tasks_side_effect_gate_design.py": {
+  "scripts/ops/audits/backend/audit_post_tasks_side_effect_gate_design.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12505,7 +12433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_root_legacy_scripts.py": {
+  "scripts/ops/repo_gates/audit_root_legacy_scripts.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12513,7 +12441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_runtime_storage_bind_mount_design.py": {
+  "scripts/ops/audits/backend/audit_runtime_storage_bind_mount_design.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12521,7 +12449,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_shared_warehouse_policy.py": {
+  "scripts/ops/audits/app/audit_shared_warehouse_policy.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12529,7 +12457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py": {
+  "scripts/ops/audits/app/audit_site_sso_subdomain_runtime_baseline.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12537,7 +12465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_site_work_function_baseline.py": {
+  "scripts/ops/audits/app/audit_site_work_function_baseline.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12545,7 +12473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_standard_ui_package.py": {
+  "scripts/ops/audits/app/audit_standard_ui_package.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12553,7 +12481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_standard_workflow_contract.py": {
+  "scripts/ops/audits/app/audit_standard_workflow_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12561,7 +12489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_subdomain_dns_routing_foundation.py": {
+  "scripts/ops/audits/app/audit_vendor_design_system_sync.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12569,7 +12497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_vendor_design_system_sync.py": {
+  "scripts/ops/audits/backend/audit_web_project_provisioning_factory.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12577,23 +12505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_web_project_provisioning_factory.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/audit_windows_user_install_live_smoke.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/behavior_gate.py": {
+  "scripts/ops/hooks/behavior_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12625,7 +12537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/capability_check.py": {
+  "scripts/ops/hooks/capability_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12633,7 +12545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/cdp_click_watch.py": {
+  "scripts/ops/runtime/cdp_click_watch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12641,7 +12553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/check_a4.py": {
+  "scripts/ops/office/check_a4.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12649,15 +12561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/check_audit.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/check_excel_live.py": {
+  "scripts/ops/office/check_excel_live.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12673,7 +12577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/ci_layer_gate_check.py": {
+  "scripts/ops/repo_gates/ci_layer_gate_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12785,7 +12689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/codebase_layer_audit.py": {
+  "scripts/ops/repo_gates/codebase_layer_audit.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12793,7 +12697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/collect_google_passwords_list.py": {
+  "scripts/auth/collect_google_passwords_list.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12801,7 +12705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/create_quote_template.py": {
+  "scripts/ops/office/create_quote_template.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12809,7 +12713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/create_web_project_provisioning_plan.py": {
+  "scripts/ops/deploy/create_web_project_provisioning_plan.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12817,7 +12721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/deploy_diagnose.py": {
+  "scripts/ops/deploy/deploy_diagnose.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12825,7 +12729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/dry_run_approved_browser_instruction_api.py": {
+  "scripts/ops/verify/dry_run_approved_browser_instruction_api.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12833,7 +12737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/dry_run_local_agent_cdp_attach.py": {
+  "scripts/ops/verify/dry_run_local_agent_cdp_attach.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12841,7 +12745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/dry_run_manual_local_agent_browser_smoke.py": {
+  "scripts/ops/verify/dry_run_manual_local_agent_browser_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12849,7 +12753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/duplicate_code_check.py": {
+  "scripts/ops/hooks/duplicate_code_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12865,7 +12769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/fetch_gsc_queries.py": {
+  "scripts/google/search/fetch_gsc_queries.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12873,7 +12777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/generate_desc_templates_lighting.py": {
+  "scripts/mk_catalog/generate_desc_templates_lighting.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12889,7 +12793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/get_credential.py": {
+  "scripts/auth/get_credential.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12897,7 +12801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/guard_cdp_new_tab.py": {
+  "scripts/ops/hooks/guard_cdp_new_tab.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12905,7 +12809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/guard_force_cdp.py": {
+  "scripts/ops/hooks/guard_force_cdp.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12913,7 +12817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/guard_openai_call.py": {
+  "scripts/ops/hooks/guard_openai_call.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12921,7 +12825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/guard_youtube_upload.py": {
+  "scripts/ops/hooks/guard_youtube_upload.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "youtube",
@@ -12929,7 +12833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hook_check_a4.py": {
+  "scripts/ops/hooks/hook_check_a4.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12945,7 +12849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/inspect_excel.py": {
+  "scripts/ops/hooks/install_git_hooks.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12953,15 +12857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/install_git_hooks.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/live_approved_browser_instruction_smoke.py": {
+  "scripts/ops/smoke/live_approved_browser_instruction_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12977,7 +12873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/live_parallel_task_dispatch_smoke.py": {
+  "scripts/ops/smoke/live_parallel_task_dispatch_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12985,7 +12881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/log_watcher.py": {
+  "scripts/ops/runtime/log_watcher.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13009,7 +12905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/login_sites.py": {
+  "scripts/auth/login_sites.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13017,7 +12913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/make_constraints.py": {
+  "scripts/ops/devflow/make_constraints.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13025,7 +12921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/make_promo_video.py": {
+  "scripts/video/make_promo_video.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13041,7 +12937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/module_separation_gate.py": {
+  "scripts/ops/repo_gates/module_separation_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13065,7 +12961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/post_edit_fast_gate.py": {
+  "scripts/ops/hooks/post_edit_fast_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13073,7 +12969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/pre_change_dry_run.py": {
+  "scripts/ops/devflow/pre_change_dry_run.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13081,7 +12977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/pre_edit_dup_check.py": {
+  "scripts/ops/hooks/pre_edit_dup_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13089,7 +12985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/preflight.py": {
+  "scripts/ops/verify/preflight.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13097,7 +12993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/prewrite_capability_check.py": {
+  "scripts/ops/hooks/prewrite_capability_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13105,7 +13001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/record_promo_video.py": {
+  "scripts/video/record_promo_video.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13129,7 +13025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/ruff_new_only_gate.py": {
+  "scripts/ops/repo_gates/ruff_new_only_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13185,7 +13081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/selector_health_check.py": {
+  "scripts/ops/selector_health/selector_health_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13209,7 +13105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/session_guard.py": {
+  "scripts/ops/hooks/session_guard.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13217,7 +13113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/session_handoff.py": {
+  "scripts/ops/hooks/session_handoff.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13225,7 +13121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/session_probe.py": {
+  "scripts/ops/runtime/session_probe.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13233,7 +13129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_app_api_readonly_endpoints.py": {
+  "scripts/ops/audits/app/smoke_app_api_readonly_endpoints.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13241,7 +13137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_app_task_queue_readonly_list_polish.py": {
+  "scripts/ops/audits/app/smoke_app_task_queue_readonly_list_polish.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13249,7 +13145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_app_ui_shell_browser.py": {
+  "scripts/ops/audits/app/smoke_app_ui_shell_browser.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -13257,15 +13153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_app_ui_shell_readonly_api_wiring.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/smoke_local_desktop_agent_live_connection.py": {
+  "scripts/ops/smoke/smoke_local_desktop_agent_live_connection.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13313,7 +13201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke_public_local_agent_ws_from_user_ip.py": {
+  "scripts/ops/smoke/smoke_public_local_agent_ws_from_user_ip.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -13321,7 +13209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/stop_fast_verify.py": {
+  "scripts/ops/hooks/stop_fast_verify.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13329,7 +13217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/validate_common_operations_index.py": {
+  "scripts/ops/repo_gates/validate_common_operations_index.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13337,7 +13225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/validate_site_registry_baseline.py": {
+  "scripts/site_engine/validate_site_registry_baseline.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13345,7 +13233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/vendor_api_registry.py": {
+  "scripts/ops/hooks/vendor_api_registry.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13369,7 +13257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify_runtime_drift.py": {
+  "scripts/ops/runtime/verify_runtime_drift.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13377,7 +13265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/windows_auth_popup_monitor.py": {
+  "scripts/browser/popup/windows_auth_popup_monitor.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -13385,7 +13273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/worklog_realtime.py": {
+  "scripts/ops/hooks/worklog_realtime.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13393,7 +13281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/worktree_change_index.py": {
+  "scripts/ops/devflow/worktree_change_index.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13713,7 +13601,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/watch_log.py": {
+  "scripts/ops/runtime/watch_log.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -13994,46 +13882,6 @@
    "source": "rule"
   },
   "tests/integration/manual/test_wait_login.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_5050_legacy_characterization_20260517.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_5050_legacy_fastapi_migration_readiness_20260516.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_5050_phase1_8400_contract_freeze_20260517.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_5050_phase1b_adapter_contract_detail_20260517.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_5050_phase1d_adapter_dry_run_compat_20260517.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -19425,7 +19273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_api_contract_frontend_backend.py": {
+  "scripts/ops/repo_gates/audit_api_contract_frontend_backend.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19433,7 +19281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_r1_api_contract_gate.py": {
+  "scripts/ops/repo_gates/audit_r1_api_contract_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19633,7 +19481,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/make_shim.py": {
+  "scripts/ops/devflow/make_shim.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19641,7 +19489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/move_preflight.py": {
+  "scripts/ops/devflow/move_preflight.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19649,15 +19497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/run_impacted_tests.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/tool_home_gate.py": {
+  "scripts/ops/devflow/run_impacted_tests.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19689,7 +19529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/_dup_structure_hash.py": {
+  "scripts/ops/repo_gates/_dup_structure_hash.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19697,7 +19537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/dup_gate.py": {
+  "scripts/ops/repo_gates/dup_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19713,7 +19553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/root_calc_gate.py": {
+  "scripts/ops/repo_gates/root_calc_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -20161,14 +20001,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/flat_root_gate.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "tests/test_flat_root_gate.py": {
    "layer": "L11",
    "role": "test",
@@ -20201,7 +20033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/folder_gate.py": {
+  "scripts/ops/repo_gates/folder_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22377,7 +22209,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/ops/_proc.py": {
+  "scripts/common/no_window.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22385,15 +22217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_log_sensitive_scan.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/bundle_path_gate.py": {
+  "scripts/ops/repo_gates/bundle_path_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23641,7 +23465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/import_contracts_gen.py": {
+  "scripts/ops/repo_gates/import_contracts_gen.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23762,6 +23586,214 @@
    "source": "rule"
   },
   "tests/test_ref_seeds.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "hiworks_mail_reader.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "naver_mail",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "inbox_store.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "log_analyzer.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/ops/audits/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audits/agent/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "local_agent",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audits/app/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audits/backend/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audits/backend/audit_log_sensitive_scan.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/audits/google/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "google",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/deploy/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/devflow/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/devflow/merge_step_check.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/hooks/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/hooks/audit_kit_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/office/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/office/inspect_excel.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/repo_gates/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/repo_gates/flat_root_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/repo_gates/tool_home_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/runtime/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/smoke/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/verify/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/video/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "video",
+   "reason": "도메인(video) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "telegram_notifier.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_hook_check_a4_targets.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_inspect_excel.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",

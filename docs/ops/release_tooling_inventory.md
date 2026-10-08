@@ -57,7 +57,7 @@ in an explicit live validation stage.
 - `verify_agent_ws_auth.py`
 - `verify_live_agent_smoke.py`
 - `verify_live_task_dispatch.py`
-- `scripts/ops/deploy_dry_run.py`
+- `scripts/ops/deploy/deploy_dry_run.py`
 - `scripts/check_compose_safe.sh`
 - `scripts/ops/check_container_restart_counts.sh`
 - `scripts/ops/smoke_*live*.py`

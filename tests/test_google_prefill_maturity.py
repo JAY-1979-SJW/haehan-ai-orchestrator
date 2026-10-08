@@ -1,5 +1,5 @@
 from scripts.google.common import live_inputs
-from scripts.ops import audit_google_prefill_maturity as audit
+from scripts.ops.audits.google import audit_google_prefill_maturity as audit
 
 
 def test_google_live_input_coverage_tracks_strict_prefill_maturity() -> None:

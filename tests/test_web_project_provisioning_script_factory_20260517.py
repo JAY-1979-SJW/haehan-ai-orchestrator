@@ -17,8 +17,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-PROVISIONING_SCRIPT = ROOT / "scripts" / "ops" / "create_web_project_provisioning_plan.py"
-AUDIT_SCRIPT = ROOT / "scripts" / "ops" / "audit_web_project_provisioning_factory.py"
+PROVISIONING_SCRIPT = ROOT / "scripts" / "ops" / "deploy" / "create_web_project_provisioning_plan.py"
+AUDIT_SCRIPT = ROOT / "scripts" / "ops" / "audits" / "backend" / "audit_web_project_provisioning_factory.py"
 
 
 def _load_factory():
@@ -479,7 +479,7 @@ def test_compatible_with_frontdoor_checklist():
 
     spec = importlib.util.spec_from_file_location(
         "audit_autowork_frontdoor_operation",
-        ROOT / "scripts" / "ops" / "audit_autowork_frontdoor_operation.py",
+        ROOT / "scripts" / "ops" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py",
     )
     fd_mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(fd_mod)

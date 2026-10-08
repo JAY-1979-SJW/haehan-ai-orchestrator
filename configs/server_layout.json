@@ -1,0 +1,5 @@
+{
+ "_comment": "운영 서버(haehan-app)의 폴더 배치 — 서버 계약 감사(scripts/ops/audits/backend)가 '기대하는 값'으로 읽는다. 코드에 절대경로를 박지 않기 위한 설정(개발 기준서 STD-02).",
+ "app_root": "/home/ubuntu/app",
+ "orchestrator_root": "/home/ubuntu/apps/haehan-ai-orchestrator"
+}

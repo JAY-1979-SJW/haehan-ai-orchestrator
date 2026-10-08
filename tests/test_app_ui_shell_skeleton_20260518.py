@@ -220,7 +220,7 @@ def test_docker_compose_not_modified():
 
 
 def test_audit_verdict_ready_or_warn():
-    import scripts.ops.audit_app_ui_shell_skeleton as m
+    import scripts.ops.audits.app.audit_app_ui_shell_skeleton as m
 
     report = m.run_audit()
     assert report.verdict in (m.VERDICT_READY, m.VERDICT_WARN), f"verdict={report.verdict}"

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.ops.audit_ai_agent_ui_structure_blueprint import audit
+from scripts.ops.audits.app.audit_ai_agent_ui_structure_blueprint import audit
 
 
 def test_ai_agent_ui_structure_blueprint_audit_passes() -> None:

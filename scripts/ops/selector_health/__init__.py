@@ -1,8 +1,8 @@
 """셀렉터 헬스체크 패키지.
 
 사용:
-    python scripts/ops/selector_health_check.py naver_blog
-    python scripts/ops/selector_health_check.py --all
+    python scripts/ops/selector_health/selector_health_check.py naver_blog
+    python scripts/ops/selector_health/selector_health_check.py --all
 """
 
 from __future__ import annotations

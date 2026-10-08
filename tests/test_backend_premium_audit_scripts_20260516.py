@@ -16,7 +16,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS_OPS = ROOT / "scripts/ops"
+SCRIPTS_OPS = ROOT / "scripts/ops/audits/backend"
 
 AUDIT_SCRIPT_NAMES = [
     "audit_backend_premium_domain_core",
@@ -228,9 +228,9 @@ class TestIntegratedRunner:
     def test_runner_no_file_creation(self, tmp_path):
         mod = _load(RUNNER_NAME)
 
-        before = {p.name for p in (ROOT / "scripts/ops").iterdir()}
+        before = {p.name for p in SCRIPTS_OPS.iterdir()}
         mod.run_integrated_audit()
-        after = {p.name for p in (ROOT / "scripts/ops").iterdir()}
+        after = {p.name for p in SCRIPTS_OPS.iterdir()}
         new_files = after - before
         md_files = [f for f in new_files if f.endswith(".md") or f.endswith(".json")]
         assert not md_files, f"감사 중 파일 생성 감지: {md_files}"

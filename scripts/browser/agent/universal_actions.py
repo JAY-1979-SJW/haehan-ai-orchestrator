@@ -16,7 +16,7 @@ Playwright `page` 객체를 그대로 받아서 동작한다.
    `page.keyboard.type()` 을 재사용한다 — React 등 컨트롤드 인풋과의 호환성이
    `.value` 직접 대입보다 실제 키 입력 시뮬레이션 쪽이 안전하다.
 3. 이미 아는 사이트는 이 모듈을 거치지 않는다. CLAUDE.md 의
-   `scripts/ops/capability_check.py` 필수 실행 규칙으로 기존 사이트 모듈
+   `scripts/ops/hooks/capability_check.py` 필수 실행 규칙으로 기존 사이트 모듈
    (`scripts/naver/*` 등)이 있으면 그쪽을 우선 쓰고, 이 모듈은 처음 보는
    사이트에서만 폴백으로 쓴다.
 

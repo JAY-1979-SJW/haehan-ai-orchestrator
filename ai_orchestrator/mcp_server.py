@@ -740,7 +740,7 @@ async def list_tools() -> list[types.Tool]:
                 "페이지(또는 이 앱 자신의 창)의 접근성 트리 스냅샷을 찍습니다. "
                 "처음 방문하는 사이트(전용 사이트 모듈이 없는 사이트)에서 무엇을 클릭·입력할 수 "
                 "있는지 파악할 때 씁니다. 반환된 각 항목의 [ref] 값을 act_on_page에 그대로 넘기세요. "
-                "이미 아는 사이트는 이 도구 대신 scripts/ops/capability_check.py로 확인한 전용 "
+                "이미 아는 사이트는 이 도구 대신 scripts/ops/hooks/capability_check.py로 확인한 전용 "
                 "사이트 모듈을 먼저 쓰세요."
             ),
             inputSchema={

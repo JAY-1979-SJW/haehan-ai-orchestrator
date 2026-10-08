@@ -81,7 +81,7 @@ repository=DB / adapter=외부 연동.
 
 ## 6. 게이트 강제
 
-- `python scripts/ops/codebase_layer_audit.py` → FORBIDDEN_IMPORT / CIRCULAR_IMPORT / SECURITY_PATTERN = 0
+- `python scripts/ops/repo_gates/codebase_layer_audit.py` → FORBIDDEN_IMPORT / CIRCULAR_IMPORT / SECURITY_PATTERN = 0
 - `python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change` → errors = 0
 - (옵션 신설) **파일 크기 게이트** — 800 LOC+ 신규 유입 차단. 분리 완료 모듈은 화이트리스트.
 - (적용됨) 데스크톱 `LEAF_COUPLING` 게이트 — leaf 간 직접 import 차단. 백엔드 도메인에도 동형 규칙 확장 검토.

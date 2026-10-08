@@ -1,5 +1,5 @@
 {
- "_comment": "도구 집 게이트(G11) 규칙 — 정본: docs/architecture/TOOL_HOME_MAP.md. 도구 키워드(소문자 경로에 정규식)가 들어간 새 .py/.ts/.tsx 가 그 도구의 집(homes) 밖에 있으면 scripts/ops/tool_home_gate.py 가 차단한다. 기존 집 밖 파일은 configs/tool_home_baseline.json 으로 고정(늘리는 변경 금지, 줄이는 방향만). 도구는 구체적인 것이 먼저(첫 매칭이 이긴다).",
+ "_comment": "도구 집 게이트(G11) 규칙 — 정본: docs/architecture/TOOL_HOME_MAP.md. 도구 키워드(소문자 경로에 정규식)가 들어간 새 .py/.ts/.tsx 가 그 도구의 집(homes) 밖에 있으면 scripts/ops/repo_gates/tool_home_gate.py 가 차단한다. 기존 집 밖 파일은 configs/tool_home_baseline.json 으로 고정(늘리는 변경 금지, 줄이는 방향만). 도구는 구체적인 것이 먼저(첫 매칭이 이긴다).",
  "extensions": [".py", ".ts", ".tsx"],
  "tools": [
   {"name": "video", "keyword": "^scripts/video/", "homes": ["scripts/video/"]},
@@ -51,6 +51,6 @@
   {"prefix": "scripts/ops/selector_health/sites/", "reason": "플러그인 레지스트리 — 공용 틀 안의 사이트별 플러그인"},
   {"prefix": "scripts/ops/write_gates/", "reason": "플러그인 레지스트리 — 쓰기 게이트 플러그인"},
   {"prefix": "ai_orchestrator/browser_tool/", "reason": "기반 연동(T4)"},
-  {"prefix": "scripts/ops/guard_youtube_upload.py", "reason": ".claude 훅이 이 경로를 직접 호출 — 이동 금지"}
+  {"prefix": "scripts/ops/hooks/guard_youtube_upload.py", "reason": ".claude 훅이 이 경로를 직접 호출 — 이동 금지"}
  ]
 }

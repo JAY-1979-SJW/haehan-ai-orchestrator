@@ -1,4 +1,4 @@
-from scripts.ops import audit_module_baseline_contract as audit
+from scripts.ops.audits.app import audit_module_baseline_contract as audit
 
 
 def test_module_baseline_contract_passes():

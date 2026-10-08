@@ -1,4 +1,4 @@
-from scripts.ops import audit_common_engine_commercialization_baseline as audit
+from scripts.ops.audits.app import audit_common_engine_commercialization_baseline as audit
 
 
 def test_common_engine_commercialization_baseline_passes():

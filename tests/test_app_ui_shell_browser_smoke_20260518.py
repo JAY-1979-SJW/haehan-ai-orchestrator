@@ -187,6 +187,6 @@ def test_no_fetch_post_execute():
 # ── 12. audit verdict ─────────────────────────────────────────────────────────
 
 def test_audit_verdict_pass_or_warn():
-    import scripts.ops.audit_app_ui_shell_browser_smoke as m
+    import scripts.ops.audits.app.audit_app_ui_shell_browser_smoke as m
     report = m.run_audit()
     assert report.verdict in (m.VERDICT_PASS, m.VERDICT_WARN), f"verdict={report.verdict}"

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scripts.ops.validate_site_registry_baseline import validate_registry
+from scripts.site_engine.validate_site_registry_baseline import validate_registry
 
 
 def test_site_registry_baseline_passes() -> None:

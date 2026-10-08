@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 
-from scripts.ops.vendor_api_registry import (
+from scripts.ops.hooks.vendor_api_registry import (
     REGISTRY_FILE,
     STATUS_NOT_REGISTERED,
     VendorAPI,
@@ -37,13 +37,13 @@ def test_registry_file_exists_and_parses():
 
 def test_missing_file_is_not_fatal(tmp_path):
     """목록이 없어도 capability_check 가 죽으면 안 된다."""
-    from scripts.ops.vendor_api_registry import _load
+    from scripts.ops.hooks.vendor_api_registry import _load
 
     assert _load(tmp_path / "없음.json") == []
 
 
 def test_corrupt_file_is_not_fatal(tmp_path):
-    from scripts.ops.vendor_api_registry import _load
+    from scripts.ops.hooks.vendor_api_registry import _load
 
     f = tmp_path / "bad.json"
     f.write_text("{ 깨진", encoding="utf-8")
@@ -144,7 +144,7 @@ def test_capability_check_runs_vendor_section_first():
     """벤더 API 는 저장소 스캔보다 **먼저** 나와야 의미가 있다."""
     import inspect
 
-    from scripts.ops import capability_check as cc
+    from scripts.ops.hooks import capability_check as cc
 
     src = inspect.getsource(cc.run)
     assert "find_vendor_apis" in src

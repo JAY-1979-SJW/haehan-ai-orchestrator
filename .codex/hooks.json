@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\prewrite_capability_check.py\"",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\hooks\\prewrite_capability_check.py\"",
             "statusMessage": "기존 구현 조회 중 (capability-gate)..."
           }
         ]
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\install_git_hooks.py\"",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\hooks\\install_git_hooks.py\"",
             "statusMessage": "git hook 설치 중 (ruff + AI 검수)..."
           }
         ]
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\behavior_gate.py\"",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\hooks\\behavior_gate.py\"",
             "statusMessage": "행동 게이트 검사 중..."
           }
         ]

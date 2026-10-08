@@ -5,7 +5,7 @@
 4	40.4	로깅	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	CDP._reader	apps/marketing-standalone/connectors/cdp_helper.py:64	52	26
 5	39.8	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter.write_mixed_content	apps/marketing-standalone/connectors/naver_writer.py:270	74	33
 6	38.8	기타	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	_basic_seo_warnings, _basic_warnings	apps/marketing-standalone/core/content_rules.py:19	44	22
-7	38.6	경로/파일	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	scripts, tests	_load, _load_audit, _load_factory	scripts/ops/audit_web_project_provisioning_factory.py:22	43	35
+7	38.6	경로/파일	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	scripts, tests	_load, _load_audit, _load_factory	scripts/ops/audits/backend/audit_web_project_provisioning_factory.py:22	43	35
 8	38.0	기타	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	_ai_section_ratio	apps/marketing-standalone/core/content_rules.py:96	40	16
 9	37.6	기타	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	_risky_claims	apps/marketing-standalone/core/content_rules.py:78	38	16
 10	37.2	기타	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	seo_check	apps/marketing-standalone/core/content_rules.py:43	36	18
@@ -20,7 +20,7 @@
 19	35.0	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter.clear_body, BlogWriter.clear_title	apps/marketing-standalone/connectors/naver_writer.py:153	50	37
 20	35.0	웹/HTTP	haehan_common 이전 추천 (독립 코드)	유사	0.842	ai_orchestrator, tests	TestBuildWatcherJs.test_js_template_generated, test_real_capture_button_uses_distinct_class, test_real_capture_success_message_contains_required_phrases, test_step2_has_real_capture_button	ai_orchestrator/tests/test_admin_ui_capture_screenshot.py:352	29	19
 21	34.9	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	유사	0.816	apps, scripts	BlogWriter.publish	apps/marketing-standalone/connectors/naver_writer.py:537	54	25
-22	34.8	경로/파일	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	scripts, tests	_check_forbidden, _has_forbidden	scripts/ops/audit_backend_premium_audit_evidence.py:81	24	16
+22	34.8	경로/파일	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	scripts, tests	_check_forbidden, _has_forbidden	scripts/ops/audits/backend/audit_backend_premium_audit_evidence.py:81	24	16
 23	34.4	로깅	haehan_common 이전 추천 (독립 코드)	구조 동일	1.0	apps, scripts	CDP.send	apps/marketing-standalone/connectors/cdp_helper.py:91	22	11
 24	34.4	웹/HTTP	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	_write_content, _write_post_content	apps/marketing-standalone/connectors/naver_writer.py:624	47	21
 25	34.2	로깅	공용화 검토 (프로젝트 내부 모듈 의존성 분리 필요)	구조 동일	1.0	apps, scripts	BlogWriter._detect_blog_id	apps/marketing-standalone/connectors/naver_writer.py:109	46	20

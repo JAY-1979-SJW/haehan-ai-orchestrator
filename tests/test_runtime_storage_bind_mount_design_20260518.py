@@ -26,7 +26,7 @@ def _load_module(name, rel_path):
 def audit_mod():
     return _load_module(
         "audit_bind_mount_design",
-        "scripts/ops/audit_runtime_storage_bind_mount_design.py",
+        "scripts/ops/audits/backend/audit_runtime_storage_bind_mount_design.py",
     )
 
 

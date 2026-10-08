@@ -46,7 +46,7 @@ def test_connection_inventory_locks_local_agent_and_background_browser_boundarie
 def test_connection_inventory_lists_required_lock_verification():
     text = CONNECTION_INVENTORY.read_text(encoding="utf-8")
 
-    assert "python scripts/ops/audit_standard_workflow_contract.py" in text
-    assert "python scripts/ops/audit_local_agent_e2e_baseline_contract.py" in text
-    assert "python scripts/ops/audit_local_agent_e2e_flow_contract.py" in text
+    assert "python scripts/ops/audits/app/audit_standard_workflow_contract.py" in text
+    assert "python scripts/ops/audits/agent/audit_local_agent_e2e_baseline_contract.py" in text
+    assert "python scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py" in text
     assert "python -m pytest tests/test_connection_inventory_lock.py -q" in text

@@ -1,6 +1,6 @@
 import json
 
-from scripts.ops import pre_change_dry_run as pre
+from scripts.ops.devflow import pre_change_dry_run as pre
 
 
 def test_build_record_marks_ok_and_scope():

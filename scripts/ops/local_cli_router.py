@@ -80,7 +80,7 @@ def _cmd_blog_scrape(args: list[str]) -> None:
 def _cmd_check() -> None:
     gate_check("goto")
     print("[로컬에이전트] Playwright 환경 점검")
-    from scripts.ops.check_playwright_bootstrap import main
+    from scripts.ops.verify.check_playwright_bootstrap import main
 
     main()
 
@@ -89,7 +89,7 @@ def _cmd_create_profile(args: list[str]) -> None:
     gate_check("goto")
     site = args[0] if args else ""
     print(f"[로컬에이전트] 사이트 프로파일 생성: {site or '(URL 미지정)'}")
-    from scripts.ops.create_site_profile import main
+    from scripts.site_engine.create_site_profile import main
 
     main()
 

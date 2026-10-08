@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.fixture(scope="module")
 def mvp():
-    import scripts.ops.audit_app_foundation_mvp_prep as m
+    import scripts.ops.audits.app.audit_app_foundation_mvp_prep as m
     return m
 
 
@@ -29,7 +29,7 @@ def audit_report(mvp):
 # ── 1. 스크립트 import ────────────────────────────────────────────────────────
 
 def test_audit_script_importable():
-    import scripts.ops.audit_app_foundation_mvp_prep  # noqa: F401
+    import scripts.ops.audits.app.audit_app_foundation_mvp_prep  # noqa: F401
 
 
 # ── 2. MVP 화면 목록 ──────────────────────────────────────────────────────────
@@ -306,7 +306,7 @@ def test_pytest_baseline_tag_test_baseline_cleaned(mvp):
 # ── 11. Verdict ───────────────────────────────────────────────────────────────
 
 def test_audit_verdict_ready_or_warn(audit_report):
-    import scripts.ops.audit_app_foundation_mvp_prep as m
+    import scripts.ops.audits.app.audit_app_foundation_mvp_prep as m
     assert audit_report.verdict in (m.VERDICT_READY, m.VERDICT_WARN), \
         f"verdict = {audit_report.verdict} (expected READY or WITH_WARN)"
 

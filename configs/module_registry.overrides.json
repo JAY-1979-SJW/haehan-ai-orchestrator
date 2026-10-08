@@ -564,12 +564,12 @@
   "role": "generic",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
- "scripts/ops/run_playwright_smoke.py": {
+ "scripts/ops/smoke/run_playwright_smoke.py": {
   "layer": "L6",
   "role": "browser_engine",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
- "scripts/ops/run_universal_ai_real_site_smoke.py": {
+ "scripts/ops/smoke/run_universal_ai_real_site_smoke.py": {
   "layer": "L6",
   "role": "browser_engine",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"

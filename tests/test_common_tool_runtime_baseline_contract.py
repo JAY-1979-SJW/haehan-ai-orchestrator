@@ -1,4 +1,4 @@
-from scripts.ops import audit_common_tool_runtime_baseline_contract as audit
+from scripts.ops.audits.agent import audit_common_tool_runtime_baseline_contract as audit
 
 
 def test_common_tool_runtime_baseline_contract_passes():

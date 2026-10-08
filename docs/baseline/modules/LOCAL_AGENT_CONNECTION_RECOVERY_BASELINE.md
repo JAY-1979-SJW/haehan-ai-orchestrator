@@ -106,7 +106,7 @@ python verify_live_task_dispatch.py --server https://haehan-ai.kr/orchestrator -
 Baseline verification:
 
 ```text
-python scripts/ops/audit_local_agent_connection_recovery_baseline.py
+python scripts/ops/audits/agent/audit_local_agent_connection_recovery_baseline.py
 python -m pytest tests/test_local_agent_connection_recovery_baseline.py -q
 ```
 

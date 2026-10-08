@@ -1,4 +1,4 @@
-from scripts.ops import agent_usage as u
+from scripts.ops.hooks import agent_usage as u
 
 
 def test_record_summarize(tmp_path):

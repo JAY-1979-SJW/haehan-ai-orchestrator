@@ -11,7 +11,7 @@ Source of truth:
 
 ```text
 configs/module_boundaries.json
-scripts/ops/audit_module_boundaries.py
+scripts/ops/audits/app/audit_module_boundaries.py
 tests/test_module_boundaries.py
 ```
 

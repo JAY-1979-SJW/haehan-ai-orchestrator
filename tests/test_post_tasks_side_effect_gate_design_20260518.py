@@ -30,7 +30,7 @@ def _load_module(name, rel_path):
 def audit_mod():
     return _load_module(
         "audit_post_tasks_gate",
-        "scripts/ops/audit_post_tasks_side_effect_gate_design.py",
+        "scripts/ops/audits/backend/audit_post_tasks_side_effect_gate_design.py",
     )
 
 
@@ -376,7 +376,7 @@ def test_58_touch_phase_still_1r(router_content):
 
 
 def test_59_no_http_import_in_audit_script():
-    content = (REPO_ROOT / "scripts/ops/audit_post_tasks_side_effect_gate_design.py").read_text(
+    content = (REPO_ROOT / "scripts/ops/audits/backend/audit_post_tasks_side_effect_gate_design.py").read_text(
         encoding="utf-8", errors="ignore"
     )
     try:

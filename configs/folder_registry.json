@@ -1,6 +1,6 @@
 {
- "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
- "count": 337,
+ "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/repo_gates/folder_gate.py",
+ "count": 348,
  "folders": [
   {
    "path": ".",
@@ -2308,6 +2308,46 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "scripts/ops/audits",
+   "purpose": "계약·기준선 감사 모음(읽기 전용) — scripts/ops 평면 정리",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
+   "path": "scripts/ops/audits/agent",
+   "purpose": "로컬 에이전트·데스크톱·MCP·Playwright 계약 감사",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
+   "path": "scripts/ops/audits/app",
+   "purpose": "앱 구조·UI·사이트·공용 기준선 감사와 짝 smoke",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
+   "path": "scripts/ops/audits/backend",
+   "purpose": "백엔드·서버 운영 계약 감사",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
+   "path": "scripts/ops/audits/google",
+   "purpose": "Google 자동화·Cloud·Workspace 계약 감사",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
    "path": "scripts/ops/code_map",
    "purpose": "scripts/ops 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "기능",
@@ -2316,12 +2356,60 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "scripts/ops/deploy",
+   "purpose": "서버 배포·릴리스 게시·컨테이너 점검·착공 계획",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
+   "path": "scripts/ops/devflow",
+   "purpose": "변경 검증·이동·병합 워크플로 도구(verify_change·merge_*·run_impacted_tests·make_shim 등)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
+   "path": "scripts/ops/hooks",
+   "purpose": "Claude/Codex 훅·git 훅과 편집 전 조회·세션 기록 도구",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
+   "path": "scripts/ops/office",
+   "purpose": "엑셀·A4·견적서 서식 도구",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
    "path": "scripts/ops/quality",
    "purpose": "품질 게이트·설치 도구",
    "kind": "공용 기반",
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
+  },
+  {
+   "path": "scripts/ops/repo_gates",
+   "purpose": "저장소 구조·커밋·CI 게이트(G5·G11·G12·G15·G16·G17·R1·층 감사) — ai_orchestrator/gates(런타임 정책 게이트)와 구별해 repo_gates",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
+   "path": "scripts/ops/runtime",
+   "purpose": "운영 감시·로컬 실행·정리 스크립트(로그·드리프트·세션 감시, ps1)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(OPS_FOLDER_DESIGN 승인, 지휘창 경유 2026-10-08)"
   },
   {
    "path": "scripts/ops/selector_health",

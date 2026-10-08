@@ -1,4 +1,4 @@
-from scripts.ops import dry_run_local_agent_cdp_attach as gate
+from scripts.ops.verify import dry_run_local_agent_cdp_attach as gate
 
 
 def test_dry_run_local_agent_cdp_attach_passes_static_contract():

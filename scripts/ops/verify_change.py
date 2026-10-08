@@ -61,8 +61,8 @@ def _pytest_extra_args() -> list[str]:
 # browser_instruction_api.py 에 docstring 5줄만 추가한 커밋이 그 함수의 기존 복잡도
 # 위반 3건 때문에 CI FAIL — 로컬 pre-commit 훅은 이미 ruff_new_only_gate.py 로 같은
 # 문제를 정확히 처리하고 있어 그 로직을 재사용한다.
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ruff_new_only_gate import changed_lines_between  # type: ignore[import-not-found]  # noqa: E402
+sys.path.insert(0, str(ROOT))
+from scripts.ops.repo_gates.ruff_new_only_gate import changed_lines_between  # noqa: E402
 
 ENV = {
     **os.environ,
@@ -483,9 +483,7 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
 
     audit-kit 이 없는 PC·CI 에서는 검사를 생략하고 그 사실을 알린다(설치된 PC 에서는 필수: 새 문제가 있으면 FAIL).
     """
-    from audit_kit_gate import (  # type: ignore[import-not-found]  # scripts/ops 안의 형제 모듈
-        _new_typed,
-        batch_raw_findings,
+    from scripts.ops.hooks.audit_kit_gate import (
         find_audit_kit,
         finding_key,
         is_real_kit,

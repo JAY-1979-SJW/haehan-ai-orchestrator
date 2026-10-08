@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops import audit_kit_gate as gate
+from scripts.ops.hooks import audit_kit_gate as gate
 
 BAD = "x: int = 'not an int'\n"  # mypy: Incompatible types in assignment
 BAD2 = "y: str = 123\n"
@@ -217,6 +217,106 @@ def test_batch_falls_back_to_per_file_on_mypy_internal_error(tmp_path, monkeypat
     keys = gate.mypy_keys_batch("py", files, tmp_path)
     assert keys == {files[0]: {"bad  [misc]"}, files[1]: None, files[2]: {"bad  [misc]"}}
     assert len(calls) == 2 + 4  # 일괄 2회(재시도) + 파일별(m1 은 재시도 포함 2회)
+
+
+def _write_marker_kit(path: Path) -> None:
+    """가짜 audit-kit: stdin 의 file_path 내용에 들어 있는 마커 줄마다 `[STD-99] <줄>` 를 찍고 exit 2(없으면 exit 0)."""
+    path.write_text(
+        "import json, sys\n"
+        "data = json.loads(sys.stdin.read())\n"
+        "text = open(data['tool_input']['file_path'], encoding='utf-8').read()\n"
+        "markers = [ln for ln in text.splitlines() if ln.startswith('MARKER_')]\n"
+        "for m in markers:\n"
+        "    print(f'[STD-99] {m}', file=sys.stderr)\n"
+        "sys.exit(2 if markers else 0)\n",
+        encoding="utf-8",
+    )
+
+
+def _write_path_echoing_kit(path: Path) -> None:
+    """가짜 audit-kit: 실제 audit-kit 처럼 지적 문구에 검사 대상의 상대경로를 그대로 박아 넣는다(`_hook_base_<이름>` 사본과
+    원본의 파일명이 달라 글자 비교가 틀어지는 실제 버그를 재현)."""
+    path.write_text(
+        "import json, sys\n"
+        "from pathlib import Path\n"
+        "data = json.loads(sys.stdin.read())\n"
+        "fp = Path(data['tool_input']['file_path'])\n"
+        "text = fp.read_text(encoding='utf-8')\n"
+        "markers = [ln for ln in text.splitlines() if ln.startswith('MARKER_')]\n"
+        "rel = fp.relative_to(Path(data['cwd']))\n"
+        "for m in markers:\n"
+        "    print(f'[표준 STD-02] {rel.as_posix()}:25 {m}', file=sys.stderr)\n"
+        "sys.exit(2 if markers else 0)\n",
+        encoding="utf-8",
+    )
+
+
+def test_hook_rename_ignores_temp_copy_filename_in_finding_text(repo, tmp_path):
+    """회귀 방지(2026-10-08 실사례): HEAD 사본 파일명(`_hook_base_X.py`)이 지적 문구 안의 경로에 그대로 찍혀도
+    태그+메시지만 비교해 같은 지적로 인식한다(실제 audit-kit STD-02 형식 재현)."""
+    (repo / "old" / "mod.py").write_text(
+        (repo / "old" / "mod.py").read_text(encoding="utf-8") + "MARKER_A = 1\n", encoding="utf-8"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add marker")
+    (repo / "new").mkdir()
+    _git(repo, "mv", "old/mod.py", "new/mod.py")
+    path = repo / "new" / "mod.py"
+    kit_py = tmp_path / "path_echo_kit.py"
+    _write_path_echoing_kit(kit_py)
+    kit = [sys.executable, str(kit_py)]
+    assert gate._kit_hook_against_head(kit, path, repo, "old/mod.py") == ([], "")
+
+
+def test_hook_rename_without_change_has_no_new_findings(repo, tmp_path):
+    """STD 류(hook) 체크도 git mv 로만 옮긴 파일은 옛 위치의 기존 지적을 신규로 안 잡는다(2026-10-08, tests 이동 커밋 오탐 발견)."""
+    (repo / "old" / "mod.py").write_text(
+        (repo / "old" / "mod.py").read_text(encoding="utf-8") + "MARKER_A = 1\n", encoding="utf-8"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add marker")
+    (repo / "new").mkdir()
+    _git(repo, "mv", "old/mod.py", "new/mod.py")
+    path = repo / "new" / "mod.py"
+    kit_py = tmp_path / "marker_kit.py"
+    _write_marker_kit(kit_py)
+    kit = [sys.executable, str(kit_py)]
+    assert gate._kit_hook_against_head(kit, path, repo, "old/mod.py") == ([], "")
+
+
+def test_hook_rename_without_old_rel_is_misreported_as_new(repo, tmp_path):
+    """회귀 방지: old_rel 을 안 주면(예전 동작) 옮기기만 한 파일도 기존 지적이 전부 신규로 잡힌다."""
+    (repo / "old" / "mod.py").write_text(
+        (repo / "old" / "mod.py").read_text(encoding="utf-8") + "MARKER_A = 1\n", encoding="utf-8"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add marker")
+    (repo / "new").mkdir()
+    _git(repo, "mv", "old/mod.py", "new/mod.py")
+    path = repo / "new" / "mod.py"
+    kit_py = tmp_path / "marker_kit.py"
+    _write_marker_kit(kit_py)
+    kit = [sys.executable, str(kit_py)]
+    findings, why = gate._kit_hook_against_head(kit, path, repo, None)
+    assert why == "" and len(findings) == 1 and "MARKER_A" in findings[0]
+
+
+def test_hook_rename_with_new_marker_reports_only_the_new_one(repo, tmp_path):
+    """이동 + 새 지적 1개 = 신규 1(기존 마커는 제외)."""
+    (repo / "old" / "mod.py").write_text(
+        (repo / "old" / "mod.py").read_text(encoding="utf-8") + "MARKER_A = 1\n", encoding="utf-8"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add marker")
+    (repo / "new").mkdir()
+    _git(repo, "mv", "old/mod.py", "new/mod.py")
+    path = repo / "new" / "mod.py"
+    path.write_text(path.read_text(encoding="utf-8") + "MARKER_B = 2\n", encoding="utf-8")
+    kit_py = tmp_path / "marker_kit.py"
+    _write_marker_kit(kit_py)
+    kit = [sys.executable, str(kit_py)]
+    findings, why = gate._kit_hook_against_head(kit, path, repo, "old/mod.py")
+    assert why == "" and len(findings) == 1 and "MARKER_B" in findings[0]
 
 
 def test_batch_reports_not_run_when_mypy_missing_or_times_out(tmp_path, monkeypatch):

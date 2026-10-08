@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts" / "ops"))
+sys.path.insert(0, str(ROOT / "scripts" / "ops" / "hooks"))
 
 import session_guard as sg  # noqa: E402
 import session_handoff as sh  # noqa: E402

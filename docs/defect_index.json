@@ -455,7 +455,7 @@
         "scripts/ops/check_excel_live.py"
       ],
       "evidence": "runcheck R0(2026-09-29 재확인): scripts/audit_dev_reg_approvals.py 는 a1f4de20 삭제 전 커밋에서 복원 + persistence/clients 이동 경로 2곳 갱신으로 해결(테스트 35개 통과). scripts/ops/check_a4.py 는 shared.constants/excel_utils 실제 구현을 다른 저장소(42. excel-ai-agent)에서 scripts/common/excel_a4_constants.py·excel_a4_utils.py 로 이식해 해결 — xlsx 편집마다 도는 PostToolUse 훅이 다시 정상 동작 확인(실제 xlsx 파일 대상 COM 자동화 실행 검증). 단, 이 훅의 2단계(ai_check_a4.py, GPT-4o-mini 호출)는 \"외부 유료 AI API 호출 승인제\"+2026-09-24 \"유료 AI 호출 0\" 결정과 충돌해 복원하지 않고 hook_check_a4.py에서 의도적으로 건너뛰도록 함(별도 사용자 승인 필요 사안). 2026-09-29 나머지 2개도 해결: report_naver_mail_inbox_consolidated.py — batch_runner.py 는 processing/batch_runner.py 로 이동한 얇은 `import *` shim인데 __all__ 이 없어 밑줄시작 이름(_classify_priority 등)이 재노출 안 되는 Python 기본 동작 때문에 깨져 있었음, 호출부를 실제 모듈 경로에서 직접 import 하도록 수정해 해결. check_excel_live.py — __main__ 가드 없는 최상위 스크립트라 import만 해도 GetActiveObject COM 호출이 즉시 실행돼 '임포트 실패'로 보였을 뿐 결함은 아니었음(Excel 미실행이 전제조건), main()+`if __name__=='__main__'` 가드로 감싸 Excel 미실행 시 안내 메시지를 출력하도록 개선.",
-      "fix_note": "2026-09-29: 위 evidence에 상세 기술 — 2개 파일 모두 해결.",
+      "fix_note": "2026-09-29: 위 evidence에 상세 기술 — 2개 파일 모두 해결. (후속 2026-10-08: ai_check_a4.py 는 실행 불가인 유료 OpenAI 호출 코드라 삭제됨 — docs/deleted_code_index.md)",
       "stage": "RUN",
       "status": "fixed",
       "no": 32

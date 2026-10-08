@@ -58,30 +58,30 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "tests/test_ai_agent_ui_structure_blueprint.py" in rendered
     assert "tests/test_mcp_gateway_baseline.py" in rendered
     assert "tests/test_ai_work_session_gate.py" in rendered
-    assert "scripts/ops/dry_run_local_agent_cdp_attach.py" in rendered
-    assert "scripts/ops/audit_common_tool_runtime.py" in rendered
-    assert "scripts/ops/audit_common_tool_runtime_baseline_contract.py" in rendered
-    assert "scripts/ops/audit_common_engine_commercialization_baseline.py" in rendered
-    assert "scripts/ops/audit_local_agent_connection_recovery_baseline.py" in rendered
-    assert "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py" in rendered
-    assert "scripts/ops/audit_local_agent_e2e_flow_contract.py" in rendered
-    assert "scripts/ops/audit_app_baseline_contract.py" in rendered
-    assert "scripts/ops/audit_standard_workflow_contract.py" in rendered
-    assert "scripts/ops/audit_module_baseline_contract.py" in rendered
-    assert "scripts/ops/audit_backend_core_baseline_contract.py" in rendered
-    assert "scripts/ops/audit_local_agent_e2e_baseline_contract.py" in rendered
-    assert "scripts/ops/audit_approval_flow_baseline_contract.py" in rendered
-    assert "scripts/ops/audit_playwright_ai_baseline_contract.py" in rendered
-    assert "scripts/ops/audit_module_boundaries.py" in rendered
-    assert "scripts/ops/audit_root_legacy_scripts.py" in rendered
-    assert "scripts/ops/audit_google_home_login_gate.py" in rendered
-    assert "scripts/ops/audit_google_automation_baseline_contract.py" in rendered
-    assert "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py" in rendered
-    assert "scripts/ops/audit_ai_agent_app_structure_design_baseline.py" in rendered
-    assert "scripts/ops/audit_ai_agent_ui_structure_blueprint.py" in rendered
-    assert "scripts/ops/audit_mcp_gateway_baseline.py" in rendered
+    assert "scripts/ops/verify/dry_run_local_agent_cdp_attach.py" in rendered
+    assert "scripts/ops/audits/agent/audit_common_tool_runtime.py" in rendered
+    assert "scripts/ops/audits/agent/audit_common_tool_runtime_baseline_contract.py" in rendered
+    assert "scripts/ops/audits/app/audit_common_engine_commercialization_baseline.py" in rendered
+    assert "scripts/ops/audits/agent/audit_local_agent_connection_recovery_baseline.py" in rendered
+    assert "scripts/ops/audits/agent/audit_desktop_auth_runtime_baseline_contract.py" in rendered
+    assert "scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py" in rendered
+    assert "scripts/ops/audits/app/audit_app_baseline_contract.py" in rendered
+    assert "scripts/ops/audits/app/audit_standard_workflow_contract.py" in rendered
+    assert "scripts/ops/audits/app/audit_module_baseline_contract.py" in rendered
+    assert "scripts/ops/audits/backend/audit_backend_core_baseline_contract.py" in rendered
+    assert "scripts/ops/audits/agent/audit_local_agent_e2e_baseline_contract.py" in rendered
+    assert "scripts/ops/audits/app/audit_approval_flow_baseline_contract.py" in rendered
+    assert "scripts/ops/audits/agent/audit_playwright_ai_baseline_contract.py" in rendered
+    assert "scripts/ops/audits/app/audit_module_boundaries.py" in rendered
+    assert "scripts/ops/repo_gates/audit_root_legacy_scripts.py" in rendered
+    assert "scripts/ops/audits/google/audit_google_home_login_gate.py" in rendered
+    assert "scripts/ops/audits/google/audit_google_automation_baseline_contract.py" in rendered
+    assert "scripts/ops/audits/app/audit_site_sso_subdomain_runtime_baseline.py" in rendered
+    assert "scripts/ops/audits/app/audit_ai_agent_app_structure_design_baseline.py" in rendered
+    assert "scripts/ops/audits/app/audit_ai_agent_ui_structure_blueprint.py" in rendered
+    assert "scripts/ops/audits/agent/audit_mcp_gateway_baseline.py" in rendered
     assert "scripts/common/ai_work_session.py" in rendered
-    assert "scripts/ops/audit_ai_work_session_gate.py" in rendered
+    assert "scripts/ops/audits/app/audit_ai_work_session_gate.py" in rendered
     assert "scripts/google/ads_signup.py" in rendered
     assert "scripts/google/live_surface_explorer.py" in rendered
     assert "scripts/google/cloud/live_console_explorer.py" in rendered
@@ -104,9 +104,9 @@ def test_required_gate_includes_browser_runtime_policy_tests():
 
 
 def test_git_hooks_delegate_to_required_gate():
-    # 현행 위임 구조(2026-05-31 f6a169ae 이후 훅 재작성, 설치기 scripts/ops/install_git_hooks.py):
+    # 현행 위임 구조(2026-05-31 f6a169ae 이후 훅 재작성, 설치기 scripts/ops/hooks/install_git_hooks.py):
     #   pre-commit(체크리스트 래퍼) -> pre-commit.orig(ruff + ruff_new_only_gate)
-    #   pre-push -> scripts/ops/ai_code_review_gate.py
+    #   pre-push -> scripts/ops/hooks/ai_code_review_gate.py
     # required_quality_gate.py 를 직접 호출하던 구 구조는 더 이상 훅에 없다.
     pre_commit = (ROOT / ".githooks" / "pre-commit").read_text(encoding="utf-8")
     pre_commit_orig = (ROOT / ".githooks" / "pre-commit.orig").read_text(encoding="utf-8")

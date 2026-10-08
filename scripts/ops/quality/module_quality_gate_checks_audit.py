@@ -14,7 +14,7 @@ sys.dont_write_bytecode = True
 
 def check_site_registry_baseline() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/validate_site_registry_baseline.py"],
+        [PY, "scripts/site_engine/validate_site_registry_baseline.py"],
         timeout=120,
     )
     if not ok:
@@ -24,7 +24,7 @@ def check_site_registry_baseline() -> tuple[bool, str]:
 
 def check_site_sso_subdomain_runtime_baseline() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py"],
+        [PY, "scripts/ops/audits/app/audit_site_sso_subdomain_runtime_baseline.py"],
         timeout=120,
     )
     if not ok:
@@ -34,7 +34,7 @@ def check_site_sso_subdomain_runtime_baseline() -> tuple[bool, str]:
 
 def check_site_work_function_baseline() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_site_work_function_baseline.py"],
+        [PY, "scripts/ops/audits/app/audit_site_work_function_baseline.py"],
         timeout=120,
     )
     if not ok:
@@ -44,7 +44,7 @@ def check_site_work_function_baseline() -> tuple[bool, str]:
 
 def check_google_automation_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_google_automation_baseline_contract.py"],
+        [PY, "scripts/ops/audits/google/audit_google_automation_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -54,7 +54,7 @@ def check_google_automation_baseline_contract() -> tuple[bool, str]:
 
 def check_google_workspace_module_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_google_workspace_module_baseline_contract.py"],
+        [PY, "scripts/ops/audits/google/audit_google_workspace_module_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -74,7 +74,7 @@ def check_google_gmail_function_contract() -> tuple[bool, str]:
 
 def check_google_workspace_router_compatibility() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_google_workspace_router_compatibility.py"],
+        [PY, "scripts/ops/audits/google/audit_google_workspace_router_compatibility.py"],
         timeout=120,
     )
     if not ok:
@@ -84,7 +84,7 @@ def check_google_workspace_router_compatibility() -> tuple[bool, str]:
 
 def check_google_cloud_module_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_google_cloud_module_baseline_contract.py"],
+        [PY, "scripts/ops/audits/google/audit_google_cloud_module_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -94,7 +94,7 @@ def check_google_cloud_module_baseline_contract() -> tuple[bool, str]:
 
 def check_google_cloud_router_compatibility() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_google_cloud_router_compatibility.py"],
+        [PY, "scripts/ops/audits/google/audit_google_cloud_router_compatibility.py"],
         timeout=120,
     )
     if not ok:
@@ -104,7 +104,7 @@ def check_google_cloud_router_compatibility() -> tuple[bool, str]:
 
 def check_google_cloud_action_policy_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_google_cloud_action_policy_baseline_contract.py"],
+        [PY, "scripts/ops/audits/google/audit_google_cloud_action_policy_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -114,7 +114,7 @@ def check_google_cloud_action_policy_baseline_contract() -> tuple[bool, str]:
 
 def check_google_cloud_readonly_local_browser_dryrun() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_google_cloud_readonly_local_browser_dryrun.py"],
+        [PY, "scripts/ops/audits/google/audit_google_cloud_readonly_local_browser_dryrun.py"],
         timeout=120,
     )
     if not ok:
@@ -124,7 +124,7 @@ def check_google_cloud_readonly_local_browser_dryrun() -> tuple[bool, str]:
 
 def check_google_domain_module_boundaries() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_google_domain_module_boundaries.py"],
+        [PY, "scripts/ops/audits/google/audit_google_domain_module_boundaries.py"],
         timeout=120,
     )
     if not ok:
@@ -134,7 +134,7 @@ def check_google_domain_module_boundaries() -> tuple[bool, str]:
 
 def check_common_tool_runtime_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_common_tool_runtime.py"],
+        [PY, "scripts/ops/audits/agent/audit_common_tool_runtime.py"],
         timeout=120,
     )
     if not ok:
@@ -144,7 +144,7 @@ def check_common_tool_runtime_contract() -> tuple[bool, str]:
 
 def check_common_tool_runtime_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_common_tool_runtime_baseline_contract.py"],
+        [PY, "scripts/ops/audits/agent/audit_common_tool_runtime_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -154,7 +154,7 @@ def check_common_tool_runtime_baseline_contract() -> tuple[bool, str]:
 
 def check_common_engine_commercialization_baseline() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_common_engine_commercialization_baseline.py"],
+        [PY, "scripts/ops/audits/app/audit_common_engine_commercialization_baseline.py"],
         timeout=120,
     )
     if not ok:
@@ -164,7 +164,7 @@ def check_common_engine_commercialization_baseline() -> tuple[bool, str]:
 
 def check_local_agent_connection_recovery_baseline() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_local_agent_connection_recovery_baseline.py"],
+        [PY, "scripts/ops/audits/agent/audit_local_agent_connection_recovery_baseline.py"],
         timeout=120,
     )
     if not ok:
@@ -174,7 +174,7 @@ def check_local_agent_connection_recovery_baseline() -> tuple[bool, str]:
 
 def check_desktop_auth_runtime_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py"],
+        [PY, "scripts/ops/audits/agent/audit_desktop_auth_runtime_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -184,7 +184,7 @@ def check_desktop_auth_runtime_baseline_contract() -> tuple[bool, str]:
 
 def check_app_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_app_baseline_contract.py"],
+        [PY, "scripts/ops/audits/app/audit_app_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -194,7 +194,7 @@ def check_app_baseline_contract() -> tuple[bool, str]:
 
 def check_standard_workflow_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_standard_workflow_contract.py"],
+        [PY, "scripts/ops/audits/app/audit_standard_workflow_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -204,7 +204,7 @@ def check_standard_workflow_contract() -> tuple[bool, str]:
 
 def check_module_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_module_baseline_contract.py"],
+        [PY, "scripts/ops/audits/app/audit_module_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -214,7 +214,7 @@ def check_module_baseline_contract() -> tuple[bool, str]:
 
 def check_backend_runtime_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_backend_runtime_contract.py"],
+        [PY, "scripts/ops/audits/backend/audit_backend_runtime_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -224,7 +224,7 @@ def check_backend_runtime_contract() -> tuple[bool, str]:
 
 def check_backend_core_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_backend_core_baseline_contract.py"],
+        [PY, "scripts/ops/audits/backend/audit_backend_core_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -234,7 +234,7 @@ def check_backend_core_baseline_contract() -> tuple[bool, str]:
 
 def check_local_agent_e2e_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_local_agent_e2e_baseline_contract.py"],
+        [PY, "scripts/ops/audits/agent/audit_local_agent_e2e_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -244,7 +244,7 @@ def check_local_agent_e2e_baseline_contract() -> tuple[bool, str]:
 
 def check_approval_flow_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_approval_flow_baseline_contract.py"],
+        [PY, "scripts/ops/audits/app/audit_approval_flow_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -254,7 +254,7 @@ def check_approval_flow_baseline_contract() -> tuple[bool, str]:
 
 def check_playwright_ai_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_playwright_ai_baseline_contract.py"],
+        [PY, "scripts/ops/audits/agent/audit_playwright_ai_baseline_contract.py"],
         timeout=120,
     )
     if not ok:

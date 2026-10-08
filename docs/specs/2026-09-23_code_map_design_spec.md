@@ -89,7 +89,7 @@
 | `data/code_map/summary.md` | 사람용 요약(커버리지 → 분류 개수 → 상위 후보) | 미추적 |
 | `docs/defect_index.json` | 결함 목차(번호 고정, 코드맵 노드 id 링크) | 추적 |
 
-위치 사유: 읽기 전용 운영 감사 도구 = 기존 `scripts/ops/codebase_layer_audit.py` 와 같은 자리. 원본 코드·DB 에 쓰지 않는다.
+위치 사유: 읽기 전용 운영 감사 도구 = 기존 `scripts/ops/repo_gates/codebase_layer_audit.py` 와 같은 자리. 원본 코드·DB 에 쓰지 않는다.
 
 ## 6. 단계 계획과 합격 기준
 

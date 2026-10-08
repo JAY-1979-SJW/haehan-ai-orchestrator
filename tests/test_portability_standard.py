@@ -14,7 +14,7 @@ import pytest
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
-from scripts.ops import make_constraints as mc
+from scripts.ops.devflow import make_constraints as mc
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -51,7 +51,7 @@ def test_constraints_file_is_well_formed_and_covers_requirements():
     for req in mc.read_requirements(ROOT / "requirements.txt"):
         if req.marker is not None and not req.marker.evaluate({"extra": ""}):
             continue  # 이 플랫폼에서는 설치하지 않는 요구(예: win32 전용)
-        assert canonicalize_name(req.name) in pins, f"constraints.txt 에 {req.name} 가 없음 — python scripts/ops/make_constraints.py 로 다시 만드세요"
+        assert canonicalize_name(req.name) in pins, f"constraints.txt 에 {req.name} 가 없음 — python scripts/ops/devflow/make_constraints.py 로 다시 만드세요"
 
 
 def test_constraints_satisfy_the_requirement_ranges():

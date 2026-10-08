@@ -12,12 +12,12 @@
 사이트 자동화, 데이터 수집, CDP 조작, 스크래핑 코드를 **새로 작성하기 전에** 반드시 아래를 먼저 실행한다.
 
 ```bash
-python scripts/ops/capability_check.py <도메인>
+python scripts/ops/hooks/capability_check.py <도메인>
 # 예시
-python scripts/ops/capability_check.py cafe
-python scripts/ops/capability_check.py smartstore
-python scripts/ops/capability_check.py eum
-python scripts/ops/capability_check.py naver mail
+python scripts/ops/hooks/capability_check.py cafe
+python scripts/ops/hooks/capability_check.py smartstore
+python scripts/ops/hooks/capability_check.py eum
+python scripts/ops/hooks/capability_check.py naver mail
 ```
 
 출력에서 기존 구현(API 엔드포인트, Python 함수, CLI 커맨드)이 확인되면:
@@ -31,7 +31,7 @@ python scripts/ops/capability_check.py naver mail
 
 `capability_check` 출력 맨 위의 **`[0] 벤더 공식 API`** 를 확인하지 않고 CDP 작업을 시작하지 않는다.
 
-- 목록: `configs/vendor_apis.json` / 조회: `scripts/ops/vendor_api_registry.py`
+- 목록: `configs/vendor_apis.json` / 조회: `scripts/ops/hooks/vendor_api_registry.py`
 - ✅ 표시된 기능은 **API로 구현**한다. CDP로 만들지 않는다.
 - ❌ 표시된 것만 CDP가 정당한 경로다.
 - 목록에 없는 새 도메인이면 **벤더 API 존재 여부를 검색해 확인**하고 결과를 목록에 추가한다.
@@ -79,7 +79,7 @@ python scripts/ops/capability_check.py naver mail
 **GPT/OpenAI 등 외부 유료 AI API를 호출하는 작업은 반드시 사용자 사전 승인 후에만 실행한다.**
 
 - 대상: `ai_orchestrator/openai_proxy_caller.py`(`call_openai_agent`, `call_openai_chat`), `OPENAI_API_KEY` 사용, `api.openai.com` 직접 호출 등 모든 유료 외부 AI API 경로.
-- **자동 차단 훅**: `.claude/settings.json` → `hooks.PreToolUse` (matcher `Bash|PowerShell`) → `scripts/ops/guard_openai_call.py`. 위 키워드가 명령어에 포함되면 `bypassPermissions` 모드여도 강제로 사용자 확인(ask)을 받는다.
+- **자동 차단 훅**: `.claude/settings.json` → `hooks.PreToolUse` (matcher `Bash|PowerShell`) → `scripts/ops/hooks/guard_openai_call.py`. 위 키워드가 명령어에 포함되면 `bypassPermissions` 모드여도 강제로 사용자 확인(ask)을 받는다.
 - 사유: 이 프로젝트의 `permissions.defaultMode`는 `bypassPermissions`(자동 실행)라서, 승인 없이 유료 API를 호출하는 사고가 실제로 발생함(2026-07-28, KPI PDF 비전 파싱 작업 중 사용자 확인 없이 GPT 호출 시도).
 - 신규 기능에서 OpenAI/GPT 호출이 필요하면: 먼저 사용자에게 비용·목적을 설명하고 명시적 승인("진행해", "GPT 써도 돼" 등)을 받은 뒤에만 실행한다. 승인 없이 "일단 테스트해본다"는 금지.
 - 이 훅은 Bash/PowerShell 명령어 문자열 매칭 방식이라 완벽하지 않음(예: 변수로 우회한 코드는 못 잡음) — 최종 책임은 AI가 실행 전에 스스로 확인하는 것.
@@ -287,7 +287,7 @@ chmod/chown 자동 변경 금지
 
 작업 후 반드시 실행:
 ```bash
-python scripts/ops/codebase_layer_audit.py
+python scripts/ops/repo_gates/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
 python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 ```
@@ -301,7 +301,7 @@ quality gate errors > 0 → STOP
 ## 코딩 컨벤션 및 완료 보고 기준 (2026-09-26 추가)
 
 ### 재사용 우선
-새 함수/유틸을 만들기 전 `scripts/ops/capability_check.py`, `scripts/ops/duplicate_code_check.py`,
+새 함수/유틸을 만들기 전 `scripts/ops/hooks/capability_check.py`, `scripts/ops/hooks/duplicate_code_check.py`,
 Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/import, 없을 때만 신규 작성.
 검증 안 된 추측성 코드 금지 — 불확실하면 Grep/Read로 실제 시그니처·동작을 확인한 뒤 작성한다.
 
@@ -310,7 +310,7 @@ Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/i
 확인할 것. 실행해보지 않은 코드를 '완료'로 보고하지 말 것.
 
 ### audit-kit 검증 강제 (2026-10-05 추가)
-코드를 쓴 직후 `scripts/ops/audit_kit_gate.py`(PostToolUse/Stop 훅)가, 커밋 시점에는 pre-commit 의
+코드를 쓴 직후 `scripts/ops/hooks/audit_kit_gate.py`(PostToolUse/Stop 훅)가, 커밋 시점에는 pre-commit 의
 `audit_kit_gate.py --staged` 가 **이번 변경으로 새로 생긴** 개발 기준서·구조 문제를 막는다(기존 문제는 안 막음).
 audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/audit-kit` 로 설치하며, 위치는
 `AUDIT_KIT_BIN` 으로 지정한다. **`AUDIT_KIT_REQUIRED=1` 이면 audit-kit 를 못 찾을 때 건너뛰지 않고 막는다** —
@@ -329,7 +329,7 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
   금지는 유지한다 — 전체 시험은 오래 걸리므로 영향 시험만 돌린다.)
 - ruff는 레거시 오류가 많은 파일이 다수 존재 — 새 훅은 "이번 편집으로 새로 생긴 오류"만 차단.
 - Windows에서 훅은 셸 스크립트가 아니라 python 스크립트로 작성(기존 관례, PowerShell/cmd 차이 회피).
-- `scripts/ops/stop_fast_verify.py`는 세션별 편집 기록(`data/.session_edits/<session_id>.json`,
+- `scripts/ops/hooks/stop_fast_verify.py`는 세션별 편집 기록(`data/.session_edits/<session_id>.json`,
   `post_edit_fast_gate.py`가 PostToolUse마다 기록)만 검사한다 — 최초 구현은
   `git status --porcelain` 전체를 대상으로 해서 다른 세션의 미커밋 변경분까지 차단 사유에
   끼어드는 문제가 있었고(code-reviewer 서브에이전트 실측 지적, 2026-09-26), 세션별 목록 방식으로

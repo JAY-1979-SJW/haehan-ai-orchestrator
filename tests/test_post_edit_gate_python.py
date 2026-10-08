@@ -3,7 +3,7 @@
 import subprocess
 import sys
 
-from scripts.ops import post_edit_fast_gate as gate
+from scripts.ops.hooks import post_edit_fast_gate as gate
 
 
 def test_uses_current_interpreter_when_already_project_version(monkeypatch):

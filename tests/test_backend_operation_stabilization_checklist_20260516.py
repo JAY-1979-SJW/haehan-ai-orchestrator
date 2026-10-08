@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "ops" / "audit_backend_operation_stabilization.py"
+SCRIPT = ROOT / "scripts" / "ops" / "audits" / "backend" / "audit_backend_operation_stabilization.py"
 
 
 def _load_module():

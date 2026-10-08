@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops import flat_root_gate as gate
+from scripts.ops.repo_gates import flat_root_gate as gate
 
 REAL_ROOT = Path(__file__).resolve().parents[1]
 

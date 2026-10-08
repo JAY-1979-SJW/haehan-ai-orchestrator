@@ -296,12 +296,12 @@ def test_boundary_sessions_parsing_forbidden():
 # ── 13. 감사 스크립트 PASS ────────────────────────────────────────────────────
 
 def test_warehouse_audit_script_importable():
-    import scripts.ops.audit_shared_warehouse_policy as m
+    import scripts.ops.audits.app.audit_shared_warehouse_policy as m
     assert hasattr(m, "run_audit")
 
 
 def test_warehouse_audit_script_runs_and_passes():
-    from scripts.ops.audit_shared_warehouse_policy import run_audit
+    from scripts.ops.audits.app.audit_shared_warehouse_policy import run_audit
     report = run_audit()
     summary = report.summary()
     assert summary["failed"] == 0, f"Warehouse audit 실패: {summary['issues']}"

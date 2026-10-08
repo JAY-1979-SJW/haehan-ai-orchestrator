@@ -221,4 +221,4 @@ youtube	apps/youtube-analyzer-standalone/core/__init__.py	구현	독립앱(결�
 youtube	apps/youtube-analyzer-standalone/core/report_builder.py	구현	독립앱(결정)	scripts/youtube/report_builder.py	0	0
 youtube	apps/youtube-analyzer-standalone/core/url_parser.py	구현	독립앱(결정)	scripts/youtube/url_parser.py	0	0
 youtube	apps/youtube-analyzer-standalone/core/viral_score.py	구현	독립앱(결정)	scripts/youtube/viral_score.py	0	0
-youtube	scripts/ops/guard_youtube_upload.py	구현	제외(.claude 훅 — 이동 금지)	(이동 안 함)	0	0
+youtube	scripts/ops/hooks/guard_youtube_upload.py	구현	제외(.claude 훅 — 이동 금지)	(이동 안 함)	0	0

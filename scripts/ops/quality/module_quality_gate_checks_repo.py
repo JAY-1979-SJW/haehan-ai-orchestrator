@@ -58,7 +58,7 @@ def check_forbidden_command_matrix() -> tuple[bool, str]:
 
 def check_local_agent_browser_runtime_rules() -> tuple[bool, str]:
     doc = ROOT / "docs" / "architecture" / "local_agent_browser_runtime_operating_rules_20260523.md"
-    dry_run = ROOT / "scripts" / "ops" / "dry_run_local_agent_cdp_attach.py"
+    dry_run = ROOT / "scripts" / "ops" / "verify" / "dry_run_local_agent_cdp_attach.py"
     tests = ROOT / "tests" / "test_local_agent_browser_runtime_operating_rules.py"
     monitor = ROOT / "scripts" / "archive" / "misc" / "chrome_ui_monitor.py"
     cdp_client = ROOT / "scripts" / "browser" / "cdp_client.py"
@@ -162,7 +162,7 @@ def _local_gate_file_failure(required_gate, pre_commit, pre_commit_orig, pre_pus
     if missing:
         return False, "missing required local gate file(s): " + ", ".join(missing)
 
-    # 현행 훅 구조(f6a169ae 2026-05-31 재작성 이후, 설치기 scripts/ops/install_git_hooks.py):
+    # 현행 훅 구조(f6a169ae 2026-05-31 재작성 이후, 설치기 scripts/ops/hooks/install_git_hooks.py):
     #   pre-commit(래퍼) -> pre-commit.orig 위임, pre-commit.orig 가 핵심 게이트들을 호출,
     #   pre-push -> ai_code_review_gate.py. required_quality_gate.py 는 더 이상 훅에서
     #   호출되지 않는다(그 미연결 자체는 의도 미확인 — 훅 변경은 이 검사기의 범위 밖).
@@ -206,7 +206,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
 
     required_rendered = "\n".join(required_gate_mod.command_text(command) for command in required_gate_mod.COMMANDS)
     required_needles = (
-        "scripts/ops/dry_run_local_agent_cdp_attach.py",
+        "scripts/ops/verify/dry_run_local_agent_cdp_attach.py",
         "tests/test_local_agent_browser_runtime_operating_rules.py",
         "tests/test_local_agent_cdp_attach.py",
         "tests/test_dry_run_local_agent_cdp_attach.py",
@@ -225,20 +225,20 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tests/test_playwright_ai_baseline_contract.py",
         "tests/test_required_quality_gate.py",
         "tests/test_root_legacy_scripts_audit.py",
-        "scripts/ops/audit_common_tool_runtime.py",
-        "scripts/ops/audit_common_tool_runtime_baseline_contract.py",
-        "scripts/ops/audit_common_engine_commercialization_baseline.py",
-        "scripts/ops/audit_local_agent_connection_recovery_baseline.py",
-        "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py",
-        "scripts/ops/audit_local_agent_e2e_flow_contract.py",
-        "scripts/ops/audit_app_baseline_contract.py",
-        "scripts/ops/audit_standard_workflow_contract.py",
-        "scripts/ops/audit_module_baseline_contract.py",
-        "scripts/ops/audit_backend_core_baseline_contract.py",
-        "scripts/ops/audit_local_agent_e2e_baseline_contract.py",
-        "scripts/ops/audit_approval_flow_baseline_contract.py",
-        "scripts/ops/audit_playwright_ai_baseline_contract.py",
-        "scripts/ops/audit_root_legacy_scripts.py",
+        "scripts/ops/audits/agent/audit_common_tool_runtime.py",
+        "scripts/ops/audits/agent/audit_common_tool_runtime_baseline_contract.py",
+        "scripts/ops/audits/app/audit_common_engine_commercialization_baseline.py",
+        "scripts/ops/audits/agent/audit_local_agent_connection_recovery_baseline.py",
+        "scripts/ops/audits/agent/audit_desktop_auth_runtime_baseline_contract.py",
+        "scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py",
+        "scripts/ops/audits/app/audit_app_baseline_contract.py",
+        "scripts/ops/audits/app/audit_standard_workflow_contract.py",
+        "scripts/ops/audits/app/audit_module_baseline_contract.py",
+        "scripts/ops/audits/backend/audit_backend_core_baseline_contract.py",
+        "scripts/ops/audits/agent/audit_local_agent_e2e_baseline_contract.py",
+        "scripts/ops/audits/app/audit_approval_flow_baseline_contract.py",
+        "scripts/ops/audits/agent/audit_playwright_ai_baseline_contract.py",
+        "scripts/ops/repo_gates/audit_root_legacy_scripts.py",
         "scripts/ops/quality/module_quality_gate.py --module repo_guard",
     )
     missing_needles = [needle for needle in required_needles if needle not in required_rendered]
@@ -256,14 +256,14 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
     hooks_path = normalize_path(config.stdout.strip()) if config.returncode == 0 else ""
     # 설치기가 절대경로(<저장소>/.githooks)로 설정하는 환경도 현행 구조로 인정한다.
     if hooks_path != ".githooks" and not hooks_path.endswith("/.githooks"):
-        return False, "core.hooksPath must be .githooks; run python scripts/ops/quality/install_git_hooks.py"
+        return False, "core.hooksPath must be .githooks; run python scripts/ops/hooks/install_git_hooks.py"
 
     return True, "required local gate is wired through pre-commit/pre-push and Actions are disabled"
 
 
 def check_module_boundary_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_module_boundaries.py"],
+        [PY, "scripts/ops/audits/app/audit_module_boundaries.py"],
         timeout=120,
     )
     if not ok:
@@ -273,7 +273,7 @@ def check_module_boundary_contract() -> tuple[bool, str]:
 
 def check_root_legacy_script_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_root_legacy_scripts.py"],
+        [PY, "scripts/ops/repo_gates/audit_root_legacy_scripts.py"],
         timeout=120,
     )
     if not ok:
