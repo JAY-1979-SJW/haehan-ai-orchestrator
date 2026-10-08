@@ -10,9 +10,9 @@ import json
 
 import pytest
 
-from ai_orchestrator.domain import site_map_sources as sd
-from ai_orchestrator.domain import site_task_map as tm
-from ai_orchestrator.persistence import site_task_map_store as store
+from ai_orchestrator.site_work import site_map_sources as sd
+from ai_orchestrator.site_work import site_task_map as tm
+from ai_orchestrator.site_work import site_task_map_store as store
 from scripts.explorer import data_sources as ds
 from scripts.explorer import task_mapper
 

@@ -32,7 +32,7 @@ import warnings
 warnings.filterwarnings("ignore")
 os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
-from ai_orchestrator.browser_tool.g2b_public_notice_workflow import (  # noqa: E402
+from ai_orchestrator.connectors.g2b.g2b_public_notice_workflow import (  # noqa: E402
     FORBIDDEN_OPERATIONS,
     VERDICT_ALLOWED,
     VERDICT_BLOCKED,
@@ -356,7 +356,7 @@ class TestG2BWorkflowInvariants(unittest.TestCase):
 
 class TestG2BWorkflowCodeSafety(unittest.TestCase):
     def _get_src(self):
-        import ai_orchestrator.browser_tool.g2b_public_notice_workflow as m
+        import ai_orchestrator.connectors.g2b.g2b_public_notice_workflow as m
 
         return inspect.getsource(m)
 

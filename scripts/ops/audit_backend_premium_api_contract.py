@@ -86,12 +86,12 @@ def _check_ops_get_count() -> dict:
 
 
 def _check_naver_endpoint_count() -> dict:
-    # ac-04: naver 3개 — 실제 위치: ai_orchestrator/connectors/naver_search_router.py
+    # ac-04: naver 3개 — 실제 위치: ai_orchestrator/connectors/naver_search/naver_search_router.py
     import re as _re
 
     naver_src = ""
     for f in [
-        ROOT / "ai_orchestrator/connectors/naver_search_router.py",
+        ROOT / "ai_orchestrator/connectors/naver_search/naver_search_router.py",
         ROOT / "ai_orchestrator/naver_search_router.py",
         ROOT / "ai_orchestrator/sites/naver_search/router.py",
     ]:
@@ -108,14 +108,14 @@ def _check_naver_endpoint_count() -> dict:
 
 
 def _check_web_task_router_exists() -> tuple[dict, bool]:
-    web_task = (ROOT / "ai_orchestrator/routers/web_task_router.py").exists()
+    web_task = (ROOT / "ai_orchestrator/web_task/web_task_router.py").exists()
     return _item("ac-05", "PASS" if web_task else "WARN", "web_task_router.py 존재" if web_task else "없음"), web_task
 
 
 def _check_web_task_path(web_task: bool) -> dict:
     if not web_task:
         return _item("ac-06", "WARN", "web_task_router 없음")
-    wt_src = (ROOT / "ai_orchestrator/routers/web_task_router.py").read_text(encoding="utf-8")
+    wt_src = (ROOT / "ai_orchestrator/web_task/web_task_router.py").read_text(encoding="utf-8")
     has_path = "/web-task" in wt_src or "/tasks" in wt_src
     return _item("ac-06", "PASS" if has_path else "FAIL", "web-task/tasks path 존재" if has_path else "path 없음")
 

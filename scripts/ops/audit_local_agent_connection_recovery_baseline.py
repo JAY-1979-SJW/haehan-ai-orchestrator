@@ -15,8 +15,8 @@ COMMON_ENGINE = ROOT / "docs" / "baseline" / "modules" / "COMMON_ENGINE_COMMERCI
 MODULE_BASELINE = ROOT / "docs" / "baseline" / "MODULE_BASELINE.md"
 CONNECTION_DIAGNOSTICS = ROOT / "local_agent" / "connection_diagnostics.py"
 WEBSOCKET_CLIENT = ROOT / "local_agent" / "websocket_client.py"
-WS_AUTH_PROBE = ROOT / "scripts" / "verify" / "verify_agent_ws_auth.py"
-LIVE_DISPATCH = ROOT / "scripts" / "verify" / "verify_live_task_dispatch.py"
+WS_AUTH_PROBE = ROOT / "scripts" / "ops" / "verify" / "verify_agent_ws_auth.py"
+LIVE_DISPATCH = ROOT / "scripts" / "ops" / "verify" / "verify_live_task_dispatch.py"
 
 REQUIRED_BASELINE_PHRASES = (
     "Status: LOCKED",
@@ -29,7 +29,7 @@ REQUIRED_BASELINE_PHRASES = (
     "initial backoff: 1 second",
     "maximum backoff: 60 seconds",
     "jitter: up to 10 percent",
-    "python scripts/module_quality_gate.py --module local_agent_connection_recovery",
+    "python scripts/ops/quality/module_quality_gate.py --module local_agent_connection_recovery",
 )
 
 REQUIRED_DIAGNOSTIC_PHRASES = (

@@ -170,7 +170,9 @@ def test_mypy_runs_once_for_many_files_and_splits_output(tmp_path, monkeypatch):
     for f in files:
         f.write_text("x = 1\n", encoding="utf-8")
     with_base = {f"m{i}.py" for i in range(0, 6, 2)}
-    monkeypatch.setattr(gate, "_head_blobs", lambda _root, rels: {r: (b"x = 0\n" if r in with_base else None) for r in rels})
+    monkeypatch.setattr(
+        gate, "_head_blobs", lambda _root, rels: {r: (b"x = 0\n" if r in with_base else None) for r in rels}
+    )
     calls = []
 
     def fake_run(cmd, *_a, **_k):

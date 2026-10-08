@@ -1,4 +1,4 @@
-"""ai_orchestrator.domain.work_record (L1) — 순수 규칙 시험. DB·환경변수·네트워크 접촉 없음."""
+"""ai_orchestrator.site_work.work_record (L1) — 순수 규칙 시험. DB·환경변수·네트워크 접촉 없음."""
 
 from __future__ import annotations
 
@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.domain import work_record as wr
-from ai_orchestrator.domain.work_record import JobStatus as J
-from ai_orchestrator.domain.work_record import ValidationError
+from ai_orchestrator.site_work import work_record as wr
+from ai_orchestrator.site_work.work_record import JobStatus as J
+from ai_orchestrator.site_work.work_record import ValidationError
 
 _SRC = Path(wr.__file__)
 

@@ -49,7 +49,7 @@ apps/marketing-standalone/          ← 신규 최상위 디렉터리 (신규 �
 | `scripts/naver/blog/marketing/images.py` | `apps/marketing-standalone/connectors/blog_images.py` | 그대로 |
 | `scripts/naver/blog/accounts.py` | `apps/marketing-standalone/connectors/blog_accounts.py` | 계정 목록은 신규 앱 전용 config로 교체(고객 계정은 다름) |
 | `scripts/instagram/api_publish.py` | `apps/marketing-standalone/connectors/instagram_graph_api.py` | 그대로(이미 무의존) |
-| `scripts/cdp_helper.py` | `apps/marketing-standalone/connectors/cdp_helper.py` | 그대로 |
+| `scripts/browser/cdp/cdp_helper.py` | `apps/marketing-standalone/connectors/cdp_helper.py` | 그대로 |
 
 **뺄 것 (Phase 1 범위 아님)**: `research_blog_topics*.py`, `blog_explorer.py`,
 `targeted_engage.py`, `blog_scraper.py`, `apply_cta_to_batches.py`,
@@ -72,7 +72,7 @@ apps/marketing-standalone/          ← 신규 최상위 디렉터리 (신규 �
 ```bash
 python scripts/ops/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
-python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 python scripts/ops/duplicate_code_check.py   # 사본이 "중복 구현"으로 오탐되는지 확인
 ```
 

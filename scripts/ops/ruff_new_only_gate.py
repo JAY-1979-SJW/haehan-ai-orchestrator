@@ -27,6 +27,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _proc import no_window_kwargs
+
 ROOT = Path(__file__).resolve().parents[2]  # scripts/ops/ -> repo root
 _HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 
@@ -41,6 +44,7 @@ def _run_git(args: list[str]) -> subprocess.CompletedProcess:
         errors="replace",
         timeout=30,
         check=False,
+        **no_window_kwargs(),
     )
 
 
@@ -99,6 +103,7 @@ def run_ruff_json(cfg: str, files: list[str]) -> list[dict]:
         errors="replace",
         timeout=60,
         check=False,
+        **no_window_kwargs(),
     )
     try:
         return json.loads(p.stdout or "[]")

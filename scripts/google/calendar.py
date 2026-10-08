@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from scripts.config import GOOGLE_URLS
+from scripts.common.config import GOOGLE_URLS
 
 from .base import page_goto, page_wait_click, page_wait_type, page_wait_visible, task_context
+from .browser_tasks import ContextDeleteSpec, run_context_menu_delete, run_event_list
 
 
 def run(task: str, args: list[str]) -> None:
@@ -25,28 +26,7 @@ def run(task: str, args: list[str]) -> None:
                 print(f"  [오류] 알 수 없는 작업: {task}")
 
 
-def _show_events(page: Any, label: str, url_key: str, ready_selector: str, script: str, column: str) -> None:
-    """캘린더 화면을 열어 일정을 읽어 출력한다(_task_today/_task_week 공통). column = 왼쪽 열로 보여 줄 필드(time|date)."""
-    print(f"\n[작업] Google Calendar {label}")
-
-    page_goto(page, GOOGLE_URLS[url_key])
-    page_wait_visible(page, ready_selector, timeout=15000)
-
-    events = page.evaluate(script)
-
-    print(f"  일정 수: {len(events)}")
-    for i, evt in enumerate(events, 1):
-        print(f"  [{i}] {evt[column]:20s} {evt['title'][:50]}")
-
-
-def _task_today(page: Any, args: list[str]) -> None:
-    """오늘 일정."""
-    _show_events(
-        page,
-        "오늘 일정",
-        "calendar_day",
-        '[role="main"], [data-view="day"], .KF4T6b',  # 캘린더 그리드 렌더 확인
-        r"""() => {
+_TODAY_EVENTS_JS = r"""() => {
         const results = [];
         for (const el of document.querySelectorAll('[data-eventchip], [role="button"][data-draggable-id*="event"]')) {
             const title = el.getAttribute('data-eventchip') || el.textContent.trim();
@@ -54,19 +34,9 @@ def _task_today(page: Any, args: list[str]) -> None:
             if (title) results.push({title, time});
         }
         return results;
-    }""",
-        "time",
-    )
+    }"""
 
-
-def _task_week(page: Any, args: list[str]) -> None:
-    """주간 일정."""
-    _show_events(
-        page,
-        "주간 일정",
-        "calendar_week",
-        '[role="main"], [data-view="week"], .KF4T6b',
-        r"""() => {
+_WEEK_EVENTS_JS = r"""() => {
         const results = [];
         for (const el of document.querySelectorAll('[data-eventchip]')) {
             const title = el.getAttribute('data-eventchip') || el.textContent.trim();
@@ -74,8 +44,30 @@ def _task_week(page: Any, args: list[str]) -> None:
             if (title) results.push({title, date});
         }
         return results.slice(0, 20);
-    }""",
-        "date",
+    }"""
+
+
+def _task_today(page: Any, args: list[str]) -> None:
+    """오늘 일정."""
+    run_event_list(
+        page,
+        heading="Google Calendar 오늘 일정",
+        url=GOOGLE_URLS["calendar_day"],
+        ready_selector='[role="main"], [data-view="day"], .KF4T6b',
+        events_js=_TODAY_EVENTS_JS,
+        when_key="time",
+    )
+
+
+def _task_week(page: Any, args: list[str]) -> None:
+    """주간 일정."""
+    run_event_list(
+        page,
+        heading="Google Calendar 주간 일정",
+        url=GOOGLE_URLS["calendar_week"],
+        ready_selector='[role="main"], [data-view="week"], .KF4T6b',
+        events_js=_WEEK_EVENTS_JS,
+        when_key="date",
     )
 
 
@@ -144,30 +136,19 @@ def _task_create(page: Any, args: list[str]) -> None:
 
 def _task_delete(page: Any, args: list[str]) -> None:
     """이벤트 삭제."""
-    if not args:
-        print("  [오류] 삭제할 이벤트 제목을 입력하세요")
-        return
-
-    event_name = " ".join(args)
-    print(f"\n[작업] Google Calendar 이벤트 삭제: {event_name}")
-
-    page_goto(page, GOOGLE_URLS["calendar_day"])
-    page_wait_visible(page, '[role="main"]', timeout=15000)
-
-    # 이벤트 찾아 우클릭
-    page.evaluate(f"""() => {{
-        for (const el of document.querySelectorAll('[role="button"]')) {{
-            if (el.textContent.includes({event_name!r})) {{
-                el.dispatchEvent(new MouseEvent('contextmenu', {{ bubbles: true }}));
-                break;
-            }}
-        }}
-    }}""")
-
-    # 컨텍스트 메뉴 대기
-    if page_wait_visible(page, '[role="menu"], [role="menuitem"]', timeout=5000):
-        page_wait_click(page, '[role="menuitem"]:has-text("삭제"), [role="menuitem"]:has-text("Delete")')
-        page_wait_visible(page, '[role="main"]', timeout=5000)
-        print("  ✓ 이벤트 삭제 완료")
-    else:
-        print("  ⚠  삭제 메뉴 못 찾음")
+    run_context_menu_delete(
+        page,
+        args,
+        ContextDeleteSpec(
+            empty_message="  [오류] 삭제할 이벤트 제목을 입력하세요",
+            heading="Google Calendar 이벤트 삭제",
+            home_url=GOOGLE_URLS["calendar_day"],
+            ready_selector='[role="main"]',
+            ready_timeout=15000,
+            candidates_selector='[role="button"]',
+            match_condition="el.textContent.includes({name})",
+            menu_selector='[role="menu"], [role="menuitem"]',
+            done_message="  ✓ 이벤트 삭제 완료",
+            fail_message="  ⚠  삭제 메뉴 못 찾음",
+        ),
+    )

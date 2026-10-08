@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT))
 # ---------------------------------------------------------------------------
 
 def test_gabia_dns_work_trade_exists():
-    from ai_orchestrator.gabia.gabia_dns_work_registry import get_work_trade
+    from ai_orchestrator.connectors.gabia.dns_work_registry import get_work_trade
     wt = get_work_trade("gabia_dns_management")
     assert wt is not None
     assert wt.work_trade_id == "gabia_dns_management"
@@ -30,7 +30,7 @@ def test_gabia_dns_work_trade_exists():
 
 
 def test_gabia_dns_work_trade_not_external_app_hold():
-    from ai_orchestrator.gabia.gabia_dns_work_registry import get_work_trade
+    from ai_orchestrator.connectors.gabia.dns_work_registry import get_work_trade
     wt = get_work_trade("gabia_dns_management")
     assert wt.is_external_app_hold() is False
 
@@ -40,7 +40,7 @@ def test_gabia_dns_work_trade_not_external_app_hold():
 # ---------------------------------------------------------------------------
 
 def test_gabia_dns_external_work_prepare_exists():
-    from ai_orchestrator.gabia.gabia_dns_work_registry import get_external_work
+    from ai_orchestrator.connectors.gabia.dns_work_registry import get_external_work
     ew = get_external_work("gabia_dns_record_prepare")
     assert ew is not None
     assert ew.provider == "gabia"
@@ -48,7 +48,7 @@ def test_gabia_dns_external_work_prepare_exists():
 
 
 def test_gabia_dns_external_work_final_save_exists():
-    from ai_orchestrator.gabia.gabia_dns_work_registry import get_external_work
+    from ai_orchestrator.connectors.gabia.dns_work_registry import get_external_work
     ew = get_external_work("gabia_dns_final_save")
     assert ew is not None
     assert ew.requires_user_direct() is True
@@ -56,14 +56,14 @@ def test_gabia_dns_external_work_final_save_exists():
 
 
 def test_gabia_dns_external_work_read_exists():
-    from ai_orchestrator.gabia.gabia_dns_work_registry import get_external_work
+    from ai_orchestrator.connectors.gabia.dns_work_registry import get_external_work
     ew = get_external_work("gabia_dns_record_read")
     assert ew is not None
     assert ew.risk_level == "medium"
 
 
 def test_external_work_registry_has_gabia():
-    from ai_orchestrator.external_work_registry import get_external_work
+    from ai_orchestrator.tasks.external_work_registry import get_external_work
     p = get_external_work("gabia", "dns_record_prepare")
     f = get_external_work("gabia", "dns_final_save")
     r = get_external_work("gabia", "dns_record_read")
@@ -154,7 +154,7 @@ def test_gabia_dns_prepare_requires_final_approval():
 
 
 def test_gabia_dns_draft_model_safe_to_prepare():
-    from ai_orchestrator.gabia.gabia_dns_models import make_assistant_subdomain_drafts
+    from ai_orchestrator.connectors.gabia.dns_models import make_assistant_subdomain_drafts
     d1, d2 = make_assistant_subdomain_drafts()
     assert d1.safe_to_prepare is True
     assert d2.safe_to_prepare is True
@@ -179,7 +179,7 @@ def test_gabia_dns_final_save_requires_final_approval():
 
 
 def test_gabia_dns_draft_requires_final_approval():
-    from ai_orchestrator.gabia.gabia_dns_models import make_assistant_subdomain_drafts
+    from ai_orchestrator.connectors.gabia.dns_models import make_assistant_subdomain_drafts
     d1, d2 = make_assistant_subdomain_drafts()
     assert d1.requires_final_approval is True
     assert d2.requires_final_approval is True
@@ -191,7 +191,8 @@ def test_gabia_dns_draft_requires_final_approval():
 
 def test_final_approval_gate_policy_blocks_dns_save():
     from ai_orchestrator.safety_policy.safety_policy_registry import (
-        get_policy, DECISION_REQUIRE_APPROVAL,
+        DECISION_REQUIRE_APPROVAL,
+        get_policy,
     )
     p = get_policy("FINAL_APPROVAL_GATE_REQUIRED")
     assert p is not None
@@ -201,7 +202,8 @@ def test_final_approval_gate_policy_blocks_dns_save():
 
 def test_domain_dns_change_approval_required_policy():
     from ai_orchestrator.safety_policy.safety_policy_registry import (
-        get_policy, DECISION_REQUIRE_APPROVAL,
+        DECISION_REQUIRE_APPROVAL,
+        get_policy,
     )
     p = get_policy("DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED")
     assert p is not None
@@ -214,7 +216,7 @@ def test_domain_dns_change_approval_required_policy():
 # ---------------------------------------------------------------------------
 
 def test_ai_can_create_dns_record_draft():
-    from ai_orchestrator.gabia.gabia_dns_models import GabiaDnsRecordDraft
+    from ai_orchestrator.connectors.gabia.dns_models import GabiaDnsRecordDraft
     draft = GabiaDnsRecordDraft(
         record_id="test_draft_001",
         domain="haehan-ai.kr",
@@ -230,8 +232,9 @@ def test_ai_can_create_dns_record_draft():
 
 
 def test_ai_can_create_change_preview():
-    from ai_orchestrator.gabia.gabia_dns_models import (
-        GabiaDnsRecordDraft, GabiaDnsChangePreview,
+    from ai_orchestrator.connectors.gabia.dns_models import (
+        GabiaDnsChangePreview,
+        GabiaDnsRecordDraft,
     )
     existing = GabiaDnsRecordDraft(
         record_id="ex1", domain="haehan-ai.kr", host="@",
@@ -268,7 +271,7 @@ def test_ai_cannot_auto_click_final_save():
 
 
 def test_approval_summary_user_must_click():
-    from ai_orchestrator.gabia.gabia_dns_models import GabiaDnsApprovalSummary
+    from ai_orchestrator.connectors.gabia.dns_models import GabiaDnsApprovalSummary
     summary = GabiaDnsApprovalSummary(
         action="add_subdomain",
         domain="haehan-ai.kr",
@@ -285,7 +288,7 @@ def test_approval_summary_user_must_click():
 # ---------------------------------------------------------------------------
 
 def test_dns_draft_no_secret_fields():
-    from ai_orchestrator.gabia.gabia_dns_models import GabiaDnsRecordDraft
+    from ai_orchestrator.connectors.gabia.dns_models import GabiaDnsRecordDraft
     forbidden = {"password", "otp", "cert_password", "token", "cookie", "session", "private_key"}
     draft = GabiaDnsRecordDraft(
         record_id="x", domain="haehan-ai.kr", host="test",
@@ -296,7 +299,7 @@ def test_dns_draft_no_secret_fields():
 
 
 def test_dns_draft_safe_dict_no_secrets():
-    from ai_orchestrator.gabia.gabia_dns_models import make_assistant_subdomain_drafts
+    from ai_orchestrator.connectors.gabia.dns_models import make_assistant_subdomain_drafts
     d1, _ = make_assistant_subdomain_drafts()
     safe = d1.to_safe_dict()
     forbidden = {"password", "otp", "cert_password", "token", "cookie", "session", "private_key"}
@@ -304,7 +307,7 @@ def test_dns_draft_safe_dict_no_secrets():
 
 
 def test_approval_summary_no_secret_fields():
-    from ai_orchestrator.gabia.gabia_dns_models import GabiaDnsApprovalSummary
+    from ai_orchestrator.connectors.gabia.dns_models import GabiaDnsApprovalSummary
     summary = GabiaDnsApprovalSummary(
         action="test", domain="haehan-ai.kr",
         records_to_add=(), records_to_change=(), records_to_remove=(),
@@ -319,7 +322,7 @@ def test_approval_summary_no_secret_fields():
 # ---------------------------------------------------------------------------
 
 def test_rollback_plan_exists_and_requires_approval():
-    from ai_orchestrator.gabia.gabia_dns_models import make_default_rollback_plan
+    from ai_orchestrator.connectors.gabia.dns_models import make_default_rollback_plan
     rb = make_default_rollback_plan()
     assert rb.rollback_available is True
     assert rb.requires_user_approval is True
@@ -327,7 +330,7 @@ def test_rollback_plan_exists_and_requires_approval():
 
 
 def test_rollback_plan_has_propagation_notice():
-    from ai_orchestrator.gabia.gabia_dns_models import make_default_rollback_plan
+    from ai_orchestrator.connectors.gabia.dns_models import make_default_rollback_plan
     rb = make_default_rollback_plan()
     assert "48" in rb.dns_propagation_notice or "전파" in rb.dns_propagation_notice
 
@@ -382,7 +385,8 @@ def test_no_actual_gabia_access():
 
 def test_no_conflict_with_existing_trusted_session_policy():
     from ai_orchestrator.safety_policy.safety_policy_registry import (
-        get_policy, list_all_policies,
+        get_policy,
+        list_all_policies,
     )
     all_policies = list_all_policies()
     gabia_policy = get_policy("DOMAIN_DNS_CHANGE_APPROVAL_REQUIRED")

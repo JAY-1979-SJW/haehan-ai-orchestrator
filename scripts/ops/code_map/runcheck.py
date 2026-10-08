@@ -33,6 +33,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.ops.code_map import scan  # noqa: E402
+from scripts.ops.code_map.proc_tree import run_tree_killed  # noqa: E402
 
 MAP = ROOT / "data" / "code_map" / "map.json"
 LEDGER = ROOT / "data" / "code_map" / "run_ledger.json"
@@ -165,12 +166,8 @@ def run_r0(m: dict, workers: int = 8) -> dict[str, dict]:
 
     def one(rel: str) -> tuple[str, dict]:
         try:
-            r = subprocess.run(
+            r = run_tree_killed(  # 데몬을 띄우는 import 가 파이프를 물고 있어도 60초 뒤 트리째 종료하고 넘어간다
                 [sys.executable, "-c", IMPORT_CHILD, str(ROOT).replace("\\", "/"), rel],
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
                 timeout=60,
                 cwd=ROOT,
                 env=CHILD_ENV,
@@ -218,16 +215,7 @@ def run_r1(m: dict, workers: int = 4) -> dict[str, dict]:
     def one(rel: str) -> tuple[str, dict]:
         t = time.time()
         try:
-            r = subprocess.run(
-                _help_cmd(rel),
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=60,
-                cwd=ROOT,
-                env=CHILD_ENV,
-            )
+            r = run_tree_killed(_help_cmd(rel), timeout=60, cwd=ROOT, env=CHILD_ENV)
             ok = r.returncode == 0 and "usage" in (r.stdout + r.stderr).lower()
             err = "" if ok else f"rc={r.returncode} " + (r.stderr or r.stdout)[-250:]
             return rel, {"status": "OK" if ok else "FAIL", "sec": round(time.time() - t, 2), "err": err}

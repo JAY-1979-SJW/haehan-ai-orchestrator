@@ -58,7 +58,7 @@ extend-immutable-calls = [
     "ai_orchestrator.gates.auth.require_role",
     # LoginRequest(): 요청 바디 기본값으로만 쓰이고 핸들러 안에서 읽기만 함(변형 없음,
     # 2026-09-29 확인) — naver_session_router.py:trigger_login.
-    "ai_orchestrator.connectors.naver_session_router.LoginRequest",
+    "ai_orchestrator.connectors.naver_auth.session_router.LoginRequest",
 ]
 
 [format]

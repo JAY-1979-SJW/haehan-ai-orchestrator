@@ -41,7 +41,7 @@ def _fake_get_page(calls, fail=False):
 
 def test_cdp_is_ensured_before_any_site_is_collected(env):
     calls, _, mp = env
-    mp.setattr("scripts.web_connector.get_page", _fake_get_page(calls))
+    mp.setattr("scripts.browser.cdp.connection.get_page", _fake_get_page(calls))
     report = S.run_all_sites("scheduled")
     assert calls[0] == "get_page" and calls.index("get_page") < calls.index("extract:http://a.test")
     assert report["ok_count"] == 2
@@ -49,7 +49,7 @@ def test_cdp_is_ensured_before_any_site_is_collected(env):
 
 def test_cdp_start_failure_is_reported_once_and_collection_is_skipped(env):
     calls, _, mp = env
-    mp.setattr("scripts.web_connector.get_page", _fake_get_page(calls, fail=True))
+    mp.setattr("scripts.browser.cdp.connection.get_page", _fake_get_page(calls, fail=True))
     report = S.run_all_sites("scheduled")
     assert calls == ["get_page"]  # 수집 함수는 호출되지 않고, 브라우저 기동 시도도 1번뿐
     assert report["ok_count"] == 0 and report["site_count"] == 2
@@ -59,6 +59,6 @@ def test_cdp_start_failure_is_reported_once_and_collection_is_skipped(env):
 def test_no_sites_does_not_touch_the_browser(env):
     calls, sites, mp = env
     sites.clear()
-    mp.setattr("scripts.web_connector.get_page", _fake_get_page(calls))
+    mp.setattr("scripts.browser.cdp.connection.get_page", _fake_get_page(calls))
     S.run_all_sites("scheduled")
     assert calls == []

@@ -318,8 +318,6 @@ if _dg.exists() and py_files:
 from pathlib import Path as _P
 import importlib.util, os
 gate = ROOT / "scripts" / "ops" / "quality" / "quality_gate.py"
-if not gate.exists():
-    gate = ROOT / "scripts" / "quality_gate.py"  # S2-B 이동 전 브랜치(master) 호환 — 둘 다 없으면 아래에서 건너뜀
 if gate.exists():
     # 2026-09-30 수정(defect_index #2): 이 훅이 --allow-existing-code-change 를 항상
     # 넘겨서 existing_code_change_requires_flag 안전장치가 영구 무력화돼 있었다.

@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from scripts import credentials
+from scripts.auth import credentials
 
 
 def _runtime_paths() -> tuple[Path, Path]:

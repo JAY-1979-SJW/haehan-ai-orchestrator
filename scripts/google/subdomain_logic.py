@@ -18,11 +18,11 @@ from ai_orchestrator.local_agent.common_tool_runtime import (
     build_common_tool_task,
 )
 
-from scripts.sites.sso_runtime import (
+from scripts.site_engine.sso_runtime import (
     build_login_entry_task,
     build_subdomain_readonly_task,
 )
-from scripts.sites.subdomain_registry import get_provider
+from scripts.site_engine.subdomain_registry import get_provider
 
 from . import surfaces, workflows
 

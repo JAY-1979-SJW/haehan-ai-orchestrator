@@ -24,9 +24,9 @@ except ImportError:
     pass
 
 from scripts.eum.auth import ensure_logged_in
-from scripts.gate import check as gate_check
-from scripts.logger import get_logger
-from scripts.web_connector import get_page
+from scripts.common.gate import check as gate_check  # noqa: E402 - sys.path 부트스트랩 뒤 import
+from scripts.common.logger import get_logger  # noqa: E402 - sys.path 부트스트랩 뒤 import
+from scripts.browser.cdp.connection import get_page  # noqa: E402 - sys.path 부트스트랩 뒤 import(이동 전부터 있던 패턴)
 
 log = get_logger(__name__)
 
@@ -79,9 +79,6 @@ SUBMIT_SELECTORS = [
     ".btn-submit",
 ]
 
-MENU_FIELD_IDS = {"menuSearchKeyowrd", "menuSearchKeyword"}
-IGNORED_BUTTON_TEXT = {"닫기", "close"}
-
 DEVICE_KEYWORDS = ["단말기", "단말", "기기", "terminal", "device", "tmn", "term", "eqp"]
 DATE_KEYWORDS = ["철거일", "말소일", "철거예정", "일자", "date", "remove", "dereg", "delete", "del"]
 DENIAL_MARKERS = [
@@ -126,76 +123,23 @@ def _load_form_analysis() -> dict[str, Any]:
         return {}
 
 
+# form_selectors 는 함수 안에서 import 한다(이 파일의 모듈 import 는 sys.path 부트스트랩 뒤라 상단에 추가하면 E402).
 def _analysis_entries(page_code: str) -> list[dict[str, Any]]:
-    analysis = _load_form_analysis()
-    entries: list[dict[str, Any]] = []
-    for key, value in analysis.items():
-        if not isinstance(value, dict):
-            continue
-        url = str(value.get("url") or "")
-        if page_code in str(key) or page_code in url:
-            entries.append(value)
-    return entries
+    from scripts.eum.form_selectors import analysis_entries
 
-
-def _selector_from_field(field: dict[str, Any]) -> str | None:
-    selector = str(field.get("selector") or "").strip()
-    field_id = str(field.get("id") or "").strip()
-    name = str(field.get("name") or "").strip()
-    if field_id in MENU_FIELD_IDS:
-        return None
-    if selector:
-        return selector
-    if field_id:
-        return f"#{field_id}"
-    if name:
-        return f"input[name='{name}']"
-    return None
-
-
-def _selector_from_button(button: dict[str, Any]) -> str | None:
-    text = str(button.get("text") or "").strip()
-    if text.lower() in IGNORED_BUTTON_TEXT:
-        return None
-    selector = str(button.get("selector") or "").strip()
-    button_id = str(button.get("id") or "").strip()
-    if selector:
-        return selector
-    if button_id:
-        return f"#{button_id}"
-    return None
+    return analysis_entries(_load_form_analysis(), page_code)
 
 
 def _analyzed_field_selectors(page_code: str, keywords: list[str]) -> list[str]:
-    selectors: list[str] = []
-    keys = [keyword.lower() for keyword in keywords if keyword]
-    for entry in _analysis_entries(page_code):
-        fields = entry.get("fields") or entry.get("inputs") or []
-        textareas = entry.get("textareas") or []
-        for field in [*fields, *textareas]:
-            if not isinstance(field, dict):
-                continue
-            haystack = " ".join(
-                str(field.get(part) or "") for part in ("id", "name", "placeholder", "label", "type")
-            ).lower()
-            if keys and not any(key in haystack for key in keys):
-                continue
-            selector = _selector_from_field(field)
-            if selector and selector not in selectors:
-                selectors.append(selector)
-    return selectors
+    from scripts.eum.form_selectors import field_selectors
+
+    return field_selectors(_analysis_entries(page_code), keywords)
 
 
 def _analyzed_submit_selectors(page_code: str) -> list[str]:
-    selectors: list[str] = []
-    for entry in _analysis_entries(page_code):
-        for button in entry.get("buttons") or []:
-            if not isinstance(button, dict):
-                continue
-            selector = _selector_from_button(button)
-            if selector and selector not in selectors:
-                selectors.append(selector)
-    return selectors
+    from scripts.eum.form_selectors import submit_selectors
+
+    return submit_selectors(_analysis_entries(page_code))
 
 
 def _fill_by_keywords(page, keywords: list[str], value: str, field: str) -> str | None:

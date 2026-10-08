@@ -21,7 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
-from ai_orchestrator.config import get_local_data_dir  # noqa: E402
+from ai_orchestrator.core.config import get_local_data_dir  # noqa: E402
 
 VOICE = "ko-KR-InJoonNeural"
 TTS_RATE = "+15%"

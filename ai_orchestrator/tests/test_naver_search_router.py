@@ -16,15 +16,15 @@ from fastapi.testclient import TestClient
 
 from ai_orchestrator.connectors import (
     naver_openapi_config as cfg_mod,
-)
-from ai_orchestrator.connectors import (
     naver_search_client,
+)
+from ai_orchestrator.connectors.naver_search import (
     naver_search_jobs,
 )
-from ai_orchestrator.connectors import (
+from ai_orchestrator.connectors.naver_search import (
     naver_search_queries as q,
 )
-from ai_orchestrator.connectors.naver_search_router import naver_search_router
+from ai_orchestrator.connectors.naver_search.naver_search_router import naver_search_router
 
 
 # ── fixtures ────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ from ai_orchestrator.connectors.naver_search_router import naver_search_router
 def _disable_auth(monkeypatch):
     """모든 테스트 동안 AUTH_ENABLED=False 로 고정 → dummy owner 통과.
     다른 테스트에서 True 로 세팅한 잔존 상태를 무효화한다."""
-    from ai_orchestrator import config as _config
+    from ai_orchestrator.core import config as _config
 
     monkeypatch.setattr(_config, "AUTH_ENABLED", False, raising=False)
     yield

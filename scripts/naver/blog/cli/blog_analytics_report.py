@@ -19,7 +19,7 @@ from scripts.naver.blog.accounts import BLOG_ACCOUNTS, DEFAULT_ACCOUNT
 
 sys.path.insert(0, ".")
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.naver.blog.management.analytics import BlogAnalytics
 
 _log = get_logger(__name__)

@@ -13,10 +13,10 @@ from collections.abc import Callable
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
-from scripts.login_detector import detect_login_state
-from scripts.session_tracker import mark_state
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
+from scripts.auth.login_detector import detect_login_state
+from scripts.browser.session.session_tracker import mark_state
 
 _log = get_logger(__name__)
 

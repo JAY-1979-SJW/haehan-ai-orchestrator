@@ -25,7 +25,7 @@ from fastapi.security import (
     HTTPBearer,
 )
 
-from ai_orchestrator import config
+from ai_orchestrator.core import config
 
 logger = logging.getLogger(__name__)
 

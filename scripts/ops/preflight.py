@@ -87,7 +87,7 @@ def _port_in_use(host: str, port: int) -> bool:
 
 
 def _find_chrome() -> str | None:
-    from scripts.browser_paths import find_chrome
+    from scripts.browser.session.browser_paths import find_chrome
 
     return find_chrome()
 
@@ -182,7 +182,7 @@ def check_cdp_port(env: Env) -> Check:
         return Check("CDP 포트 9222", PASS, "크롬 디버그 포트가 응답함")
     if env.port_in_use(CDP_HOST, CDP_PORT):
         return Check("CDP 포트 9222", FAIL, "포트를 다른 프로그램이 쓰고 있어 크롬 디버그 포트가 응답하지 않습니다")
-    return Check("CDP 포트 9222", WARN, "꺼져 있음 — 필요할 때 python scripts/cdp_force_start.py start (읽기 전용 점검이라 켜지 않음)")
+    return Check("CDP 포트 9222", WARN, "꺼져 있음 — 필요할 때 python scripts/browser/cdp/cdp_force_start.py start (읽기 전용 점검이라 켜지 않음)")
 
 
 def check_writable(env: Env) -> Check:

@@ -9,7 +9,7 @@ import re
 import time
 from dataclasses import dataclass, field
 
-from . import cdp
+from scripts.naver.mail.read import cdp
 
 # ── PII 마스킹 ───────────────────────────────────────────────────────
 

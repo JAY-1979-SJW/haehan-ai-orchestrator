@@ -7,7 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator import asgi, config
+from ai_orchestrator import asgi
+from ai_orchestrator.core import config
 
 ROOT = Path(__file__).resolve().parents[1]
 

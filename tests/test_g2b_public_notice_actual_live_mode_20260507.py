@@ -15,12 +15,12 @@ _repo_root = Path(__file__).resolve().parent.parent
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (  # noqa: E402
+from ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate import (  # noqa: E402
     GATE_NEEDS_VERIFICATION,
     GATE_READONLY_EXECUTION_CANDIDATE,
     build_g2b_readonly_execution_candidate,
 )
-from ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner import (  # noqa: E402
+from ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner import (  # noqa: E402
     _check_playwright_available,
     run_g2b_public_notice_fixture_live_suite,
     run_g2b_public_notice_readonly_live,
@@ -78,7 +78,7 @@ def test_01_actual_live_mock_used_true_is_fail():
 def test_02_forbid_mock_playwright_unavailable_returns_fail():
     """forbid_mock=True에서 playwright 미사용 시 LIVE_FAIL 반환."""
     candidate = _allowed_candidate()
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": False,
             "error": "playwright not installed",
@@ -95,7 +95,7 @@ def test_02_forbid_mock_playwright_unavailable_returns_fail():
 def test_03_actual_live_warn_not_pass():
     """actual-live 모드에서 playwright 미사용 시 LIVE_WARN이 PASS로 처리되지 않는다."""
     candidate = _allowed_candidate()
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": False,
             "error": "playwright not installed",
@@ -112,7 +112,7 @@ def test_03_actual_live_warn_not_pass():
 def test_04_playwright_unavailable_actual_live_fails():
     """playwright 미설치 환경 시뮬레이션에서 actual-live PASS 불가."""
     candidate = _allowed_candidate()
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": False,
             "error": "playwright not installed",
@@ -128,7 +128,7 @@ def test_04_playwright_unavailable_actual_live_fails():
 def test_05_allowed_case_execution_dispatched_true_on_success():
     """허용 케이스에서 실제 playwright 성공 시 execution_dispatched=True."""
     candidate = _allowed_candidate()
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": True,
             "error": "",
@@ -161,7 +161,7 @@ def test_07_needs_verification_execution_dispatched_false():
 def test_08_server_browser_used_always_false():
     """server_browser_used는 actual-live 모드에서도 항상 False."""
     candidate = _allowed_candidate()
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": True,
             "error": "",
@@ -177,7 +177,7 @@ def test_08_server_browser_used_always_false():
 def test_09_local_agent_used_false_no_actual_pass():
     """local_agent_used=False이면 actual-live PASS 불가."""
     candidate = _allowed_candidate()
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": False,
             "error": "not available",
@@ -194,7 +194,7 @@ def test_09_local_agent_used_false_no_actual_pass():
 def test_10_result_schema_actual_live_fields():
     """실제 live 결과 schema에 actual_live_required/mock_used/playwright_available 포함."""
     candidate = _allowed_candidate()
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": True,
             "error": "",
@@ -251,7 +251,7 @@ def test_13_click_type_fill_submit_always_blocked():
 
 def test_14_suite_mock_used_false_in_actual_live_mode():
     """actual-live suite 결과에 mock_used=False 포함."""
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": True,
             "error": "",
@@ -271,7 +271,7 @@ def test_14_suite_mock_used_false_in_actual_live_mode():
 
 def test_15_suite_live_warn_not_counted_as_success_in_actual_live():
     """actual-live suite에서 LIVE_WARN은 live_executed에 포함되지 않는다."""
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": False,
             "error": "not available",
@@ -303,7 +303,7 @@ def test_16_check_playwright_available_returns_dict():
 
 def test_17_actual_live_required_field_in_suite_result():
     """suite 결과에 actual_live_required 필드가 있다."""
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": True,
             "error": "",
@@ -319,7 +319,7 @@ def test_17_actual_live_required_field_in_suite_result():
 
 def test_18_fixture_blocked_cases_gate_block_in_actual_live():
     """actual-live 모드에서도 차단 케이스는 gate BLOCK."""
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": True,
             "error": "",
@@ -347,7 +347,7 @@ def test_19_scripts_import_includes_argparse():
 
 def test_20_suite_needs_verification_not_live_in_actual_live():
     """actual-live 모드에서도 NEEDS_VERIFICATION은 live 실행 대상 아님."""
-    with patch("ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
+    with patch("ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner._try_playwright_open_read") as mock_pw:
         mock_pw.return_value = {
             "local_agent_available": True,
             "error": "",

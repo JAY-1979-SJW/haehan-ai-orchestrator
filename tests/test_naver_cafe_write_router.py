@@ -24,7 +24,7 @@ class _FakeCafe:
 @pytest.fixture
 def fake_cafe(monkeypatch, tmp_path):
     import scripts.naver.cafe as cafe_pkg
-    import scripts.web_connector as wc
+    import scripts.browser.cdp.connection as wc
 
     _FakeCafe.calls = []
     _FakeCafe.result = {"ok": True, "mode": "awaiting_approval"}

@@ -106,7 +106,7 @@ Common Naver live safety policy:
 - `docs/naver_live_safety_policy_20260513.md`
 - `scripts/naver/live_safety.py`
 - `docs/common_login_session_safety_policy_20260513.md`
-- `scripts/site_session_safety.py`
+- `scripts/site_engine/site_session_safety.py`
 
 Live browser actions require `--live-ok`. Multi-target Naver scans require both
 `--live-ok` and `--allow-multi-target`.

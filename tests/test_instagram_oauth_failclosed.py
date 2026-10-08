@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.connectors import instagram_dm_router as igmod
+from ai_orchestrator.connectors.instagram import instagram_dm_router as igmod
 
 
 def _setup(monkeypatch, short, long_):

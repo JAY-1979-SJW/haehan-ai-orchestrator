@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, File, UploadFile
 
 from ai_orchestrator.gates.auth import require_role
 
-from ...audit_logger import log_event
+from ...audit.audit_logger import log_event
 from ._helpers import ROOT
 
 _TEMP_IMAGE_DIR = ROOT / "data" / "temp_images"

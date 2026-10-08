@@ -68,7 +68,7 @@ def router_content():
 
 @pytest.fixture(scope="module")
 def executor_content():
-    return (REPO_ROOT / "ai_orchestrator/executor.py").read_text(encoding="utf-8", errors="ignore")
+    return (REPO_ROOT / "ai_orchestrator/tasks/executor.py").read_text(encoding="utf-8", errors="ignore")
 
 
 @pytest.fixture(scope="module")
@@ -203,46 +203,46 @@ def router_mod():
     import sys
 
     mock_names = [
-        "ai_orchestrator.planner",
-        "ai_orchestrator.executor",
+        "ai_orchestrator.llm.planner",
+        "ai_orchestrator.tasks.executor",
         "ai_orchestrator.gates.approval",
-        "ai_orchestrator.audit_logger",
+        "ai_orchestrator.audit.audit_logger",
         "ai_orchestrator.gates.auth",
-        "ai_orchestrator.telegram_webhook",
-        "ai_orchestrator.inbox",
-        "ai_orchestrator.sites.gmail_reader",
+        "ai_orchestrator.notify.telegram_webhook",
+        "ai_orchestrator.tasks.inbox",
+        "ai_orchestrator.connectors.google.gmail_reader",
         "ai_orchestrator.sites.router",
         "ai_orchestrator.cad.router",
-        "ai_orchestrator.routers.web_task_router",
+        "ai_orchestrator.web_task.web_task_router",
         "ai_orchestrator.local_agent_router",
         "ai_orchestrator.routers.admin_ui_router",
-        "ai_orchestrator.routers.auth_router",
+        "ai_orchestrator.auth.auth_router",
         "ai_orchestrator.browser_tool.approval_record_router",
         "ai_orchestrator.routers.action_router",
         "ai_orchestrator.cad_ai_router",
-        "ai_orchestrator.connectors.naver_search_router",
+        "ai_orchestrator.connectors.naver_search.naver_search_router",
         "ai_orchestrator.routers.ops_router",
     ]
     originals = {n: sys.modules.get(n) for n in mock_names}
     mocks = {
-        "ai_orchestrator.planner": MagicMock(),
-        "ai_orchestrator.executor": MagicMock(),
+        "ai_orchestrator.llm.planner": MagicMock(),
+        "ai_orchestrator.tasks.executor": MagicMock(),
         "ai_orchestrator.gates.approval": MagicMock(),
-        "ai_orchestrator.audit_logger": MagicMock(),
+        "ai_orchestrator.audit.audit_logger": MagicMock(),
         "ai_orchestrator.gates.auth": MagicMock(),
-        "ai_orchestrator.telegram_webhook": MagicMock(),
-        "ai_orchestrator.inbox": MagicMock(),
-        "ai_orchestrator.sites.gmail_reader": MagicMock(),
+        "ai_orchestrator.notify.telegram_webhook": MagicMock(),
+        "ai_orchestrator.tasks.inbox": MagicMock(),
+        "ai_orchestrator.connectors.google.gmail_reader": MagicMock(),
         "ai_orchestrator.sites.router": MagicMock(sites_router=APIRouter()),
         "ai_orchestrator.cad.router": MagicMock(cad_router=APIRouter()),
-        "ai_orchestrator.routers.web_task_router": MagicMock(web_task_router=APIRouter()),
+        "ai_orchestrator.web_task.web_task_router": MagicMock(web_task_router=APIRouter()),
         "ai_orchestrator.local_agent_router": MagicMock(local_agent_router=APIRouter()),
         "ai_orchestrator.routers.admin_ui_router": MagicMock(admin_ui_router=APIRouter()),
-        "ai_orchestrator.routers.auth_router": MagicMock(auth_router=APIRouter()),
+        "ai_orchestrator.auth.auth_router": MagicMock(auth_router=APIRouter()),
         "ai_orchestrator.browser_tool.approval_record_router": MagicMock(approval_record_router=APIRouter()),
         "ai_orchestrator.routers.action_router": MagicMock(action_router=APIRouter()),
         "ai_orchestrator.cad_ai_router": MagicMock(cad_ai_router=APIRouter()),
-        "ai_orchestrator.connectors.naver_search_router": MagicMock(naver_search_router=APIRouter()),
+        "ai_orchestrator.connectors.naver_search.naver_search_router": MagicMock(naver_search_router=APIRouter()),
         "ai_orchestrator.routers.ops_router": MagicMock(ops_router=APIRouter()),
     }
     for mod_name, mock in mocks.items():

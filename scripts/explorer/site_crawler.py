@@ -16,7 +16,7 @@
 
 사용:
     python -m scripts.explorer.site_crawler <site> [depth] [max_pages]
-    python scripts/cdp_client.py crawl <site> [depth] [max]
+    python scripts/browser/cdp/cdp_client.py crawl <site> [depth] [max]
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from urllib.parse import urljoin, urlparse
 
 from scripts.explorer.page_classifier import classify_page
 from scripts.form.bot_radar import scan as bot_scan
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -41,11 +41,11 @@ def _dismiss_popups(page, rounds: int = 3) -> list[dict]:
     """홈페이지/페이지 진입 시 자동 팝업 닫기.
 
     기존 모듈 재사용:
-      - scripts.popup_detector.handle_page_popups: DOM 모달 닫기
-      - scripts.popup_detector.close_popup_windows: 별도 창 팝업 닫기
+      - scripts.browser.popup.popup_detector.handle_page_popups: DOM 모달 닫기
+      - scripts.browser.popup.popup_detector.close_popup_windows: 별도 창 팝업 닫기
     연쇄 팝업 대비 여러 라운드.
     """
-    from scripts.popup_detector import close_popup_windows, handle_page_popups
+    from scripts.browser.popup.popup_detector import close_popup_windows, handle_page_popups
 
     all_actions: list[dict] = []
     for i in range(rounds):
@@ -494,7 +494,7 @@ def main() -> None:
     depth = int(sys.argv[2]) if len(sys.argv) > 2 else 3
     max_pages = int(sys.argv[3]) if len(sys.argv) > 3 else 50
 
-    from scripts.site_access import open_site
+    from scripts.site_engine.site_access import open_site
 
     page = open_site(site)
     result = crawl_site(page, depth=depth, max_pages=max_pages)

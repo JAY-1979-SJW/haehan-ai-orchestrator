@@ -1,4 +1,4 @@
-from scripts import module_quality_gate as gate
+from scripts.ops.quality import module_quality_gate as gate
 
 
 def test_module_matrix_has_expected_modules():
@@ -112,7 +112,7 @@ def test_python_compile_steps_use_no_cache_wrapper():
     compile_steps = [step for step in gate.all_steps() if step.name.endswith("_py_compile")]
 
     assert compile_steps
-    assert all("scripts/py_compile_no_cache.py" in step.command for step in compile_steps)
+    assert all("scripts/ops/quality/py_compile_no_cache.py" in step.command for step in compile_steps)
 
 
 def test_redact_masks_auth_and_secret_values():

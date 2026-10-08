@@ -92,7 +92,7 @@ def explore_google_surfaces(
     }
 
     try:
-        from scripts.web_connector import get_page
+        from scripts.browser.cdp.connection import get_page
 
         base_page = get_page()
     except Exception as exc:  # noqa: BLE001 - 구글 서비스 화면 읽기전용 탐색기(로그인 필요 여부/위험버튼 분류) - 실패시 status=failed 기록, 쓰기 없음

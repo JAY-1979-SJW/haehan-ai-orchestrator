@@ -55,7 +55,6 @@
       "hiworks",
       "kakao",
       "naver",
-      "naver_mail",
       "smartstore",
       "youtube"
     ],
@@ -311,7 +310,7 @@
         "scripts/naver/cafe",
         "scripts/naver/keyword_tools.py",
         "scripts/naver/service_catalog.py",
-        "scripts/browser_cdp_selection_gate.py"
+        "scripts/browser/session/browser_cdp_selection_gate.py"
       ],
       "tests": [
         "tests/test_naver_site_engine.py",
@@ -358,9 +357,9 @@
       "login_policy": "user_present_only",
       "risk_level": "high",
       "tools": [
-        "scripts/naver_mail",
-        "scripts/naver_mail/background_runner.py",
-        "scripts/naver_mail/settings_panel.py",
+        "scripts/naver/mail",
+        "scripts/naver/mail/collection/background_runner.py",
+        "scripts/naver/mail/utilities/settings_panel.py",
         "scripts/naver/mail/read",
         "ai_orchestrator/connectors/naver"
       ],
@@ -369,7 +368,7 @@
         "tests/test_naver_mail_background_runner.py",
         "tests/test_naver_mail_settings_panel.py"
       ],
-      "owner_module": "scripts/naver_mail",
+      "owner_module": "scripts/naver/mail",
       "notes": [
         "Private mail data must be redacted in logs.",
         "Read and compose/prepare are allowed after gates; send, delete, move, and settings save require approval.",

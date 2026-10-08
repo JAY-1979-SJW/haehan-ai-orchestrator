@@ -11,7 +11,7 @@ description: 네이버 스마트스토어센터(반딧불 아뜰리에) CDP 상�
 ## 0. 전제 — CDP 연결
 
 `cdp-browser-automation` 스킬로 CDP 확인/시작 후, 스마트스토어센터 접속·로그인
-상태를 `scripts.cdp_helper.CDP(port=9222)`로 조작한다. 로그인 세션은 보존
+상태를 `scripts.browser.cdp.cdp_helper.CDP(port=9222)`로 조작한다. 로그인 세션은 보존
 원칙(쿠키 삭제/로그아웃 금지) 그대로 적용.
 
 ## 1. 상시 감시 — 클릭할 때마다 자동 분류
@@ -48,7 +48,7 @@ href가 안 바뀌는 한 계속 재시도한다(`counts_reported_for` 로직). 
 반드시 기간을 넓혀 재확인한다:
 
 ```python
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 from scripts.naver.smartstore.inquiry_workflow import set_date_range, dismiss_notice_popup
 
 cdp = CDP(port=9222)

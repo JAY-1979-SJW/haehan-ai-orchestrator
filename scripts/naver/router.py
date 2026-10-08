@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check  # noqa: F401 — tests patch router.gate_check
+from scripts.common.gate import check as gate_check  # noqa: F401 — tests patch router.gate_check
 
 from . import blog
 from .dispatch import _run_naver_content_task, _run_naver_service_task, _run_naver_system_task  # noqa: F401

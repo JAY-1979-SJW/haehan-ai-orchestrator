@@ -10,7 +10,7 @@ from datetime import datetime
 from time import perf_counter
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 RUNS_DIR = ROOT / "data" / "eum_runs"
@@ -27,7 +27,7 @@ def _audit_event(
 ) -> None:
     """Best-effort realtime audit logging for EUM workflows."""
     try:
-        from scripts.realtime_audit import emit_event
+        from scripts.common.realtime_audit import emit_event
 
         emit_event(
             event_type,

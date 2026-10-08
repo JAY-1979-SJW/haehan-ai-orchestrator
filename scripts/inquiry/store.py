@@ -13,8 +13,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
+
 ROOT = Path(__file__).resolve().parents[2]
-_FILE = ROOT / "data" / "inquiries" / "inquiries.jsonl"
+_FILE = data_dir() / "inquiries" / "inquiries.jsonl"
 _LOCK = threading.Lock()  # 동시 append/재기록 직렬화(업데이트 유실 방지)
 
 _MAXLEN = {"name": 60, "contact": 120, "company": 80, "subject": 120, "message": 4000}

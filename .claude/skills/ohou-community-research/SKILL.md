@@ -48,7 +48,7 @@ result = search_community("스탠드 조명")
 
 ### 1. requests/curl은 403 — CDP 필수
 `ohou.se`는 서버 단 봇 차단이 있어 일반 HTTP 요청(정상 UA 포함)은
-**무조건 403**이 난다. `scripts.cdp_force_start`로 띄운 실제 브라우저로
+**무조건 403**이 난다. `scripts.browser.cdp.cdp_force_start`로 띄운 실제 브라우저로
 직접 URL 이동하면 로그인 없이 정상 로딩된다. **requests/BeautifulSoup만
 으로 재시도하지 말 것** — 이미 확인된 막다른 길이다.
 

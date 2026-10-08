@@ -1,6 +1,6 @@
 import pytest
 
-from scripts import site_session_safety as safety
+from scripts.site_engine import site_session_safety as safety
 
 
 def test_different_user_is_common_session_integrity_failure():

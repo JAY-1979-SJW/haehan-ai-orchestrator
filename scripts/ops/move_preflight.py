@@ -96,7 +96,11 @@ class _Target:
         self.parent_module = self.module.rpartition(".")[0]
         # 같은 폴더 안의 bare import(`import smartstore` / `from smartstore import x`) 후보 위치: 패키지(__init__)면 그 패키지 폴더의 부모, 모듈이면 자기 폴더.
         # 파이썬 3 에서 단독 이름 import 는 sys.path 에 그 폴더가 있을 때만 되지만(스크립트 실행·sys.path 부트스트랩) 실제로 쓰이므로 참조로 센다.
-        self.bare_dir = Path(self.rel).parent.parent.as_posix() if self.rel.endswith("__init__.py") else Path(self.rel).parent.as_posix()
+        self.bare_dir = (
+            Path(self.rel).parent.parent.as_posix()
+            if self.rel.endswith("__init__.py")
+            else Path(self.rel).parent.as_posix()
+        )
         self.variants = _path_variants(self.rel)
         self.mod_re = _dotted_module_re(self.module)
         self.path_re = _path_re(self.rel)
@@ -119,15 +123,33 @@ def _py_refs(rel: str, text: str, t: _Target) -> list[dict]:  # noqa: C901, PLR0
                 for a in node.names:
                     if a.name == t.module or a.name.startswith(t.module + "."):
                         refs.append({"kind": "import", "line": node.lineno, "text": f"import {a.name}"})
-                    elif (a.name == t.stem or a.name.startswith(t.stem + ".")) and Path(rel).parent.as_posix() == t.bare_dir:
-                        refs.append({"kind": "import", "line": node.lineno, "text": f"import {a.name}  (같은 폴더 bare import — sys.path 의존)"})
+                    elif (a.name == t.stem or a.name.startswith(t.stem + ".")) and Path(
+                        rel
+                    ).parent.as_posix() == t.bare_dir:
+                        refs.append(
+                            {
+                                "kind": "import",
+                                "line": node.lineno,
+                                "text": f"import {a.name}  (같은 폴더 bare import — sys.path 의존)",
+                            }
+                        )
             elif isinstance(node, ast.ImportFrom):
                 base = node.module or ""
                 if node.level:
                     cut = len(pkg) - (node.level - 1)
                     base = ".".join([*pkg[: max(cut, 0)], *([base] if base else [])])
-                if not node.level and (node.module == t.stem or (node.module or "").startswith(t.stem + ".")) and Path(rel).parent.as_posix() == t.bare_dir:
-                    refs.append({"kind": "import", "line": node.lineno, "text": f"from {node.module} import ...  (같은 폴더 bare import — sys.path 의존)"})
+                if (
+                    not node.level
+                    and (node.module == t.stem or (node.module or "").startswith(t.stem + "."))
+                    and Path(rel).parent.as_posix() == t.bare_dir
+                ):
+                    refs.append(
+                        {
+                            "kind": "import",
+                            "line": node.lineno,
+                            "text": f"from {node.module} import ...  (같은 폴더 bare import — sys.path 의존)",
+                        }
+                    )
                 elif base == t.module or base.startswith(t.module + "."):
                     refs.append(
                         {
@@ -318,7 +340,7 @@ def _acked(root: Path) -> set[str]:
         return set()
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+    except OSError, ValueError:
         return set()
     return {e["file"].replace("\\", "/") for e in data.get("acked", []) if e.get("file") and e.get("reason")}
 

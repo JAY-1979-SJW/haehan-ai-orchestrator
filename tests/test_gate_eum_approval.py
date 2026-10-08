@@ -1,7 +1,7 @@
 import pytest
 
-from scripts.gate import GateBlocked, check, get_risk
-from scripts.schemas import RiskLevel
+from scripts.common.gate import GateBlocked, check, get_risk
+from scripts.common.schemas import RiskLevel
 
 
 def test_eum_mutation_gates_are_approval():

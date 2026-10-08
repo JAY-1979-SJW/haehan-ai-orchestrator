@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from scripts.cdp_console import connect
+from scripts.browser.cdp.cdp_console import connect
 from scripts.google.youtube.search_common import WORD_RE, _top_keywords
 from security_utils import safe_preview
 

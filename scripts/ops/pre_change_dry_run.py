@@ -84,7 +84,7 @@ def save_record(record: dict[str, Any], *, latest_path: Path = LATEST_PATH, hist
     latest_path.write_text(payload, encoding="utf-8")
     history_path.write_text(payload, encoding="utf-8")
     try:
-        from scripts.realtime_audit import emit_event
+        from scripts.common.realtime_audit import emit_event
 
         emit_event(
             "PRE_CHANGE_DRY_RUN_RECORDED",

@@ -85,3 +85,4 @@
 - 앱 전체 구조: [APP_STRUCTURE.md](APP_STRUCTURE.md)
 - 최상위 평면 금지: G15 게이트 `scripts/ops/flat_root_gate.py` — 규칙 `configs/flat_root_gate.json`, 기준선 `configs/flat_root_baseline.json`(줄이기만). pre-commit `--staged`, CI `--check-all`
 - 폴더 승인(G16): `scripts/ops/folder_gate.py` — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더는 `configs/folder_registry.json` 에 승인돼 있어야 한다(하위 폴더도 각각). 새 폴더는 작업 창 → 지휘창 '새 폴더 요청'(경로·목적·왜 기존 폴더로 안 되는지) → 대표님 승인 → 목록 추가 → PR 라벨 `folder-approved`(지휘창만 붙임). pre-commit `--staged`, CI `--check-all` + `--check-approval`(목록 추가 시 라벨 확인). 삭제는 승인 불필요.
+- 번들 경로 일관성(G17): `scripts/ops/bundle_path_gate.py` — 폴더를 옮기면 파이썬 밖의 참조(PyInstaller spec 진입 파일·우리 모듈 hiddenimports·datas, `admin-web/electron/package.json` extraResources, `lib/*.js` 의 `process.resourcesPath` 경로, `desktop-release.yml` 경로)도 함께 고친다. pre-commit `--staged`(관련 파일 staged 시만), CI `--check-all`.

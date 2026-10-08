@@ -18,10 +18,10 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
-from scripts.popup_detector import handle_page_popups
+from scripts.browser.popup.popup_detector import handle_page_popups
 
 _log = get_logger(__name__)
 

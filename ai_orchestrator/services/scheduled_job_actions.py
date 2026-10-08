@@ -116,7 +116,7 @@ def _mail_fetch_params(params: dict[str, Any]) -> dict[str, Any]:
 
 
 def _mail_send_params(params: dict[str, Any]) -> dict[str, Any]:
-    from scripts.naver.mail_imap import sender
+    from scripts.naver.mail.imap import sender
 
     extra = set(params) - {"target", "to", "subject", "body"}
     if extra:
@@ -144,7 +144,7 @@ def _run_community(_: dict[str, Any]) -> str:
 
 
 def _run_naver_login_check(params: dict[str, Any]) -> str:
-    from ai_orchestrator.workflows.naver_session_guard import default_deps, ensure_login
+    from ai_orchestrator.connectors.naver_auth.session_guard import default_deps, ensure_login
 
     result = ensure_login(params["target"], default_deps())
     if result["action"] in ("failed", "captcha"):
@@ -179,7 +179,7 @@ def _run_blog_publish(params: dict[str, Any]) -> str:
     def job() -> str:
         from scripts.naver.blog.automation.account_probe import alias_to_blog_id, read_alias
         from scripts.naver.blog.core.writer import write_post
-        from scripts.web_connector import get_page
+        from scripts.browser.cdp.connection import get_page
 
         page = get_page()
         alias = read_alias(page)
@@ -201,7 +201,7 @@ def _run_blog_publish(params: dict[str, Any]) -> str:
             raise RuntimeError("블로그 발행에 실패했습니다: " + str(result.get("error") or result.get("reason") or "")[:100])
         return f"발행했습니다 (글번호 {result.get('log_no') or '확인 안 됨'})"
 
-    from scripts.web_connector import run_on_browser_thread
+    from scripts.browser.cdp.connection import run_on_browser_thread
 
     return run_on_browser_thread(job, timeout=900)
 
@@ -212,7 +212,7 @@ def _in_new_tab(fn: Callable[[Any], Any]) -> Any:
     def job() -> Any:
         import contextlib
 
-        from scripts.web_connector import open_page
+        from scripts.browser.cdp.connection import open_page
 
         page = open_page(allow_new_tab=True, reason="naver-mail-imap-setting")
         try:
@@ -221,14 +221,14 @@ def _in_new_tab(fn: Callable[[Any], Any]) -> Any:
             with contextlib.suppress(Exception):  # 탭 정리 실패는 결과에 영향 없음
                 page.close()
 
-    from scripts.web_connector import run_on_browser_thread
+    from scripts.browser.cdp.connection import run_on_browser_thread
 
     return run_on_browser_thread(job, timeout=180)
 
 
 def _run_naver_mail_check(params: dict[str, Any]) -> str:
     """웹메일 'IMAP/SMTP 사용' 설정 상태 + IMAP/SMTP 로그인 점검(읽기 전용). 하나라도 안 되면 해결 방법과 함께 실패로 기록."""
-    from scripts.naver.mail_imap import protocol, settings
+    from scripts.naver.mail.imap import protocol, settings
 
     account = params["target"]
     state = _in_new_tab(settings.read_state)
@@ -244,7 +244,7 @@ def _run_naver_mail_check(params: dict[str, Any]) -> str:
 
 def _run_naver_mail_enable(params: dict[str, Any]) -> str:
     """웹메일에서 'IMAP/SMTP 사용'을 '사용함'으로 저장한다(이미 사용함이면 변경 없음). 승인 후에만 실행된다."""
-    from scripts.naver.mail_imap import settings
+    from scripts.naver.mail.imap import settings
 
     account = params["target"]
     result = _in_new_tab(lambda page: settings.enable(page, account))
@@ -261,7 +261,7 @@ def _run_naver_mail_enable(params: dict[str, Any]) -> str:
 
 def _run_naver_mail_fetch(params: dict[str, Any]) -> str:
     """IMAP 으로 받은편지함 최근 메일 헤더를 읽는다(읽음 표시는 바뀌지 않는다)."""
-    from scripts.naver.mail_imap import reader
+    from scripts.naver.mail.imap import reader
 
     result = reader.list_messages(params["target"], unseen_only=params["unseen_only"], limit=params["limit"])
     if not result["ok"]:
@@ -271,7 +271,7 @@ def _run_naver_mail_fetch(params: dict[str, Any]) -> str:
 
 def _run_naver_mail_send(params: dict[str, Any]) -> str:
     """SMTP 로 메일 1통을 보낸다. 회차 승인을 받은 뒤에만 호출된다."""
-    from scripts.naver.mail_imap import sender
+    from scripts.naver.mail.imap import sender
 
     result = sender.send_mail(params["target"], params["to"], params["subject"], params["body"])
     if not result["ok"]:
@@ -283,7 +283,7 @@ def _run_naver_mail_send(params: dict[str, Any]) -> str:
 
 def _fax_send_params(params: dict[str, Any]) -> dict[str, Any]:
     """승인서 id 하나만 받는다. 수신자·제목·문서는 승인서에서 읽는다(여기서 바꿀 수 없다)."""
-    from ai_orchestrator.persistence import fax_authorization_store as fax_store
+    from ai_orchestrator.connectors.hanafax import authorization_store as fax_store
 
     extra = set(params) - {"authorization_id"}
     if extra:
@@ -299,7 +299,7 @@ def _fax_send_params(params: dict[str, Any]) -> dict[str, Any]:
 
 def _mail_bulk_params(params: dict[str, Any]) -> dict[str, Any]:
     """승인서 id 하나만 받는다. 수신자·내용·첨부는 승인서에서 읽는다(여기서 바꿀 수 없다)."""
-    from ai_orchestrator.persistence import mail_bulk_store as bulk_store
+    from ai_orchestrator.connectors.naver_mail import bulk_store as bulk_store
 
     extra = set(params) - {"authorization_id"}
     if extra:
@@ -315,7 +315,7 @@ def _mail_bulk_params(params: dict[str, Any]) -> dict[str, Any]:
 
 def _run_naver_mail_bulk_send(params: dict[str, Any]) -> str:
     """승인서 범위 안에서 메일을 한 명씩 차례로 보내는 백그라운드 실행을 시작한다(오래 걸려 예약 루프를 막지 않는다)."""
-    from ai_orchestrator.services import mail_bulk_service as bulk_service
+    from ai_orchestrator.connectors.naver_mail import bulk_service as bulk_service
 
     auth_id = params["authorization_id"]
     if bulk_service.status(auth_id)["running"]:
@@ -326,49 +326,17 @@ def _run_naver_mail_bulk_send(params: dict[str, Any]) -> str:
 
 def _run_gongmu_due_notice(_: dict[str, Any]) -> str:
     """새 기간(월·연) 업무를 앱 안 DB 에 추가하고 지연·임박 업무를 요약한다. 외부 접속·발송 없음(읽기 전용 요약)."""
-    from ai_orchestrator.services import gongmu_service as gongmu
+    from ai_orchestrator.gongmu import gongmu_service as gongmu
 
     gongmu.generate_all(actor="scheduled")
     return gongmu.notice_text()
 
 
 def _run_hanafax_send(params: dict[str, Any]) -> str:
-    """승인서 범위 안에서 팩스를 자동 발송한다. 승인서가 드라이런이면 전송하지 않고 계획만 기록한다."""
-    from datetime import datetime
+    """승인서 범위 안에서 팩스를 자동 발송한다(구현은 connectors/hanafax/send_job — 하나팩스 도구 안으로 모았다)."""
+    from ai_orchestrator.connectors.hanafax import send_job
 
-    from ai_orchestrator.sites import hanafax_auto_sender as adapter
-    from ai_orchestrator.persistence import fax_authorization_store as fax_store
-    from ai_orchestrator.workflows import hanafax_auto_send as fax_flow
-
-    auth_id = params["authorization_id"]
-    row = fax_store.get_authorization(auth_id)
-    if row is None:
-        raise ValueError("팩스 발송 승인서를 찾을 수 없습니다")
-
-    def _never(*_args: Any) -> dict[str, Any]:  # 드라이런은 발송기를 부르지 않는다 — 불렸다면 버그이므로 멈춘다
-        raise RuntimeError("드라이런 승인서는 전송할 수 없습니다")
-
-    bulk = len(row["recipients"]) > 1  # 여러 명이면 하나팩스 단체발송(로그인·업로드 1회)으로 묶음 전송
-    sender: Any = _never
-    if row["live"]:
-        build = adapter.build_bulk_sender if bulk else adapter.build_sender
-        try:
-            sender = build(row["document_ref"], row["document_hash"])
-        except adapter.DocumentChanged as exc:
-            raise RuntimeError(str(exc)) from exc
-    runner = fax_flow.run_bulk if bulk else fax_flow.run
-    result = runner(auth_id, sender, datetime.now().astimezone())
-    if result.decision == "deny":
-        raise RuntimeError(f"발송하지 않음({result.reason})")
-    text = (
-        f"{'드라이런 ' if result.dry_run else ''}발송 {result.sent}건, 실패 {result.failed}건, "
-        f"확인 필요 {result.unknown}건, 건너뜀 {len(result.skipped)}건"
-    )
-    if result.decision == "skip":
-        return f"보낼 대상 없음({result.reason})"
-    if result.failed or result.unknown or result.stopped_midway:
-        raise RuntimeError(text + (" — 정지·취소로 중단됨" if result.stopped_midway else ""))
-    return text
+    return send_job.run_send(params)
 
 
 ACTIONS: dict[str, ActionSpec] = {
@@ -489,7 +457,7 @@ def get_action(key: str) -> ActionSpec | None:
 
 def ensure_cdp() -> None:
     """브라우저(CDP, 9222)가 꺼져 있으면 기동한다. 이미 떠 있으면 아무것도 하지 않는다."""
-    from scripts.cdp_force_start import _is_cdp_alive, cmd_start
+    from scripts.browser.cdp.cdp_force_start import _is_cdp_alive, cmd_start
 
     if _is_cdp_alive():
         return
@@ -543,7 +511,7 @@ def catalog() -> list[dict[str, Any]]:
                 {"name": "body", "label": "본문", "type": "text", "options": [], "default": ""},
             ]
         if spec.validate is _fax_send_params:
-            from ai_orchestrator.persistence import fax_authorization_store as fax_store
+            from ai_orchestrator.connectors.hanafax import authorization_store as fax_store
 
             approved = [a for a in fax_store.list_authorizations() if a["approved"] and not a["revoked"]]
             fields.append(

@@ -39,7 +39,7 @@ def test_index_embeds_operating_rules_and_reference_pack():
     assert "docs/worktree_management_index.md" in index["reference_pack"]
     assert "docs/pre_change_dry_run_policy_20260513.md" in index["reference_pack"]
     assert "scripts/ops/pre_change_dry_run.py" in index["reference_pack"]
-    assert "scripts/quality_gate.py" in index["reference_pack"]
+    assert "scripts/ops/quality/quality_gate.py" in index["reference_pack"]
 
 
 def test_repo_ignore_file_is_policy_not_active_code():

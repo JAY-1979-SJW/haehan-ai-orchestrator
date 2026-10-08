@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.connectors import instagram_dm_db as db
-from ai_orchestrator.connectors import instagram_dm_router as igmod
-from ai_orchestrator.connectors import instagram_dm_rule_engine as rule_engine
-from ai_orchestrator.connectors import instagram_dm_service as service
+from ai_orchestrator.connectors.instagram import instagram_dm_db as db
+from ai_orchestrator.connectors.instagram import instagram_dm_router as igmod
+from ai_orchestrator.connectors.instagram import instagram_dm_rule_engine as rule_engine
+from ai_orchestrator.connectors.instagram import instagram_dm_service as service
 
 
 @pytest.fixture()

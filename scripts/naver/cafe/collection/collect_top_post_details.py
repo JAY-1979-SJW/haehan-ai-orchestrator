@@ -15,8 +15,8 @@ import argparse
 import json
 import time
 
-from scripts.app_paths import repo_root
-from scripts.logger import get_logger
+from scripts.common.app_paths import repo_root
+from scripts.common.logger import get_logger
 from scripts.naver.cafe.collection.collector import _fetch_article_detail
 
 _log = get_logger(__name__)

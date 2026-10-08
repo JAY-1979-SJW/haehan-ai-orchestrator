@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.gates import mail_draft_policy as pol
-from ai_orchestrator.persistence import naver_mail_draft_store as store
+from ai_orchestrator.connectors.naver_mail import draft_policy as pol
+from ai_orchestrator.connectors.naver_mail import draft_store as store
 
 
 @pytest.fixture(autouse=True)

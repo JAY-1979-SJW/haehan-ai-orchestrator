@@ -2,7 +2,7 @@
 
 작성일: 2026-05-11
 대상 구현자: 최하위 모델 (Claude Haiku 등) — 단계별 그대로 따라 작성하면 동작해야 함
-참조 기존 코드: `scripts/navigator.py` (현재 `handle_draft_restore_popup` 함수)
+참조 기존 코드: `scripts/browser/navigator/navigator.py` (현재 `handle_draft_restore_popup` 함수)
 
 ---
 
@@ -16,7 +16,7 @@
 
 | 파일 | 신규/수정 | 역할 |
 |------|---------|------|
-| `scripts/popup_watcher.py` | **신규** | 본체 — 주입/조회/처리 |
+| `scripts/browser/popup/popup_watcher.py` | **신규** | 본체 — 주입/조회/처리 |
 | `scripts/cdp_client.py` | 수정 | CLI 명령 3개 추가 |
 | `tests/test_popup_watcher.py` | **신규** | 단위 테스트 |
 
@@ -137,7 +137,7 @@ def auto_handle(page=None) -> dict:
             continue
         if spec["action"] == "click_button":
             # 기존 click_button 함수 재사용
-            from scripts.navigator import click_button
+            from scripts.browser.navigator.navigator import click_button
             ok = click_button(spec["target"])
             handled.append({"event": ev, "clicked": ok})
     if events:
@@ -246,7 +246,7 @@ python scripts/cdp_client.py write-post "watcher 후 회귀 테스트" "본문" 
 
 ## 8. 구현 순서 (단계별 지시)
 
-1. `scripts/popup_watcher.py` 파일 생성 — `POPUP_MARKERS`, `build_watcher_js`, `install_watcher` 작성
+1. `scripts/browser/popup/popup_watcher.py` 파일 생성 — `POPUP_MARKERS`, `build_watcher_js`, `install_watcher` 작성
 2. 단위 테스트 `tests/test_popup_watcher.py` 작성 (모킹 기반, 실제 브라우저 없이 동작 검증)
 3. `poll_events`, `clear_events`, `auto_handle` 작성
 4. `cdp_client.py`에 3개 case 분기 추가

@@ -13,7 +13,7 @@ from . import local_agent_audit_builders as _audit
 from . import local_agent_audit_event_policy as _policy
 from . import local_agent_registry as _reg
 from . import local_agent_router_guards as _guards  # 공유 leaf
-from .audit_logger import log_event
+from .audit.audit_logger import log_event
 from .gates.approval import approve_token, issue_token_for_dev_reg, reject_token
 from .gates.auth import require_role
 from .local_agent_router_schemas import (

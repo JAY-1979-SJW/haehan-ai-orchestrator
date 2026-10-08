@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 
-from ai_orchestrator.gates import mail_bulk_policy as pol
-from ai_orchestrator.persistence import mail_bulk_store as store
+from ai_orchestrator.connectors.naver_mail import bulk_policy as pol
+from ai_orchestrator.connectors.naver_mail import bulk_store as store
 
 NOW = datetime(2026, 10, 5, 10, 0)
 RECIPS = tuple({"email": f"user{i}@example.com", "name": f"고객{i}"} for i in range(5))

@@ -121,7 +121,7 @@ def _audit_auth_defaults(findings):
     else:
         add(findings, "FAIL", "compose_auth_default", "AUTH_ENABLED true not found")
 
-    config_py = read_text("ai_orchestrator/config.py")
+    config_py = read_text("ai_orchestrator/core/config.py")
     if has(r"os\.environ\.get\(\s*[\"']AUTH_ENABLED[\"']\s*,\s*[\"']true[\"']", config_py):
         add(findings, "PASS", "config_auth_default", "default true")
     else:
@@ -213,7 +213,7 @@ def _audit_actions_ws(findings):
     else:
         add(findings, "FAIL", "ws_off_event_loop", "process_task may run inside event loop")
 
-    live_verify = read_text("scripts/verify/verify_live_browser_readonly_dispatch.py")
+    live_verify = read_text("scripts/ops/verify/verify_live_browser_readonly_dispatch.py")
     if "_mask_agent_id" in live_verify and "device_token" not in live_verify:
         add(findings, "PASS", "live_verify_redaction", "agent id masked; token not referenced")
     else:

@@ -5,7 +5,7 @@
 
 통합 진입점:
     from scripts.naver import NaverServices
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     n = NaverServices(get_page())
     n.login()                                  # 자동 로그인
@@ -56,7 +56,7 @@ class NaverServices:
 
     def logged_in_user(self) -> str | None:
         """현재 로그인 사용자명."""
-        from scripts.login_detector import get_logged_in_user
+        from scripts.auth.login_detector import get_logged_in_user
         return get_logged_in_user(self.page)
 
     # ── 서비스별 lazy 인스턴스 ─────────────────────────────────────────

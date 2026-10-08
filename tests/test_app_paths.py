@@ -1,4 +1,4 @@
-"""scripts.app_paths — 윈도우 표준 저장소 경로 해석기 (결함 #17)."""
+"""scripts.common.app_paths — 윈도우 표준 저장소 경로 해석기 (결함 #17)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts import app_paths as ap
+from scripts.common import app_paths as ap
 
 
 @pytest.fixture(autouse=True)

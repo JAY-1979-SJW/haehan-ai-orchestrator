@@ -9,8 +9,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
-from scripts.realtime_audit import emit_event
+from scripts.common.app_paths import repo_root
+from scripts.common.realtime_audit import emit_event
 
 ROOT = repo_root()
 PLAN_DIR = ROOT / "data" / "youtube_recording_plans"

@@ -29,8 +29,8 @@ _SERVER_REQUIRED = [
     ("ai_orchestrator.local_agent_registry", "set_agent_last_seen"),
     ("ai_orchestrator.local_agent_registry", "set_agent_disconnected"),
     ("ai_orchestrator.local_agent_registry", "get_agent_status"),
-    ("ai_orchestrator.registration_codes", "issue_code"),
-    ("ai_orchestrator.registration_codes", "consume_code"),
+    ("ai_orchestrator.auth.registration_codes", "issue_code"),
+    ("ai_orchestrator.auth.registration_codes", "consume_code"),
 ]
 
 # 클라이언트 모듈

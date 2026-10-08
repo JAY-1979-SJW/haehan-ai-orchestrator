@@ -22,9 +22,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from ai_orchestrator.config import get_local_data_dir  # noqa: E402
-from scripts.browser_paths import find_ffmpeg  # noqa: E402
-
+from ai_orchestrator.core.config import get_local_data_dir  # noqa: E402
+from scripts.browser.session.browser_paths import find_ffmpeg  # noqa: E402
 
 NARR_DIR = get_local_data_dir() / "video" / "narration"
 RAW_DIR = get_local_data_dir() / "video" / "raw"

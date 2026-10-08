@@ -44,7 +44,7 @@ ROUTER_LOCATION_PLAN = {
     ],
     "import_dependencies": [
         "fastapi.APIRouter",
-        "ai_orchestrator.config (dry_run_gate_enabled 등)",
+        "ai_orchestrator.core.config (dry_run_gate_enabled 등)",
         "ai_orchestrator.storage_policy (storage path/policy)",
         "ai_orchestrator.external_sites.canonical_provider_registry (providers)",
     ],

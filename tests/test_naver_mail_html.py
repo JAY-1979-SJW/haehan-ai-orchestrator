@@ -6,7 +6,7 @@ import base64
 
 import pytest
 
-from scripts.naver.mail_imap import html_sanitize as hs
+from scripts.naver.mail.imap import html_sanitize as hs
 
 PNG = base64.b64encode(
     bytes.fromhex(

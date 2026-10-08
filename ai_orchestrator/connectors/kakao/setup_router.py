@@ -136,7 +136,7 @@ def _stage_cdp_autostart(run: _GateRun):
         import subprocess
 
         subprocess.Popen(
-            [sys.executable, str(ROOT / "scripts" / "cdp_force_start.py"), "start"],
+            [sys.executable, str(ROOT / "scripts" / "browser" / "cdp" / "cdp_force_start.py"), "start"],
             cwd=str(ROOT),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

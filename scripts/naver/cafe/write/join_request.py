@@ -10,7 +10,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 from scripts.naver.cafe import list_collector
 from scripts.naver.cafe.member_collect import normalize_cafe_url
 from scripts.naver.mail.read import cdp

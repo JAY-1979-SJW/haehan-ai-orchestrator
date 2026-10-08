@@ -1,6 +1,6 @@
-from scripts.browser_task_session import (
-    BrowserTaskTabLimitError,
+from scripts.browser.session.browser_task_session import (
     BrowserTaskPolicy,
+    BrowserTaskTabLimitError,
     cleanup_task_pages,
     close_all_pages,
     get_or_create_task_page,

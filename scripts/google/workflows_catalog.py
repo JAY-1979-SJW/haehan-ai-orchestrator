@@ -1,11 +1,12 @@
 """Catalog builders and savers for Google work actions and adapter profiles."""
 from __future__ import annotations
 
-import json
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
+
+from scripts.google.report_io import save_json_with_latest
 
 from .workflows_common import (
     ACTION_CATALOG_DIR,
@@ -61,14 +62,7 @@ def build_action_catalog(actions: Iterable[GoogleWorkAction] = GOOGLE_WORK_ACTIO
 
 def save_action_catalog(catalog: dict | None = None, path: Path | None = None) -> Path:
     catalog = catalog or build_action_catalog()
-    ACTION_CATALOG_DIR.mkdir(parents=True, exist_ok=True)
-    LATEST_ACTION_CATALOG.parent.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    target = path or ACTION_CATALOG_DIR / f"google_work_action_catalog_{timestamp}.json"
-    text = json.dumps(catalog, ensure_ascii=False, indent=2)
-    target.write_text(text, encoding="utf-8")
-    LATEST_ACTION_CATALOG.write_text(text, encoding="utf-8")
-    return target
+    return save_json_with_latest(catalog, ACTION_CATALOG_DIR, LATEST_ACTION_CATALOG, "google_work_action_catalog", path)
 
 
 def build_adapter_catalog(actions: Iterable[GoogleWorkAction] = GOOGLE_WORK_ACTIONS) -> dict:
@@ -95,14 +89,7 @@ def build_adapter_catalog(actions: Iterable[GoogleWorkAction] = GOOGLE_WORK_ACTI
 
 def save_adapter_catalog(catalog: dict | None = None, path: Path | None = None) -> Path:
     catalog = catalog or build_adapter_catalog()
-    ADAPTER_CATALOG_DIR.mkdir(parents=True, exist_ok=True)
-    LATEST_ADAPTER_CATALOG.parent.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    target = path or ADAPTER_CATALOG_DIR / f"google_execution_adapter_catalog_{timestamp}.json"
-    text = json.dumps(catalog, ensure_ascii=False, indent=2)
-    target.write_text(text, encoding="utf-8")
-    LATEST_ADAPTER_CATALOG.write_text(text, encoding="utf-8")
-    return target
+    return save_json_with_latest(catalog, ADAPTER_CATALOG_DIR, LATEST_ADAPTER_CATALOG, "google_execution_adapter_catalog", path)
 
 
 def build_undeveloped_report(actions: Iterable[GoogleWorkAction] = GOOGLE_WORK_ACTIONS) -> dict:
@@ -183,11 +170,4 @@ def build_undeveloped_report(actions: Iterable[GoogleWorkAction] = GOOGLE_WORK_A
 
 def save_undeveloped_report(report: dict | None = None, path: Path | None = None) -> Path:
     report = report or build_undeveloped_report()
-    UNDEVELOPED_REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    LATEST_UNDEVELOPED_REPORT.parent.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    target = path or UNDEVELOPED_REPORT_DIR / f"google_work_undeveloped_{timestamp}.json"
-    text = json.dumps(report, ensure_ascii=False, indent=2)
-    target.write_text(text, encoding="utf-8")
-    LATEST_UNDEVELOPED_REPORT.write_text(text, encoding="utf-8")
-    return target
+    return save_json_with_latest(report, UNDEVELOPED_REPORT_DIR, LATEST_UNDEVELOPED_REPORT, "google_work_undeveloped", path)

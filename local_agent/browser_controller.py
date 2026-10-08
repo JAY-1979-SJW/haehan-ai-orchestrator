@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from scripts.browser_sandbox_gate import assert_browser_launch_allowed
+from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed
 
 logger = logging.getLogger(__name__)
 

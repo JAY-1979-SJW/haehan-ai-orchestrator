@@ -1,7 +1,7 @@
 """네이버 카페 게시글 수집기 — 3개월치 전수 수집.
 
 사용:
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.naver.cafe.collector import collect_articles
 
     articles = collect_articles(
@@ -23,8 +23,8 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-from scripts.app_paths import repo_root
-from scripts.logger import get_logger
+from scripts.common.app_paths import repo_root
+from scripts.common.logger import get_logger
 from scripts.naver.auth import ensure_naver_login
 
 _log = get_logger(__name__)

@@ -156,7 +156,21 @@ jobs:
           HAEHAN_E2E_SKIP_PAID_API: "1"
         run: npx playwright test -c playwright.electron.config.ts app user_flow fresh_install_signup
 
-      - name: Upload E2E failure artifacts (스크린샷·trace)
+      - name: Collect app logs (시작 단계 시간·서버·UI 서버 로그)
+        # 앱 로그는 userData\logs 에 남는다(기본 %APPDATA%\Haehan AI, 새 PC 점검은 임시 폴더). 실패 원인을 확정하려면 이 로그가 필요하다.
+        if: failure() && steps.e2e.outcome == 'failure'
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "e2e-app-logs"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          $src = Join-Path $env:APPDATA "Haehan AI\logs"
+          if (Test-Path $src) { Copy-Item $src (Join-Path $out "appdata") -Recurse -Force }
+          Get-ChildItem $env:TEMP -Directory -Filter "haehan-e2e-userdata-*" -ErrorAction SilentlyContinue | ForEach-Object {
+            $l = Join-Path $_.FullName "logs"
+            if (Test-Path $l) { Copy-Item $l (Join-Path $out $_.Name) -Recurse -Force }
+          }
+
+      - name: Upload E2E failure artifacts (스크린샷·trace·앱 로그)
         if: failure() && steps.e2e.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
@@ -166,6 +180,7 @@ jobs:
             admin-web/electron/playwright-report/**
             data/screenshots_check/electron/**
             data/e2e_user_flow/**
+            e2e-app-logs/**
           if-no-files-found: ignore
           retention-days: 14
 

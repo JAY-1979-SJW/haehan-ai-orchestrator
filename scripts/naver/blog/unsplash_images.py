@@ -1,6 +1,6 @@
 """블로그 이미지(Unsplash) 해석 서비스 — 검색·로컬 캐시 폴백·다운로드.
 
-원래 `ai_orchestrator/connectors/naver_blog_router.py`(L8 라우터) 안에 있던 헬퍼를 옮겼다. CLI 스크립트(L6)가 라우터를 import 하지 않고
+원래 `ai_orchestrator/connectors/naver_blog/naver_blog_router.py`(L8 라우터) 안에 있던 헬퍼를 옮겼다. CLI 스크립트(L6)가 라우터를 import 하지 않고
 이 모듈을 쓰도록 하기 위해서다(층간 위반 정리, 2026-10-01). 블로그 전용이라 `scripts/naver/blog/` 에 둔다(services 에 두면 scripts 와 새 모듈 순환이 생김).
 라우터는 같은 이름으로 다시 내보내므로 기존 import 는 그대로 동작한다.
 
@@ -14,15 +14,15 @@ import contextlib
 import json
 import logging
 import os
-from pathlib import Path
 
-from scripts.realtime_audit import emit_event
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.realtime_audit import emit_event
 
 _log = logging.getLogger(__name__)
 
-UPLOADS_DIR = Path(__file__).resolve().parents[3] / "data" / "blog_uploads"
+UPLOADS_DIR = data_dir() / "blog_uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-_UNSPLASH_CACHE = Path(__file__).resolve().parents[3] / "data" / "unsplash_images.json"
+_UNSPLASH_CACHE = data_dir() / "unsplash_images.json"
 _UNSPLASH_API = "https://api.unsplash.com"
 
 

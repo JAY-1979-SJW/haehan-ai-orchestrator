@@ -7,12 +7,12 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ai_orchestrator import mcp_server
-from ai_orchestrator.domain import site_task_map as tm
 from ai_orchestrator.gates import auth as auth_module
 from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.persistence import site_task_map_store as store
 from ai_orchestrator.routers.site_task_map_router import site_task_map_router
-from ai_orchestrator.services import site_task_map_service as service
+from ai_orchestrator.site_work import site_task_map as tm
+from ai_orchestrator.site_work import site_task_map_service as service
+from ai_orchestrator.site_work import site_task_map_store as store
 
 HOST = "www.example-kiscon.test"
 NOW = "2026-10-03T12:00:00+09:00"

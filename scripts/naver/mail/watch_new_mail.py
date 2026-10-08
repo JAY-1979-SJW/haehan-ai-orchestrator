@@ -22,7 +22,7 @@ import argparse
 import json
 import sys
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 if str(ROOT) not in sys.path:

@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ai_orchestrator.browser_tool.g2b_existing_openapi_bridge import (
+from ai_orchestrator.connectors.g2b.g2b_existing_openapi_bridge import (
     build_g2b_notice_candidates_from_existing_source,
     classify_existing_source_bridge_result,
     normalize_existing_g2b_openapi_item,
@@ -27,7 +27,7 @@ _FIXTURE_CANDIDATES = (
     Path(__file__).resolve().parent / "fixtures" / "g2b_public_notice_existing_source_candidates_20260508.json"
 )
 _MODULE_PATH = (
-    Path(__file__).resolve().parent.parent / "ai_orchestrator" / "browser_tool" / "g2b_existing_openapi_bridge.py"
+    Path(__file__).resolve().parent.parent / "ai_orchestrator" / "connectors" / "g2b" / "g2b_existing_openapi_bridge.py"
 )
 
 
@@ -202,7 +202,7 @@ def test_missing_required_field_recorded():
 
 
 def test_bridge_output_convertible_to_content_validator_input():
-    from ai_orchestrator.browser_tool.g2b_public_notice_content_validator import (
+    from ai_orchestrator.connectors.g2b.g2b_public_notice_content_validator import (
         classify_g2b_public_notice_content,
     )
 
@@ -224,10 +224,10 @@ def test_bridge_output_convertible_to_content_validator_input():
 
 
 def test_bridge_output_usable_by_execution_gate():
-    from ai_orchestrator.browser_tool.g2b_public_notice_dryrun_adapter import (
+    from ai_orchestrator.connectors.g2b.g2b_public_notice_dryrun_adapter import (
         evaluate_g2b_public_notice_dryrun,
     )
-    from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (
+    from ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate import (
         GATE_READONLY_EXECUTION_CANDIDATE,
         evaluate_g2b_public_notice_execution_gate,
     )
@@ -331,7 +331,7 @@ def test_bridge_module_import_no_side_effect():
 
 
 def test_bridge_does_not_break_content_validator():
-    from ai_orchestrator.browser_tool.g2b_public_notice_content_validator import (
+    from ai_orchestrator.connectors.g2b.g2b_public_notice_content_validator import (
         classify_g2b_public_notice_content,
     )
 

@@ -6,7 +6,7 @@ from datetime import date
 
 import pytest
 
-from ai_orchestrator.gates import gongmu_task_policy as p
+from ai_orchestrator.gongmu import gongmu_task_policy as p
 
 SETTINGS = p.merged_settings(None)
 TODAY = date(2026, 10, 2)

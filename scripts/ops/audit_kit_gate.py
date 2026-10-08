@@ -29,6 +29,10 @@ from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _proc import no_window_kwargs
+from code_map.proc_tree import run_tree_killed
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
@@ -90,7 +94,15 @@ def raw_findings(kit: list[str], path: Path, root: Path | None = None) -> list[s
     root = root or ROOT
     payload = json.dumps({"tool_input": {"file_path": str(path)}, "cwd": str(root)})
     try:
-        proc = subprocess.run([*kit, "hook"], input=payload.encode("utf-8"), capture_output=True, timeout=PER_FILE_TIMEOUT_S, cwd=str(root), check=False)
+        proc = run_tree_killed(  # audit-kit 이 자손을 남겨 파이프를 물어도 시간 초과 때 트리째 종료하고 돌아온다(PR #160 verify 정지)
+            [*kit, "hook"],
+            input=payload.encode("utf-8"),
+            text=False,
+            timeout=PER_FILE_TIMEOUT_S,
+            cwd=str(root),
+            env=_utf8_env(),
+            **no_window_kwargs(),
+        )
     except (OSError, subprocess.TimeoutExpired):
         return None
     if proc.returncode == 0:
@@ -99,6 +111,53 @@ def raw_findings(kit: list[str], path: Path, root: Path | None = None) -> list[s
         return None
     lines = proc.stderr.decode("utf-8", errors="replace").splitlines()
     return [ln.strip() for ln in lines if ln.strip().startswith("[") and not any(n in ln for n in _NOISE)]
+
+
+def _hook_lines(messages: list[str]) -> list[str]:
+    """hook 메시지 → `raw_findings` 와 같은 규칙으로 거른 항목('['로 시작, 환경 잡음 제외)."""
+    return [m.strip() for m in messages if m.strip().startswith("[") and not any(n in m for n in _NOISE)]
+
+
+def batch_raw_findings(
+    kit: list[str], root: Path, rels: list[str], *, workers: int = 4, timeout_s: int = 1500
+) -> dict[str, list[str]]:
+    """여러 파일의 audit-kit 검사를 프로세스 몇 개에서 묶어 돈다(`scripts/ops/audit_kit_batch.py`) — 프로젝트 그래프를 프로세스마다 한 번만 만든다.
+
+    파일마다 `raw_findings`(= `audit-kit hook` 호출)를 따로 부르면 호출마다 그래프를 새로 만들어 파일당 수 초가 걸린다(PR #160 verify 정지의 원인).
+    돌려주는 dict 에 없는 파일(진짜 audit-kit 가 아니거나 묶음 실행이 실패한 경우)은 호출 쪽이 `raw_findings` 로 단독 재시도한다.
+    """
+    py = mypy_python(kit)  # audit-kit 가상환경의 python (진짜 audit-kit 일 때만 — 시험용 가짜 kit 이면 None)
+    if py is None or not rels:
+        return {}
+    script = Path(__file__).with_name("audit_kit_batch.py")
+    chunks = [rels[i::workers] for i in range(min(workers, len(rels)))]
+
+    def run_chunk(chunk: list[str]) -> dict[str, list[str]]:
+        try:
+            proc = run_tree_killed(
+                [py, str(script), str(root)],
+                input=json.dumps(chunk).encode("utf-8"),
+                text=False,
+                timeout=timeout_s,
+                cwd=str(root),
+                env=_utf8_env(),
+                **no_window_kwargs(),
+            )
+            data = json.loads(proc.stdout.decode("utf-8")) if proc.returncode == 0 else {}
+        except (OSError, subprocess.TimeoutExpired, ValueError):
+            return {}
+        return {rel: _hook_lines(msgs) for rel, msgs in data.items() if isinstance(msgs, list)}
+
+    found: dict[str, list[str]] = {}
+    with ThreadPoolExecutor(len(chunks)) as pool:
+        for part in pool.map(run_chunk, chunks):
+            found.update(part)
+    return found
+
+
+def _utf8_env() -> dict[str, str]:
+    """하위 프로세스(audit-kit·mypy)가 콘솔 코드페이지(cp949)가 아니라 utf-8 로 출력하게 한다 — 결과를 utf-8 로 읽기 때문."""
+    return {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
 
 
 def is_real_kit(kit: list[str]) -> bool:
@@ -130,7 +189,15 @@ def mypy_keys(py: str, path: Path, root: Path | None = None) -> set[str] | None:
     with _MYPY_LOCK:
         for _attempt in range(2):  # 자체 오류(종료코드 2 이상)는 일시적일 수 있어 한 번 다시 시도한다
             try:
-                proc = subprocess.run(cmd, capture_output=True, timeout=PER_FILE_TIMEOUT_S, cwd=str(root), check=False)
+                proc = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    timeout=PER_FILE_TIMEOUT_S,
+                    cwd=str(root),
+                    env=_utf8_env(),
+                    check=False,
+                    **no_window_kwargs(),
+                )
             except (OSError, subprocess.TimeoutExpired):
                 return None
             if proc.returncode in (0, 1):
@@ -193,7 +260,13 @@ def _mypy_group(py: str, group: list[Path], root: Path) -> dict[Path, set[str] |
         for _attempt in range(2):  # mypy_keys 와 같이 자체 오류는 한 번 다시 시도
             try:
                 proc = subprocess.run(
-                    cmd, capture_output=True, timeout=PER_FILE_TIMEOUT_S * len(group), cwd=str(root), check=False
+                    cmd,
+                    capture_output=True,
+                    timeout=PER_FILE_TIMEOUT_S * len(group),
+                    cwd=str(root),
+                    env=_utf8_env(),
+                    check=False,
+                    **no_window_kwargs(),
                 )
             except (OSError, subprocess.TimeoutExpired):
                 return dict.fromkeys(group)
@@ -209,6 +282,26 @@ def _mypy_group(py: str, group: list[Path], root: Path) -> dict[Path, set[str] |
     return dict(split)
 
 
+_CMD_CHAR_BUDGET = 20000  # 한 mypy 명령줄에 넣는 경로 글자 수 상한 — 윈도우 명령줄 한도(32767자) 아래로 여유를 둔다
+
+
+def _split_by_command_length(group: list[Path]) -> list[list[Path]]:
+    """파일이 많으면(PR #160: 변경 1049개 ≈ 10만 자) 한 명령에 다 넣을 수 없다 — WinError 206(OSError)이 나면 전부 '실행 못 함'이 되어 버린다."""
+    parts: list[list[Path]] = []
+    current: list[Path] = []
+    size = 0
+    for path in group:
+        length = len(str(path)) + 1
+        if current and size + length > _CMD_CHAR_BUDGET:
+            parts.append(current)
+            current, size = [], 0
+        current.append(path)
+        size += length
+    if current:
+        parts.append(current)
+    return parts
+
+
 def mypy_keys_batch(py: str, paths: list[Path], root: Path | None = None) -> dict[Path, set[str] | None]:
     """여러 파일의 mypy 오류 문장 집합을 기준 폴더별 mypy 1회로 구한다 — 파일마다 `mypy_keys` 를 부른 것과 같은 결과."""
     root = root or ROOT
@@ -217,7 +310,8 @@ def mypy_keys_batch(py: str, paths: list[Path], root: Path | None = None) -> dic
         groups.setdefault(_mypy_base_dir(path), []).append(path)
     result: dict[Path, set[str] | None] = {}
     for group in groups.values():
-        result.update(_mypy_group(py, group, root))
+        for part in _split_by_command_length(group):
+            result.update(_mypy_group(py, part, root))
     return result
 
 
@@ -249,7 +343,7 @@ def _mypy_against_head(py: str, path: Path, root: Path, old_rel: str | None = No
     있던 기존 오류가 이동 때문에 '새 파일의 신규 오류'로 잡히지 않게 한다(2026-10-07, git mv 이동 커밋에서 오탐 3건).
     """
     rel = old_rel or path.resolve().relative_to(root.resolve()).as_posix()
-    shown = subprocess.run(["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False)
+    shown = subprocess.run(["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False, **no_window_kwargs())
     if shown.returncode != 0:
         return mypy_new(py, path, None, root)
     copy = path.with_name(f"_mypy_base_{path.name}")  # 같은 폴더에 둬야 상대 import 가 같게 풀린다
@@ -285,7 +379,7 @@ def _head_blobs(root: Path, rels: list[str]) -> dict[str, bytes | None]:
             blobs[rel] = None
     if len(blobs) != len(unique):  # 출력을 다 못 읽었으면 예전 방식으로
         for rel in unique:
-            shown = subprocess.run(["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False)
+            shown = subprocess.run(["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False, **no_window_kwargs())
             blobs[rel] = shown.stdout if shown.returncode == 0 else None
     return blobs
 
@@ -322,13 +416,14 @@ def _kit_hook(kit: list[str], path: Path, root: Path) -> tuple[list[str], str]:
     """`audit-kit hook` 으로 한 파일 검사 → (신규 항목, 검사 못 한 이유)."""
     payload = json.dumps({"tool_input": {"file_path": str(path)}, "cwd": str(root)})
     try:
-        proc = subprocess.run(
+        proc = run_tree_killed(  # audit-kit 이 자손을 남겨 파이프를 물어도 시간 초과 때 트리째 종료하고 돌아온다(PR #160 verify 정지)
             [*kit, "hook"],
             input=payload.encode("utf-8"),
-            capture_output=True,
+            text=False,
             timeout=PER_FILE_TIMEOUT_S,
             cwd=str(root),
-            check=False,
+            env=_utf8_env(),
+            **no_window_kwargs(),
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return [], f"{type(exc).__name__}: {exc}"
@@ -439,7 +534,10 @@ def run_post_edit(stdin_text: str) -> int:
 
 def _session_python_files(session_id: str | None) -> list[Path]:
     """이번 세션이 편집한 저장소 안 .py 파일(중복 제거, 순서 유지)."""
-    from scripts.ops.post_edit_fast_gate import cleanup_old_session_edit_files, load_session_edits
+    from scripts.ops.post_edit_fast_gate import (
+        cleanup_old_session_edit_files,
+        load_session_edits,
+    )
 
     cleanup_old_session_edit_files()
     found = []
@@ -500,6 +598,7 @@ def _staged_python_changes() -> list[tuple[Path, str | None]]:
     out = subprocess.run(
         ["git", "diff", "--cached", "-M", "--name-status", "--diff-filter=ACMR", "-z"],
         cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
+        **no_window_kwargs(),
     ).stdout
     parts = [x for x in out.split("\0") if x]
     changes: list[tuple[Path, str | None]] = []

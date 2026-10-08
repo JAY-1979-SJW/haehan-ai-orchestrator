@@ -16,7 +16,7 @@ alert로 막힌다. submit_reply()는 페이지의 $Form/$Element 프레임워�
 호출해야 한다.
 
 사용법:
-    from scripts.cdp_helper import CDP
+    from scripts.browser.cdp.cdp_helper import CDP
     from scripts.naver.smartstore.inquiry_reply import fill_reply_draft, submit_reply
 
     cdp = CDP(port=9222)
@@ -28,8 +28,8 @@ alert로 막힌다. submit_reply()는 페이지의 $Form/$Element 프레임워�
 import json
 import time
 
-from scripts.cdp_helper import CDP
-from scripts.publish_guard import guarded
+from scripts.browser.cdp.cdp_helper import CDP
+from scripts.common.publish_guard import guarded
 
 # 문의 상세 화면엔 숨겨진(0x0) textarea가 먼저 잡히는 경우가 있어(2026-08-23 실측),
 # 화면에 실제로 렌더된(너비>0) textarea만 후보로 삼는다.
@@ -88,7 +88,7 @@ def submit_reply(cdp: CDP, timeout: float = 5.0, approval: str | None = None) ->
     반환값: 결과 alert 메시지 (성공 시 "답변처리가 완료되었습니다.", 검증 실패 시
     "제목을 선택해 주세요." 등). alert가 없으면 마지막 JS 반환값을 그대로 준다.
     """
-    from scripts.gate import require_approved
+    from scripts.common.gate import require_approved
 
     require_approved("smartstore_reply", approval, via="smartstore_inquiry_reply")
     cdp.send("Page.enable")

@@ -180,7 +180,7 @@ error_code = "LOGIN_NOT_CONFIRMED"
 다음 두 옵션을 **필수** 로 사용한다.
 
 ```
-python scripts/smoke_youtube_manual_login_probe.py \
+python scripts/youtube/smoke_youtube_manual_login_probe.py \
   --require-visible-confirm \
   --require-user-login-confirm
 ```

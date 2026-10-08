@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from ai_orchestrator.gates.auth import require_role
 
-from ..audit_logger import log_event
+from ..audit.audit_logger import log_event
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ def extract(req: ExtractRequest, user: dict = Depends(require_role("admin", "own
     try:
         _ensure_path()
         from scripts.community.universal_extractor import extract_posts
-        from scripts.web_connector import get_page, run_on_browser_thread
+        from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         result = run_on_browser_thread(
@@ -145,7 +145,7 @@ def analyze(req: AnalyzeRequest, user: dict = Depends(require_role("admin", "own
     if req.url:
         try:
             from scripts.community.universal_extractor import extract_posts
-            from scripts.web_connector import get_page, run_on_browser_thread
+            from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
             ex = run_on_browser_thread(
                 lambda: extract_posts(get_page(), req.url.strip(), max_posts=max(1, min(req.max_posts, 120))),

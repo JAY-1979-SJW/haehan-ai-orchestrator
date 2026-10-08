@@ -216,6 +216,11 @@ def test_pytest_runs_with_the_current_interpreter():
     assert rit._pyexe() == [sys.executable]
 
 
+
+
+
+
+
 # ── 하위 패키지 이동: `from . import <패키지>` · bare `import <패키지>` · 폴더 인자 ─────────────────
 
 
@@ -224,11 +229,17 @@ def pkg_repo(tmp_path):
     _git(tmp_path, "init", "-q")
     _git(tmp_path, "config", "user.email", "t@t")
     _git(tmp_path, "config", "user.name", "t")
-    _w(tmp_path, "scripts/auto/__init__.py", "from . import smartstore\nimport smartstore\nfrom smartstore import mod_a\nfrom scripts.auto import smartstore as ss2\n")
+    _w(
+        tmp_path,
+        "scripts/auto/__init__.py",
+        "from . import smartstore\nimport smartstore\nfrom smartstore import mod_a\nfrom scripts.auto import smartstore as ss2\n",
+    )
     _w(tmp_path, "scripts/auto/smartstore/__init__.py", "from .mod_a import run\n")
     _w(tmp_path, "scripts/auto/smartstore/mod_a.py", "def run():\n    return 1\n")
     _w(tmp_path, "scripts/auto/smartstore/mod_b.py", "from . import mod_a\n")
-    _w(tmp_path, "scripts/other/__init__.py", "import smartstore\n")  # 다른 폴더의 같은 이름 import 는 이 패키지 참조가 아니다
+    _w(
+        tmp_path, "scripts/other/__init__.py", "import smartstore\n"
+    )  # 다른 폴더의 같은 이름 import 는 이 패키지 참조가 아니다
     _git(tmp_path, "add", "-A")
     _git(tmp_path, "commit", "-qm", "init")
     return tmp_path

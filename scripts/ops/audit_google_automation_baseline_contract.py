@@ -31,14 +31,14 @@ REQUIRED_PHRASES = (
     "scripts/google/tab_logic.py",
     "scripts/google/live_surface_explorer.py",
     "scripts/google/cloud/live_console_explorer.py",
-    "scripts/gates/secret_action_gate.py",
-    "scripts/gates/work_mode_gate.py",
+    "scripts/common/gates/secret_action_gate.py",
+    "scripts/common/gates/work_mode_gate.py",
     "scripts/google/workspace_basic.py",
     "scripts/google/ads_signup.py",
     "scripts/google/domain_readiness_audit.py",
     "scripts/google/vision_usage_gate.py",
     "scripts/ops/audit_google_home_login_gate.py",
-    "python scripts/cdp_client.py google work undeveloped",
+    "python scripts/browser/cdp/cdp_client.py google work undeveloped",
     "tests/test_google_tab_registry.py",
     "tests/test_google_domain_readiness_audit.py",
     "tests/test_google_secret_action_gate.py",
@@ -163,7 +163,7 @@ def _check_undeveloped_report() -> list[str]:
 
 
 def _check_domain_readiness_and_secret_gate() -> list[str]:
-    from scripts.gates import secret_action_gate
+    from scripts.common.gates import secret_action_gate
     from scripts.google import domain_readiness_audit
 
     failures: list[str] = []

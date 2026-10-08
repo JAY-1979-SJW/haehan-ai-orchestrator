@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 
 
 def _option_value(args: list[str], prefix: str) -> str | None:
