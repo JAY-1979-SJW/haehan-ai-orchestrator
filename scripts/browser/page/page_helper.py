@@ -1,9 +1,4 @@
-"""page_helper 공개 API — 책임별 leaf 모듈 aggregator.
-
-popup/nav/interact/watch/inspect 기능이 각 leaf 에 구현돼 있다.
-이 모듈은 공개 API 를 묶어 단일 진입점으로 제공한다.
-[docs/module_separation_standard.md]
-"""
+"""page_helper 공개 API — popup/nav/interact/watch/inspect leaf 모듈 aggregator. [docs/module_separation_standard.md]"""
 
 from __future__ import annotations
 

@@ -60,7 +60,7 @@ from typing import Any
 import requests
 import websocket
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
 from scripts.common.config import CDP_HOST, CDP_PORT  # noqa: E402
