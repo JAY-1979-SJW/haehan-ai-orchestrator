@@ -276,6 +276,9 @@ def test_start_launches_detached_and_second_start_is_skipped(tmp_path, monkeypat
 
 
 def test_script_runs_as_subprocess_status_and_bad_command():
+    # browser_watch.py 가 콘솔에 한글을 출력한다 — Windows 콘솔 기본 코드페이지(cp949)로
+    # 적히면 이쪽에서 utf-8 로 디코드하다 깨진다. 자식 프로세스 stdio 를 utf-8 로 강제한다.
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
     ok = subprocess.run(
         [sys.executable, str(ROOT / "scripts" / "browser" / "cdp" / "browser_watch.py"), "status"],
         capture_output=True,
@@ -283,6 +286,7 @@ def test_script_runs_as_subprocess_status_and_bad_command():
         encoding="utf-8",
         timeout=60,
         check=False,
+        env=env,
     )
     assert ok.returncode == 0 and "browser_watch:" in ok.stdout
     bad = subprocess.run(
@@ -292,6 +296,7 @@ def test_script_runs_as_subprocess_status_and_bad_command():
         encoding="utf-8",
         timeout=60,
         check=False,
+        env=env,
     )
     assert bad.returncode == 1
 
