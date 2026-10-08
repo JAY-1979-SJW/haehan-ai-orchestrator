@@ -17,12 +17,12 @@ import time
 from typing import Any
 
 from ai_orchestrator.contracts.local_task_protocol import (
-    STATUS_WAITING_USER_AUTH,
-    STATUS_USER_ACTION_REQUIRED,
+    STATUS_AUTH_CANCELLED,
     STATUS_AUTH_COMPLETED,
     STATUS_AUTH_TIMEOUT,
-    STATUS_AUTH_CANCELLED,
     STATUS_AUTO_RESUME_READY,
+    STATUS_USER_ACTION_REQUIRED,
+    STATUS_WAITING_USER_AUTH,
     build_result,
 )
 

@@ -3897,7 +3897,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/auth_completion_detector.py": {
+  "local_agent/runtime/auth/auth_completion_detector.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3905,7 +3905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/auth_wait_controller.py": {
+  "local_agent/runtime/auth/auth_wait_controller.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3913,7 +3913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/auto_resume_after_auth.py": {
+  "local_agent/runtime/auth/auto_resume_after_auth.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -23314,6 +23314,14 @@
    "source": "rule"
   },
   "local_agent/runtime/playwright/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/auth/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

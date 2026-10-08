@@ -9,16 +9,16 @@ from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_USER_ACTION_REQUIRED,
     STATUS_WAITING_USER_AUTH,
 )
-from local_agent.runtime.auth_completion_detector import (
+from local_agent.runtime.auth.auth_completion_detector import (
     check_auth_completed_from_page_state,
 )
-from local_agent.runtime.auth_wait_controller import (
+from local_agent.runtime.auth.auth_wait_controller import (
     AUTH_SIGNAL_CERT,
     AUTH_SIGNAL_LOGIN,
     AUTH_SIGNAL_OTP,
     enter_auth_wait,
 )
-from local_agent.runtime.auto_resume_after_auth import (
+from local_agent.runtime.auth.auto_resume_after_auth import (
     resume_after_auth,
 )
 from local_agent.runtime.local_session_boundary import (

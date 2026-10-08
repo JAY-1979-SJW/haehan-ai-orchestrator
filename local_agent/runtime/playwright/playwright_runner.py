@@ -36,7 +36,7 @@ from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_WAITING_USER_AUTH,
     build_result,
 )
-from local_agent.runtime.auth_wait_controller import (
+from local_agent.runtime.auth.auth_wait_controller import (
     AUTH_SIGNAL_CERT,
     AUTH_SIGNAL_LOGIN,
     AUTH_SIGNAL_OTP,

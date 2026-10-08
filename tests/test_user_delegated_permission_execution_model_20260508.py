@@ -367,7 +367,7 @@ class TestRegressionExistingSystem:
         from ai_orchestrator.contracts.local_task_protocol import (
             STATUS_WAITING_USER_AUTH,
         )
-        from local_agent.runtime.auth_wait_controller import (
+        from local_agent.runtime.auth.auth_wait_controller import (
             AUTH_SIGNAL_LOGIN,
             enter_auth_wait,
         )
@@ -378,7 +378,7 @@ class TestRegressionExistingSystem:
 
     def test_existing_auto_resume_after_auth_still_works(self):
         """기존 auto resume 회귀."""
-        from local_agent.runtime.auto_resume_after_auth import can_auto_resume
+        from local_agent.runtime.auth.auto_resume_after_auth import can_auto_resume
 
         assert can_auto_resume("read_page") is True
         assert can_auto_resume("submit") is False

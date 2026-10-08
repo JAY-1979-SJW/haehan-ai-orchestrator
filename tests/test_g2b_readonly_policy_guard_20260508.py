@@ -22,7 +22,7 @@ from ai_orchestrator.contracts.local_task_protocol import (
     EXEC_MODE_LOCAL_PLAYWRIGHT,
     build_task,
 )
-from local_agent.runtime.auto_resume_after_auth import (
+from local_agent.runtime.auth.auto_resume_after_auth import (
     can_auto_resume,
     classify_resume_eligibility,
 )

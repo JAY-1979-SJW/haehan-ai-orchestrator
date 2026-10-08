@@ -212,12 +212,12 @@ class TestSmoke:
         assert hasattr(playwright_runner, "run_task")
 
     def test_auth_wait_import_ok(self):
-        from local_agent.runtime.auth_wait_controller import enter_auth_wait
+        from local_agent.runtime.auth.auth_wait_controller import enter_auth_wait
 
         assert callable(enter_auth_wait)
 
     def test_auto_resume_import_ok(self):
-        from local_agent.runtime.auto_resume_after_auth import can_auto_resume
+        from local_agent.runtime.auth.auto_resume_after_auth import can_auto_resume
 
         assert can_auto_resume("read_page") is True
         assert can_auto_resume("final_submit") is False

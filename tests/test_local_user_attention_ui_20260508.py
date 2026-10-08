@@ -6,7 +6,7 @@ user attention UI 통합 테스트
 
 from unittest.mock import patch
 
-from local_agent.runtime.auth_wait_controller import (
+from local_agent.runtime.auth.auth_wait_controller import (
     AUTH_SIGNAL_CERT,
     AUTH_SIGNAL_LOGIN,
     AUTH_SIGNAL_OTP,
@@ -164,13 +164,13 @@ class TestNotifierStatus:
 
 class TestSmoke:
     def test_auth_wait_controller_import_ok(self):
-        from local_agent.runtime.auth_wait_controller import enter_auth_wait
+        from local_agent.runtime.auth.auth_wait_controller import enter_auth_wait
 
         result = enter_auth_wait("smoke-task", AUTH_SIGNAL_LOGIN)
         assert result["status"] in {"WAITING_USER_AUTH", "USER_ACTION_REQUIRED"}
 
     def test_auto_resume_import_ok(self):
-        from local_agent.runtime.auto_resume_after_auth import can_auto_resume
+        from local_agent.runtime.auth.auto_resume_after_auth import can_auto_resume
 
         assert can_auto_resume("read_page") is True
         assert can_auto_resume("final_submit") is False

@@ -21,9 +21,9 @@ from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_USER_ACTION_REQUIRED,
     build_result,
 )
-from local_agent.runtime.security_guard import validate_task_before_run
-from local_agent.runtime.result_sanitizer import sanitize_result
 from local_agent.runtime.local_session_boundary import enforce_session_boundary
+from local_agent.runtime.result_sanitizer import sanitize_result
+from local_agent.runtime.security_guard import validate_task_before_run
 
 # ── 자동 재개 허용 action ─────────────────────────────────────────────────────
 

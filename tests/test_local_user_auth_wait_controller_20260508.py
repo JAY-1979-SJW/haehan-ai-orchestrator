@@ -10,7 +10,7 @@ from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_USER_ACTION_REQUIRED,
     STATUS_WAITING_USER_AUTH,
 )
-from local_agent.runtime.auth_wait_controller import (
+from local_agent.runtime.auth.auth_wait_controller import (
     AUTH_SIGNAL_CERT,
     AUTH_SIGNAL_LOGIN,
     AUTH_SIGNAL_OTP,
@@ -130,7 +130,7 @@ class TestAuthWaitState:
 
 class TestWaitForCompletion:
     def test_returns_cancel_result_when_cancelled(self):
-        from local_agent.runtime.auth_wait_controller import wait_for_completion
+        from local_agent.runtime.auth.auth_wait_controller import wait_for_completion
 
         state = AuthWaitState(TASK_ID, AUTH_SIGNAL_LOGIN, timeout_sec=300)
         state.cancel()
@@ -138,14 +138,14 @@ class TestWaitForCompletion:
         assert result["status"] == STATUS_AUTH_CANCELLED
 
     def test_returns_timeout_result_when_timed_out(self):
-        from local_agent.runtime.auth_wait_controller import wait_for_completion
+        from local_agent.runtime.auth.auth_wait_controller import wait_for_completion
 
         state = AuthWaitState(TASK_ID, AUTH_SIGNAL_LOGIN, timeout_sec=0)
         result = wait_for_completion(state, lambda: {"auth_completed": False})
         assert result["status"] == STATUS_AUTH_TIMEOUT
 
     def test_returns_completed_when_detector_signals(self):
-        from local_agent.runtime.auth_wait_controller import wait_for_completion
+        from local_agent.runtime.auth.auth_wait_controller import wait_for_completion
 
         state = AuthWaitState(TASK_ID, AUTH_SIGNAL_LOGIN, timeout_sec=300)
         result = wait_for_completion(
