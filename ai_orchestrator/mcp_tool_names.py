@@ -25,7 +25,7 @@ COLLECT = (
     "open_seller_center",
 )
 # 앱 API/화면 범용 조작
-PAGE = ("list_api_endpoints", "call_api", "snapshot_page", "act_on_page", "navigate_page")
+PAGE = ("list_api_endpoints", "call_api", "call_api_readonly", "snapshot_page", "act_on_page", "navigate_page")
 # 상세설명 콘텐츠(내부 섹션 렌더러 — 외부 유료 AI 호출 없음)
 CONTENT = ("generate_description", "render_description", "save_template", "list_templates", "get_template")
 # 상품 등록·수정 — 임시저장까지만 진행, 최종 저장은 사용자가 직접
@@ -35,6 +35,18 @@ RESTRICTED = ("delete_template", "add_cafe_board")
 
 DEFAULT_ALLOWED = (*LOOKUP, *COLLECT, *PAGE, *CONTENT, *REGISTER)
 ALL_TOOL_NAMES = frozenset((*DEFAULT_ALLOWED, *RESTRICTED))
+
+# 쓰기·외부 영향 가능 도구(확인 없이 바로 쓸 수 있으면 위험) — 기본 허용에서 뺀다.
+# call_api 는 endpoint 가 등록된 메서드로(POST 포함) 호출되고, act_on_page 는 화면의 임의
+# 버튼/입력을 누른다. auto_register_product·edit_product 는 save=False(임시저장까지)지만
+# 사용자의 실제 네이버 셀러센터 화면에 값을 채워 넣는 부작용이 있다(2026-10-08 대표님 결정:
+# AI 콘솔 전용 에이전트는 이 4개를 기본에서 빼고, 사용자가 allowed_tools 로 명시해야 쓴다).
+_WRITE_CAPABLE = ("call_api", "act_on_page", "auto_register_product", "edit_product")
+
+# AI 콘솔(action_run_claude_agent)의 기본 허용 — 조회·수집·로컬 콘텐츠만, 쓰기 가능 도구는 제외.
+# call_api_readonly(PAGE 그룹, GET 전용 안전 모드, mcp_server.py)는 _WRITE_CAPABLE 에 없으므로
+# 그대로 남아 메일함(mailbox.*)·공무(gongmu.*) 등 조회 API 를 쓸 수 있다(2026-10-08, call_api 제외 보완).
+SAFE_DEFAULT_ALLOWED = tuple(n for n in DEFAULT_ALLOWED if n not in _WRITE_CAPABLE)
 
 
 def qualified(names: tuple[str, ...]) -> list[str]:

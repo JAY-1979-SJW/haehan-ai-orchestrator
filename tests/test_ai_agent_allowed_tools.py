@@ -11,8 +11,19 @@ from ai_orchestrator.routers.ai_agent_router import _DEFAULT_ALLOWED_TOOLS
 
 
 def test_router_uses_shared_names_without_restricted():
-    assert _DEFAULT_ALLOWED_TOOLS == names.qualified(names.DEFAULT_ALLOWED)
+    # 2026-10-08: 쓰기 가능 도구(call_api·act_on_page·auto_register_product·edit_product)는
+    # 사용자 확인 없이 기본으로 쓸 수 없게 SAFE_DEFAULT_ALLOWED 로 뺐다 — DEFAULT_ALLOWED 전체가
+    # 아니다. 명시적으로 allowed_tools 에 넣으면 여전히 쓸 수 있다(API 계약 변경 없음).
+    assert _DEFAULT_ALLOWED_TOOLS == names.qualified(names.SAFE_DEFAULT_ALLOWED)
     assert not set(names.RESTRICTED) & {t.removeprefix(names.MCP_TOOL_PREFIX) for t in _DEFAULT_ALLOWED_TOOLS}
+
+
+def test_safe_default_excludes_write_capable_tools():
+    write_capable = {"call_api", "act_on_page", "auto_register_product", "edit_product"}
+    assert write_capable & set(names.DEFAULT_ALLOWED) == write_capable  # 여전히 존재는 함(명시 허용용)
+    assert write_capable.isdisjoint(names.SAFE_DEFAULT_ALLOWED)
+    # list_api_endpoints·snapshot_page·navigate_page 같은 읽기 전용 PAGE 도구는 남아 있어야 한다.
+    assert {"list_api_endpoints", "snapshot_page", "navigate_page"} <= set(names.SAFE_DEFAULT_ALLOWED)
 
 
 def test_no_duplicate_names_across_groups():

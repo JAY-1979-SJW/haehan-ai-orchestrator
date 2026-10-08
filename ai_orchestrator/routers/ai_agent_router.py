@@ -29,7 +29,7 @@ ai_agent_router = APIRouter(prefix="/ai-agent", tags=["ai-agent"])
 # 화이트리스트. --allowedTools 없이는 claude -p 헤드리스에서 MCP 도구 호출이 전부 거부되므로
 # (설계문서 §5.1 실측 확인) 앱을 실제로 조작하려면 이 목록이 필요하다.
 # 이름 정의는 mcp_tool_names.py 한 곳(삭제/설정 변경 도구는 제외 — 그 파일 RESTRICTED 참고).
-_DEFAULT_ALLOWED_TOOLS = _tool_names.qualified(_tool_names.DEFAULT_ALLOWED)
+_DEFAULT_ALLOWED_TOOLS = _tool_names.qualified(_tool_names.SAFE_DEFAULT_ALLOWED)
 
 
 CHAT_RESULT_MAX_CHARS = RESULT_FULL_MAX_CHARS  # result_full 상한(정본: contracts/agent_result_limits.py)

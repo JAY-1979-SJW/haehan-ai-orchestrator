@@ -153,8 +153,11 @@ def test_restricted_mode_closes_tool_set_and_mcp() -> None:
 
 
 def test_default_mode_command_unchanged_by_restricted_support() -> None:
+    # 2026-10-08: --mcp-config 를 줄 때는 --strict-mcp-config 도 같이 줘야 사용자 claude.ai
+    # 커넥터(Gmail 등)·다른 프로젝트 MCP 설정이 안 섞인다(지휘창 교차 점검에서 발견된 누출 수정).
+    # "--restricted" 플래그 자체(도구 집합을 닫는 그 모드)는 여전히 켜지지 않는다.
     cmd = _capture_cmd({"allowed_tools": ["Read"]})
-    assert "--mcp-config" in cmd and "--restricted" not in cmd and "--strict-mcp-config" not in cmd
+    assert "--mcp-config" in cmd and "--restricted" not in cmd and "--strict-mcp-config" in cmd
     assert "--tools" not in cmd
 
 
@@ -249,6 +252,41 @@ def test_not_frozen_cwd_unchanged() -> None:
     import local_agent.actions as actions_mod
 
     assert captured["kwargs"]["cwd"] == str(Path(actions_mod.__file__).parents[1])
+
+
+def test_setting_sources_project_always_set_so_user_claude_md_hooks_skills_dont_leak() -> None:
+    """2026-10-08 A 방식 전용 에이전트 분리: --setting-sources project 로 "user" 소스
+    (~/.claude/CLAUDE.md·메모리·훅·스킬)를 안 읽는다. CLAUDE_CONFIG_DIR 로는 못 한다
+    (로그인 자격까지 분리돼버림, 실측 확인) — 그래서 CLI 플래그로만 한다."""
+    cmd = _capture_cmd({"allowed_tools": ["Read"]})
+    idx = cmd.index("--setting-sources")
+    assert cmd[idx + 1] == "project"
+
+
+def test_append_system_prompt_present_and_warns_before_irreversible_actions() -> None:
+    """앱 전용 역할·안전 지시가 모든 호출에 들어가야 한다(확인 요청 문구 포함)."""
+    cmd = _capture_cmd({"allowed_tools": ["Read"]})
+    idx = cmd.index("--append-system-prompt")
+    prompt = cmd[idx + 1]
+    assert "Haehan AI" in prompt
+    assert "확인" in prompt
+
+
+def test_non_restricted_mcp_call_is_strict_so_user_claudeai_connectors_dont_leak(monkeypatch, tmp_path) -> None:
+    """2026-10-08 지휘창 교차 점검에서 발견: --mcp-config 만 주고 --strict-mcp-config 가 없어서
+    사용자의 claude.ai 커넥터(Gmail 등)가 앱 세션에 새어 들어왔다("연결된 건 Gmail 뿐"이라 답함).
+    --mcp-config 를 줄 때는 반드시 --strict-mcp-config 도 같이 가야 한다."""
+    import local_agent.actions as actions_mod
+
+    fake_exe = tmp_path / "haehan-mcp.exe"
+    fake_exe.write_bytes(b"fake")
+    monkeypatch.setattr(actions_mod.sys, "frozen", True, raising=False)
+    monkeypatch.setenv("HAEHAN_MCP_EXE", str(fake_exe))
+    monkeypatch.setenv("HAEHAN_DATA_DIR", str(tmp_path / "data"))
+
+    cmd = _capture_cmd({})
+    assert "--mcp-config" in cmd
+    assert "--strict-mcp-config" in cmd
 
 
 def test_stdin_is_devnull_so_claude_does_not_wait_for_input() -> None:

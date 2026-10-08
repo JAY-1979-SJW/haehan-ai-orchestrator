@@ -427,6 +427,29 @@ API_REGISTRY: dict[str, dict[str, str]] = {
 }
 
 
+def _api_call_readonly(endpoint: str, path_params: dict | None = None, query: dict | None = None) -> dict:
+    """call_api 의 GET 전용 안전 모드 — 쓰기 endpoint(POST 등)는 호출 전에 거부한다.
+
+    AI 콘솔 전용 에이전트(SAFE_DEFAULT_ALLOWED)는 call_api 대신 이걸 쓴다. endpoint 이름만으로는
+    사람이 매번 method 를 외우기 어려우므로, 등록된 메서드를 여기서 직접 검사해 GET 이 아니면
+    조용히 통과시키지 않고 명확한 이유를 돌려준다(2026-10-08 — call_api 기본 허용 제외 보완).
+    """
+    spec = API_REGISTRY.get(endpoint)
+    if not spec:
+        return {
+            "ok": False,
+            "error": f"허용되지 않은 endpoint: {endpoint}",
+            "hint": "list_api_endpoints 로 사용 가능 목록 확인",
+        }
+    if spec["method"] != "GET":
+        return {
+            "ok": False,
+            "error": f"call_api_readonly 는 조회(GET)만 가능합니다 — '{endpoint}' 는 {spec['method']} 입니다",
+            "hint": "발송·초안 작성 등 쓰기 작업은 사용자 확인을 거쳐야 하며 이 안전 모드로는 할 수 없습니다",
+        }
+    return _api_call(endpoint, path_params, query, None)
+
+
 def _api_call(
     endpoint: str, path_params: dict | None = None, query: dict | None = None, body: dict | None = None
 ) -> dict:
@@ -735,6 +758,27 @@ async def list_tools() -> list[types.Tool]:
             },
         ),
         types.Tool(
+            name="call_api_readonly",
+            description=(
+                "지금 실행 중인 해한 AI 앱(FastAPI 8401)의 API를 조회(GET)만 호출합니다. "
+                "call_api 와 같은 허용목록(list_api_endpoints)을 쓰지만, GET 이 아닌 endpoint(발송·초안·동기화 등 "
+                "쓰기 작업)는 거부합니다 — AI 콘솔 전용 에이전트(2026-10-08)가 쓰기 도구 없이 메일·메일함·공무 등 "
+                "조회용 API 에 접근할 수 있게 하기 위한 안전 모드입니다. 발송·초안 작성 등은 call_api(명시 허용 필요)만 할 수 있습니다."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "endpoint": {
+                        "type": "string",
+                        "description": "list_api_endpoints에서 확인한 GET endpoint 키 (예: mailbox.list)",
+                    },
+                    "path_params": {"type": "object", "description": "URL 경로 파라미터"},
+                    "query": {"type": "object", "description": "쿼리스트링 파라미터"},
+                },
+                "required": ["endpoint"],
+            },
+        ),
+        types.Tool(
             name="snapshot_page",
             description=(
                 "페이지(또는 이 앱 자신의 창)의 접근성 트리 스냅샷을 찍습니다. "
@@ -822,6 +866,7 @@ _SYNC_TOOL_HANDLERS: dict[str, Any] = {
     "add_cafe_board": lambda a: _add_cafe_board(a),
     "list_api_endpoints": lambda a: {"ok": True, "base_url": API_BASE, "endpoints": API_REGISTRY},
     "call_api": lambda a: _api_call(a["endpoint"], a.get("path_params"), a.get("query"), a.get("body")),
+    "call_api_readonly": lambda a: _api_call_readonly(a["endpoint"], a.get("path_params"), a.get("query")),
     "snapshot_page": lambda a: _snapshot_page(a),
     "act_on_page": lambda a: _act_on_page(a),
     "navigate_page": lambda a: _navigate_page(a),

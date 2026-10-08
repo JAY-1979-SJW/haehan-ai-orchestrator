@@ -1435,8 +1435,20 @@ def _build_claude_command(  # noqa: PLR0913 - 키워드 전용 인자(옵션 조
 ) -> list[str]:
     """action_run_claude_agent()의 claude -p 커맨드 조립 — 분리 이유는 순수 가독성/복잡도
     관리(C901)이며, 동작(옵션 순서·"--" 구분자 등)은 기존과 동일하게 유지한다.
+
+    앱 전용 에이전트 격리(2026-10-08, 대표님 승인 "A 방식 — 로그인은 PC 의 기존 claude 재사용,
+    설정·MCP·훅은 분리"): CLAUDE_CONFIG_DIR 로 환경을 바꾸면 로그인(구독) 자격도 같이 분리되는
+    것을 실측 확인(HOME/CLAUDE_CONFIG_DIR 를 바꾸면 곧바로 "Not logged in"). 그래서 로그인에
+    영향을 주는 환경변수는 건드리지 않고, CLI 플래그만으로 사용자 설정·훅·MCP 를 차단한다:
+      --setting-sources project : "user" 소스(~/.claude/CLAUDE.md·메모리·훅·스킬)를 안 읽는다.
+        호출부가 cwd 를 HAEHAN_DATA_DIR(프로젝트 CLAUDE.md 가 없는 빈 폴더)로 주므로 "project"
+        소스도 실질적으로 빈 상태 — 실측(2026-10-08): 이 플래그로 project CLAUDE.md 는 로드되고
+        (긍정 대조군 확인), 로그인은 그대로 유지됨(과금 발생 호출로 확인).
+      --strict-mcp-config        : --mcp-config 로 준 것 외 어떤 MCP 서버도 안 쓴다 — 사용자의
+        claude.ai 커넥터(Gmail 등)가 앱 세션에 새어 들어온 사고(2026-10-08 지휘창 교차 점검 발견:
+        "연결된 건 Gmail 뿐"이라 답함)의 원인이 바로 이게 restricted 분기에만 있었던 것.
     """
-    cmd = ["claude", "-p"]
+    cmd = ["claude", "-p", "--setting-sources", "project"]
     if restricted:
         # 읽기 전용 호출(작업 분배의 계획자·조사/검토/종합): --allowedTools 는 "권한 확인 없이 허용"일 뿐
         # 사용 가능 도구를 제한하지 않는다(2026-10-02 실측: Read/Grep/Glob 만 허용했는데 Bash 가 실행됨,
@@ -1451,7 +1463,27 @@ def _build_claude_command(  # noqa: PLR0913 - 키워드 전용 인자(옵션 조
         # --mcp-config 자체를 생략한다(MCP 도구 없이 기본 도구만으로 계속 진행).
         mcp_cfg = _frozen_mcp_config_path() if getattr(sys, "frozen", False) else root / ".mcp.json"
         if mcp_cfg is not None:
-            cmd += ["--mcp-config", str(mcp_cfg)]
+            # --strict-mcp-config 를 같이 줘야 사용자 claude.ai 커넥터·다른 프로젝트 MCP 설정이
+            # 안 섞인다(앱은 haehan-orchestrator 하나만 써야 한다).
+            cmd += ["--mcp-config", str(mcp_cfg), "--strict-mcp-config"]
+    cmd += [
+        "--append-system-prompt",
+        (
+            "당신은 Haehan AI 데스크톱 앱의 업무 비서입니다. 한국어로 답하세요. "
+            "조회를 우선하고, 수치·목록은 먼저 조회 도구로 확인한 뒤 답하세요. "
+            "메일/메시지 발송, 게시글 작성, 상품 등록·수정, 결제, 공공입찰 제출처럼 "
+            "되돌리기 어렵거나 외부에 영향을 주는 작업은 반드시 사용자에게 먼저 확인받고, "
+            "확인 전에는 절대 실행하지 마세요.\n\n"
+            "앱 기능은 이걸로 조회하세요(이름을 모르면 list_api_endpoints 로 전체 목록을 먼저 보세요):\n"
+            "- 네이버 메일함(메일 목록/본문/새 메일): call_api_readonly(mailbox.folders/mailbox.list/"
+            "mailbox.read/mailbox.new), 승인 대기 초안 목록은 mailbox.drafts. 메일 발송·초안 작성은 "
+            "call_api_readonly 로 안 되며(쓰기라 거부됨) 사용자 확인 없이는 하지 않습니다.\n"
+            "- 스마트스토어 상품/주문/정산/리뷰/통계: list_products/list_orders/list_settlements/"
+            "list_reviews/list_stats(캐시 비어 있으면 collect_* 로 먼저 수집해도 되는지 물어보세요).\n"
+            "- 네이버 카페 게시판: list_cafe_boards(cafe_url 필요).\n"
+            "- 그 밖의 앱 조회 API(공무·EUM·구글 허브 등): call_api_readonly + list_api_endpoints."
+        ),
+    ]
     cmd += ["--output-format", "json", "--max-budget-usd", str(max_budget_usd)]
     if model:
         cmd += ["--model", model]
