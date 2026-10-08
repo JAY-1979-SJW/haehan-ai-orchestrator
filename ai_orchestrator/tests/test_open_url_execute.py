@@ -46,8 +46,8 @@ def _make_test_client(user: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.agent_hub.router.root import local_agent_router
+    from ai_orchestrator.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -75,7 +75,7 @@ def _register_agent(client) -> dict:
 
 def test_open_url_dry_run_regression():
     """기존 dry_run=true 경로는 변경 없이 동작해야 한다."""
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com", "dry_run": True})
     assert r.success
@@ -90,7 +90,7 @@ def test_open_url_dry_run_regression():
 
 
 def test_open_url_dry_run_false_still_rejected():
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com", "dry_run": False})
     assert not r.success
@@ -125,7 +125,7 @@ def test_open_url_execute_not_in_server_auto_complete():
 
 
 def test_open_url_execute_in_approval_required_actions():
-    from local_agent.websocket_client import _APPROVAL_REQUIRED_ACTIONS
+    from local_agent.connection.websocket_client import _APPROVAL_REQUIRED_ACTIONS
 
     assert "open_url_execute" in _APPROVAL_REQUIRED_ACTIONS
 
@@ -136,7 +136,7 @@ def test_open_url_execute_in_approval_required_actions():
 
 
 def test_open_url_execute_no_approved_flag_rejected():
-    from local_agent.actions import action_open_url_execute
+    from local_agent.connection.actions import action_open_url_execute
 
     r = action_open_url_execute({"url": "https://example.com"})
     assert not r.success
@@ -144,7 +144,7 @@ def test_open_url_execute_no_approved_flag_rejected():
 
 
 def test_open_url_execute_approved_false_rejected():
-    from local_agent.actions import action_open_url_execute
+    from local_agent.connection.actions import action_open_url_execute
 
     r = action_open_url_execute({"url": "https://example.com", "_approved": False})
     assert not r.success
@@ -158,10 +158,10 @@ def test_open_url_execute_approved_false_rejected():
 
 def test_open_url_execute_user_approved_true_not_trusted():
     """사용자가 params 에 approved=true 를 넣어도 _approved 키만 신뢰한다."""
-    from local_agent.actions import action_open_url_execute
+    from local_agent.connection.actions import action_open_url_execute
 
     # approved (without underscore) 는 내부 인증 키가 아님
-    with mock.patch("local_agent.actions.webbrowser.open") as mock_open:
+    with mock.patch("local_agent.connection.actions.webbrowser.open") as mock_open:
         r = action_open_url_execute({"url": "https://example.com", "approved": True})
     assert not r.success
     assert r.error_code == "OPEN_URL_NOT_APPROVED"
@@ -174,9 +174,9 @@ def test_open_url_execute_user_approved_true_not_trusted():
 
 
 def test_open_url_execute_approved_calls_webbrowser_open():
-    from local_agent.actions import action_open_url_execute
+    from local_agent.connection.actions import action_open_url_execute
 
-    with mock.patch("local_agent.actions.webbrowser.open") as mock_open:
+    with mock.patch("local_agent.connection.actions.webbrowser.open") as mock_open:
         r = action_open_url_execute(
             {
                 "url": "https://example.com",
@@ -194,9 +194,9 @@ def test_open_url_execute_approved_calls_webbrowser_open():
 
 
 def test_open_url_execute_no_approved_no_webbrowser_call():
-    from local_agent.actions import action_open_url_execute
+    from local_agent.connection.actions import action_open_url_execute
 
-    with mock.patch("local_agent.actions.webbrowser.open") as mock_open:
+    with mock.patch("local_agent.connection.actions.webbrowser.open") as mock_open:
         r = action_open_url_execute({"url": "https://example.com"})
     assert not r.success
     mock_open.assert_not_called()
@@ -219,9 +219,9 @@ def test_open_url_execute_no_approved_no_webbrowser_call():
     ],
 )
 def test_open_url_execute_sensitive_key_rejected(sensitive_key):
-    from local_agent.actions import action_open_url_execute
+    from local_agent.connection.actions import action_open_url_execute
 
-    with mock.patch("local_agent.actions.webbrowser.open") as mock_open:
+    with mock.patch("local_agent.connection.actions.webbrowser.open") as mock_open:
         r = action_open_url_execute(
             {
                 "url": "https://example.com",
@@ -240,9 +240,9 @@ def test_open_url_execute_sensitive_key_rejected(sensitive_key):
 
 
 def test_open_url_execute_query_string_stripped_from_result():
-    from local_agent.actions import action_open_url_execute
+    from local_agent.connection.actions import action_open_url_execute
 
-    with mock.patch("local_agent.actions.webbrowser.open"):
+    with mock.patch("local_agent.connection.actions.webbrowser.open"):
         r = action_open_url_execute(
             {
                 "url": "https://example.com/path?token=abc&foo=bar",
@@ -370,9 +370,9 @@ def test_open_url_execute_attach_and_validate_token():
 
 
 def test_open_url_execute_result_data_fields():
-    from local_agent.actions import action_open_url_execute
+    from local_agent.connection.actions import action_open_url_execute
 
-    with mock.patch("local_agent.actions.webbrowser.open"):
+    with mock.patch("local_agent.connection.actions.webbrowser.open"):
         r = action_open_url_execute(
             {
                 "url": "https://example.com/page",
@@ -472,7 +472,7 @@ def test_router_open_url_execution_request_missing_url():
 
 def test_process_task_open_url_execute_no_approved_refused():
     """process_task: approved=False → NOT_IMPLEMENTED_STAGE2."""
-    from local_agent.websocket_client import process_task
+    from local_agent.connection.websocket_client import process_task
 
     task = {
         "task_id": "lat-ws-001",
@@ -488,7 +488,7 @@ def test_process_task_open_url_execute_no_approved_refused():
 
 def test_process_task_open_url_execute_approved_calls_action():
     """process_task: approved=True → execute_action 호출, webbrowser.open."""
-    from local_agent.websocket_client import process_task
+    from local_agent.connection.websocket_client import process_task
 
     task = {
         "task_id": "lat-ws-002",
@@ -498,7 +498,7 @@ def test_process_task_open_url_execute_approved_calls_action():
         "approved": True,
         "token_id": "tok-abc",
     }
-    with mock.patch("local_agent.actions.webbrowser.open") as mock_open:
+    with mock.patch("local_agent.connection.actions.webbrowser.open") as mock_open:
         result = process_task(task)
     assert result["success"], result
     mock_open.assert_called_once_with("https://example.com")
@@ -545,7 +545,7 @@ def test_open_url_execute_ws_running_then_result_ack_completed(tmp_path):
     assert approve_resp.status_code == 200
 
     # WS: running → running_ack → result → result_ack(completed)
-    with mock.patch("local_agent.actions.webbrowser.open"):
+    with mock.patch("local_agent.connection.actions.webbrowser.open"):
         with client.websocket_connect("/api/v1/local-agents/ws") as ws:
             device_token = reg_resp["device_token"]
             ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": device_token})
@@ -628,8 +628,8 @@ def test_open_url_execute_ws_result_without_running_fails(tmp_path):
 
 def test_build_result_message_includes_action_data():
     """Stage 13G-8: _build_result_message 가 ActionResult.data 를 data 필드로 포함."""
-    from local_agent.actions import ActionResult
-    from local_agent.websocket_client import _build_result_message
+    from local_agent.connection.actions import ActionResult
+    from local_agent.connection.websocket_client import _build_result_message
 
     result = ActionResult(
         success=True,
@@ -660,8 +660,8 @@ def test_build_result_message_includes_action_data():
 
 def test_build_result_message_omits_data_when_empty():
     """data 가 없거나 빈 dict 이면 result message 에 'data' 키 미포함."""
-    from local_agent.actions import ActionResult
-    from local_agent.websocket_client import _build_result_message
+    from local_agent.connection.actions import ActionResult
+    from local_agent.connection.websocket_client import _build_result_message
 
     msg_none = _build_result_message(
         {"task_id": "t1"},
@@ -684,7 +684,7 @@ def test_open_url_execute_ws_persists_result_data(tmp_path):
     _strip_result_data allowlist 통과 키만 result_data 에 저장됨을 확인한다.
     """
     import ai_orchestrator.agent_hub.registry.facade as reg
-    from local_agent.websocket_client import process_task
+    from local_agent.connection.websocket_client import process_task
 
     user = _make_admin_user()
     client = _make_test_client(user)
@@ -704,7 +704,7 @@ def test_open_url_execute_ws_persists_result_data(tmp_path):
         json={"token_id": token_id},
     )
 
-    with mock.patch("local_agent.actions.webbrowser.open"):
+    with mock.patch("local_agent.connection.actions.webbrowser.open"):
         with client.websocket_connect("/api/v1/local-agents/ws") as ws:
             ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": reg_resp["device_token"]})
             assert ws.receive_json()["type"] == "auth_ok"

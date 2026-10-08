@@ -35,11 +35,11 @@ _SERVER_REQUIRED = [
 
 # 클라이언트 모듈
 _CLIENT_REQUIRED = [
-    ("local_agent.websocket_client", "run_forever"),
-    ("local_agent.registration_client", "register_with_code"),
-    ("local_agent.connection_diagnostics", "build_diagnostics"),
-    ("local_agent.connection_diagnostics", "normalize_ws_url"),
-    ("local_agent.connection_diagnostics", "explain_error"),
+    ("local_agent.connection.websocket_client", "run_forever"),
+    ("local_agent.connection.registration_client", "register_with_code"),
+    ("local_agent.connection.connection_diagnostics", "build_diagnostics"),
+    ("local_agent.connection.connection_diagnostics", "normalize_ws_url"),
+    ("local_agent.connection.connection_diagnostics", "explain_error"),
 ]
 
 

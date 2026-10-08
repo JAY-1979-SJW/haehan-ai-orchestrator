@@ -6,7 +6,6 @@ import urllib.request
 from typing import Any
 from urllib.parse import urlparse
 
-
 BYPASS_HOSTS = frozenset({"haehan-ai.kr"})
 _PROXY_ENV_KEYS = (
     "HTTP_PROXY",

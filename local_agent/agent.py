@@ -28,16 +28,11 @@ from local_agent.common import config
 from local_agent.common import desktop_config as _desk_cfg
 from local_agent.common.audit import log_local_event
 from local_agent.common.redaction import safe_summary as _safe_summary
-
-from . import network_bypass as _network_bypass
-from . import token_store as _token_store
-from .actions import execute_action
-from .registration_client import (
-    RegistrationError,
-)
-from .registration_client import (
-    register_with_code as _register_with_code,
-)
+from local_agent.connection import network_bypass as _network_bypass
+from local_agent.connection import token_store as _token_store
+from local_agent.connection.actions import execute_action
+from local_agent.connection.registration_client import RegistrationError
+from local_agent.connection.registration_client import register_with_code as _register_with_code
 
 logger = logging.getLogger(__name__)
 
@@ -310,7 +305,7 @@ def run_websocket(*, server_url: str | None = None, allow_plaintext: bool = Fals
       2) 평문 fallback (allow_plaintext=True 인 경우만)
       3) 레거시 ``TOKEN_STORE_PATH`` 평문 파일 (backward compat)
     """
-    from . import websocket_client
+    from local_agent.connection import websocket_client
 
     if not config.WEBSOCKET_ENABLED:
         print("WebSocket 비활성 상태. 환경변수 HAEHAN_AGENT_WS_ENABLED=true 후 실행", file=sys.stderr)

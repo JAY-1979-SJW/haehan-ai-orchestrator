@@ -323,11 +323,11 @@ def test_empty_root_path_rejected() -> None:
     assert report["error_code"] == "ROOT_INVALID"
 
 
-# ─── local_agent.actions 통합 ──────────────────────────────────────────────
+# ─── local_agent.connection.actions 통합 ──────────────────────────────────────────────
 
 
 def test_execute_action_scan_file_tree(sample_tree: Path) -> None:
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     result = execute_action("scan_file_tree", {"root_path": str(sample_tree)})
     assert result.success is True
@@ -338,7 +338,7 @@ def test_execute_action_scan_file_tree(sample_tree: Path) -> None:
 
 
 def test_execute_action_scan_file_tree_missing_root() -> None:
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     result = execute_action("scan_file_tree", {})
     assert result.success is False
@@ -346,7 +346,7 @@ def test_execute_action_scan_file_tree_missing_root() -> None:
 
 
 def test_execute_action_scan_file_tree_blocks_drive_root() -> None:
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     result = execute_action("scan_file_tree", {"root_path": "C:/"})
     assert result.success is False
@@ -363,7 +363,7 @@ def test_no_forbidden_mutation_apis_in_new_code() -> None:
     import local_agent.tools.file_scanner as fs
 
     scanner_src = _P(fs.__file__).read_text(encoding="utf-8")
-    action_src = (_P(fs.__file__).parent.parent / "actions.py").read_text(encoding="utf-8")
+    action_src = (_P(fs.__file__).parent.parent / "connection" / "actions.py").read_text(encoding="utf-8")
 
     forbidden_tokens = (
         "os.remove",

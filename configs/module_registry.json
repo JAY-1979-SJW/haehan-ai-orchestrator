@@ -6889,7 +6889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/actions.py": {
+  "local_agent/connection/actions.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7081,7 +7081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/connection_diagnostics.py": {
+  "local_agent/connection/connection_diagnostics.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7169,7 +7169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/network_bypass.py": {
+  "local_agent/connection/network_bypass.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7185,7 +7185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/registration_client.py": {
+  "local_agent/connection/registration_client.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7233,7 +7233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/token_store.py": {
+  "local_agent/connection/token_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -7281,7 +7281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/websocket_client.py": {
+  "local_agent/connection/websocket_client.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -9537,7 +9537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/controller.py": {
+  "local_agent/connection/controller.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -9577,7 +9577,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/process_guard.py": {
+  "local_agent/connection/process_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -9633,7 +9633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/status_store.py": {
+  "local_agent/connection/status_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -23386,6 +23386,14 @@
    "source": "rule"
   },
   "local_agent/browser/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/connection/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

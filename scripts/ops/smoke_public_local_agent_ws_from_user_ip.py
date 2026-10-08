@@ -224,7 +224,7 @@ def main():
     }
 
     # 6) 사용자 진단 메시지 — connection_diagnostics 출력 예시
-    from local_agent import connection_diagnostics as cd
+    from local_agent.connection import connection_diagnostics as cd
 
     diag_ok = cd.build_diagnostics(
         server_base_url=SERVER_BASE,

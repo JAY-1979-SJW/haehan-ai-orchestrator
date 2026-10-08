@@ -523,7 +523,7 @@ forbidden_modules =
     ai_orchestrator.web_task.web_task_approval_service
     ai_orchestrator.web_task.web_task_registry
     ai_orchestrator.web_task.web_task_router
-    local_agent.actions
+    local_agent.connection.actions
     local_agent.agent
     local_agent.common.audit
     local_agent.browser.browser_action_contract
@@ -545,7 +545,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_handshake
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.browser.cdp_attach
-    local_agent.connection_diagnostics
+    local_agent.connection.connection_diagnostics
     local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
@@ -556,21 +556,21 @@ forbidden_modules =
     local_agent.tools.kras_connector
     local_agent.browser.login_auto_flow
     local_agent.browser.login_state_detector
-    local_agent.network_bypass
+    local_agent.connection.network_bypass
     local_agent.common.redaction
-    local_agent.registration_client
+    local_agent.connection.registration_client
     local_agent.browser.server_action_adapter
     local_agent.policy.site_compliance_gate
     local_agent.policy.site_entry_policy
     local_agent.browser.site_mapper
     local_agent.policy.tenant_scope_contract
-    local_agent.token_store
+    local_agent.connection.token_store
     local_agent.user_present.user_present_state_store
     local_agent.user_present.user_present_status_sender
     local_agent.user_present.user_present_ui_server
     local_agent.user_present.user_present_ws_adapter
     local_agent.browser.web_reader
-    local_agent.websocket_client
+    local_agent.connection.websocket_client
     orchestrator_v1.inbox.email_classifier
     orchestrator_v1.inbox.hiworks_mail_reader
     orchestrator_v1.inbox.inbox_store
@@ -1651,7 +1651,7 @@ forbidden_modules =
     ai_orchestrator.vendor_directory.vendor_directory_service
     ai_orchestrator.web_task.web_task_registry
     ai_orchestrator.web_task.web_task_router
-    local_agent.actions
+    local_agent.connection.actions
     local_agent.agent
     local_agent.common.audit
     local_agent.browser.browser_action_contract
@@ -1668,7 +1668,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_handshake
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.browser.cdp_attach
-    local_agent.connection_diagnostics
+    local_agent.connection.connection_diagnostics
     local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
@@ -1678,9 +1678,9 @@ forbidden_modules =
     local_agent.tools.kras_connector
     local_agent.browser.login_auto_flow
     local_agent.browser.login_state_detector
-    local_agent.network_bypass
+    local_agent.connection.network_bypass
     local_agent.common.redaction
-    local_agent.registration_client
+    local_agent.connection.registration_client
     local_agent.browser.server_action_adapter
     local_agent.browser.site_mapper
     local_agent.policy.tenant_scope_contract
@@ -1688,7 +1688,7 @@ forbidden_modules =
     local_agent.user_present.user_present_ui_server
     local_agent.user_present.user_present_ws_adapter
     local_agent.browser.web_reader
-    local_agent.websocket_client
+    local_agent.connection.websocket_client
     orchestrator_v1.inbox.email_classifier
     orchestrator_v1.inbox.hiworks_mail_reader
     orchestrator_v1.inbox.kakaowork_reader
@@ -2701,7 +2701,7 @@ forbidden_modules =
     ai_orchestrator.web_task.web_task_approval_service
     ai_orchestrator.web_task.web_task_registry
     ai_orchestrator.web_task.web_task_router
-    local_agent.actions
+    local_agent.connection.actions
     local_agent.agent
     local_agent.common.audit
     local_agent.browser.browser_action_contract
@@ -2723,7 +2723,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_handshake
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.browser.cdp_attach
-    local_agent.connection_diagnostics
+    local_agent.connection.connection_diagnostics
     local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
@@ -2734,21 +2734,21 @@ forbidden_modules =
     local_agent.tools.kras_connector
     local_agent.browser.login_auto_flow
     local_agent.browser.login_state_detector
-    local_agent.network_bypass
+    local_agent.connection.network_bypass
     local_agent.common.redaction
-    local_agent.registration_client
+    local_agent.connection.registration_client
     local_agent.browser.server_action_adapter
     local_agent.policy.site_compliance_gate
     local_agent.policy.site_entry_policy
     local_agent.browser.site_mapper
     local_agent.policy.tenant_scope_contract
-    local_agent.token_store
+    local_agent.connection.token_store
     local_agent.user_present.user_present_state_store
     local_agent.user_present.user_present_status_sender
     local_agent.user_present.user_present_ui_server
     local_agent.user_present.user_present_ws_adapter
     local_agent.browser.web_reader
-    local_agent.websocket_client
+    local_agent.connection.websocket_client
     orchestrator_v1.inbox.email_classifier
     orchestrator_v1.inbox.hiworks_mail_reader
     orchestrator_v1.inbox.inbox_store
@@ -3802,7 +3802,7 @@ forbidden_modules =
     ai_orchestrator.vendor_directory.vendor_directory_service
     ai_orchestrator.web_task.web_task_registry
     ai_orchestrator.web_task.web_task_router
-    local_agent.actions
+    local_agent.connection.actions
     local_agent.agent
     local_agent.common.audit
     local_agent.browser.browser_action_contract
@@ -3819,7 +3819,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_handshake
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.browser.cdp_attach
-    local_agent.connection_diagnostics
+    local_agent.connection.connection_diagnostics
     local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
@@ -3829,9 +3829,9 @@ forbidden_modules =
     local_agent.tools.kras_connector
     local_agent.browser.login_auto_flow
     local_agent.browser.login_state_detector
-    local_agent.network_bypass
+    local_agent.connection.network_bypass
     local_agent.common.redaction
-    local_agent.registration_client
+    local_agent.connection.registration_client
     local_agent.browser.server_action_adapter
     local_agent.browser.site_mapper
     local_agent.policy.tenant_scope_contract
@@ -3839,7 +3839,7 @@ forbidden_modules =
     local_agent.user_present.user_present_ui_server
     local_agent.user_present.user_present_ws_adapter
     local_agent.browser.web_reader
-    local_agent.websocket_client
+    local_agent.connection.websocket_client
     orchestrator_v1.inbox.notice_radar.browser_collector
     orchestrator_v1.inbox.notice_radar.collector
     orchestrator_v1.inbox.notice_radar.pipeline
@@ -4964,7 +4964,7 @@ forbidden_modules =
     ai_orchestrator.vendor_directory.vendor_directory_service
     ai_orchestrator.web_task.web_task_registry
     ai_orchestrator.web_task.web_task_router
-    local_agent.actions
+    local_agent.connection.actions
     local_agent.agent
     local_agent.common.audit
     local_agent.browser.browser_action_contract
@@ -4981,7 +4981,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_handshake
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.browser.cdp_attach
-    local_agent.connection_diagnostics
+    local_agent.connection.connection_diagnostics
     local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
@@ -4991,9 +4991,9 @@ forbidden_modules =
     local_agent.tools.kras_connector
     local_agent.browser.login_auto_flow
     local_agent.browser.login_state_detector
-    local_agent.network_bypass
+    local_agent.connection.network_bypass
     local_agent.common.redaction
-    local_agent.registration_client
+    local_agent.connection.registration_client
     local_agent.browser.server_action_adapter
     local_agent.browser.site_mapper
     local_agent.policy.tenant_scope_contract
@@ -5001,7 +5001,7 @@ forbidden_modules =
     local_agent.user_present.user_present_ui_server
     local_agent.user_present.user_present_ws_adapter
     local_agent.browser.web_reader
-    local_agent.websocket_client
+    local_agent.connection.websocket_client
     orchestrator_v1.inbox.notice_radar.pipeline
     orchestrator_v1.inbox.notice_router
     orchestrator_v1.monitoring.dashboard
@@ -5251,7 +5251,7 @@ forbidden_modules =
     ai_orchestrator.user_data.user_data_contribution_router
     ai_orchestrator.vendor_directory.vendor_directory_router
     ai_orchestrator.web_task.web_task_router
-    local_agent.actions
+    local_agent.connection.actions
     local_agent.agent
     local_agent.common.audit
     local_agent.browser.browser_action_contract
@@ -5268,7 +5268,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_handshake
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.browser.cdp_attach
-    local_agent.connection_diagnostics
+    local_agent.connection.connection_diagnostics
     local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
@@ -5278,9 +5278,9 @@ forbidden_modules =
     local_agent.tools.kras_connector
     local_agent.browser.login_auto_flow
     local_agent.browser.login_state_detector
-    local_agent.network_bypass
+    local_agent.connection.network_bypass
     local_agent.common.redaction
-    local_agent.registration_client
+    local_agent.connection.registration_client
     local_agent.browser.server_action_adapter
     local_agent.browser.site_mapper
     local_agent.policy.tenant_scope_contract
@@ -5288,7 +5288,7 @@ forbidden_modules =
     local_agent.user_present.user_present_ui_server
     local_agent.user_present.user_present_ws_adapter
     local_agent.browser.web_reader
-    local_agent.websocket_client
+    local_agent.connection.websocket_client
     orchestrator_v1.inbox.notice_router
     orchestrator_v1.monitoring.dashboard
     orchestrator_v1.routers.inbox_router
@@ -5338,7 +5338,7 @@ source_modules =
     local_agent.browser.approval.browser_approval_db_store
     local_agent.browser.approval.browser_approval_persistent_store
     local_agent.browser.browser_session_store
-    local_agent.token_store
+    local_agent.connection.token_store
     local_agent.user_present.user_present_state_store
     orchestrator_v1.inbox.inbox_store
     orchestrator_v1.tasks.candidate_store
@@ -5740,7 +5740,7 @@ forbidden_modules =
     ai_orchestrator.web_task.web_task_approval_service
     ai_orchestrator.web_task.web_task_registry
     ai_orchestrator.web_task.web_task_router
-    local_agent.actions
+    local_agent.connection.actions
     local_agent.agent
     local_agent.common.audit
     local_agent.browser.browser_action_contract
@@ -5759,7 +5759,7 @@ forbidden_modules =
     local_agent.browser.bridge.browser_websocket_handshake
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.browser.cdp_attach
-    local_agent.connection_diagnostics
+    local_agent.connection.connection_diagnostics
     local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
@@ -5770,9 +5770,9 @@ forbidden_modules =
     local_agent.tools.kras_connector
     local_agent.browser.login_auto_flow
     local_agent.browser.login_state_detector
-    local_agent.network_bypass
+    local_agent.connection.network_bypass
     local_agent.common.redaction
-    local_agent.registration_client
+    local_agent.connection.registration_client
     local_agent.browser.server_action_adapter
     local_agent.policy.site_compliance_gate
     local_agent.policy.site_entry_policy
@@ -5782,7 +5782,7 @@ forbidden_modules =
     local_agent.user_present.user_present_ui_server
     local_agent.user_present.user_present_ws_adapter
     local_agent.browser.web_reader
-    local_agent.websocket_client
+    local_agent.connection.websocket_client
     orchestrator_v1.inbox.email_classifier
     orchestrator_v1.inbox.hiworks_mail_reader
     orchestrator_v1.inbox.kakaowork_reader
@@ -6422,7 +6422,7 @@ as_packages = False
 name = 층 L10 는 L1,L2,L3,L4,L7,L10 만 직접 import (module_registry allowed_deps)
 type = forbidden
 source_modules =
-    local_agent.actions
+    local_agent.connection.actions
     local_agent.agent
     local_agent.common.audit
     local_agent.browser.browser_action_contract
@@ -6439,7 +6439,7 @@ source_modules =
     local_agent.browser.bridge.browser_websocket_handshake
     local_agent.browser.bridge.browser_websocket_schema
     local_agent.browser.cdp_attach
-    local_agent.connection_diagnostics
+    local_agent.connection.connection_diagnostics
     local_agent.common.desktop_config
     local_agent.tools.file_scanner
     local_agent.gui.gui_chat_state
@@ -6449,16 +6449,16 @@ source_modules =
     local_agent.tools.kras_connector
     local_agent.browser.login_auto_flow
     local_agent.browser.login_state_detector
-    local_agent.network_bypass
+    local_agent.connection.network_bypass
     local_agent.common.redaction
-    local_agent.registration_client
+    local_agent.connection.registration_client
     local_agent.browser.server_action_adapter
     local_agent.browser.site_mapper
     local_agent.policy.tenant_scope_contract
     local_agent.user_present.user_present_status_sender
     local_agent.user_present.user_present_ws_adapter
     local_agent.browser.web_reader
-    local_agent.websocket_client
+    local_agent.connection.websocket_client
 forbidden_modules =
     ai_orchestrator.agent_dispatch.agent_dispatch_router
     ai_orchestrator.agent_dispatch.agent_dispatch_runner

@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from local_agent.network_bypass import direct_child_env, urlopen_for_server
+from local_agent.connection.network_bypass import direct_child_env, urlopen_for_server  # noqa: E402
 
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
 

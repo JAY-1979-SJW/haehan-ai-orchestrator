@@ -51,10 +51,10 @@ def _isolated_storage(tmp_path, monkeypatch):
 
     importlib.reload(_lar)
 
+    import ai_orchestrator.agent_hub.registry.common as _reg_common
+    import ai_orchestrator.agent_hub.registry.facade as _reg
     import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.gates.approval as _ap
-    import ai_orchestrator.agent_hub.registry.facade as _reg
-    import ai_orchestrator.agent_hub.registry.common as _reg_common
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
@@ -87,8 +87,8 @@ def _make_test_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.agent_hub.router.root import local_agent_router
+    from ai_orchestrator.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -578,7 +578,7 @@ def test_action_risk_mapping_sanity():
 
 
 def test_local_actions_module_forbidden_set():
-    from local_agent.actions import FORBIDDEN_ACTIONS, execute_action
+    from local_agent.connection.actions import FORBIDDEN_ACTIONS, execute_action
 
     assert {"delete_file", "upload_file", "modify_file", "execute_shell"} <= FORBIDDEN_ACTIONS
     r = execute_action("delete_file", {"path": "C:/x"})
@@ -587,7 +587,7 @@ def test_local_actions_module_forbidden_set():
 
 
 def test_local_actions_unknown_action():
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     r = execute_action("nope_such_thing", {})
     assert not r.success
@@ -595,7 +595,7 @@ def test_local_actions_unknown_action():
 
 
 def test_local_actions_open_url_blocks_dangerous_schemes():
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     for url in ("file:///C:/Windows/System32/cmd.exe", "javascript:alert(1)", "data:text/html,<script>x</script>"):
         r = action_open_url({"url": url})
@@ -605,7 +605,7 @@ def test_local_actions_open_url_blocks_dangerous_schemes():
 
 def test_open_url_dry_run_default_true():
     """dry_run 기본값은 true."""
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com"})
     assert r.success
@@ -614,7 +614,7 @@ def test_open_url_dry_run_default_true():
 
 def test_open_url_dry_run_true_success():
     """dry_run=true이면 success 반환."""
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com", "dry_run": True})
     assert r.success
@@ -625,9 +625,9 @@ def test_open_url_dry_run_true_no_browser_execution():
     """dry_run=true일 때 webbrowser.open() 호출 안 됨."""
     import unittest.mock as mock
 
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
-    with mock.patch("local_agent.actions.webbrowser.open") as mock_open:
+    with mock.patch("local_agent.connection.actions.webbrowser.open") as mock_open:
         r = action_open_url({"url": "https://example.com", "dry_run": True})
         assert r.success
         mock_open.assert_not_called()
@@ -635,7 +635,7 @@ def test_open_url_dry_run_true_no_browser_execution():
 
 def test_open_url_dry_run_result_fields():
     """dry_run 성공 결과에 필수 필드 포함."""
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com", "dry_run": True})
     assert r.success
@@ -650,7 +650,7 @@ def test_open_url_dry_run_result_fields():
 
 def test_open_url_dry_run_false_rejected():
     """dry_run=false는 명시적으로 거부."""
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com", "dry_run": False})
     assert not r.success
@@ -659,7 +659,7 @@ def test_open_url_dry_run_false_rejected():
 
 def test_open_url_blocks_sensitive_password():
     """password 포함 params는 거부."""
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com", "password": "secret123"})
     assert not r.success
@@ -668,7 +668,7 @@ def test_open_url_blocks_sensitive_password():
 
 def test_open_url_blocks_sensitive_token():
     """token 포함 params는 거부."""
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com", "token": "secret_token"})
     assert not r.success
@@ -677,7 +677,7 @@ def test_open_url_blocks_sensitive_token():
 
 def test_open_url_blocks_sensitive_cookie():
     """cookie 포함 params는 거부."""
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com", "cookie": "session_id=xyz"})
     assert not r.success
@@ -686,7 +686,7 @@ def test_open_url_blocks_sensitive_cookie():
 
 def test_open_url_blocks_sensitive_authorization():
     """authorization 포함 params는 거부."""
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com", "authorization": "Bearer xyz"})
     assert not r.success
@@ -695,7 +695,7 @@ def test_open_url_blocks_sensitive_authorization():
 
 def test_open_url_case_insensitive_sensitive_check():
     """민감정보 검사는 대소문자 무관."""
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com", "Password": "secret"})
     assert not r.success
@@ -704,7 +704,7 @@ def test_open_url_case_insensitive_sensitive_check():
 
 def test_open_url_dry_run_string_true():
     """dry_run 문자열 'true' 도 true로 인식."""
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com", "dry_run": "true"})
     assert r.success
@@ -713,7 +713,7 @@ def test_open_url_dry_run_string_true():
 
 def test_open_url_dry_run_string_false():
     """dry_run 문자열 'false' 도 false로 인식."""
-    from local_agent.actions import action_open_url
+    from local_agent.connection.actions import action_open_url
 
     r = action_open_url({"url": "https://example.com", "dry_run": "false"})
     assert not r.success
@@ -721,7 +721,7 @@ def test_open_url_dry_run_string_false():
 
 
 def test_local_actions_list_allowed_apps():
-    from local_agent.actions import action_list_allowed_apps
+    from local_agent.connection.actions import action_list_allowed_apps
 
     r = action_list_allowed_apps({})
     assert r.success

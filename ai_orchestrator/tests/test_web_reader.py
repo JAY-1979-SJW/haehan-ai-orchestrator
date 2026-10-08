@@ -306,7 +306,7 @@ def test_validate_url_allow_private_network_opt_in() -> None:
 
 
 def test_execute_action_web_analyze_html() -> None:
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     result = execute_action(
         "web_analyze_html",
@@ -320,7 +320,7 @@ def test_execute_action_web_analyze_html() -> None:
 
 
 def test_execute_action_web_analyze_html_missing_html() -> None:
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     result = execute_action("web_analyze_html", {})
     assert result.success is False
@@ -363,8 +363,8 @@ def test_no_browser_automation_or_mutation_apis() -> None:
     """web_reader / 새 action 코드에 클릭·입력·브라우저 자동화 호출이 없는지."""
     from pathlib import Path
 
-    import local_agent.actions as ac
     import local_agent.browser.web_reader as wr
+    import local_agent.connection.actions as ac
 
     reader_src = Path(wr.__file__).read_text(encoding="utf-8")
     actions_src = Path(ac.__file__).read_text(encoding="utf-8")

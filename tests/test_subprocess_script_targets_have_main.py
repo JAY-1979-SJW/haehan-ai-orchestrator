@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CALLERS = [
-    "local_agent/actions.py",
+    "local_agent/connection/actions.py",
     "scripts/browser/cdp/cdp_daemon.py",
     "ai_orchestrator/gongmu/fetch_nts_interpretations.py",
     "ai_orchestrator/gongmu/fetch_tax_precedent_summary.py",

@@ -83,12 +83,12 @@
 
 | 기능 | 현재 위치 | 통합 후 단일 위치 |
 |------|-----------|------------------|
-| 등록 (register-with-code) | `local_agent.registration_client` + `desktop.local_server._handle_register` | **local_agent.registration_client** (서버는 호출만) |
-| device_token 저장 | `local_agent.token_store` + `desktop` keyring 별도 | **local_agent.token_store** |
-| 서버 WS heartbeat | `local_agent.websocket_client` + `desktop.local_server._connect_to_server_ws` | **local_agent.websocket_client** (desktop에서 spawn) |
+| 등록 (register-with-code) | `local_agent.connection.registration_client` + `desktop.local_server._handle_register` | **local_agent.connection.registration_client** (서버는 호출만) |
+| device_token 저장 | `local_agent.connection.token_store` + `desktop` keyring 별도 | **local_agent.connection.token_store** |
+| 서버 WS heartbeat | `local_agent.connection.websocket_client` + `desktop.local_server._connect_to_server_ws` | **local_agent.connection.websocket_client** (desktop에서 spawn) |
 | 트레이 아이콘 | `local_agent.gui_tray` + `desktop.tray_app` | **local_agent.gui_tray** |
 | 로그 redaction | `local_agent.common.redaction` + `desktop` ad-hoc | **local_agent.common.redaction** |
-| 진단 텍스트 | `local_agent.connection_diagnostics` + `desktop` 패널 | **local_agent.connection_diagnostics** |
+| 진단 텍스트 | `local_agent.connection.connection_diagnostics` + `desktop` 패널 | **local_agent.connection.connection_diagnostics** |
 
 ### 2.4 유지 (각 라인 고유)
 

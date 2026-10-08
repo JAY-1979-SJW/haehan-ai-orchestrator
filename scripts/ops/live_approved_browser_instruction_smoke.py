@@ -27,7 +27,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from local_agent.network_bypass import (  # noqa: E402
+from local_agent.connection.network_bypass import (  # noqa: E402
     direct_child_env,
     urlopen_for_server,
 )

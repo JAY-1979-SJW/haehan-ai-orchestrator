@@ -26,6 +26,7 @@ from ai_orchestrator.contracts.user_present_ws_contract import (
     STATUS_USER_CONFIRMED,
     STATUS_WAITING_FOR_USER,
 )
+from local_agent.connection.websocket_client import process_user_present_task
 from local_agent.user_present.user_present_state_store import (
     STATE_WAITING_FOR_USER,
     UserPresentStateStore,
@@ -38,7 +39,6 @@ from local_agent.user_present.user_present_ws_adapter import (
     create_local_user_present_task_from_ws,
     mark_local_user_confirmed_and_build_event,
 )
-from local_agent.websocket_client import process_user_present_task
 from tests.helpers.local_agent_user_present_test_transport import (
     InMemoryTestTransport,
     make_bank_task_payload,
@@ -309,14 +309,14 @@ class TestServerHandler:
 
 class TestWebSocketCompatibility:
     def test_process_task_still_works(self):
-        from local_agent.websocket_client import process_task
+        from local_agent.connection.websocket_client import process_task
 
         task = {"task_id": "tid_test", "action": "ping", "params": {}, "risk_level": "low"}
         result = process_task(task)
         assert result["type"] == "result"
 
     def test_user_present_task_does_not_break_process_task(self):
-        from local_agent.websocket_client import process_task, process_user_present_task
+        from local_agent.connection.websocket_client import process_task, process_user_present_task
 
         assert callable(process_task)
         assert callable(process_user_present_task)

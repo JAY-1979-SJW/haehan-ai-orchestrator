@@ -1343,7 +1343,7 @@ def action_cdp_run(params: dict) -> ActionResult:
     timeout = int(params.get("timeout", 90))
     no_wait = bool(params.get("no_wait", True))
 
-    root = Path(__file__).parents[1]
+    root = Path(__file__).parents[2]
     script = root / "scripts" / "entry" / "cdp_cli.py"
 
     cmd = [sys.executable, str(script), site]
@@ -1503,7 +1503,7 @@ def action_run_claude_agent(params: dict) -> ActionResult:
     except (TypeError, ValueError):
         result_max_chars = 0
 
-    root = Path(__file__).parents[1]
+    root = Path(__file__).parents[2]
     cmd = _build_claude_command(
         root=root,
         prompt=prompt,
@@ -1797,7 +1797,7 @@ def _now_iso() -> str:
 
 def _agent_version() -> str:
     try:
-        from . import __version__
+        from local_agent import __version__
 
         return __version__
     except Exception:  # noqa: BLE001 - 로컬 에이전트 액션 디스패처 -- 각 액션 실행 실패를 ActionResult(False, ...)로 변환해 반환(fail-closed), 버전 조회/로컬호스트 URL 정규화 실패는 안전한 기본값으로 폴백

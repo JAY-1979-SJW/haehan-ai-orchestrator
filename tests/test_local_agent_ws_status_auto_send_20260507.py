@@ -331,14 +331,14 @@ class TestRunSendOnce(unittest.TestCase):
 class TestSecurityPolicy(unittest.TestCase):
     def test_14_heartbeat_path_coexists(self):
         """_STATUS_SENDER_AVAILABLE import 경로 확인."""
-        from local_agent import websocket_client
+        from local_agent.connection import websocket_client
 
         self.assertTrue(hasattr(websocket_client, "_STATUS_SENDER_AVAILABLE"))
         self.assertTrue(websocket_client._STATUS_SENDER_AVAILABLE)
 
     def test_15_existing_task_receive_path_unchanged(self):
         """process_user_present_task 기존 경로 여전히 작동."""
-        from local_agent.websocket_client import process_user_present_task
+        from local_agent.connection.websocket_client import process_user_present_task
 
         msg = {
             "message_type": "USER_PRESENT_TASK",
@@ -363,7 +363,7 @@ class TestSecurityPolicy(unittest.TestCase):
 
     def test_17_general_task_path_unchanged(self):
         """process_task 기존 경로 여전히 작동 (forbidden action)."""
-        from local_agent.websocket_client import process_task
+        from local_agent.connection.websocket_client import process_task
 
         task = {"task_id": "t-001", "action": "delete_file", "params": {}}
         result = process_task(task)

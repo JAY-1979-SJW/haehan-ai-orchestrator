@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from urllib import error as _urlerr
 from urllib import request as _urlreq
 
-from . import network_bypass as _network_bypass
+from local_agent.connection import network_bypass as _network_bypass
 
 logger = logging.getLogger(__name__)
 

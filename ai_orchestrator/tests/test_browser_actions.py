@@ -671,8 +671,8 @@ def test_browser_actions_source_has_no_mutating_network_calls() -> None:
 
 
 def test_action_web_click_guarded_safe(monkeypatch) -> None:
-    from local_agent.actions import execute_action
     from local_agent.browser import browser_actions
+    from local_agent.connection.actions import execute_action
 
     captured: list[dict] = []
 
@@ -714,8 +714,8 @@ def test_action_web_click_guarded_safe(monkeypatch) -> None:
 
 
 def test_action_web_type_guarded_password_approval_required(monkeypatch) -> None:
-    from local_agent.actions import execute_action
     from local_agent.browser import browser_actions
+    from local_agent.connection.actions import execute_action
 
     def fake_perform(**kwargs):
         return {
@@ -756,8 +756,8 @@ def test_action_web_type_guarded_password_approval_required(monkeypatch) -> None
 
 
 def test_action_web_scroll_guarded_defaults(monkeypatch) -> None:
-    from local_agent.actions import execute_action
     from local_agent.browser import browser_actions
+    from local_agent.connection.actions import execute_action
 
     captured: list[dict] = []
 
@@ -796,7 +796,7 @@ def test_action_web_scroll_guarded_defaults(monkeypatch) -> None:
 
 
 def test_action_web_click_guarded_missing_url() -> None:
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     r = execute_action("web_click_guarded", {})
     assert r.success is False

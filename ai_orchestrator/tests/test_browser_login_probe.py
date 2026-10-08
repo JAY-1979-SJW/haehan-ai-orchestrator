@@ -675,7 +675,7 @@ def test_close_methods_called():
 
 
 def test_action_web_probe_manual_login_returns_result():
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     script = [
         {"title": "Naver Login", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
@@ -699,7 +699,7 @@ def test_action_web_probe_manual_login_returns_result():
 
 
 def test_action_probe_blocks_non_allowed_host():
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     # allowed_hosts=[naver.com] 에 걸리지 않는 호스트 → HOST_NOT_ALLOWED.
     # 실제 브라우저는 실행되지 않는다 (factory 도 주입하지 않음).

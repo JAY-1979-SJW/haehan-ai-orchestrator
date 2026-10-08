@@ -66,7 +66,7 @@
 ## 4. 로컬 Agent 역할
 
 - 사용자 PC에서 실행 (desktop/local_runner.py 기반)
-- 중앙 서버 WebSocket 연결 (local_agent/websocket_client.py)
+- 중앙 서버 WebSocket 연결 (local_agent/connection/websocket_client.py)
 - 사이트 열기: 브라우저를 read-only로 실행, 인증 화면까지만 탐색
 - USER_PRESENT_REQUIRED 상태 감지 및 사용자 대기
 - 사용자가 인증 완료 버튼 클릭 후 read-only 상태 확인
