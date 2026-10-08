@@ -10,7 +10,17 @@ PyInstaller 는 진입 파일을 패키지 밖 단독 스크립트로 실행하�
 scripts/local_agent.py(스마트스토어 전용 옛 에이전트, local-agent.exe)와는 별개 프로그램이다.
 """
 
+import contextlib
 import sys
+
+# PyInstaller 번들 exe 는 stdout/stderr 가 파이프로 리다이렉트될 때 콘솔 코드페이지(cp949 등)로
+# 떨어져 로그 파일(local-agent-ai.log)의 한글이 깨진다(scripts/local_agent.py 의 같은 사고와 동일
+# 원인 — PYTHONIOENCODING/PYTHONUTF8 환경변수가 frozen exe 까지 전달되지 않는 경우에도 안전하도록
+# 코드에서 직접 강제). best-effort — 실패해도 에이전트 기동 자체는 막지 않는다.
+with contextlib.suppress(Exception):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+with contextlib.suppress(Exception):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
 
 from ai_orchestrator.server.desktop_entry import start_parent_watchdog
 from local_agent import agent
