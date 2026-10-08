@@ -3,6 +3,20 @@ import subprocess, sys
 from pathlib import Path
 
 
+def _run_relay(name, cmd, **kw):
+    # CREATE_NO_WINDOW + 콘솔 미상속 조합에서 자식 stdout/stderr 가 조용히 사라지는 문제(2026-10-08
+    # W2·W4 "체크리스트 PASS 뒤 무출력 exit 1") 진단용 — 캡처해서 부모 stdout/stderr 로 그대로 relay.
+    kw.pop("capture_output", None)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", **kw)
+    if proc.stdout:
+        sys.stdout.write(proc.stdout)
+    if proc.stderr:
+        sys.stderr.write(proc.stderr)
+    if proc.returncode != 0:
+        print(f"[{name}] exit={proc.returncode}", file=sys.stderr)
+    return proc
+
+
 def _no_window():
     # scripts/ops/_proc.no_window_kwargs 와 같은 로직을 그대로 둔다 — 이 파일은
     # core.hooksPath 로 여러 worktree 가 공유해 __file__ 기준 import 가 항상 메인
@@ -216,7 +230,7 @@ if _js_staged:
 # 우회: SKELETON_GATE_SKIP_REASON="사유" 환경변수 (감사 로그 기록됨).
 _sg = ROOT / "scripts" / "ops" / "code_map" / "skeleton_gate.py"
 if _sg.exists():
-    _sg_result = subprocess.run([*_pyexe(), str(_sg)], cwd=str(ROOT), **_no_window())
+    _sg_result = _run_relay("skeleton_gate", [*_pyexe(), str(_sg)], cwd=str(ROOT), **_no_window())
     if _sg_result.returncode != 0:
         sys.exit(_sg_result.returncode)
 
@@ -224,7 +238,7 @@ if _sg.exists():
 # audit-kit 를 못 찾으면 건너뛰지만 AUDIT_KIT_REQUIRED=1 이면 커밋을 막는다.
 _ak = ROOT / "scripts" / "ops" / "audit_kit_gate.py"
 if _ak.exists():
-    _ak_result = subprocess.run([*_pyexe(), str(_ak), "--staged"], cwd=str(ROOT), **_no_window())
+    _ak_result = _run_relay("audit_kit_gate", [*_pyexe(), str(_ak), "--staged"], cwd=str(ROOT), **_no_window())
     if _ak_result.returncode != 0:
         sys.exit(_ak_result.returncode)
 
@@ -321,7 +335,7 @@ _r1_staged = [
 if _r1_staged:
     _r1 = ROOT / "scripts" / "ops" / "audit_r1_api_contract_gate.py"
     if _r1.exists():
-        _r1_result = subprocess.run([*_pyexe(), str(_r1)], cwd=str(ROOT), **_no_window())
+        _r1_result = _run_relay("r1_api_contract_gate", [*_pyexe(), str(_r1)], cwd=str(ROOT), **_no_window())
         if _r1_result.returncode != 0:
             sys.exit(_r1_result.returncode)
 
@@ -365,7 +379,8 @@ if gate.exists():
     except (subprocess.CalledProcessError, OSError):
         pass  # 가시성 로그 실패는 커밋을 막지 않음
 
-    result = subprocess.run(
+    result = _run_relay(
+        "quality_gate",
         [*_pyexe(), str(gate), "--staged", "--enforce", "--allow-existing-code-change"],
         cwd=str(ROOT), **_no_window(),
     )
