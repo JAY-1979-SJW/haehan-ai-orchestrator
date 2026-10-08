@@ -3,14 +3,14 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.browser_site_registry import (
+from local_agent.runtime.browser_site_registry import (
     SitePolicy, register_site, clear_all,
 )
-from ai_orchestrator.local_agent.browser_discovery_candidates import (
+from local_agent.runtime.browser_discovery_candidates import (
     build_candidate,
     CANDIDATE_MENU, CANDIDATE_SUBMIT_BUTTON, CANDIDATE_DESTRUCTIVE_BUTTON,
 )
-from ai_orchestrator.local_agent.browser_allowlist_expansion_preflight import (
+from local_agent.runtime.browser_allowlist_expansion_preflight import (
     preflight_expansion, can_auto_approve,
     VERDICT_ALLOW, VERDICT_REVIEW, VERDICT_BLOCKED,
 )

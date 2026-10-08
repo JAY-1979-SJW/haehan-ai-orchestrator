@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scripts.google import subdomain_logic
+from scripts.google.common import subdomain_logic
 
 
 def test_google_subdomain_logic_catalog_groups_surfaces_and_actions_by_host() -> None:

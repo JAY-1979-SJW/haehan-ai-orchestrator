@@ -58,7 +58,7 @@ Common module:
 
 Current integration:
 
-- `scripts/naver/content.py` calls the common guard after `ensure_naver_login`.
+- `scripts/naver/common/content.py` calls the common guard after `ensure_naver_login`.
 
 Every future site auth helper should reuse this module before live actions are
 allowed.

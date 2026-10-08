@@ -3,7 +3,7 @@ import pytest
 
 from scripts.site_engine.profiles import SiteProfile
 from scripts.site_engine.registry import SiteProfileRegistry
-from scripts.site_engine.types import SiteCapability
+from scripts.site_engine.site_types import SiteCapability
 
 
 def _make_profile(key: str) -> SiteProfile:

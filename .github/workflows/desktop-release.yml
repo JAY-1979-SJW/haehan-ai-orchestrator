@@ -154,6 +154,8 @@ jobs:
         env:
           HAEHAN_E2E_EXE_PATH: ${{ github.workspace }}/dist-electron-new/win-unpacked/Haehan AI.exe
           HAEHAN_E2E_SKIP_PAID_API: "1"
+          # Playwright 의 Electron 실행 대기 과정을 로그로 남긴다(앱은 떴는데 launch 가 시간 초과되는 원인 확정용)
+          DEBUG: pw:browser*,pw:electron*
         run: npx playwright test -c playwright.electron.config.ts app user_flow fresh_install_signup
 
       - name: Collect app logs (시작 단계 시간·서버·UI 서버 로그)

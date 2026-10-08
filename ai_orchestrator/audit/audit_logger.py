@@ -2,7 +2,7 @@ import json
 import logging
 from datetime import UTC, datetime
 
-from orchestrator_v1.core.logging_utils import mask_sensitive
+from ai_orchestrator.core.logging_utils import mask_sensitive
 
 from ..core.config import AUDIT_LOG_PATH as _LOG_PATH
 

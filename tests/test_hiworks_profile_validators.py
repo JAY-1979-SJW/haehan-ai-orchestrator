@@ -1,10 +1,10 @@
 """Unit tests for hiworks profile and validators."""
 
-from scripts.hiworks.profile import HIWORKS_PROFILE
+from scripts.hiworks.site_profile import HIWORKS_PROFILE
 from scripts.hiworks.validators import (
     validate_hiworks_no_plain_secret,
 )
-from scripts.site_engine.types import GateDecision, SiteCapability
+from scripts.site_engine.site_types import GateDecision, SiteCapability
 
 # ── profile ──────────────────────────────────────────────────────────
 

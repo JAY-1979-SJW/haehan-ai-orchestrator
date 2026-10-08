@@ -2,7 +2,7 @@
  "_comment": "최상위 평면 금지 게이트(G15) 기준선 — 이미 평면에 있던 파일(기존 부채). 늘리는 변경 금지, 하위 폴더로 옮기거나 삭제해 줄이는 방향만. 규칙: configs/flat_root_gate.json",
  "target": 0,
  "count": 115,
- "note": "규칙 변경 동기화(integrate-4 누적 병합으로 scripts/ai_orchestrator 최상위에 기존 파일이 쌓였는데 기준선 미갱신 — PR#164 CI 2차 FAIL(flat_root_gate --check-all) 해결, 전부 origin/master 에 이미 존재): +48 -0 = 115",
+ "note": "규칙 변경 동기화(integrate-4 누적 병합으로 scripts/ai_orchestrator 최상위에 기존 파일이 쌓였는데 기준선 미갱신 — PR#164 CI 2차 FAIL(flat_root_gate --check-all) 해결, 전부 origin/master 에 이미 존재): +48 -0 = 115 | 병합 합집합(ours 115 + theirs 신규 0 = 115)",
  "files": [
   "ai_orchestrator/audit_logger.py",
   "ai_orchestrator/execution_limits.py",

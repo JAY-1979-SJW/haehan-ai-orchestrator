@@ -4,19 +4,16 @@
 (cdp_client·login_session·site_access)이 이를 import 하면 층간 위반이었다. 사이트별 지식은 `scripts/site_engine/site_registry_sites.py`(L5)로 옮기고,
 이 코어는 `SiteSpec`·조회·등록만 한다. 호출처는 그대로 `get_site`·`list_sites` 를 부른다.
 
-사이트 모듈 연결: 처음 `get_site`/`list_sites` 가 불리면 `_LOADER` 가 가리키는 모듈을 문자열로 불러 `build_sites(SiteSpec)` 결과를 등록한다.
-정적 import 가 아니라 **의도적인 데이터 주도(플러그인) 결합**이다 — 런타임에는 코어가 사이트 모듈에 의존하며(결합이 0 은 아님),
-달라지는 것은 L4 파일이 사이트 지식을 소유하지 않는다는 점이다. 로더 실패는 삼키지 않고 예외로 알린다(다음 호출에서 다시 시도).
+사이트 모듈 연결: 이 코어는 사이트 모듈을 import 하지 않는다. 프로세스 진입점이 시작할 때 조합 모듈의 `install()` 이
+`configure(provider)` 로 사이트 목록 공급자를 알려 주고, 처음 `get_site`/`list_sites` 가 불릴 때 공급자가 `SiteSpec` 목록을 만든다.
+공급자가 없으면(= 진입점이 install 을 빠뜨렸으면) 조용히 빈 목록으로 가지 않고 RuntimeError 로 알린다 — 자동 로그인이 말없이 꺼지지 않게 하기 위해서다.
+공급자 실패도 삼키지 않고 예외로 알린다(다음 호출에서 다시 시도).
 """
 
 from __future__ import annotations
 
-import importlib
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-
-_LOADER = "scripts.site_engine.site_registry_sites"  # 변수에 담은 문자열 — 정적 import 가 아니다(위 설명 참고)
-
 
 @dataclass
 class SiteSpec:
@@ -28,9 +25,26 @@ class SiteSpec:
     login_strategy: str = "registered_only"  # registered_only | registered_then_universal | manual_only
 
 
+SiteProvider = Callable[[type[SiteSpec]], Iterable[SiteSpec]]  # SiteSpec 클래스를 받아 사이트 목록을 만든다
+
 _REGISTRY: dict[str, SiteSpec] = {}
+_provider: SiteProvider | None = None
 _loaded = False
 _loading = False
+
+
+def configure(provider: SiteProvider) -> None:
+    """사이트 목록 공급자를 알려 준다(진입점 install 용). 같은 공급자를 다시 알려 주면 아무 일도 하지 않는다(멱등)."""
+    global _provider, _loaded
+    if provider is _provider:
+        return
+    _provider = provider
+    _loaded = False
+    _REGISTRY.clear()
+
+
+def is_configured() -> bool:
+    return _provider is not None
 
 
 def register_site(spec: SiteSpec) -> None:
@@ -41,13 +55,18 @@ def register_site(spec: SiteSpec) -> None:
 
 
 def _ensure_loaded() -> None:
-    """사이트 모듈을 한 번만 불러 등록한다(멱등·재진입 안전). 실패하면 아무것도 등록하지 않고 예외를 올린다."""
+    """공급자로 사이트를 한 번만 등록한다(멱등·재진입 안전). 실패하면 아무것도 등록하지 않고 예외를 올린다."""
     global _loaded, _loading
     if _loaded or _loading:
         return
+    if _provider is None:
+        raise RuntimeError(
+            "사이트 등록표가 구성되지 않았습니다 — 진입점이 시작할 때 조합 모듈의 install() 을 불러야 합니다 "
+            "(site_registry.configure(provider) 미호출)."
+        )
     _loading = True
     try:
-        specs = importlib.import_module(_LOADER).build_sites(SiteSpec)
+        specs = list(_provider(SiteSpec))
         for spec in specs:
             register_site(spec)
         _loaded = True

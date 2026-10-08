@@ -56,7 +56,7 @@ class BrowserGateMiddleware(BaseHTTPMiddleware):
         if body.get("force"):
             return await call_next(request)
 
-        from ai_orchestrator.local_agent.browser.action_gate import (
+        from scripts.browser.agent.action_gate import (
             GATE_APPROVE,
             GATE_NOTIFY,
             classify_action,

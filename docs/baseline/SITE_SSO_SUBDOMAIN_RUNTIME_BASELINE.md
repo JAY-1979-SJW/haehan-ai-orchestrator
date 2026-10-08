@@ -17,10 +17,10 @@ This baseline does not approve automatic login, credential replay, cookie
 export, session export, or write actions.
 
 Google subdomain-specific feature logic is implemented in
-`scripts/google/subdomain_logic.py`. It converts the locked Google surface and
+`scripts/google/common/subdomain_logic.py`. It converts the locked Google surface and
 workflow catalogs into host-level read and approval boundaries without
 performing credential entry or exporting session material.
-Google tab-level feature logic is implemented in `scripts/google/tab_logic.py`
+Google tab-level feature logic is implemented in `scripts/google/common/tab_logic.py`
 and exposed through all nine Google tab packages.
 
 ## 1.1 Occasional Site Login Handoff

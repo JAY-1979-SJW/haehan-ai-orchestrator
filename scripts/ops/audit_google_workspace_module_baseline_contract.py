@@ -4,7 +4,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -72,8 +71,8 @@ def audit() -> tuple[bool, list[str]]:
     if missing:
         failures.append("Google Workspace baseline missing phrase(s): " + ", ".join(missing))
 
-    from scripts.google.live_inputs import build_live_input_coverage
-    from scripts.google.tab_registry import build_google_tab_summary
+    from scripts.google.common.live_inputs import build_live_input_coverage
+    from scripts.google.common.tab_registry import build_google_tab_summary
 
     summary = build_google_tab_summary()
     workspace = next((tab for tab in summary["tabs"] if tab["key"] == "workspace"), None)
@@ -115,11 +114,10 @@ def audit() -> tuple[bool, list[str]]:
 
 
 def main() -> int:
+    from scripts.common.audit_cli import report_findings
+
     ok, findings = audit()
-    for finding in findings:
-        print(f"[{'PASS' if ok else 'FAIL'}] {finding}")
-    print(f"RESULT={'PASS_GOOGLE_WORKSPACE_MODULE_BASELINE_CONTRACT' if ok else 'FAIL_GOOGLE_WORKSPACE_MODULE_BASELINE_CONTRACT'}")
-    return 0 if ok else 1
+    return report_findings(ok, findings, "GOOGLE_WORKSPACE_MODULE_BASELINE_CONTRACT")
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ cross-domain 직접 import 금지: gabia ↔ g2b ↔ hiworks ↔ eum ↔ google 
 | 허용 action | 후보 도메인 정규화, TLD 추천, 초안 생성, 조회 |
 | 금지 action | 실제 등록 자동 실행, 결제 자동화, OTP 입력, session 사용 |
 | router | `scripts/gabia/router.py` → `domain-assist` 명령 |
-| profile/gates/validators | `scripts/gabia/profile.py`, `scripts/gabia/gates.py`, `scripts/gabia/validators.py` |
+| profile/gates/validators | `scripts/gabia/site_profile.py`, `scripts/gabia/gates.py`, `scripts/gabia/validators.py` |
 | usecase/assist | `scripts/gabia/domain_assist.py` |
 | storage/report | `data/gabia/domain_candidates/` |
 | test | `tests/test_gabia_domain_registration_assist.py` |
@@ -39,7 +39,7 @@ cross-domain 직접 import 금지: gabia ↔ g2b ↔ hiworks ↔ eum ↔ google 
 | 허용 action | DNS 현황 조회, 변경 초안 생성, nslookup 검증 |
 | 금지 action | DNS 레코드 자동 추가/수정/삭제, 서버 사이드 로그인 |
 | router | `scripts/gabia/router.py` → `dns` 명령 (미구현) |
-| profile/gates/validators | `scripts/gabia/profile.py`, `scripts/gabia/gates.py` |
+| profile/gates/validators | `scripts/gabia/site_profile.py`, `scripts/gabia/gates.py` |
 | usecase/assist | `scripts/gabia/dns_assist.py` (미구현) |
 | storage/report | `data/gabia/dns_snapshots/` |
 | test | `tests/test_gabia_dns_management.py` (미구현) |
@@ -59,7 +59,7 @@ cross-domain 직접 import 금지: gabia ↔ g2b ↔ hiworks ↔ eum ↔ google 
 | 허용 action | 호스팅 현황 조회, 만료일 알림 초안 |
 | 금지 action | 호스팅 자동 구매/갱신/해지, 결제 자동화 |
 | router | `scripts/gabia/router.py` → `hosting` 명령 (미구현) |
-| profile/gates/validators | `scripts/gabia/profile.py`, `scripts/gabia/gates.py` |
+| profile/gates/validators | `scripts/gabia/site_profile.py`, `scripts/gabia/gates.py` |
 | usecase/assist | `scripts/gabia/hosting_assist.py` (미구현) |
 | storage/report | `data/gabia/hosting_snapshots/` |
 | test | `tests/test_gabia_hosting_management.py` (미구현) |
@@ -79,7 +79,7 @@ cross-domain 직접 import 금지: gabia ↔ g2b ↔ hiworks ↔ eum ↔ google 
 | 허용 action | 메일 계정 목록 조회, 포워딩 초안 생성 |
 | 금지 action | 메일 자동 발송, 계정 자동 생성/삭제 |
 | router | `scripts/gabia/router.py` → `mail` 명령 (미구현) |
-| profile/gates/validators | `scripts/gabia/profile.py`, `scripts/gabia/gates.py` |
+| profile/gates/validators | `scripts/gabia/site_profile.py`, `scripts/gabia/gates.py` |
 | usecase/assist | `scripts/gabia/mail_assist.py` (미구현) |
 | storage/report | `data/gabia/mail_snapshots/` |
 | test | `tests/test_gabia_mail_management.py` (미구현) |
@@ -99,7 +99,7 @@ cross-domain 직접 import 금지: gabia ↔ g2b ↔ hiworks ↔ eum ↔ google 
 | 허용 action | 계정 정보 조회, 계약 목록 조회, 만료일 목록 |
 | 금지 action | 계정 정보 변경, 비밀번호 변경, 결제 수단 변경 |
 | router | `scripts/gabia/router.py` → `account` 명령 (미구현) |
-| profile/gates/validators | `scripts/gabia/profile.py`, `scripts/gabia/gates.py` |
+| profile/gates/validators | `scripts/gabia/site_profile.py`, `scripts/gabia/gates.py` |
 | usecase/assist | `scripts/gabia/account_assist.py` (미구현) |
 | storage/report | `data/gabia/account_snapshots/` |
 | test | `tests/test_gabia_account_readonly.py` (미구현) |
@@ -119,7 +119,7 @@ cross-domain 직접 import 금지: gabia ↔ g2b ↔ hiworks ↔ eum ↔ google 
 | 허용 action | 결제 내역 조회, 청구 예정 알림 초안 |
 | 금지 action | 결제 자동 실행, 카드 정보 저장/전송 |
 | router | `scripts/gabia/router.py` → `payment` 명령 (미구현) |
-| profile/gates/validators | `scripts/gabia/profile.py`, `scripts/gabia/gates.py` |
+| profile/gates/validators | `scripts/gabia/site_profile.py`, `scripts/gabia/gates.py` |
 | usecase/assist | `scripts/gabia/payment_assist.py` (미구현) |
 | storage/report | `data/gabia/payment_snapshots/` |
 | test | `tests/test_gabia_payment_billing.py` (미구현) |

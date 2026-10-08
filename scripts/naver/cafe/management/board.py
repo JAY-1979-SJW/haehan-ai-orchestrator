@@ -22,7 +22,7 @@ import time
 from playwright.sync_api import Frame, Page
 
 from scripts.common.logger import get_logger
-from scripts.naver.auth import ensure_naver_login
+from scripts.naver.common.auth import ensure_naver_login
 
 _log = get_logger(__name__)
 

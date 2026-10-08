@@ -1,4 +1,4 @@
-from scripts.naver.auth import _redact_input_result
+from scripts.naver.common.auth import _redact_input_result
 
 
 def test_redact_input_result_removes_raw_password_values():

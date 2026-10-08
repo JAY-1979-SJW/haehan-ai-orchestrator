@@ -8,7 +8,7 @@
   event_text|이벤트문구
 
 사용:
-  from scripts.naver.automation.csv_import import CSVImporter
+  from scripts.naver.smartstore.automation.csv_import import CSVImporter
   ci = CSVImporter(page)
   result = ci.import_csv("data/products.csv", save_after=False)
   result = ci.import_excel("data/products.xlsx")

@@ -4,14 +4,14 @@
 
 import pytest
 
-from ai_orchestrator.local_agent.delegated_action_executor import EXEC_ALLOWED
-from ai_orchestrator.local_agent.delegated_permission_store import (
+from local_agent.runtime.delegated_action_executor import EXEC_ALLOWED
+from local_agent.runtime.delegated_permission_store import (
     clear_all,
     grant_permission,
     revoke,
 )
-from ai_orchestrator.local_agent.naver_content_safe_result import validate_naver_result
-from ai_orchestrator.local_agent.naver_content_workflow_runner import (
+from scripts.naver.blog.naver_content_safe_result import validate_naver_result
+from scripts.naver.cafe.naver_content_workflow_runner import (
     WORKFLOW_WARN_PERMISSION,
     run_cafe_to_blog_workflow,
 )
@@ -107,6 +107,6 @@ class TestWorkflowWithPermission:
         # 철회된 권한: publish_result status가 EXEC_NEED_PERMISSION
         pub = result.get("publish_result")
         if pub:
-            from ai_orchestrator.local_agent.delegated_action_executor import EXEC_NEED_PERMISSION
+            from local_agent.runtime.delegated_action_executor import EXEC_NEED_PERMISSION
 
             assert pub["status"] == EXEC_NEED_PERMISSION

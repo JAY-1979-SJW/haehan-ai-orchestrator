@@ -9,7 +9,7 @@ import pytest
 
 def test_action_risk_defined():
     """ACTION_RISK가 정의되어 있고 필수 액션들을 포함한다."""
-    from ai_orchestrator.local_agent_risk_policy import ACTION_RISK
+    from ai_orchestrator.agent_hub.policy.risk_policy import ACTION_RISK
 
     assert isinstance(ACTION_RISK, dict)
     assert len(ACTION_RISK) > 0
@@ -24,7 +24,7 @@ def test_action_risk_defined():
 
 def test_action_risk_levels():
     """ACTION_RISK의 risk_level 값이 예상과 일치한다."""
-    from ai_orchestrator.local_agent_risk_policy import ACTION_RISK
+    from ai_orchestrator.agent_hub.policy.risk_policy import ACTION_RISK
 
     # low risk
     assert ACTION_RISK["ping"] == "low"
@@ -43,7 +43,7 @@ def test_action_risk_levels():
 
 def test_server_auto_complete_defined():
     """_SERVER_AUTO_COMPLETE가 정의되어 있고 올바른 액션을 포함한다."""
-    from ai_orchestrator.local_agent_risk_policy import _SERVER_AUTO_COMPLETE
+    from ai_orchestrator.agent_hub.policy.risk_policy import _SERVER_AUTO_COMPLETE
 
     assert isinstance(_SERVER_AUTO_COMPLETE, frozenset)
     assert "ping" in _SERVER_AUTO_COMPLETE
@@ -54,7 +54,7 @@ def test_server_auto_complete_defined():
 
 def test_allowed_apps_defined():
     """ALLOWED_APPS가 정의되어 있고 올바른 앱을 포함한다."""
-    from ai_orchestrator.local_agent_risk_policy import ALLOWED_APPS
+    from ai_orchestrator.agent_hub.policy.risk_policy import ALLOWED_APPS
 
     assert isinstance(ALLOWED_APPS, list)
     assert "browser" in ALLOWED_APPS
@@ -66,7 +66,10 @@ def test_allowed_apps_defined():
 
 def test_registry_uses_action_risk():
     """registry가 ACTION_RISK를 올바르게 사용한다."""
-    from ai_orchestrator.local_agent_registry import enqueue_task, UnknownActionError
+    from ai_orchestrator.agent_hub.registry.facade import (
+        UnknownActionError,
+        enqueue_task,
+    )
 
     # 알려진 액션은 성공
     task = enqueue_task(
@@ -90,7 +93,7 @@ def test_registry_uses_action_risk():
 
 def test_risk_level_high_requires_approval():
     """high risk 액션은 waiting_approval 상태로 생성된다."""
-    from ai_orchestrator.local_agent_registry import enqueue_task
+    from ai_orchestrator.agent_hub.registry.facade import enqueue_task
 
     task = enqueue_task(
         agent_id="test-agent",
@@ -105,7 +108,7 @@ def test_risk_level_high_requires_approval():
 
 def test_server_auto_complete_behavior():
     """_SERVER_AUTO_COMPLETE 액션은 completed 상태로 생성된다."""
-    from ai_orchestrator.local_agent_registry import enqueue_task
+    from ai_orchestrator.agent_hub.registry.facade import enqueue_task
 
     task = enqueue_task(
         agent_id="test-agent",
@@ -119,7 +122,7 @@ def test_server_auto_complete_behavior():
 
 def test_low_risk_non_auto_complete_action():
     """low risk이지만 non-auto-complete 액션은 queued 상태."""
-    from ai_orchestrator.local_agent_registry import enqueue_task
+    from ai_orchestrator.agent_hub.registry.facade import enqueue_task
 
     task = enqueue_task(
         agent_id="test-agent",
@@ -134,7 +137,7 @@ def test_low_risk_non_auto_complete_action():
 
 def test_web_open_url_readonly_is_low_risk_queued():
     """read-only browser observation is queued for local agent execution."""
-    from ai_orchestrator.local_agent_registry import enqueue_task
+    from ai_orchestrator.agent_hub.registry.facade import enqueue_task
 
     task = enqueue_task(
         agent_id="test-agent",
@@ -149,7 +152,7 @@ def test_web_open_url_readonly_is_low_risk_queued():
 
 def test_medium_risk_action():
     """medium risk 액션은 queued 상태."""
-    from ai_orchestrator.local_agent_registry import enqueue_task
+    from ai_orchestrator.agent_hub.registry.facade import enqueue_task
 
     task = enqueue_task(
         agent_id="test-agent",
@@ -164,7 +167,7 @@ def test_medium_risk_action():
 
 def test_browser_actions_defined():
     """browser automation 액션들이 정의되어 있다."""
-    from ai_orchestrator.local_agent_risk_policy import ACTION_RISK
+    from ai_orchestrator.agent_hub.policy.risk_policy import ACTION_RISK
 
     browser_actions = {
         "browser.inspect": "low",
@@ -181,6 +184,6 @@ def test_browser_actions_defined():
 
 
 def test_web_open_url_readonly_auto_execute_registered():
-    from ai_orchestrator.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
+    from ai_orchestrator.contracts.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
 
     assert "web_open_url_readonly" in AUTO_EXECUTE_VIA_AGENT

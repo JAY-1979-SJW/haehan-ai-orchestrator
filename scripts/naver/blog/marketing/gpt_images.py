@@ -34,6 +34,7 @@ import time
 from pathlib import Path
 
 from scripts.browser.cdp.cdp_helper import CDP
+from scripts.naver.blog.marketing.chatgpt_prompt import send_chatgpt_prompt
 
 
 def clear_device_metrics(cdp: CDP) -> None:
@@ -48,23 +49,7 @@ def clear_device_metrics(cdp: CDP) -> None:
 
 
 def _send_prompt(cdp: CDP, prompt: str) -> str:
-    focus_result = cdp.js("""(function(){
-      var ta = document.querySelector('#prompt-textarea');
-      if (!ta) return 'textarea not found';
-      ta.focus();
-      return 'focused';
-    })()""")
-    if focus_result != "focused":
-        return focus_result
-    time.sleep(0.3)
-    cdp.send("Input.insertText", {"text": prompt})
-    time.sleep(0.5)
-    return cdp.js("""(function(){
-      var btn = document.querySelector('button[data-testid="send-button"]');
-      if (!btn) return 'send button not found';
-      btn.click();
-      return 'clicked';
-    })()""")
+    return send_chatgpt_prompt(cdp, prompt, 0.5)
 
 
 _FIND_LARGE_IMAGE_JS = """(function(){

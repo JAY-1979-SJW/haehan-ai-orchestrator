@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.task_protocol import STATUS_COMPLETED, build_result
+from ai_orchestrator.contracts.local_task_protocol import STATUS_COMPLETED, build_result
 from ai_orchestrator.server.local_agent_task_api import (
     create_local_browser_task,
     get_pending_local_agent_task,
@@ -106,7 +106,7 @@ def test_receive_result_sensitive_blocked():
 
 
 def test_sanitize_task_clean():
-    from ai_orchestrator.local_agent.task_protocol import build_task
+    from ai_orchestrator.contracts.local_task_protocol import build_task
 
     t = build_task("open_url", "https://www.g2b.go.kr")
     safe = sanitize_task_for_local_agent(t)
@@ -114,7 +114,7 @@ def test_sanitize_task_clean():
 
 
 def test_sanitize_task_with_forbidden_raises():
-    from ai_orchestrator.local_agent.task_protocol import build_task
+    from ai_orchestrator.contracts.local_task_protocol import build_task
 
     t = build_task("open_url", "https://www.g2b.go.kr")
     t["cookie"] = "abc"

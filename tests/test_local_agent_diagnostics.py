@@ -2,8 +2,8 @@
 
 from datetime import UTC, datetime
 
-from ai_orchestrator import local_agent_diagnostics
-from ai_orchestrator import local_agent_registry as _reg
+from ai_orchestrator.agent_hub.registry import diagnostics as local_agent_diagnostics
+from ai_orchestrator.agent_hub.registry import facade as _reg
 
 
 class TestDiagnosticsHelper:
@@ -375,7 +375,7 @@ class TestEndpointRegistration:
 
     def test_endpoint_is_get_only(self):
         """diagnostics endpoint는 GET만 지원."""
-        from ai_orchestrator.local_agent_router import local_agent_router
+        from ai_orchestrator.agent_hub.router.root import local_agent_router
 
         # 라우터에 등록된 route 확인
         routes = local_agent_router.routes

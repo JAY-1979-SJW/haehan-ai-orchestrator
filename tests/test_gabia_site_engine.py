@@ -5,18 +5,18 @@ from __future__ import annotations
 # ── 1. profile 검증 ─────────────────────────────────────────────────────────
 
 def test_gabia_profile_import():
-    from scripts.gabia.profile import GABIA_PROFILE
+    from scripts.gabia.site_profile import GABIA_PROFILE
     assert GABIA_PROFILE.key == "gabia"
 
 
 def test_gabia_profile_display_name():
-    from scripts.gabia.profile import GABIA_PROFILE
+    from scripts.gabia.site_profile import GABIA_PROFILE
     assert "Gabia" in GABIA_PROFILE.display_name
 
 
 def test_read_policy_is_read_only_allowed():
-    from scripts.gabia.profile import GABIA_PROFILE
-    from scripts.site_engine.types import GateDecision, SiteCapability
+    from scripts.gabia.site_profile import GABIA_PROFILE
+    from scripts.site_engine.site_types import GateDecision, SiteCapability
     policy = GABIA_PROFILE.action_policies.get(SiteCapability.READ)
     assert policy is not None
     assert policy.gate == GateDecision.READ_ONLY_ALLOWED
@@ -24,8 +24,8 @@ def test_read_policy_is_read_only_allowed():
 
 
 def test_submit_approval_required():
-    from scripts.gabia.profile import GABIA_PROFILE
-    from scripts.site_engine.types import SiteCapability
+    from scripts.gabia.site_profile import GABIA_PROFILE
+    from scripts.site_engine.site_types import SiteCapability
     policy = GABIA_PROFILE.action_policies.get(SiteCapability.SUBMIT)
     assert policy is not None
     assert policy.requires_approval is True
@@ -33,8 +33,8 @@ def test_submit_approval_required():
 
 
 def test_delete_approval_required():
-    from scripts.gabia.profile import GABIA_PROFILE
-    from scripts.site_engine.types import SiteCapability
+    from scripts.gabia.site_profile import GABIA_PROFILE
+    from scripts.site_engine.site_types import SiteCapability
     policy = GABIA_PROFILE.action_policies.get(SiteCapability.DELETE)
     assert policy is not None
     assert policy.requires_approval is True
@@ -42,8 +42,8 @@ def test_delete_approval_required():
 
 
 def test_sign_is_blocked():
-    from scripts.gabia.profile import GABIA_PROFILE
-    from scripts.site_engine.types import GateDecision, SiteCapability
+    from scripts.gabia.site_profile import GABIA_PROFILE
+    from scripts.site_engine.site_types import GateDecision, SiteCapability
     policy = GABIA_PROFILE.action_policies.get(SiteCapability.SIGN)
     assert policy is not None
     assert policy.gate == GateDecision.BLOCKED
@@ -82,7 +82,7 @@ def test_gate_payment_blocked():
 
 def test_gate_dns_change_approval_required():
     from scripts.gabia.gates import gate_gabia_dns_change
-    from scripts.site_engine.types import GateDecision
+    from scripts.site_engine.site_types import GateDecision
     result = gate_gabia_dns_change()
     assert result.gate_decision == GateDecision.APPROVAL_REQUIRED
     assert result.requires_approval is True
@@ -90,7 +90,7 @@ def test_gate_dns_change_approval_required():
 
 def test_gate_dns_delete_approval_required():
     from scripts.gabia.gates import gate_gabia_dns_delete
-    from scripts.site_engine.types import GateDecision
+    from scripts.site_engine.site_types import GateDecision
     result = gate_gabia_dns_delete()
     assert result.gate_decision == GateDecision.APPROVAL_REQUIRED
     assert result.requires_approval is True
@@ -98,7 +98,7 @@ def test_gate_dns_delete_approval_required():
 
 def test_gate_domain_renew_approval_required():
     from scripts.gabia.gates import gate_gabia_domain_renew
-    from scripts.site_engine.types import GateDecision
+    from scripts.site_engine.site_types import GateDecision
     result = gate_gabia_domain_renew()
     assert result.gate_decision == GateDecision.APPROVAL_REQUIRED
     assert result.requires_approval is True
@@ -106,7 +106,7 @@ def test_gate_domain_renew_approval_required():
 
 def test_gate_hosting_change_approval_required():
     from scripts.gabia.gates import gate_gabia_hosting_change
-    from scripts.site_engine.types import GateDecision
+    from scripts.site_engine.site_types import GateDecision
     result = gate_gabia_hosting_change()
     assert result.gate_decision == GateDecision.APPROVAL_REQUIRED
     assert result.requires_approval is True
@@ -117,7 +117,7 @@ def test_gate_account_read_not_plain_allowed():
     from scripts.gabia.gates import gate_gabia_account_read
     result = gate_gabia_account_read()
     # is_server_forbidden_site=True 이므로 SERVER_BROWSER_ALLOWED 아님
-    from scripts.site_engine.types import GateDecision
+    from scripts.site_engine.site_types import GateDecision
     assert result.gate_decision != GateDecision.SERVER_BROWSER_ALLOWED
 
 

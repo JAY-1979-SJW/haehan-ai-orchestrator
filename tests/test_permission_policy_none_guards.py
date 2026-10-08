@@ -9,15 +9,15 @@ import ast
 from pathlib import Path
 from typing import Any
 
-from ai_orchestrator.local_agent import delegated_permission_store as store
-from ai_orchestrator.local_agent.delegated_permission_policy import (
+from local_agent.runtime import delegated_permission_store as store
+from local_agent.runtime.delegated_permission_policy import (
     CHECK_ALLOWED,
     CHECK_PERMISSION_REQUIRED,
     check_permission,
 )
 
 _ROOT = Path(__file__).resolve().parent.parent
-_BPI = _ROOT / "ai_orchestrator" / "local_agent" / "browser_policy_integration.py"
+_BPI = _ROOT / "local_agent" / "runtime" / "browser_policy_integration.py"
 
 
 def setup_function() -> None:

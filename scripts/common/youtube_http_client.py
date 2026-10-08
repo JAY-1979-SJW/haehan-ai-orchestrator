@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import json
 import os
-import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any
+
+from scripts.common.http_retry import urlopen_with_dead_proxy_fallback
 
 # ── API key ───────────────────────────────────────────────────────────────────
 
@@ -96,29 +97,7 @@ def oauth_token(
 
 
 # ── HTTP transport ────────────────────────────────────────────────────────────
-
-
-def urlopen_with_dead_proxy_fallback(request: urllib.request.Request, *, timeout: int):
-    """Open a URL, bypassing a dead local proxy on connection-refused errors."""
-    try:
-        return urllib.request.urlopen(request, timeout=timeout)
-    except urllib.error.URLError as exc:
-        if not _should_retry_without_proxy(exc):
-            raise
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-        return opener.open(request, timeout=timeout)
-
-
-def _should_retry_without_proxy(exc: urllib.error.URLError) -> bool:
-    reason = str(getattr(exc, "reason", exc))
-    proxy_values = [
-        os.environ.get("HTTPS_PROXY", ""),
-        os.environ.get("HTTP_PROXY", ""),
-        os.environ.get("https_proxy", ""),
-        os.environ.get("http_proxy", ""),
-    ]
-    dead_local = any("127.0.0.1:9" in v or "localhost:9" in v for v in proxy_values)
-    return dead_local and ("10061" in reason or "Connection refused" in reason or "연결을 거부" in reason)
+# urlopen_with_dead_proxy_fallback 는 scripts/common/http_retry.py 로 옮겼다(위 import 로 재노출, __all__ 유지).
 
 
 # ── JSON / text fetchers ──────────────────────────────────────────────────────

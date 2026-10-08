@@ -6,8 +6,9 @@ from scripts.site_engine.execution_gate import (
     ExecutionGateResult,
     GateReason,
 )
-from scripts.site_engine.types import GateDecision, SiteCapability
+from scripts.site_engine.site_types import GateDecision, SiteCapability
 from scripts.site_engine.validators import (
+    validate_action_plan_safety,
     validate_action_plan_steps,
     validate_no_blocked_step_executable,
     validate_no_executable_sensitive_step_without_gate,
@@ -132,3 +133,35 @@ def test_validators_no_external_call():
     from scripts.site_engine import validators
 
     assert callable(validators.validate_no_plain_secret)
+
+
+# ── validate_action_plan_safety (도구별 validate_<tool>_action_plan 공용 본문) ──
+
+
+def test_action_plan_safety_merges_three_checks():
+    plan = build_action_plan("p1", "test", [{"capability": SiteCapability.SUBMIT, "action": "submit", "step_id": "s1"}])
+    plan.steps[0].status = ActionPlanStatus.READY
+    plan.steps[0].gate_result = None
+    merged = validate_action_plan_safety(plan)
+    expected = (
+        validate_action_plan_steps(plan).issues
+        + validate_no_blocked_step_executable(plan).issues
+        + validate_no_executable_sensitive_step_without_gate(plan).issues
+    )
+    assert [i.code for i in merged.issues] == [i.code for i in expected]
+    assert merged.is_valid is (not expected)
+    assert not merged.is_valid
+
+
+def test_tool_action_plan_validators_delegate_to_shared():
+    from scripts.gabia.validators import validate_gabia_action_plan
+    from scripts.google.validators import validate_google_action_plan
+    from scripts.hiworks.validators import validate_hiworks_action_plan
+    from scripts.youtube.validators import validate_youtube_action_plan
+
+    plan = build_action_plan("p1", "test", [{"capability": SiteCapability.SUBMIT, "action": "submit", "step_id": "s1"}])
+    base = validate_action_plan_safety(plan)
+    for fn in (validate_gabia_action_plan, validate_google_action_plan, validate_hiworks_action_plan, validate_youtube_action_plan):
+        r = fn(plan)
+        assert r.is_valid == base.is_valid
+        assert [i.code for i in r.issues] == [i.code for i in base.issues]

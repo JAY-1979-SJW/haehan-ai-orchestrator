@@ -1325,7 +1325,7 @@ def action_browser_inspect(params: dict) -> ActionResult:
 
 
 def action_cdp_run(params: dict) -> ActionResult:
-    """CDP 브라우저 자동화 실행 — cdp_client.py 전체 기능 래핑.
+    """CDP 브라우저 자동화 실행 — cdp_cli.py(CLI 진입부) 전체 기능 래핑.
 
     params:
         site    (str)  : google | gmail | naver | g2b | gov24 | ...
@@ -1344,7 +1344,7 @@ def action_cdp_run(params: dict) -> ActionResult:
     no_wait = bool(params.get("no_wait", True))
 
     root = Path(__file__).parents[1]
-    script = root / "scripts" / "browser" / "cdp" / "cdp_client.py"
+    script = root / "scripts" / "entry" / "cdp_cli.py"
 
     cmd = [sys.executable, str(script), site]
     if task:

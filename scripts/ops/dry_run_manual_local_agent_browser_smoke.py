@@ -29,9 +29,9 @@ REQUIRED_FILES = (
     "local_agent/agent.py",
     "local_agent/websocket_client.py",
     "local_agent/browser_readonly_runtime.py",
-    "ai_orchestrator/local_agent_router.py",
-    "ai_orchestrator/local_agent_actions.py",
-    "ai_orchestrator/local_agent_risk_policy.py",
+    "ai_orchestrator/agent_hub/router/root.py",
+    "ai_orchestrator/contracts/local_agent_actions.py",
+    "ai_orchestrator/agent_hub/policy/risk_policy.py",
 )
 SENSITIVE_PATTERNS = (
     re.compile(r"Authorization\s*:\s*Bearer\s+[^<\s]+", re.I),
@@ -98,8 +98,8 @@ def _dry_run_files_router(findings):
     router = "\n".join(
         read(rel)
         for rel in (
-            "ai_orchestrator/local_agent_router.py",
-            "ai_orchestrator/local_agent_router_registration.py",
+            "ai_orchestrator/agent_hub/router/root.py",
+            "ai_orchestrator/agent_hub/router/registration.py",
         )
         if (ROOT / rel).exists()
     )
@@ -121,8 +121,8 @@ def _dry_run_config_actions(findings):
     else:
         add(findings, "FAIL", "auth_fail_closed_defaults", "AUTH_ENABLED true defaults missing")
 
-    actions = read("ai_orchestrator/local_agent_actions.py")
-    risk = read("ai_orchestrator/local_agent_risk_policy.py")
+    actions = read("ai_orchestrator/contracts/local_agent_actions.py")
+    risk = read("ai_orchestrator/agent_hub/policy/risk_policy.py")
     if "web_open_url_readonly" in actions and "web_open_url_readonly" in risk:
         add(findings, "PASS", "readonly_action_allowed", "registered in action and risk policy")
     else:

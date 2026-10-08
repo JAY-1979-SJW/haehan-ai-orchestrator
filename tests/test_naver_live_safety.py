@@ -1,6 +1,6 @@
 import pytest
 
-from scripts.naver import live_safety
+from scripts.naver.common import live_safety
 
 
 def test_detect_robot_signal_matches_korean_security_text():

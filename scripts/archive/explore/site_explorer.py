@@ -28,9 +28,11 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.page_helper import _CRITICAL_SITE_PATTERNS, is_work_category  # noqa: E402 - 레거시 sys.path 조작 후 import
-from scripts.browser.page.web_connector import get_page  # noqa: E402 - 레거시 sys.path 조작 후 import
-
+from scripts.browser.cdp.connection import get_page  # noqa: E402 - 레거시 sys.path 조작 후 import
+from scripts.browser.page.page_helper_common import (  # noqa: E402 - 레거시 sys.path 조작 후 import
+    _CRITICAL_SITE_PATTERNS,
+    is_work_category,
+)
 from scripts.browser.popup.popup_detector import handle_page_popups  # noqa: E402 - 레거시 sys.path 조작 후 import
 from scripts.common.critical_logger import log_critical  # noqa: E402 - 레거시 sys.path 조작 후 import
 from scripts.common.logger import get_logger  # noqa: E402 - 레거시 sys.path 조작 후 import

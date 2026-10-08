@@ -6,7 +6,7 @@ LocalAgent, LocalAgentTask, RegisterResult 모델의 필드, 기본값, 응답 s
 
 import pytest
 
-from ai_orchestrator.local_agent_registry import LocalAgent, clear, enqueue_task, register_agent
+from ai_orchestrator.agent_hub.registry.facade import LocalAgent, clear, enqueue_task, register_agent
 
 
 @pytest.fixture(autouse=True)
@@ -298,7 +298,7 @@ def test_to_safe_uses_the_stats_it_is_given():
 
 
 def test_list_agents_fills_the_stats_from_the_registry():
-    from ai_orchestrator import local_agent_registry as reg
+    from ai_orchestrator.agent_hub.registry import facade as reg
 
     result = register_agent(host="h", os_name="Windows 11", version="0.1.0", requested_by="u")
     agent_id = result.agent.agent_id
@@ -316,7 +316,8 @@ def test_models_module_does_not_import_the_registry():
     import ast
     import pathlib
 
-    tree = ast.parse((pathlib.Path(__file__).resolve().parents[1] / "local_agent_models.py").read_text(encoding="utf-8"))
+    models_path = pathlib.Path(__file__).resolve().parents[1] / "agent_hub" / "models.py"
+    tree = ast.parse(models_path.read_text(encoding="utf-8"))
     imported = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):

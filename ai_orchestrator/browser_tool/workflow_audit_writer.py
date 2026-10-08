@@ -15,6 +15,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.browser_tool.approval_record_store import read_jsonl_records
+
 # Sensitive field names that must be redacted
 SENSITIVE_FIELD_NAMES = {
     "password",
@@ -490,21 +492,4 @@ def read_audit_records(jsonl_path: Path | str) -> list[dict]:
         FileNotFoundError: If file doesn't exist
         ValueError: If any line is not valid JSON
     """
-    jsonl_path = Path(jsonl_path)
-
-    if not jsonl_path.exists():
-        raise FileNotFoundError(f"Audit file not found: {jsonl_path}")
-
-    records = []
-    with jsonl_path.open(encoding="utf-8") as f:
-        for line_num, line in enumerate(f, 1):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                record = json.loads(line)
-                records.append(record)
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON at line {line_num}: {e}") from e
-
-    return records
+    return read_jsonl_records(jsonl_path, "Audit")

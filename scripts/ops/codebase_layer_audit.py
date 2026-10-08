@@ -77,13 +77,13 @@ IMPORT_SCAN_PREFIXES = {
     "ai_orchestrator",
     "agent",
     "local_agent",
-    "browser_api",
-    "browser_worker",
+    "ai_orchestrator.connectors.instagram",
+    "ai_orchestrator.browser_tool.worker",
     "services",
-    "adapters",
+    "ai_orchestrator.connectors.g2b",
 }
 
-OPENAPI_APP_MODULES = (  # browser_api.server 는 2026-10-07 scripts/archive/misc 로 보관(실행 대상 아님) — 목록에서 뺌
+OPENAPI_APP_MODULES = (  # scripts.archive.misc.browser_api_server 는 2026-10-07 scripts/archive/misc 로 보관(실행 대상 아님) — 목록에서 뺌
     "ai_orchestrator.browser_tool.worker.app",
     "ai_orchestrator.asgi",
 )
@@ -94,9 +94,9 @@ PYDANTIC_SCHEMA_MODULES = (
     "ai_orchestrator.browser_tool.schemas",
     "ai_orchestrator.browser_tool.unified_browser_task_schema",
     "ai_orchestrator.server.task_queue_schema",
-    "ai_orchestrator.local_agent.action_schemas",
+    "ai_orchestrator.agent_hub.action_schemas",
     "local_agent.browser_websocket_schema",
-)  # agent.models 는 2026-10-07 scripts/archive/misc 로 보관(가져다 쓰는 곳 없음) — 목록에서 뺌
+)  # scripts.archive.misc.agent_models 는 2026-10-07 scripts/archive/misc 로 보관(가져다 쓰는 곳 없음) — 목록에서 뺌
 
 
 SITE_STANDARD_FILES = {
@@ -606,17 +606,17 @@ _ROUTER_THINNESS_KNOWN_DEBT: set[str] = {
 # 6개는 DB 모듈 자체이거나(instagram_dm_db·gonobi/db) 연결을 직접 여는 파일이라 L7 헬퍼로 옮기는 별도 리팩터링 대상.
 _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "ai_orchestrator/connectors/instagram/instagram_dm_db.py",
-    "ai_orchestrator/connectors/naver_search/naver_search_db.py",
-    "ai_orchestrator/connectors/naver_search/naver_search_queries.py",
-    "ai_orchestrator/local_agent/browser/cdp_session_manager.py",
+    "scripts/naver/shopping/naver_search_db.py",
+    "scripts/naver/shopping/naver_search_queries.py",
+    "scripts/browser/agent/cdp_session_manager.py",
     "ai_orchestrator/auth/registration_code_store.py",
     "apps/ig-comment-dm-bot/core/processed_store.py",
     "local_agent/browser_approval_db_store.py",
     "scripts/browser/cdp/cdp_db.py",
     "scripts/common/youtube_search_cache.py",
     "scripts/common/critical_logger.py",
-    "scripts/naver/automation/platform/error_recovery.py",
-    "scripts/naver/automation/platform/scheduler.py",
+    "scripts/naver/automation/error_recovery.py",
+    "scripts/naver/automation/scheduler.py",
     "scripts/naver/smartstore/automation/analytics_dashboard.py",
     "scripts/naver/smartstore/automation/competitor_analysis.py",
     "scripts/naver/blog/gonobi/db.py",
@@ -626,7 +626,7 @@ _STORAGE_BOUNDARY_KNOWN_DEBT: set[str] = {
     "scripts/naver/shopping/crawl.py",
     "scripts/naver/smartstore/product/bulk.py",
     "scripts/common/op_log.py",
-    "scripts/browser/popup/popup_monitor.py",
+    "scripts/browser/navigator/popup_monitor.py",
 }
 
 # STORAGE_BOUNDARY test known debt (tests 폴더 내 sqlite3 사용)
@@ -652,7 +652,7 @@ _ROUTER_FORBIDDEN_PATTERNS = [
 _ROUTER_FILE_PATTERNS = [
     "scripts/*/router.py",
     "ai_orchestrator/server/*.py",
-    "browser_api/*.py",
+    "ai_orchestrator.connectors.instagram/*.py",
 ]
 
 
@@ -736,8 +736,8 @@ _STORAGE_ALLOWED_PREFIXES = (
     "ai_orchestrator/connectors/hanafax/authorization_store.py",
     "ai_orchestrator/connectors/naver_mail/bulk_store.py",
     "ai_orchestrator/connectors/naver_mail/draft_store.py",
+    "scripts/common/sqlite_helpers.py",  # L7 persistence 공용 SQLite 헬퍼 — 흩어진 sqlite3 직접 사용(N6 중복 통합)을 이 한 파일로 모은 것이라 DB 직접 접근이 이 파일의 책임이다(registry 도 L7·persistence)
     "scripts/common/app_paths_migrate.py",  # 저장소 이전 도구 — sqlite 를 backup() 으로 복사하는 것이 본업(2026-10-01)
-    "storage/",
     "migrations/",
     "scripts/ops/",
     "tests/",

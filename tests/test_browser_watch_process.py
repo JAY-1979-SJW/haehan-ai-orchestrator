@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from scripts.ops import browser_watch as bw
+from scripts.browser.cdp import browser_watch as bw
 
 PORT = 9222
 NOW = 1_000_000.0

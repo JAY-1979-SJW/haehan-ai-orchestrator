@@ -24,7 +24,7 @@ from .gates import (  # noqa: F401
     gate_gabia_payment,
     gate_gabia_credential_extract,
 )
-from .profile import GABIA_PROFILE  # noqa: F401
+from .site_profile import GABIA_PROFILE  # noqa: F401
 from .validators import validate_gabia_no_plain_secret  # noqa: F401
 
 __status__ = {
@@ -112,16 +112,25 @@ def _cmd_dns(sub: str, args: list[str]) -> None:
     print(f"  [error] unknown gabia dns task: {sub}")
 
 
-def _cmd_login() -> None:
-    result = gate_gabia_login()
+def _print_user_direct_gate(result, title: str, action: str, hint: str) -> None:
+    """사용자 직접 수행 gate 결과 출력 공용(로그인·결제) — 제목·gate·blocked·안내 2줄."""
     print("=" * 60)
-    print("Gabia login (USER_DIRECT_REQUIRED)")
+    print(title)
     print("=" * 60)
     print(f"gate: {result.gate_decision.value}")
     print(f"blocked: {result.is_blocked}")
-    print("action: 가비아 로그인/OTP/2FA는 사용자가 직접 수행해야 합니다.")
-    print("  브라우저에서 accounts.gabia.com 접속 후 직접 로그인하세요.")
+    print(action)
+    print(hint)
     print("=" * 60)
+
+
+def _cmd_login() -> None:
+    _print_user_direct_gate(
+        gate_gabia_login(),
+        "Gabia login (USER_DIRECT_REQUIRED)",
+        "action: 가비아 로그인/OTP/2FA는 사용자가 직접 수행해야 합니다.",
+        "  브라우저에서 accounts.gabia.com 접속 후 직접 로그인하세요.",
+    )
 
 
 def _cmd_domain(sub: str, args: list[str]) -> None:
@@ -159,15 +168,12 @@ def _cmd_hosting(sub: str, args: list[str]) -> None:
 
 
 def _cmd_payment() -> None:
-    result = gate_gabia_payment()
-    print("=" * 60)
-    print("Gabia payment/billing (BLOCKED/USER_DIRECT_REQUIRED)")
-    print("=" * 60)
-    print(f"gate: {result.gate_decision.value}")
-    print(f"blocked: {result.is_blocked}")
-    print("action: 가비아 결제/청구/환불은 사용자가 직접 수행해야 합니다.")
-    print("  my.gabia.com/payment 에서 직접 처리하세요.")
-    print("=" * 60)
+    _print_user_direct_gate(
+        gate_gabia_payment(),
+        "Gabia payment/billing (BLOCKED/USER_DIRECT_REQUIRED)",
+        "action: 가비아 결제/청구/환불은 사용자가 직접 수행해야 합니다.",
+        "  my.gabia.com/payment 에서 직접 처리하세요.",
+    )
 
 
 def _cmd_domain_assist(sub: str, args: list[str]) -> None:

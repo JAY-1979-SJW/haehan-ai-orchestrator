@@ -405,7 +405,7 @@ def test_no_db_write_code():
 
 def test_compatible_with_user_present_flow():
     user_present_path = (
-        pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "local_agent_user_present_flow.py"
+        pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "agent_hub" / "user_present_flow.py"
     )
     assert user_present_path.exists(), "local_agent_user_present_flow.py 없음"
     source = MODULE_PATH.read_text(encoding="utf-8")

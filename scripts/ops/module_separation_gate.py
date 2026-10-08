@@ -28,35 +28,37 @@ ROOT = Path(__file__).resolve().parents[2]
 SEPARATED_MODULES: list[dict] = [
     {
         "name": "local_agent_router",
-        "root": "ai_orchestrator/local_agent_router.py",
+        "root": "ai_orchestrator/agent_hub/router/root.py",
         # 진행 ratchet: 분리할수록 낮춘다. 목표 ≤ 400(얇은 컴포지션 루트).
         "max_root_loc": 150,
-        "leaf_glob": "ai_orchestrator/local_agent_router_*.py",
+        # 폴더형(T4 C6): leaf 는 root 와 같은 폴더의 *.py
+        "leaf_dir": "ai_orchestrator/agent_hub/router",
+        "package": "ai_orchestrator.agent_hub.router",
         # 누구나 import 가능한 공유 leaf (계약/공용 유틸/검증/큐상태)
         "shared_leaves": {"schemas", "guards", "validation", "up_queue"},
     },
     {
         "name": "google_live_inputs",
-        "root": "scripts/google/live_inputs.py",
+        "root": "scripts/google/common/live_inputs.py",
         # 진행 ratchet: 분리할수록 낮춘다. 목표 ≤ 400.
         "max_root_loc": 400,
-        "leaf_glob": "scripts/google/live_inputs_*.py",
+        "leaf_glob": "scripts/google/common/live_inputs_*.py",
         # 공유 leaf (설정/상수/env, CDP 프리미티브 등)
         "shared_leaves": {"config", "cdp", "fill"},
     },
     {
         "name": "cafe_mixin",
-        "root": "ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py",
+        "root": "scripts/naver/agent_mixins/cafe_mixin.py",
         "max_root_loc": 30,  # ratchet: 서브믹스인 분리하며 낮춘다(목표 ≤ 200)
-        "leaf_glob": "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_*.py",
+        "leaf_glob": "scripts/naver/agent_mixins/cafe_mixin_*.py",
         # 공유 leaf (_js 등 공통 헬퍼)
         "shared_leaves": {"common"},
     },
     {
         "name": "blog_mixin",
-        "root": "ai_orchestrator/local_agent/browser/mixins/blog_mixin.py",
+        "root": "scripts/naver/agent_mixins/blog_mixin.py",
         "max_root_loc": 30,
-        "leaf_glob": "ai_orchestrator/local_agent/browser/mixins/blog_mixin_*.py",
+        "leaf_glob": "scripts/naver/agent_mixins/blog_mixin_*.py",
         "shared_leaves": {"common"},
     },
     {
@@ -75,16 +77,18 @@ SEPARATED_MODULES: list[dict] = [
     },
     {
         "name": "local_agent_registry",
-        "root": "ai_orchestrator/local_agent_registry.py",
+        "root": "ai_orchestrator/agent_hub/registry/facade.py",
         "max_root_loc": 75,
-        "leaf_glob": "ai_orchestrator/local_agent_registry_*.py",
+        # 폴더형(T4 C5): leaf 는 root 와 같은 폴더의 *.py (root·__init__ 제외), 서로의 import 는 `from .x`·`from <package>.x`·`from <package> import x` 로 본다.
+        "leaf_dir": "ai_orchestrator/agent_hub/registry",
+        "package": "ai_orchestrator.agent_hub.registry",
         "shared_leaves": {"common", "sanitize", "agent"},
     },
     {
         "name": "google_workflows",
-        "root": "scripts/google/workflows.py",
+        "root": "scripts/google/common/workflows.py",
         "max_root_loc": 35,
-        "leaf_glob": "scripts/google/workflows_*.py",
+        "leaf_glob": "scripts/google/common/workflows_*.py",
         "shared_leaves": {"common", "actions"},
     },
     {
@@ -156,6 +160,40 @@ def _leaf_key(path: Path, root_stem: str) -> str:
 _IMPORT_RE = re.compile(r"""(?:from|import)\s+(?:\.|[\w.]*\.)?([A-Za-z_][\w]*)""")
 
 
+def _sibling_imports(src: str, package: str) -> set[str]:
+    """한 파일이 같은 패키지의 어떤 sibling 모듈을 import 하는지(상대·절대 import 모두)."""
+    pkg = re.escape(package)
+    found: set[str] = set()
+    for pattern in (r"from\s+\.(\w+)(?:\.\w+)*\s+import", rf"from\s+{pkg}\.(\w+)(?:\.\w+)*\s+import", rf"import\s+{pkg}\.(\w+)"):
+        found.update(m.group(1) for m in re.finditer(pattern, src))
+    for pattern in (r"from\s+\.\s+import\s+\(?([\w,\s]+)", rf"from\s+{pkg}\s+import\s+\(?([\w,\s]+)"):
+        for m in re.finditer(pattern, src):
+            found.update(name.strip() for name in m.group(1).split(",") if name.strip().isidentifier())
+    return found
+
+
+def _check_dir_leaves(result: GateResult, mod: dict, root_path: Path) -> None:
+    """폴더형 모듈: leaf 대상이 0개면(경로 이동 뒤 설정이 낡은 경우) 조용히 통과하지 않고 MISSING 으로 알린다."""
+    leaf_dir = ROOT / mod["leaf_dir"]
+    leaf_paths = [p for p in sorted(leaf_dir.glob("*.py")) if p != root_path and p.name != "__init__.py"]
+    if not leaf_paths:
+        result.add("MISSING", f"{mod['name']}: leaf 가 없음 {mod['leaf_dir']}")
+        return
+    leaf_keys = {p.stem for p in leaf_paths}
+    shared = set(mod.get("shared_leaves", set()))
+    for lp in leaf_paths:
+        try:
+            src = lp.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for dep in sorted(_sibling_imports(src, mod["package"]) & leaf_keys):
+            if dep != lp.stem and dep not in shared:
+                result.add(
+                    "LEAF_COUPLING",
+                    f"{mod['name']}: leaf '{lp.stem}' 가 sibling leaf '{dep}' 직접 import (shared/주입/이벤트로 통신해야 함)",
+                )
+
+
 def run_gate() -> GateResult:
     result = GateResult()
     for mod in SEPARATED_MODULES:
@@ -174,6 +212,9 @@ def run_gate() -> GateResult:
             )
 
         # 2) leaf 간 직접 import 금지
+        if "leaf_dir" in mod:  # 폴더형: leaf 는 같은 폴더의 다른 파일
+            _check_dir_leaves(result, mod, root_path)
+            continue
         leaf_paths = list(ROOT.glob(mod["leaf_glob"]))
         leaf_keys = {_leaf_key(p, root_stem) for p in leaf_paths}
         shared = set(mod.get("shared_leaves", set()))

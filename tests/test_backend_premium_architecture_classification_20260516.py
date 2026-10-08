@@ -68,7 +68,7 @@ DOMAIN_CORE_MAP = {
         "impl_files": [
             "ai_orchestrator/audit/audit_logger.py",
             "ai_orchestrator/server/action_approval_audit_store.py",
-            "ai_orchestrator/local_agent/approval_audit_log.py",
+            "local_agent/runtime/approval_audit_log.py",
             "ai_orchestrator/audit_evidence/models.py",  # STEP 3: 표준 스키마 기준선
             "ai_orchestrator/audit_evidence/adapters.py",  # STEP 4: read-only adapter
         ],
@@ -114,7 +114,7 @@ DOMAIN_CORE_MAP = {
     "Artifact": {
         "impl_files": [
             "ai_orchestrator/server/action_evidence_store.py",
-            "ai_orchestrator/local_agent/action_evidence_collector.py",
+            "ai_orchestrator/agent_hub/action_evidence_collector.py",
             "ai_orchestrator/domain/models.py",  # STEP 1: Artifact baseline model 추가
             "ai_orchestrator/audit_evidence/models.py",  # STEP 3: ArtifactEvidenceRef 기준선
         ],
@@ -125,7 +125,7 @@ DOMAIN_CORE_MAP = {
         "impl_files": [
             "ai_orchestrator/browser_tool/policy.py",
             "ai_orchestrator/server/server_egress_policy.py",
-            "ai_orchestrator/local_agent/security_guard.py",
+            "local_agent/runtime/security_guard.py",
             "ai_orchestrator/sites/secrets_policy.py",
             "ai_orchestrator/domain/models.py",
             "ai_orchestrator/domain/model_adapters.py",
@@ -630,7 +630,7 @@ POLICY_LAYER_MAP = {
         "risk_gap": None,
     },
     "action_risk_policy": {
-        "impl": "ai_orchestrator/local_agent/action_risk_policy.py",
+        "impl": "ai_orchestrator/contracts/action_risk_policy.py",
         "status": "IMPLEMENTED",
         "test_covered": True,
         "risk_gap": None,

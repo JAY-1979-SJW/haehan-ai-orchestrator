@@ -10,7 +10,7 @@ from ai_orchestrator.server.action_task_handoff import (
     VERDICT_UNKNOWN_ACTION,
     VERDICT_NOT_IMPLEMENTED,
 )
-from ai_orchestrator.local_agent.user_approval_gate import (
+from ai_orchestrator.agent_hub.policy.user_approval_gate import (
     approve_request,
     _REQUESTS,
     _TOKENS,

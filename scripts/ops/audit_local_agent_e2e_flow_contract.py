@@ -51,7 +51,7 @@ def _contains_forbidden_key(value: Any) -> list[str]:
 
 def _make_client() -> TestClient:
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -65,8 +65,8 @@ def _make_client() -> TestClient:
 def _reset_runtime_state() -> None:
     import ai_orchestrator.audit.audit_logger as audit_logger
     import ai_orchestrator.gates.approval as approval
-    import ai_orchestrator.local_agent_registry as registry
-    import ai_orchestrator.local_agent_router as local_agent_router
+    import ai_orchestrator.agent_hub.registry.facade as registry
+    import ai_orchestrator.agent_hub.router.root as local_agent_router
 
     tmp_root = ROOT / "tmp"
     tmp_root.mkdir(parents=True, exist_ok=True)
@@ -173,7 +173,7 @@ def _e2e_final(client, agent_id, task_id):
 
 
 def _e2e_high_risk(agent_id):
-    import ai_orchestrator.local_agent_registry as registry
+    import ai_orchestrator.agent_hub.registry.facade as registry
 
     high = registry.enqueue_task(
         agent_id=agent_id,
@@ -222,11 +222,10 @@ def audit() -> tuple[bool, list[str]]:
 
 
 def main() -> int:
+    from scripts.common.audit_cli import report_findings
+
     ok, findings = audit()
-    for finding in findings:
-        print(f"[{'PASS' if ok else 'FAIL'}] {finding}")
-    print(f"RESULT={'PASS_LOCAL_AGENT_E2E_FLOW_CONTRACT' if ok else 'FAIL_LOCAL_AGENT_E2E_FLOW_CONTRACT'}")
-    return 0 if ok else 1
+    return report_findings(ok, findings, "LOCAL_AGENT_E2E_FLOW_CONTRACT")
 
 
 if __name__ == "__main__":

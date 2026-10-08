@@ -56,8 +56,8 @@
 | A 배포 | 코드 없음(git·PR·서버 운영) | 전부 |
 | B P4 쓰기 격리 | `local_agent/actions.py`(cwd 파라미터), `services/agent_dispatch_service.py`, 신규 `workflows/agent_dispatch_worktree.py`, `gates/agent_dispatch_policy.py` | `local_agent/websocket_client.py`, `admin-web/` |
 | C P5 화면 | `admin-web/src/**`(신규 컴포넌트 위주) | 백엔드 전부 |
-| D 병렬 보강 | `local_agent/websocket_client.py`, `local_agent/config.py`, `ai_orchestrator/local_agent_router_ws.py`, `local_agent_registry_agent.py` | 분배 서비스·화면 |
-| E 결과 필터 보강 | `ai_orchestrator/local_agent_redaction.py`, `admin-web/.../UniversalChat.tsx`(한 줄), 상수 통합 | 분배 서비스 로직 |
+| D 병렬 보강 | `local_agent/websocket_client.py`, `local_agent/config.py`, `ai_orchestrator/agent_hub/router/ws.py`, `local_agent_registry_agent.py` | 분배 서비스·화면 |
+| E 결과 필터 보강 | `ai_orchestrator/agent_hub/redaction.py`, `admin-web/.../UniversalChat.tsx`(한 줄), 상수 통합 | 분배 서비스 로직 |
 
 권장 진행 순서: **A(승인 필요, 먼저)** → B·C·D·E 는 서로 독립이라 동시 진행 가능. B 는 C 의 "구현 역할" 화면 문구와 `WRITE_ISOLATION_READY` 값만 맞추면 된다.
 

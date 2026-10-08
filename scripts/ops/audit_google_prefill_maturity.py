@@ -22,7 +22,7 @@ REPORT = ROOT / "data" / "google_prefill_maturity_latest.json"
 
 
 def build_report() -> dict[str, Any]:
-    from scripts.google import live_inputs
+    from scripts.google.common import live_inputs
 
     coverage = live_inputs.build_live_input_coverage()
     counts = coverage["counts"]

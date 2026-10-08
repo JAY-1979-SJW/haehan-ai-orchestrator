@@ -515,7 +515,7 @@ def test_result_meta_records_all_required_counters():
 
 def test_audit_module_judges_pass_on_normal_result():
     """audit 함수가 정상 결과를 PASS 판정하는지."""
-    from scripts.ops import audit_naver_mail_inbox_p0_complete as audit
+    from scripts.naver.mail.collection import audit_naver_mail_inbox_p0_complete as audit
 
     fa = FakeActions(
         title="받은메일함(2) : 네이버 메일",
@@ -579,7 +579,7 @@ def test_unread_filter_evidence_records_pre_post():
 
 def test_filter_no_op_detection_when_same_result_as_list_only():
     """LIST_ONLY 와 UNREAD_ONLY 결과가 동일하면 audit 가 WARN_UNREAD_FILTER_NO_OP 판정."""
-    from scripts.ops import audit_naver_mail_unread_filter_dom_fix as audit
+    from scripts.naver.mail.collection import audit_naver_mail_unread_filter_dom_fix as audit
 
     rows = [_mk_row("100"), _mk_row("101", is_unread=False)]
     fa1 = FakeActions(page_buttons=["1"], page_responses={"1": rows})
@@ -593,7 +593,7 @@ def test_filter_no_op_detection_when_same_result_as_list_only():
 def test_filter_effective_when_unread_only_has_only_unread():
     """UNREAD_ONLY 의 모든 item.read_state == UNREAD 이고 LIST_ONLY 와 다르며
     UI unread count 가 수집과 일치하면 PASS."""
-    from scripts.ops import audit_naver_mail_unread_filter_dom_fix as audit
+    from scripts.naver.mail.collection import audit_naver_mail_unread_filter_dom_fix as audit
 
     list_rows = [_mk_row("100", is_unread=True), _mk_row("101", is_unread=False)]
     unread_rows = [_mk_row("100", is_unread=True)]
@@ -606,7 +606,7 @@ def test_filter_effective_when_unread_only_has_only_unread():
 
 
 def test_mismatch_reason_enum():
-    from scripts.ops import audit_naver_mail_unread_filter_dom_fix as audit
+    from scripts.naver.mail.collection import audit_naver_mail_unread_filter_dom_fix as audit
 
     assert "UI_COUNT_SCOPE_DIFFERENT" in audit.MISMATCH_REASONS
     assert "FILTER_DOM_NOT_APPLIED" in audit.MISMATCH_REASONS
@@ -631,7 +631,7 @@ def test_collect_does_not_invoke_destructive_under_unread_mode():
 
 
 def test_audit_module_judges_warn_on_limit_reached():
-    from scripts.ops import audit_naver_mail_inbox_p0_complete as audit
+    from scripts.naver.mail.collection import audit_naver_mail_inbox_p0_complete as audit
 
     fa = FakeActions(
         page_buttons=[str(i) for i in range(1, 11)],

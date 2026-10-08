@@ -44,7 +44,7 @@ import mcp.types as types  # noqa: E402
 import requests  # noqa: E402
 from mcp.server import Server  # noqa: E402
 
-from ai_orchestrator.local_agent.browser import universal_actions  # noqa: E402
+from scripts.browser.agent import universal_actions  # noqa: E402
 from ai_orchestrator.paths.runtime import data_dir  # noqa: E402
 
 logger = logging.getLogger(__name__)
@@ -1226,7 +1226,7 @@ def _get_electron_page() -> Any:
             logger.debug("Electron 브라우저 연결 확인 실패: %s", type(exc).__name__)
             _electron_browser.clear()
 
-    from ai_orchestrator.local_agent.browser.electron_target import connect_electron_webview
+    from scripts.browser.agent.electron_target import connect_electron_webview
 
     page = connect_electron_webview()
     _electron_browser["page"] = page

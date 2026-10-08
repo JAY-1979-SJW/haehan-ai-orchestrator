@@ -13,8 +13,9 @@ from typing import Any
 from scripts.site_engine.execution_gate import (
     ExecutionDecision,
     ExecutionGateResult,
+    matches_credential_extraction,
 )
-from scripts.site_engine.types import GateDecision, SiteCapability
+from scripts.site_engine.site_types import GateDecision, SiteCapability
 
 
 class ActionPlanStatus(str, Enum):
@@ -87,10 +88,7 @@ _CREDENTIAL_EXTRACT_KEYWORDS = frozenset(
 
 
 def _is_credential_extraction(action: str) -> bool:
-    lower = action.lower()
-    has_cred = any(k in lower for k in _SENSITIVE_FIELD_KEYWORDS)
-    has_extract = any(k in lower for k in _CREDENTIAL_EXTRACT_KEYWORDS)
-    return has_cred and has_extract
+    return matches_credential_extraction(action, _SENSITIVE_FIELD_KEYWORDS, _CREDENTIAL_EXTRACT_KEYWORDS)
 
 
 def _is_sensitive_field(field_name: str) -> bool:

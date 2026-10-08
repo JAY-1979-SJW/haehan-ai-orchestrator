@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from scripts.google.gmail_api import GmailAPI
-from scripts.ops.audit_google_gmail_function_contract import audit
+from scripts.google.common.gmail_api import GmailAPI
+from scripts.google.audit_gmail_function_contract import audit
 
 
 def test_google_gmail_function_contract_passes() -> None:

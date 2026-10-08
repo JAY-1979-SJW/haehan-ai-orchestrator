@@ -1,4 +1,4 @@
-"""ai_orchestrator/local_agent/browser/universal_actions.py 회귀 테스트.
+"""scripts/browser/agent/universal_actions.py 회귀 테스트.
 
 실기 CDP 검증(위키백과 실제 페이지, snapshot 785개 노드/click으로 실제 페이지 이동/
 navigate 후 ref 무효화까지)은 2026-09-28 세션에서 직접 실행해 확인했다
@@ -12,7 +12,7 @@ from typing import Any
 
 import pytest
 
-from ai_orchestrator.local_agent.browser import universal_actions as ua
+from scripts.browser.agent import universal_actions as ua
 
 AX_TREE_RESPONSE = {
     "nodes": [

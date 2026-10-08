@@ -5,7 +5,7 @@ import json
 
 from scripts.common.gate import check as gate_check
 from scripts.google import module_check, work_records
-from scripts.google.base import check_session
+from scripts.google.common.base import check_session
 
 
 def run_session_check() -> None:
@@ -18,7 +18,7 @@ def run_session_check() -> None:
     elif result["logged_in"]:
         print("[ok] logged in")
     else:
-        print("[needs-login] run: python scripts/browser/cdp/cdp_client.py google login")
+        print("[needs-login] run: python scripts/entry/cdp_cli.py google login")
     print("=" * 60)
 
 

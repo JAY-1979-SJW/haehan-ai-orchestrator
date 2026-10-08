@@ -226,7 +226,7 @@ def test_server_browser_guard_execution_gate_has_server_forbidden():
 def test_server_browser_guard_account_read_not_server_browser():
     """Gabia 계정 조회는 SERVER_BROWSER_ALLOWED가 아니어야 한다."""
     from scripts.gabia.gates import gate_gabia_account_read
-    from scripts.site_engine.types import GateDecision
+    from scripts.site_engine.site_types import GateDecision
     result = gate_gabia_account_read()
     assert result.gate_decision != GateDecision.SERVER_BROWSER_ALLOWED
 

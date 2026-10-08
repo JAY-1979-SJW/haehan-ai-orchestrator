@@ -78,7 +78,7 @@ def _resolve_credentials(site: str) -> tuple[str, str]:
 
     # 2) profile (site override → base)
     try:
-        from scripts.form.profile import get_value
+        from scripts.form.personal_profile import get_value
 
         nid = get_value("default_id", site=site)
         pw = get_value("default_pw", site=site)

@@ -266,4 +266,4 @@ file_chooser.set_files(path)
 | AI 초안 생성 | `scripts/naver/blog/ai_writer.py` |
 | SEO 분석 | `scripts/naver/blog/seo.py` |
 | 고도화 워크플로 | `scripts/naver/blog/writer_pro.py` |
-| 로그인 | `scripts/naver/auth.py` |
+| 로그인 | `scripts/naver/common/auth.py` |

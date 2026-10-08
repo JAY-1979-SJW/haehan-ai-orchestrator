@@ -16,7 +16,7 @@ from ai_orchestrator.browser_tool.unified_browser_safe_result import (
     STATUS_LOCAL_HANDOFF_CREATED,
 )
 from ai_orchestrator.browser_tool.unified_execution_router import route_browser_task
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     ALLOWED_TASK_ACTIONS,
     EXEC_MODE_LOCAL_PLAYWRIGHT,
     TASK_TYPE_BROWSER,

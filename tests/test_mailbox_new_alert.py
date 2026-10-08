@@ -6,7 +6,7 @@ import json
 
 from ai_orchestrator import mcp_server
 from ai_orchestrator.connectors.naver_mail import new_policy as pol
-from scripts.naver.mail.imap import mailbox
+from scripts.naver.mail.imap import imap_mailbox as mailbox
 
 
 class _Conn:

@@ -16,7 +16,7 @@ from flask import Flask, Response, jsonify, render_template, request
 
 from orchestrator_v1.core import audit_logger
 from orchestrator_v1.core.logger import get_logger
-from orchestrator_v1.core.logging_utils import mask_sensitive
+from ai_orchestrator.core.logging_utils import mask_sensitive
 from orchestrator_v1.inbox.notice_router import notice_bp
 from orchestrator_v1.monitoring.log_analyzer import (
     _read_jsonl,

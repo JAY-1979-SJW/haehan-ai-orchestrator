@@ -11,18 +11,18 @@ import pytest
 # ── 1. profile 존재 테스트 ────────────────────────────────────────────
 
 def test_profile_exists():
-    from scripts.g2b.profile import G2B_SITE_PROFILE
+    from scripts.g2b.site_profile import G2B_SITE_PROFILE
     assert G2B_SITE_PROFILE["key"] == "g2b"
     assert "base_url" in G2B_SITE_PROFILE
 
 
 def test_profile_allowed_actions_nonempty():
-    from scripts.g2b.profile import G2B_SITE_PROFILE
+    from scripts.g2b.site_profile import G2B_SITE_PROFILE
     assert len(G2B_SITE_PROFILE["allowed_actions"]) > 0
 
 
 def test_profile_blocked_actions_nonempty():
-    from scripts.g2b.profile import G2B_SITE_PROFILE
+    from scripts.g2b.site_profile import G2B_SITE_PROFILE
     assert len(G2B_SITE_PROFILE["blocked_actions"]) > 0
 
 
@@ -177,13 +177,13 @@ def test_router_response_keys():
 # ── 14. evidence/report policy ───────────────────────────────────────
 
 def test_evidence_warehouse_policy():
-    from scripts.g2b.profile import EVIDENCE_WAREHOUSE_POLICY
+    from scripts.g2b.site_profile import EVIDENCE_WAREHOUSE_POLICY
     assert EVIDENCE_WAREHOUSE_POLICY["server_write"] == "BLOCKED"
     assert "data/g2b/" in EVIDENCE_WAREHOUSE_POLICY["warehouse_root"]
 
 
 def test_report_policy_path():
-    from scripts.g2b.profile import EVIDENCE_WAREHOUSE_POLICY
+    from scripts.g2b.site_profile import EVIDENCE_WAREHOUSE_POLICY
     assert EVIDENCE_WAREHOUSE_POLICY["report_root"] == "docs/reports/"
 
 
@@ -225,7 +225,7 @@ def test_no_sessions_access_in_g2b():
 def test_no_real_login_code():
     import pathlib
     for py in (
-        pathlib.Path("scripts/g2b/profile.py"),
+        pathlib.Path("scripts/g2b/site_profile.py"),
         pathlib.Path("scripts/g2b/gates.py"),
         pathlib.Path("scripts/g2b/validators.py"),
         pathlib.Path("scripts/g2b/router.py"),

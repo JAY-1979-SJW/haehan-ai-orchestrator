@@ -2,7 +2,7 @@
 browser.prepare_submit 핸들러 테스트
 """
 
-from ai_orchestrator.local_agent.actions.browser_prepare_submit import execute
+from ai_orchestrator.agent_hub.actions.browser_prepare_submit import execute
 
 ACTION_NAME = "browser.prepare_submit"
 

@@ -427,7 +427,7 @@ def _start_popup_monitor_process() -> None:
     """Run popup monitor out-of-process to keep Playwright sync API isolated."""
     if _procs.popup_monitor and _procs.popup_monitor.poll() is None:
         return
-    script = ROOT / "scripts" / "browser" / "cdp" / "cdp_client.py"
+    script = ROOT / "scripts" / "entry" / "cdp_cli.py"
     _procs.popup_monitor = _launch_background_python([str(script), "popup-monitor", "start", "2.0"])
     _state.popup_monitor_pid = _procs.popup_monitor.pid
     _save_state(_state)
@@ -652,9 +652,9 @@ def _signal_handler(signum: int, _frame: Any) -> None:
 
 
 def _start_browser_watch() -> None:
-    """탭·브라우저 프로세스 감시 로그(scripts/ops/browser_watch.py) 기동 — cdp_force_start 와 같은 감시를 데몬 경로에도 켠다. 실패해도 데몬은 계속."""
+    """탭·브라우저 프로세스 감시 로그(scripts/browser/cdp/browser_watch.py) 기동 — cdp_force_start 와 같은 감시를 데몬 경로에도 켠다. 실패해도 데몬은 계속."""
     try:
-        from scripts.ops import browser_watch
+        from scripts.browser.cdp import browser_watch
 
         log.info("[WATCH] 브라우저 감시 로그 %s", "시작" if browser_watch.start() else "이미 실행 중")
     except Exception as e:  # noqa: BLE001 - 감시는 부가 기능, 실패해도 브라우저 관리는 계속

@@ -60,8 +60,8 @@ def clear() -> None:
 
 def _load_builtin() -> None:
     """기본 제공 샘플 커넥터를 등록한다."""
-    from .connectors.dummy import DummyConnector
-    from .connectors.example_portal import ExamplePortalConnector
+    from .dummy import DummyConnector
+    from .example_portal import ExamplePortalConnector
 
     for conn in (DummyConnector(), ExamplePortalConnector()):
         register(conn)

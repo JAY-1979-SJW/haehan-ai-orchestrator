@@ -128,8 +128,8 @@ def _audit_auth_defaults(findings):
         add(findings, "FAIL", "config_auth_default", "default true not found")
 
 
-ROUTER_REL = "ai_orchestrator/local_agent_router.py"
-REGISTRATION_REL = "ai_orchestrator/local_agent_router_registration.py"
+ROUTER_REL = "ai_orchestrator/agent_hub/router/root.py"
+REGISTRATION_REL = "ai_orchestrator/agent_hub/router/registration.py"
 ADMIN_OWNER_GUARD = re.compile(r"require_role\(\s*[\"']admin[\"']\s*,\s*[\"']owner[\"']\s*\)")
 
 
@@ -200,8 +200,8 @@ def _audit_router(findings, router=None, registration=None):
 
 
 def _audit_actions_ws(findings):
-    actions = read_text("ai_orchestrator/local_agent_actions.py")
-    risk = read_text("ai_orchestrator/local_agent_risk_policy.py")
+    actions = read_text("ai_orchestrator/contracts/local_agent_actions.py")
+    risk = read_text("ai_orchestrator/agent_hub/policy/risk_policy.py")
     if "web_open_url_readonly" in actions and "web_open_url_readonly" in risk:
         add(findings, "PASS", "readonly_action_registered", "action and risk policy present")
     else:

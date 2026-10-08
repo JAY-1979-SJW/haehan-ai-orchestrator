@@ -25,7 +25,7 @@ from scripts.browser.popup.popup_classifier import (  # noqa: E402 - REPO_ROOT �
     classify,
     is_auto_handleable,
 )
-from scripts.browser.popup.popup_monitor import (  # noqa: E402 - REPO_ROOT 계산 이후 임포트하는 기존 구조(이번 BLE001 작업과 무관)
+from scripts.browser.navigator.popup_monitor import (  # noqa: E402 - REPO_ROOT 계산 이후 임포트하는 기존 구조(이번 BLE001 작업과 무관)
     _record_event,
 )
 from scripts.common.logger import get_logger  # noqa: E402 - REPO_ROOT 이후 import

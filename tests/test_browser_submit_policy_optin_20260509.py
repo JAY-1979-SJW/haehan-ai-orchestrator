@@ -1,8 +1,8 @@
 """browser.submit opt-in 정책 검증."""
 from __future__ import annotations
 
-from ai_orchestrator.local_agent.browser_policy_integration import submit_with_policy
-from ai_orchestrator.local_agent.browser_discovery_candidates import (
+from local_agent.runtime.browser_policy_integration import submit_with_policy
+from local_agent.runtime.browser_discovery_candidates import (
     CANDIDATE_SUBMIT_BUTTON, CANDIDATE_DESTRUCTIVE_BUTTON, CANDIDATE_BUTTON,
 )
 

@@ -12,7 +12,7 @@ import time
 
 import pytest
 
-from ai_orchestrator.local_agent import user_approval_gate as gate
+from ai_orchestrator.agent_hub.policy import user_approval_gate as gate
 from ai_orchestrator.server import action_task_handoff as ath
 
 _ATTACH_PARAMS = {

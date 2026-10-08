@@ -4,7 +4,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -76,11 +75,10 @@ def audit() -> tuple[bool, list[str]]:
 
 
 def main() -> int:
+    from scripts.common.audit_cli import report_findings
+
     ok, findings = audit()
-    for finding in findings:
-        print(f"[{'PASS' if ok else 'FAIL'}] {finding}")
-    print(f"RESULT={'PASS_APP_BASELINE_CONTRACT' if ok else 'FAIL_APP_BASELINE_CONTRACT'}")
-    return 0 if ok else 1
+    return report_findings(ok, findings, "APP_BASELINE_CONTRACT")
 
 
 if __name__ == "__main__":

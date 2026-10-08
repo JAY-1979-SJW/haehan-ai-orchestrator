@@ -1,4 +1,4 @@
-from scripts.naver import talk
+from scripts.naver.common import talk
 
 
 class _FakeLocator:
@@ -31,8 +31,7 @@ class _FakePage:
 
 def test_naver_talk_confirm_requires_approval_token(monkeypatch):
     page = _FakePage()
-    monkeypatch.setattr(talk, "ensure_naver_login", lambda page, return_url: {"ok": True})
-    monkeypatch.setattr(talk, "handle_page_popups", lambda page, timeout_s: None)
+    monkeypatch.setattr(talk, "open_logged_in_page", lambda page, url: True)  # N6: 로그인·이동·팝업 정리는 auth.open_logged_in_page 로 통합됨
     monkeypatch.setattr(talk.time, "sleep", lambda seconds: None)
 
     result = talk.NaverTalk(page).send_message("customer", "reply draft", confirm=True)
@@ -45,8 +44,7 @@ def test_naver_talk_confirm_requires_approval_token(monkeypatch):
 
 def test_naver_talk_send_with_approval_token_clicks_send(monkeypatch):
     page = _FakePage()
-    monkeypatch.setattr(talk, "ensure_naver_login", lambda page, return_url: {"ok": True})
-    monkeypatch.setattr(talk, "handle_page_popups", lambda page, timeout_s: None)
+    monkeypatch.setattr(talk, "open_logged_in_page", lambda page, url: True)  # N6: 로그인·이동·팝업 정리는 auth.open_logged_in_page 로 통합됨
     monkeypatch.setattr(talk, "log_critical", lambda *args, **kwargs: None)
     monkeypatch.setattr(talk.time, "sleep", lambda seconds: None)
 

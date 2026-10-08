@@ -602,7 +602,7 @@ def _make_mask_pw_field(id_sel, pw_sel):
 def run():
     from playwright.sync_api import sync_playwright
 
-    from scripts.browser.page.web_connector import _DEFAULT_CDP_HOST, _get_cdp_port
+    from scripts.browser.cdp.connection import _DEFAULT_CDP_HOST, _get_cdp_port
 
     fonts = load_fonts()
     fi = 0  # frame index
@@ -627,7 +627,7 @@ def run():
 
         # ── Scene 3: 네이버 로그인 페이지 이동 ──────────────────────────────
         print(f"  {step(3)} 네이버 로그인 페이지 이동")
-        from scripts.naver.auth import (
+        from scripts.naver.common.auth import (
             _BTN_SELECTORS,
             _ID_SELECTORS,
             _PW_SELECTORS,

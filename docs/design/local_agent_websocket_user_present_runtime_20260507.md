@@ -71,7 +71,7 @@ USER_PRESENT_TASK / USER_PRESENT_STATUS contract를
 - `handle_user_present_status_event(event)` 검증 및 응답
 
 **서버 측 handler 위치**:
-`ai_orchestrator/browser_tool/local_agent_user_present_status_handler.py`
+`ai_orchestrator/agent_hub/user_present_status_handler.py`
 
 ## 7. 민감정보 미전송 정책
 

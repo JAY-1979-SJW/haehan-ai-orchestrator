@@ -54,7 +54,7 @@ captured = self._page.evaluate("() => window.__cap || []")
 
 ### 1.1 calendar_mixin.py — `calendar_events` 수정
 
-**파일**: `ai_orchestrator/local_agent/browser/mixins/calendar_mixin.py`
+**파일**: `scripts/browser/agent/calendar_mixin.py`
 
 **현재 동작**: 빈 응답 인터셉트 방식 → 캡처 0개
 **수정 방향**: `page.evaluate()`로 브라우저 내부에서 직접 fetch 호출
@@ -106,7 +106,7 @@ def calendar_events(self, start: str, end: str) -> list[dict]:
 
 ### 1.2 mail_mixin.py — `mail_folders`, `mail_unread_count` 수정
 
-**파일**: `ai_orchestrator/local_agent/browser/mixins/mail_mixin.py`
+**파일**: `scripts/naver/mail/mail_mixin.py`
 
 **현재 동작**: DOM 추출로 폴더 목록 가져옴 → count는 0 반환 (DOM에서 안 읽힘)
 **수정 방향**: `/json/folder/list` API를 `page.evaluate(fetch)`로 직접 호출
@@ -221,7 +221,7 @@ def mail_search(self, query: str, max_n: int = 30) -> list[dict]:
 
 ### 1.4 mybox_mixin.py — `mybox_quota` 수정
 
-**파일**: `ai_orchestrator/local_agent/browser/mixins/mybox_mixin.py`
+**파일**: `scripts/browser/agent/mybox_mixin.py`
 
 **현재 동작**: DOM 셀렉터 탐색 → 0개
 **수정 방향**: `api.mybox.naver.com/service/quota/get` 직접 호출
@@ -366,7 +366,7 @@ check("mail_unread_count()", a.mail_unread_count, allow_zero=True)
 직렬로, 한 단계씩, 완료 검증 후 다음 단계로:
 
 1. **calendar_mixin.py — calendar_events 메서드 교체** (1.1)
-   - 검증: `python -c "from ai_orchestrator.local_agent.browser.agent import BrowserAgent; a=BrowserAgent(); a.__enter__(); print(a.calendar_events('2026-05-01','2026-05-31'))"` 또는 verify 스크립트 일부 실행
+   - 검증: `python -c "from scripts.browser.agent.agent import BrowserAgent; a=BrowserAgent(); a.__enter__(); print(a.calendar_events('2026-05-01','2026-05-31'))"` 또는 verify 스크립트 일부 실행
 
 2. **mail_mixin.py — mail_folders 교체** (1.2)
    - 검증: 폴더 목록과 count 값 확인 (받은메일함 unreadMailCount > 0 기대)

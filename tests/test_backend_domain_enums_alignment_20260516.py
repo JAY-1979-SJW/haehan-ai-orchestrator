@@ -65,7 +65,7 @@ def test_task_status_covers_task_state():
 
 def test_task_status_covers_local_agent_status_policy():
     from ai_orchestrator.domain.enums import TaskStatus
-    from ai_orchestrator.local_agent_status_policy import KNOWN_TASK_STATUSES
+    from ai_orchestrator.agent_hub.policy.status_policy import KNOWN_TASK_STATUSES
 
     for v in KNOWN_TASK_STATUSES:
         assert TaskStatus(v).value == v
@@ -182,7 +182,7 @@ def test_approval_import():
 
 
 def test_local_agent_status_policy_import():
-    from ai_orchestrator.local_agent_status_policy import (
+    from ai_orchestrator.agent_hub.policy.status_policy import (
         ACTIVE_TASK_STATUSES,
         CANCELLABLE_TASK_STATUSES,
         TERMINAL_TASK_STATUSES,

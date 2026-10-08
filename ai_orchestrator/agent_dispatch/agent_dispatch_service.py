@@ -23,7 +23,7 @@ from typing import Any
 
 import psutil
 
-from ai_orchestrator import local_agent_registry as _reg
+from ai_orchestrator.agent_hub.registry import facade as _reg
 from ai_orchestrator.agent_dispatch import agent_dispatch_policy as pol
 from ai_orchestrator.agent_dispatch import agent_dispatch_store as store
 from ai_orchestrator.contracts.agent_result_limits import RESULT_FULL_MAX_CHARS

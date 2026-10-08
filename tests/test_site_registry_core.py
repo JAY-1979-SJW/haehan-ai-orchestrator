@@ -110,7 +110,7 @@ def test_naver_login_wrapper_maps_the_result_to_the_common_schema(monkeypatch):
         seen.update(kwargs)
         return {"logged_in": True, "user": "skyjwsin", "captcha": False}
 
-    monkeypatch.setattr("scripts.naver.auth.login_naver", fake_login_naver)
+    monkeypatch.setattr("scripts.naver.common.auth.login_naver", fake_login_naver)
     result = reg.get_site("naver").login(object(), force_login=True)
     assert result == {"ok": True, "reason": "", "user": "skyjwsin", "needs_manual": False}
     assert seen == {"wait_for_user_s": 10, "force_relogin": True}
@@ -118,7 +118,7 @@ def test_naver_login_wrapper_maps_the_result_to_the_common_schema(monkeypatch):
 
 def test_naver_login_wrapper_flags_captcha_as_manual(monkeypatch):
     monkeypatch.setattr(
-        "scripts.naver.auth.login_naver",
+        "scripts.naver.common.auth.login_naver",
         lambda page, **kw: {"ok": False, "captcha_required": True, "reason": "captcha"},
     )
     result = reg.get_site("naver").login(object())
@@ -155,10 +155,13 @@ def test_detector_based_state_check_uses_the_logged_in_flag(monkeypatch, key):
 
 @pytest.fixture
 def clean_registry(monkeypatch):
-    """코어의 전역 상태(등록표·로드 플래그)를 격리하고 끝나면 원래대로 돌려놓는다."""
+    """코어의 전역 상태(등록표·로드 플래그·공급자)를 격리하고 끝나면 원래대로 돌려놓는다. 공급자는 실제 사이트 목록으로 둔다."""
+    from scripts.entry import site_login_registry as sites
+
     monkeypatch.setattr(reg, "_REGISTRY", {})
     monkeypatch.setattr(reg, "_loaded", False)
     monkeypatch.setattr(reg, "_loading", False)
+    monkeypatch.setattr(reg, "_provider", sites.build_sites)
 
 
 def _spec(key):
@@ -167,8 +170,8 @@ def _spec(key):
     )
 
 
-def test_core_never_imports_the_site_module_statically():
-    """L4 코어가 L5 사이트 모듈을 정적으로 import 하지 않는다(문자열 로더만 사용)."""
+def test_core_never_imports_the_site_module_or_the_composition():
+    """L4 코어가 사이트 모듈·조합 모듈을 import 하지 않고, 문자열 로더(importlib)도 쓰지 않는다."""
     import ast
     import pathlib
 
@@ -179,18 +182,51 @@ def test_core_never_imports_the_site_module_statically():
             imported += [a.name for a in node.names]
         elif isinstance(node, ast.ImportFrom):
             imported.append(node.module or "")
-    assert not any("site_registry_sites" in m or m.startswith("scripts.eum") for m in imported), imported
-    assert reg._LOADER == "scripts.site_engine.site_registry_sites"
+    assert not any(m.startswith(("scripts.entry", "scripts.eum", "scripts.naver", "importlib")) for m in imported), imported
+    assert not hasattr(reg, "_LOADER")
 
 
-def test_site_module_does_not_import_the_core():
-    """사이트 모듈은 코어를 import 하지 않는다 — SiteSpec 클래스는 코어가 인자로 넘긴다."""
+def test_composition_module_does_not_import_site_modules_at_top_level():
+    """조합 모듈은 코어(configure)만 정적으로 import 한다 — 사이트 auth 모듈은 로그인 호출 때에 불러온다."""
     import ast
     import pathlib
 
-    tree = ast.parse(pathlib.Path(reg.__file__).with_name("site_registry_sites.py").read_text(encoding="utf-8"))
-    imported = [n.module or "" for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)]
-    assert not any(m.endswith("site_registry") for m in imported), imported
+    from scripts.entry import site_login_registry as sites
+
+    tree = ast.parse(pathlib.Path(sites.__file__).read_text(encoding="utf-8"))
+    top = [n.module or "" for n in tree.body if isinstance(n, ast.ImportFrom)]
+    assert top == ["__future__", "scripts.site_engine"], top
+
+
+def test_unconfigured_lookup_fails_loudly_instead_of_returning_nothing(monkeypatch):
+    """진입점이 install 을 빠뜨리면 조용히 빈 목록/None 이 아니라 RuntimeError 로 알린다(자동 로그인이 말없이 꺼지지 않게)."""
+    monkeypatch.setattr(reg, "_REGISTRY", {})
+    monkeypatch.setattr(reg, "_loaded", False)
+    monkeypatch.setattr(reg, "_loading", False)
+    monkeypatch.setattr(reg, "_provider", None)
+    for call in (lambda: reg.get_site("eum"), reg.list_sites):
+        with pytest.raises(RuntimeError, match="install"):
+            call()
+    assert reg._REGISTRY == {} and reg.is_configured() is False
+
+
+def test_install_configures_the_core_and_is_idempotent(monkeypatch):
+    from scripts.entry import site_login_registry as sites
+
+    monkeypatch.setattr(reg, "_REGISTRY", {})
+    monkeypatch.setattr(reg, "_loaded", False)
+    monkeypatch.setattr(reg, "_loading", False)
+    monkeypatch.setattr(reg, "_provider", None)
+    sites.install()
+    first = reg.get_site("eum")
+    sites.install()  # 다시 불러도 이미 로드된 등록표를 지우지 않는다
+    assert reg.is_configured() and reg.get_site("eum") is first and reg.list_sites() == EXPECTED_ORDER
+
+
+def test_configure_with_a_different_provider_resets_the_registry(clean_registry):
+    assert reg.list_sites() == EXPECTED_ORDER
+    reg.configure(lambda spec_cls: [spec_cls(key="only", base_url="x", login_domain_hints=(), is_logged_in=bool, login=dict)])
+    assert reg.list_sites() == ["only"]
 
 
 def test_first_lookup_loads_the_sites_once_and_in_order(clean_registry):
@@ -217,18 +253,22 @@ def test_extra_sites_can_be_registered_and_appear_after_the_built_in_ones(clean_
     assert reg.list_sites() == ["custom", *EXPECTED_ORDER]  # 직접 등록은 로드 전에도 가능하고, 조회가 나머지를 채운다
 
 
-def test_loader_failure_is_not_swallowed_and_leaves_nothing_half_registered(clean_registry, monkeypatch):
-    monkeypatch.setattr(reg, "_LOADER", "scripts.no_such_site_module_for_test")
-    with pytest.raises(ModuleNotFoundError):
+def test_provider_failure_is_not_swallowed_and_leaves_nothing_half_registered(clean_registry):
+    from scripts.entry import site_login_registry as sites
+
+    def broken(spec_cls):
+        raise ImportError("no such site module for test")
+
+    reg.configure(broken)
+    with pytest.raises(ImportError):
         reg.get_site("eum")
     assert reg._REGISTRY == {} and reg._loaded is False
-    monkeypatch.setattr(reg, "_LOADER", "scripts.site_engine.site_registry_sites")  # 고치면 다음 호출에서 정상 로드된다
+    reg.configure(sites.build_sites)  # 고치면 다음 호출에서 정상 로드된다
     assert reg.list_sites() == EXPECTED_ORDER
 
 
-def test_a_failure_after_some_sites_were_registered_rolls_them_back(clean_registry, monkeypatch):
-    """사이트 모듈이 일부를 등록한 뒤 실패하면(예: 일부 항목이 중복) 이미 등록된 것도 지워 반쪽 상태를 남기지 않는다."""
-    import types
+def test_a_failure_after_some_sites_were_registered_rolls_them_back(clean_registry):
+    """공급자가 일부를 만든 뒤 실패하면(예: 항목이 None) 이미 등록된 것도 지워 반쪽 상태를 남기지 않는다."""
 
     def build(spec_cls):
         return [
@@ -236,22 +276,55 @@ def test_a_failure_after_some_sites_were_registered_rolls_them_back(clean_regist
             None,
         ]  # 두 번째 항목에서 실패
 
-    fake = types.SimpleNamespace(build_sites=build)
-    monkeypatch.setattr(reg.importlib, "import_module", lambda name: fake)
+    reg.configure(build)
     with pytest.raises(AttributeError):
         reg.list_sites()
     assert reg._REGISTRY == {} and reg._loaded is False
 
 
-def test_a_conflicting_site_loaded_from_the_module_rolls_everything_back(clean_registry):
-    reg.register_site(_spec("naver"))  # 사이트 모듈이 등록하려는 키와 충돌
+def test_a_conflicting_site_loaded_from_the_provider_rolls_everything_back(clean_registry):
+    reg.register_site(_spec("naver"))  # 공급자가 등록하려는 키와 충돌
     with pytest.raises(ValueError, match="naver"):
         reg.list_sites()
     assert reg._loaded is False  # 불완전한 상태로 '로드됨' 표시를 남기지 않는다
 
 
 def test_build_sites_uses_the_class_it_is_given():
-    from scripts.site_engine import site_registry_sites as sites
+    from scripts.entry import site_login_registry as sites
 
     built = sites.build_sites(lambda **kw: kw)
     assert [b["key"] for b in built] == EXPECTED_ORDER and all("login_strategy" in b for b in built)
+
+
+# ── 미구성(install 누락)이 자동 로그인 경로에서 조용히 삼켜지지 않는다 ─────────────────────────
+
+
+@pytest.fixture
+def unconfigured(monkeypatch):
+    monkeypatch.setattr(reg, "_REGISTRY", {})
+    monkeypatch.setattr(reg, "_loaded", False)
+    monkeypatch.setattr(reg, "_loading", False)
+    monkeypatch.setattr(reg, "_provider", None)
+
+
+def test_auto_login_does_not_swallow_the_unconfigured_error(unconfigured):
+    """_auto_login 이 '등록표 없음' 을 '자동 로그인 실패 → 사용자 대기' 로 바꿔 버리면 install 누락이 로그인 대기로 숨는다."""
+    from scripts.site_engine import login_session
+
+    with pytest.raises(RuntimeError, match="install"):
+        login_session._auto_login(object(), "naver")
+
+
+def test_ensure_login_propagates_the_unconfigured_error(unconfigured, monkeypatch):
+    from scripts.site_engine import login_session
+
+    monkeypatch.setattr(login_session, "is_logged_in", lambda page, site: False)
+    with pytest.raises(RuntimeError, match="install"):
+        login_session.ensure_login(object(), "naver", wait_seconds=1)
+
+
+def test_open_site_propagates_the_unconfigured_error(unconfigured):
+    from scripts.site_engine import site_access
+
+    with pytest.raises(RuntimeError, match="install"):
+        site_access.open_site("eum")

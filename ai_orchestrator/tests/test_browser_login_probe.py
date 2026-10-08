@@ -743,7 +743,7 @@ def test_playwright_missing_graceful():
 
 def test_smoke_script_not_auto_executed():
     """pytest import 만으로 실제 네이버 접속이 발생하지 않아야 한다."""
-    smoke_path = Path(__file__).resolve().parent.parent.parent / "scripts" / "smoke_naver_manual_login_probe.py"
+    smoke_path = Path(__file__).resolve().parent.parent.parent / "scripts" / "naver" / "smoke_naver_manual_login_probe.py"
     assert smoke_path.exists(), "smoke script missing"
     src = smoke_path.read_text(encoding="utf-8")
     # 실제 실행은 __main__ 가드 뒤에서만 일어난다.
@@ -764,7 +764,7 @@ def test_smoke_script_not_auto_executed():
 def test_no_credentials_hardcoded():
     root = Path(__file__).resolve().parent.parent.parent
     probe_src = (root / "local_agent" / "browser_login_probe.py").read_text(encoding="utf-8")
-    smoke_src = (root / "scripts" / "smoke_naver_manual_login_probe.py").read_text(encoding="utf-8")
+    smoke_src = (root / "scripts" / "naver" / "smoke_naver_manual_login_probe.py").read_text(encoding="utf-8")
 
     forbidden_tokens = (
         "NAVER_ID",

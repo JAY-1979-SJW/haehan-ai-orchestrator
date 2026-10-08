@@ -9,7 +9,7 @@ from scripts.site_engine.adapters.browser import (
     build_submit_plan,
     build_upload_plan,
 )
-from scripts.site_engine.types import GateDecision, SiteCapability
+from scripts.site_engine.site_types import GateDecision, SiteCapability
 
 
 def test_readonly_navigation_plan():

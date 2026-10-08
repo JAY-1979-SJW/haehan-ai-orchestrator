@@ -26,9 +26,9 @@ REQUIRED_PHRASES = (
     "Live logic surfaces: 50",
     "user_present_session",
     "host_warnings == []",
-    "scripts/google/tab_registry.py",
-    "scripts/google/subdomain_logic.py",
-    "scripts/google/tab_logic.py",
+    "scripts/google/common/tab_registry.py",
+    "scripts/google/common/subdomain_logic.py",
+    "scripts/google/common/tab_logic.py",
     "scripts/google/live_surface_explorer.py",
     "scripts/google/cloud/live_console_explorer.py",
     "scripts/common/gates/secret_action_gate.py",
@@ -38,7 +38,7 @@ REQUIRED_PHRASES = (
     "scripts/google/domain_readiness_audit.py",
     "scripts/google/vision_usage_gate.py",
     "scripts/ops/audit_google_home_login_gate.py",
-    "python scripts/browser/cdp/cdp_client.py google work undeveloped",
+    "python scripts/entry/cdp_cli.py google work undeveloped",
     "tests/test_google_tab_registry.py",
     "tests/test_google_domain_readiness_audit.py",
     "tests/test_google_secret_action_gate.py",
@@ -79,7 +79,7 @@ def _check_baseline_phrases() -> list[str]:
 
 
 def _check_tab_registry() -> list[str]:
-    from scripts.google.tab_registry import GOOGLE_TABS, build_google_tab_summary
+    from scripts.google.common.tab_registry import GOOGLE_TABS, build_google_tab_summary
 
     failures: list[str] = []
     tab_keys = tuple(tab.key for tab in GOOGLE_TABS)
@@ -105,7 +105,7 @@ def _check_tab_registry() -> list[str]:
 
 
 def _check_subdomain_and_tab_logic() -> list[str]:
-    from scripts.google import subdomain_logic, tab_logic
+    from scripts.google.common import subdomain_logic, tab_logic
 
     failures: list[str] = []
     subdomain_catalog = subdomain_logic.build_google_subdomain_logic_catalog()
@@ -132,7 +132,7 @@ def _check_live_surface() -> list[str]:
 
 
 def _check_undeveloped_report() -> list[str]:
-    from scripts.google import workflows
+    from scripts.google.common import workflows
 
     failures: list[str] = []
     undeveloped = workflows.build_undeveloped_report()
@@ -258,11 +258,10 @@ def audit() -> tuple[bool, list[str]]:
 
 
 def main() -> int:
+    from scripts.common.audit_cli import report_findings
+
     ok, findings = audit()
-    for finding in findings:
-        print(f"[{'PASS' if ok else 'FAIL'}] {finding}")
-    print(f"RESULT={'PASS_GOOGLE_AUTOMATION_BASELINE_CONTRACT' if ok else 'FAIL_GOOGLE_AUTOMATION_BASELINE_CONTRACT'}")
-    return 0 if ok else 1
+    return report_findings(ok, findings, "GOOGLE_AUTOMATION_BASELINE_CONTRACT")
 
 
 if __name__ == "__main__":

@@ -233,5 +233,5 @@ R2d-1까지 구현된 것과 조사에서 확인된 사실이다.
 ## 12. 범위와 비범위
 
 - **이번 문서**: 설계만. 구현은 대표님 승인 후 단계별 커밋(P0부터).
-- **범위 밖**: `apps/ig-comment-dm-bot`·`apps/marketing-standalone`(별도 앱), 개발 등록 승인(`dev_reg_approval`), `scripts/google/drive.py` CLI 업로드, 네이버 대량메일·하나팩스 대량의 자체 상한 정책(승인 행위만 통합).
+- **범위 밖**: `apps/ig-comment-dm-bot`·`apps/marketing-standalone`(별도 앱), 개발 등록 승인(`dev_reg_approval`), `scripts/google/common/drive.py` CLI 업로드, 네이버 대량메일·하나팩스 대량의 자체 상한 정책(승인 행위만 통합).
 - **의존**: W4의 Bearer·`OWNER_EMAILS`·`HttpOnly` 쿠키 전환 및 `auth_method` 표지. W2의 `marketing_ops_router`는 P3에서 합류.

@@ -45,7 +45,6 @@ def _check_required_module_names(modules: list) -> Finding:
         "local_agent_browser_runtime",
         "desktop_runtime",
         "admin_web",
-        "portable_install",
         "server_api",
         "site_automation",
         "legacy_root_quarantine",

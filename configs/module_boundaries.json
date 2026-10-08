@@ -23,7 +23,7 @@
       "paths": [
         "local_agent/cdp_attach.py",
         "scripts/archive/misc/chrome_ui_monitor.py",
-        "scripts/browser/cdp/cdp_client.py",
+        "scripts/browser/cdp_client.py",
         "scripts/ops/dry_run_local_agent_cdp_attach.py",
         "docs/architecture/local_agent_browser_runtime_operating_rules_20260523.md",
         "tests/test_local_agent_browser_runtime_operating_rules.py",
@@ -52,15 +52,6 @@
         "admin-web/src/"
       ],
       "required_gate": "release_preflight"
-    },
-    {
-      "name": "portable_install",
-      "owner": "release",
-      "layer": "L10",
-      "paths": [
-        "README_실행방법.txt"
-      ],
-      "required_gate": "portable_install"
     },
     {
       "name": "server_api",

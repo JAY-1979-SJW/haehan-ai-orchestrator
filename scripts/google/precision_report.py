@@ -8,7 +8,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.google import live_inputs, live_surface_explorer, subdomain_logic, tab_logic, workflows
+from scripts.google.common import live_inputs, subdomain_logic, tab_logic, workflows
+from scripts.google import live_surface_explorer
 from scripts.google.ai_usage_labels import build_google_ai_usage_labels, label_for_surface
 
 ROOT = Path(__file__).resolve().parents[2]

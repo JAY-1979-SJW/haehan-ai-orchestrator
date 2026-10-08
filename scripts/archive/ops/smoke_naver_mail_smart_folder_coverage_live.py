@@ -10,7 +10,7 @@ from pathlib import Path
 
 from scripts.naver.mail import smart_folder_collector as sfc
 from scripts.naver.mail.read import cdp
-from scripts.ops import audit_naver_mail_smart_folder_coverage as audit
+from scripts.naver.mail.collection import audit_naver_mail_smart_folder_coverage as audit
 
 
 class LiveActions:

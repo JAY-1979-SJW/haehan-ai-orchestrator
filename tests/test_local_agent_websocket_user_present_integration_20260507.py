@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+from ai_orchestrator.contracts.user_present_ws_contract import (
     MSG_USER_PRESENT_TASK,
     STATUS_CANCELLED,
     STATUS_USER_CONFIRMED,
@@ -441,7 +441,7 @@ class TestSecurityPrinciples:
     def test_no_real_websocket_in_contract_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_ws_contract as mod
+        import ai_orchestrator.contracts.user_present_ws_contract as mod
 
         src = inspect.getsource(mod)
         assert "websockets.connect" not in src
@@ -460,7 +460,7 @@ class TestSecurityPrinciples:
     def test_no_db_write_in_contract_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_ws_contract as mod
+        import ai_orchestrator.contracts.user_present_ws_contract as mod
 
         src = inspect.getsource(mod)
         assert "INSERT INTO" not in src

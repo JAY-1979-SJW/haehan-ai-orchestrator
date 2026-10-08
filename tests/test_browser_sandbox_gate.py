@@ -29,7 +29,7 @@ def test_sandbox_gate_raises_structured_payload(monkeypatch):
 
 
 def test_cdp_launcher_blocks_scheduler_start_in_sandbox(monkeypatch):
-    from ai_orchestrator.local_agent.browser import cdp_launcher
+    from scripts.browser.agent import cdp_launcher
 
     monkeypatch.setenv("CODEX_SANDBOX_NETWORK_DISABLED", "1")
     monkeypatch.setattr(cdp_launcher, "probe_cdp", lambda *_args, **_kwargs: False)

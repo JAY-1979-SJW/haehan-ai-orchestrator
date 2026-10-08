@@ -6,7 +6,7 @@ import json
 
 from scripts.naver.mail import batch_runner as br
 from scripts.naver.mail import unread_audit as ua
-from scripts.ops import audit_naver_mail_body_pipeline_batch as audit
+from scripts.naver.mail.processing import audit_naver_mail_body_pipeline_batch as audit
 
 # ── 헬퍼 ────────────────────────────────────────────────────────────
 

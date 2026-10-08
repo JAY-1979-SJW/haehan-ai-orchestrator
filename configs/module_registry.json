@@ -2777,7 +2777,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/backends/__init__.py": {
+  "ai_orchestrator/browser_tool/mock_backend.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2785,15 +2785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/backends/mock_backend.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/browser_tool/backends/worker_backend.py": {
+  "ai_orchestrator/browser_tool/worker_backend.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2881,7 +2873,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/local_agent_user_present_dispatcher.py": {
+  "ai_orchestrator/agent_hub/user_present_dispatcher.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -2889,7 +2881,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/local_agent_user_present_flow.py": {
+  "ai_orchestrator/agent_hub/user_present_flow.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -2897,7 +2889,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/local_agent_user_present_status_handler.py": {
+  "ai_orchestrator/agent_hub/user_present_status_handler.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -2905,7 +2897,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/local_agent_user_present_status_store.py": {
+  "ai_orchestrator/agent_hub/user_present_status_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -2913,7 +2905,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/local_agent_user_present_ws_contract.py": {
+  "ai_orchestrator/contracts/user_present_ws_contract.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3185,7 +3177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_kin_client.py": {
+  "scripts/naver/shopping/kin_client.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -3201,7 +3193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_openapi_config.py": {
+  "scripts/naver/shopping/naver_openapi_config.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -3225,7 +3217,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_client.py": {
+  "scripts/naver/shopping/naver_search_client.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -3233,7 +3225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search_utils.py": {
+  "scripts/naver/shopping/naver_search_utils.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -3241,7 +3233,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_shopping_collectors.py": {
+  "scripts/naver/shopping/naver_shopping_collectors.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -3641,15 +3633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/local_agent/action_evidence_collector.py": {
+  "ai_orchestrator/agent_hub/action_evidence_collector.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3657,7 +3641,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/action_registry.py": {
+  "ai_orchestrator/agent_hub/action_registry.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3665,7 +3649,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/action_risk_policy.py": {
+  "ai_orchestrator/contracts/action_risk_policy.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "local_agent",
@@ -3673,7 +3657,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/action_schemas.py": {
+  "ai_orchestrator/agent_hub/action_schemas.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -3681,7 +3665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/action_summary_builder.py": {
+  "ai_orchestrator/agent_hub/action_summary_builder.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3689,7 +3673,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/__init__.py": {
+  "ai_orchestrator/agent_hub/actions/__init__.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3697,7 +3681,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/browser_attach_file.py": {
+  "ai_orchestrator/agent_hub/actions/browser_attach_file.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -3705,7 +3689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/browser_download_file.py": {
+  "ai_orchestrator/agent_hub/actions/browser_download_file.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -3713,7 +3697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/browser_prepare_submit.py": {
+  "ai_orchestrator/agent_hub/actions/browser_prepare_submit.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3721,7 +3705,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/browser_submit_with_user_approval.py": {
+  "ai_orchestrator/agent_hub/actions/browser_submit_with_user_approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3729,7 +3713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/business_execute_with_user_approval.py": {
+  "ai_orchestrator/agent_hub/actions/business_execute_with_user_approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3737,7 +3721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/business_prepare_action.py": {
+  "ai_orchestrator/agent_hub/actions/business_prepare_action.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3745,7 +3729,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/actions/future_action_stubs.py": {
+  "ai_orchestrator/agent_hub/actions/future_action_stubs.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3753,7 +3737,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/approval_audit_log.py": {
+  "local_agent/runtime/approval_audit_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -3761,7 +3745,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/auth_completion_detector.py": {
+  "local_agent/runtime/auth_completion_detector.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3769,7 +3753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/auth_wait_controller.py": {
+  "local_agent/runtime/auth_wait_controller.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3777,7 +3761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/auto_resume_after_auth.py": {
+  "local_agent/runtime/auto_resume_after_auth.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3785,7 +3769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/__init__.py": {
+  "scripts/browser/agent/__init__.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -3793,7 +3777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_comments.js": {
+  "scripts/browser/agent/_js/extract_blog_comments.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -3801,7 +3785,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_images.js": {
+  "scripts/browser/agent/_js/extract_blog_images.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -3809,7 +3793,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_neighbors.js": {
+  "scripts/browser/agent/_js/extract_blog_neighbors.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -3817,7 +3801,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_posts.js": {
+  "scripts/browser/agent/_js/extract_blog_posts.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -3825,7 +3809,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_posts_mobile.js": {
+  "scripts/browser/agent/_js/extract_blog_posts_mobile.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -3833,7 +3817,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_search.js": {
+  "scripts/browser/agent/_js/extract_blog_search.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -3841,7 +3825,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_stats.js": {
+  "scripts/browser/agent/_js/extract_blog_stats.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -3849,7 +3833,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_blog_tags.js": {
+  "scripts/browser/agent/_js/extract_blog_tags.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -3857,7 +3841,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_boards.js": {
+  "scripts/browser/agent/_js/extract_boards.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3865,7 +3849,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_cafe_posts.js": {
+  "scripts/browser/agent/_js/extract_cafe_posts.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_cafe",
@@ -3873,7 +3857,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_calendar_events.js": {
+  "scripts/browser/agent/_js/extract_calendar_events.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3881,7 +3865,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_links.js": {
+  "scripts/browser/agent/_js/extract_links.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3889,7 +3873,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_mail_detail.js": {
+  "scripts/browser/agent/_js/extract_mail_detail.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3897,7 +3881,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_mail_folders.js": {
+  "scripts/browser/agent/_js/extract_mail_folders.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3905,7 +3889,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_mail_inbox.js": {
+  "scripts/browser/agent/_js/extract_mail_inbox.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3913,7 +3897,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_mybox_list.js": {
+  "scripts/browser/agent/_js/extract_mybox_list.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3921,7 +3905,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/_js/extract_posts.js": {
+  "scripts/browser/agent/_js/extract_posts.js": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -3929,7 +3913,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/action_gate.py": {
+  "scripts/browser/agent/action_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3937,7 +3921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/actions.py": {
+  "scripts/browser/agent/actions.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -3945,7 +3929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/agent.py": {
+  "scripts/browser/agent/agent.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -3953,7 +3937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/approval_api_client.py": {
+  "scripts/browser/agent/approval_api_client.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3961,7 +3945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/approval_server.py": {
+  "scripts/browser/agent/approval_server.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3969,7 +3953,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/audit_log.py": {
+  "scripts/browser/agent/audit_log.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -3977,7 +3961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/auto_structure_builder.py": {
+  "scripts/archive/one_off/browser_agent_auto_structure_builder.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -3985,7 +3969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/bootstrap.py": {
+  "scripts/archive/one_off/browser_agent_bootstrap.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -3993,7 +3977,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/browser_session.py": {
+  "scripts/browser/agent/browser_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4001,7 +3985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/cdp.py": {
+  "scripts/browser/agent/cdp.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4009,7 +3993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/cdp_audit.py": {
+  "scripts/common/cdp_audit.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -4017,7 +4001,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/cdp_launcher.py": {
+  "scripts/browser/agent/cdp_launcher.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4025,7 +4009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/cdp_session_manager.py": {
+  "scripts/browser/agent/cdp_session_manager.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -4033,7 +4017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/deep_sitemap_detector.py": {
+  "scripts/browser/agent/deep_sitemap_detector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4041,7 +4025,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/electron_target.py": {
+  "scripts/browser/agent/electron_target.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4049,7 +4033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/intent_token.py": {
+  "scripts/browser/agent/intent_token.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4057,71 +4041,63 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/__init__.py": {
+  "scripts/naver/agent_mixins/blog_mixin.py": {
    "layer": "L4",
-   "role": "generic",
-   "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin.py": {
-   "layer": "L5",
-   "role": "site_module",
+   "role": "browser_engine",
    "domain": "naver_blog",
-   "reason": "네이버 블로그 전용 동작을 하드코딩한 믹스인(domain=naver_blog) — L4 로 오분류",
+   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다",
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_collect.py": {
-   "layer": "L5",
-   "role": "site_module",
+  "scripts/naver/agent_mixins/blog_mixin_collect.py": {
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "naver_blog",
-   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류",
+   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다",
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_common.py": {
-   "layer": "L5",
-   "role": "site_module",
+  "scripts/naver/agent_mixins/blog_mixin_common.py": {
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "naver_blog",
-   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류",
+   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다",
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_download.py": {
-   "layer": "L5",
-   "role": "site_module",
+  "scripts/naver/agent_mixins/blog_mixin_download.py": {
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "naver_blog",
-   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류",
+   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다",
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_neighbor.py": {
-   "layer": "L5",
-   "role": "site_module",
+  "scripts/naver/agent_mixins/blog_mixin_neighbor.py": {
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "naver_blog",
-   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류",
+   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다",
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_read.py": {
-   "layer": "L5",
-   "role": "site_module",
+  "scripts/naver/agent_mixins/blog_mixin_read.py": {
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "naver_blog",
-   "reason": "네이버 블로그 전용 믹스인 — L4 generic 으로 오분류",
+   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다",
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/blog_mixin_write.py": {
-   "layer": "L5",
-   "role": "site_module",
+  "scripts/naver/agent_mixins/blog_mixin_write.py": {
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "naver_blog",
-   "reason": "writer.py·selectors.py(L5)를 호출하는 네이버 블로그 전용 믹스인 — L4 generic 으로 오분류",
+   "reason": "블로그 믹스인 — 엔진(agent.py, L4)이 다중상속으로 직접 합성하는 브라우저 엔진 부품(cafe_mixin*·mail_mixin 과 같은 층). 사이트 모듈(셀렉터·글쓰기)은 import 하지 않고 scripts.naver.blog 패키지가 주입하므로(T4) L5 가 아니다",
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py": {
+  "scripts/naver/agent_mixins/cafe_mixin.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "naver_cafe",
@@ -4129,7 +4105,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_activity.py": {
+  "scripts/naver/agent_mixins/cafe_mixin_activity.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_cafe",
@@ -4137,7 +4113,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_article.py": {
+  "scripts/naver/agent_mixins/cafe_mixin_article.py": {
    "layer": "L4",
    "role": "site_module",
    "domain": "naver_cafe",
@@ -4145,7 +4121,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_common.py": {
+  "scripts/naver/agent_mixins/cafe_mixin_common.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_cafe",
@@ -4153,7 +4129,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_media.py": {
+  "scripts/naver/agent_mixins/cafe_mixin_media.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_cafe",
@@ -4161,7 +4137,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_member.py": {
+  "scripts/naver/agent_mixins/cafe_mixin_member.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_cafe",
@@ -4169,7 +4145,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/cafe_mixin_read.py": {
+  "scripts/naver/agent_mixins/cafe_mixin_read.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_cafe",
@@ -4177,7 +4153,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/calendar_mixin.py": {
+  "scripts/browser/agent/calendar_mixin.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4185,7 +4161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/mail_mixin.py": {
+  "scripts/naver/agent_mixins/mail_mixin.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4193,7 +4169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/mixins/mybox_mixin.py": {
+  "scripts/browser/agent/mybox_mixin.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4201,7 +4177,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser/sitemap_detector.py": {
+  "scripts/browser/agent/sitemap_detector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4209,7 +4185,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/browser/universal_actions.py": {
+  "scripts/browser/agent/universal_actions.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4217,7 +4193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser_allowlist_expansion_preflight.py": {
+  "local_agent/runtime/browser_allowlist_expansion_preflight.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4225,7 +4201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser_discovery_candidates.py": {
+  "local_agent/runtime/browser_discovery_candidates.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4233,7 +4209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser_foreground_adapter.py": {
+  "local_agent/runtime/browser_foreground_adapter.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4241,7 +4217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser_policy_integration.py": {
+  "local_agent/runtime/browser_policy_integration.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4249,7 +4225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser_site_registry.py": {
+  "local_agent/runtime/browser_site_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4257,7 +4233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/browser_value_registry.py": {
+  "local_agent/runtime/browser_value_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4265,7 +4241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/business_action_profiles.py": {
+  "ai_orchestrator/agent_hub/business_action_profiles.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4273,7 +4249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/business_local_agent_mock_runner.py": {
+  "ai_orchestrator/agent_hub/business_local_agent_mock_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4281,7 +4257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/common_tool_runtime.py": {
+  "local_agent/runtime/common_tool_runtime.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4289,7 +4265,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/content_publish_guard.py": {
+  "local_agent/runtime/content_publish_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4297,7 +4273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/content_workflow_policy.py": {
+  "local_agent/runtime/content_workflow_policy.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4305,7 +4281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/delegated_action_executor.py": {
+  "local_agent/runtime/delegated_action_executor.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4313,7 +4289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/delegated_permission_gate.py": {
+  "local_agent/runtime/delegated_permission_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4321,7 +4297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/delegated_permission_policy.py": {
+  "local_agent/runtime/delegated_permission_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4329,7 +4305,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/delegated_permission_store.py": {
+  "local_agent/runtime/delegated_permission_store.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4337,7 +4313,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/download_policy.py": {
+  "local_agent/runtime/download_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4345,7 +4321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/download_result_sanitizer.py": {
+  "local_agent/runtime/download_result_sanitizer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4353,7 +4329,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/download_upload_manifest.py": {
+  "local_agent/runtime/download_upload_manifest.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4361,7 +4337,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/generic_selector_discovery.py": {
+  "local_agent/runtime/generic_selector_discovery.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4369,7 +4345,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/installer_folder_presenter.py": {
+  "local_agent/runtime/installer_folder_presenter.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4377,7 +4353,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/learned_site_profile_store.py": {
+  "local_agent/runtime/learned_site_profile_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -4385,7 +4361,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/local_security_installer_runner.py": {
+  "local_agent/runtime/local_security_installer_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4393,7 +4369,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/local_session_boundary.py": {
+  "local_agent/runtime/local_session_boundary.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4401,7 +4377,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/natural_language_task_api.py": {
+  "local_agent/runtime/natural_language_task_api.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4409,7 +4385,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/naver_blog_workflow.py": {
+  "scripts/naver/blog/naver_blog_workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_blog",
@@ -4417,7 +4393,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/naver_cafe_workflow.py": {
+  "scripts/naver/cafe/naver_cafe_workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_cafe",
@@ -4425,7 +4401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/naver_content_safe_result.py": {
+  "scripts/naver/blog/naver_content_safe_result.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver",
@@ -4433,7 +4409,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/naver_content_workflow_runner.py": {
+  "scripts/naver/cafe/naver_content_workflow_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver",
@@ -4441,7 +4417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/playwright_bootstrap.py": {
+  "local_agent/runtime/playwright_bootstrap.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4449,7 +4425,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/playwright_runner.py": {
+  "local_agent/runtime/playwright_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4457,7 +4433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/real_site_smoke_runner.py": {
+  "local_agent/runtime/real_site_smoke_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4465,7 +4441,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/result_sanitizer.py": {
+  "local_agent/runtime/result_sanitizer.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4473,7 +4449,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/safe_write_result_sanitizer.py": {
+  "local_agent/runtime/safe_write_result_sanitizer.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4481,7 +4457,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/security_guard.py": {
+  "local_agent/runtime/security_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4489,7 +4465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/security_installer_candidate_finder.py": {
+  "local_agent/runtime/security_installer_candidate_finder.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4497,7 +4473,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/security_installer_policy.py": {
+  "local_agent/runtime/security_installer_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4505,7 +4481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/security_program_auto_resume.py": {
+  "local_agent/runtime/security_program_auto_resume.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4513,7 +4489,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/security_program_detector.py": {
+  "local_agent/runtime/security_program_detector.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4521,7 +4497,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/security_program_install_completion_detector.py": {
+  "local_agent/runtime/security_program_install_completion_detector.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4529,7 +4505,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/security_program_install_result_sanitizer.py": {
+  "local_agent/runtime/security_program_install_result_sanitizer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4537,7 +4513,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/security_program_permission_gate.py": {
+  "local_agent/runtime/security_program_permission_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4545,7 +4521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/selector_pack_registry.py": {
+  "local_agent/runtime/selector_pack_registry.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4553,7 +4529,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/site_capability_matrix.py": {
+  "local_agent/runtime/site_capability_matrix.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4561,7 +4537,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/site_profile_registry.py": {
+  "local_agent/runtime/site_profile_registry.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4569,7 +4545,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/site_type_classifier.py": {
+  "local_agent/runtime/site_type_classifier.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4577,7 +4553,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/task_client.py": {
+  "local_agent/runtime/task_client.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4585,7 +4561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/task_protocol.py": {
+  "ai_orchestrator/contracts/local_task_protocol.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4593,7 +4569,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/universal_action_verifier.py": {
+  "local_agent/runtime/universal_action_verifier.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4601,7 +4577,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/universal_agent_session.py": {
+  "local_agent/runtime/universal_agent_session.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4609,7 +4585,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent/universal_ai_site_agent.py": {
+  "local_agent/runtime/universal_ai_site_agent.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4617,7 +4593,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/universal_page_observer.py": {
+  "local_agent/runtime/universal_page_observer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4625,7 +4601,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/universal_safe_result.py": {
+  "local_agent/runtime/universal_safe_result.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4633,7 +4609,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/universal_task_planner.py": {
+  "local_agent/runtime/universal_task_planner.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4641,7 +4617,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/universal_workflow_runner.py": {
+  "local_agent/runtime/universal_workflow_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4649,7 +4625,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/unknown_site_fallback_policy.py": {
+  "local_agent/runtime/unknown_site_fallback_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4657,7 +4633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/user_approval_gate.py": {
+  "ai_orchestrator/agent_hub/policy/user_approval_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4665,7 +4641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/user_assisted_installer.py": {
+  "local_agent/runtime/user_assisted_installer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4673,7 +4649,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/user_attention_notifier.py": {
+  "local_agent/runtime/user_attention_notifier.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4681,7 +4657,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/user_intent_parser.py": {
+  "local_agent/runtime/user_intent_parser.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4689,7 +4665,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/user_notification_adapter.py": {
+  "local_agent/runtime/user_notification_adapter.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4697,7 +4673,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent/workflow_template_engine.py": {
+  "local_agent/runtime/workflow_template_engine.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4705,7 +4681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_actions.py": {
+  "ai_orchestrator/contracts/local_agent_actions.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4713,7 +4689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_audit_builders.py": {
+  "ai_orchestrator/agent_hub/audit_builders.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4721,7 +4697,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_audit_event_policy.py": {
+  "ai_orchestrator/agent_hub/policy/audit_event_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4729,7 +4705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_cleanup_policy.py": {
+  "ai_orchestrator/agent_hub/policy/cleanup_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4737,7 +4713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_diagnostics.py": {
+  "ai_orchestrator/agent_hub/registry/diagnostics.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4745,7 +4721,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_diagnostics_helpers.py": {
+  "ai_orchestrator/agent_hub/registry/diagnostics_helpers.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4753,7 +4729,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_error_mapping.py": {
+  "ai_orchestrator/agent_hub/error_mapping.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4761,7 +4737,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_models.py": {
+  "ai_orchestrator/agent_hub/models.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4769,7 +4745,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent_redaction.py": {
+  "ai_orchestrator/agent_hub/redaction.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4777,7 +4753,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry.py": {
+  "ai_orchestrator/agent_hub/registry/facade.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4785,7 +4761,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_agent.py": {
+  "ai_orchestrator/agent_hub/registry/agent.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4793,7 +4769,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_cleanup.py": {
+  "ai_orchestrator/agent_hub/registry/cleanup.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4801,7 +4777,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_common.py": {
+  "ai_orchestrator/agent_hub/registry/common.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4809,7 +4785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_sanitize.py": {
+  "ai_orchestrator/agent_hub/registry/sanitize.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4817,7 +4793,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_task_cancel.py": {
+  "ai_orchestrator/agent_hub/registry/task_cancel.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4825,7 +4801,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_task_lifecycle.py": {
+  "ai_orchestrator/agent_hub/registry/task_lifecycle.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4833,7 +4809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_task_queue.py": {
+  "ai_orchestrator/agent_hub/registry/task_queue.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4841,7 +4817,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_response_builders.py": {
+  "ai_orchestrator/agent_hub/response_builders.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4849,7 +4825,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_risk_policy.py": {
+  "ai_orchestrator/agent_hub/policy/risk_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4857,7 +4833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router.py": {
+  "ai_orchestrator/agent_hub/router/root.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -4865,7 +4841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_browser.py": {
+  "ai_orchestrator/agent_hub/router/browser.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -4873,7 +4849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_cleanup.py": {
+  "ai_orchestrator/agent_hub/router/cleanup.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -4881,7 +4857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_guards.py": {
+  "ai_orchestrator/agent_hub/router/guards.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4889,7 +4865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_query.py": {
+  "ai_orchestrator/agent_hub/router/query.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -4897,7 +4873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_registration.py": {
+  "ai_orchestrator/agent_hub/router/registration.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -4905,7 +4881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_schemas.py": {
+  "ai_orchestrator/agent_hub/router/schemas.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4913,7 +4889,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/local_agent_router_task.py": {
+  "ai_orchestrator/agent_hub/router/task.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -4921,7 +4897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_up_queue.py": {
+  "ai_orchestrator/agent_hub/router/up_queue.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4929,7 +4905,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_user_present.py": {
+  "ai_orchestrator/agent_hub/router/user_present.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -4937,7 +4913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_validation.py": {
+  "ai_orchestrator/agent_hub/router/validation.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4945,7 +4921,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_router_ws.py": {
+  "ai_orchestrator/agent_hub/router/ws.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -4953,7 +4929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_status_policy.py": {
+  "ai_orchestrator/agent_hub/policy/status_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -5081,7 +5057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/site_onboarding_router.py": {
+  "ai_orchestrator/site_work/site_onboarding_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5089,7 +5065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/routers/site_task_map_router.py": {
+  "ai_orchestrator/site_work/site_task_map_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -5177,7 +5153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/server/local_agent_file_upload_policy.py": {
+  "ai_orchestrator/agent_hub/policy/file_upload_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -5345,15 +5321,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/sites/connectors/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "ai_orchestrator/sites/connectors/dummy.py": {
+  "ai_orchestrator/sites/dummy.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -5361,7 +5329,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/sites/connectors/example_portal.py": {
+  "ai_orchestrator/sites/example_portal.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -6297,7 +6265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "apps/marketing-standalone/connectors/ai_responder.py": {
+  "apps/marketing-standalone/core/ai_responder.py": {
    "layer": "APP",
    "role": "standalone_app",
    "domain": "marketing",
@@ -6305,7 +6273,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "apps/marketing-standalone/connectors/blog_accounts.py": {
+  "apps/marketing-standalone/core/blog_accounts.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "naver_blog",
@@ -7081,7 +7049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "orchestrator_v1/core/logging_utils.py": {
+  "ai_orchestrator/core/logging_utils.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -7193,7 +7161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/app_realtime_check.py": {
+  "scripts/ops/app_realtime_check.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -7521,7 +7489,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/deploy_dry_run.py": {
+  "scripts/ops/deploy_dry_run.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -7529,7 +7497,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/dev_reg_cli.py": {
+  "ai_orchestrator/dev_reg/dev_reg_cli.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -7537,7 +7505,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/e2e_deep_scan.py": {
+  "scripts/ops/e2e_deep_scan.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -7545,7 +7513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/e2e_full_report.py": {
+  "scripts/ops/e2e_full_report.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -7945,7 +7913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/fetch_nts_interpretations.py": {
+  "ai_orchestrator/gongmu/fetch_nts_interpretations.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -7953,7 +7921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/fetch_tax_precedent_summary.py": {
+  "ai_orchestrator/gongmu/fetch_tax_precedent_summary.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -8009,7 +7977,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/form/profile.py": {
+  "scripts/form/personal_profile.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -8049,7 +8017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/g2b/profile.py": {
+  "scripts/g2b/site_profile.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "g2b",
@@ -8113,7 +8081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/gabia/profile.py": {
+  "scripts/gabia/site_profile.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "gabia",
@@ -8265,7 +8233,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/google/base.py": {
+  "scripts/google/common/base.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8273,7 +8241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/calendar.py": {
+  "scripts/google/common/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8465,7 +8433,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/docs.py": {
+  "scripts/google/common/docs.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8489,7 +8457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/domain_taxonomy.py": {
+  "scripts/google/common/domain_taxonomy.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8497,7 +8465,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/drive.py": {
+  "scripts/google/common/drive.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8521,7 +8489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/gmail.py": {
+  "scripts/google/common/gmail.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8529,7 +8497,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/gmail_analysis.py": {
+  "scripts/google/common/gmail_analysis.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8537,7 +8505,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/gmail_api.py": {
+  "scripts/google/common/gmail_api.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8553,7 +8521,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/live_inputs.py": {
+  "scripts/google/common/live_inputs.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8561,7 +8529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/live_inputs_cdp.py": {
+  "scripts/google/common/live_inputs_cdp.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8569,7 +8537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/live_inputs_cdp_fillers.py": {
+  "scripts/google/common/live_inputs_cdp_fillers.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8577,7 +8545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/live_inputs_config.py": {
+  "scripts/google/common/live_inputs_config.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8585,7 +8553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/live_inputs_coverage.py": {
+  "scripts/google/common/live_inputs_coverage.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8593,7 +8561,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/live_inputs_domain_fillers.py": {
+  "scripts/google/common/live_inputs_domain_fillers.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8601,7 +8569,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/live_inputs_fill.py": {
+  "scripts/google/common/live_inputs_fill.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8609,7 +8577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/live_inputs_report.py": {
+  "scripts/google/common/live_inputs_report.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8689,7 +8657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/profile.py": {
+  "scripts/google/site_profile.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8729,7 +8697,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/sheets.py": {
+  "scripts/google/common/sheets.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8745,7 +8713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/subdomain_logic.py": {
+  "scripts/google/common/subdomain_logic.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8753,7 +8721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/surface_explorer.py": {
+  "scripts/google/common/surface_explorer.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8761,7 +8729,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/surfaces.py": {
+  "scripts/google/common/surfaces.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8769,7 +8737,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/tab_logic.py": {
+  "scripts/google/common/tab_logic.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8777,7 +8745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/tab_registry.py": {
+  "scripts/google/common/tab_registry.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8809,15 +8777,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/workflows.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "google",
-   "reason": "google 도메인 site module 내부에서만 쓰는 공개 API aggregator(leaf 모듈 re-export) — 다른 도메인이 호출하는 범용 업무흐름이 아니라 google/ 사이트 모듈 상세 구현. 이름만 workflows라 L6로 오분류.",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/google/workflows_actions.py": {
+  "scripts/google/common/workflows_actions.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8825,7 +8785,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/google/workflows_catalog.py": {
+  "scripts/google/common/workflows_catalog.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8833,7 +8793,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/google/workflows_common.py": {
+  "scripts/google/common/workflows_common.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8841,7 +8801,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/google/workflows_execute.py": {
+  "scripts/google/common/workflows_execute.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8849,7 +8809,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/google/workflows_report.py": {
+  "scripts/google/common/workflows_report.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -8865,7 +8825,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/workspace/calendar.py": {
+  "scripts/google/workspace/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -9041,7 +9001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/google/youtube_upload.py": {
+  "scripts/google/common/youtube_upload.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -9241,7 +9201,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/hiworks/profile.py": {
+  "scripts/hiworks/site_profile.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "hiworks",
@@ -9497,15 +9457,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_agent/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/local_agent/check_playwright_bootstrap.py": {
+  "scripts/ops/check_playwright_bootstrap.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -9513,7 +9465,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent/controller.py": {
+  "local_agent/controller.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -9521,7 +9473,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/local_agent/create_site_profile.py": {
+  "scripts/ops/create_site_profile.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -9529,7 +9481,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/local_agent/g2b/run_readonly_local_e2e.py": {
+  "scripts/g2b/run_readonly_local_e2e.py": {
    "layer": "L6",
    "role": "site_module",
    "domain": "g2b",
@@ -9537,15 +9489,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_agent/gov/__init__.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/local_agent/gov/gov24_certificate.py": {
+  "scripts/site_engine/gov24_certificate.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -9553,7 +9497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent/gov/minwon_submit.py": {
+  "scripts/site_engine/minwon_submit.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -9561,31 +9505,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_agent/naver/__init__.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/local_agent/naver/blog_explorer.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/local_agent/naver/blog_scraper.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver_blog",
-   "reason": "도메인(naver_blog) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/local_agent/process_guard.py": {
+  "local_agent/process_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -9593,7 +9513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent/router.py": {
+  "scripts/ops/local_cli_router.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -9601,7 +9521,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_agent/run_naver_cafe_to_blog_workflow.py": {
+  "scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_blog",
@@ -9609,7 +9529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent/run_playwright_smoke.py": {
+  "scripts/ops/run_playwright_smoke.py": {
    "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -9617,7 +9537,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_agent/run_security_install_discovery.py": {
+  "scripts/ops/run_security_install_discovery.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -9625,7 +9545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent/run_universal_ai_real_site_smoke.py": {
+  "scripts/ops/run_universal_ai_real_site_smoke.py": {
    "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -9633,7 +9553,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/local_agent/start_chrome_with_cdp.py": {
+  "scripts/browser/cdp/start_chrome_with_cdp.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -9641,7 +9561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent/status_store.py": {
+  "local_agent/status_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -9649,7 +9569,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/local_agent/validate_site_profile.py": {
+  "scripts/ops/validate_site_profile.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -9657,7 +9577,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/local_agent/webmail_send.py": {
+  "scripts/site_engine/webmail_send.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -9665,7 +9585,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/marketing_summary_build.py": {
+  "scripts/naver/cafe/ops/marketing_summary_build.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "marketing",
@@ -9753,7 +9673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/auth.py": {
+  "scripts/naver/common/auth.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -9761,7 +9681,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/naver/auth_window_gate.py": {
+  "scripts/naver/common/auth_window_gate.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "naver",
@@ -9777,30 +9697,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/automation/ai_responder.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/analytics_dashboard.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/competitor_analysis.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/automation/content/__init__.py": {
    "layer": "L5",
    "role": "site_module",
@@ -9809,7 +9705,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/automation/content/review_automation.py": {
+  "scripts/naver/smartstore/automation/review_automation.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -9825,21 +9721,13 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/automation/csv_import.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/automation/error_recovery.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "Page 복구·재시도 데코레이터와 알림 호출이 본체이고 SQLite 오류 기록은 부수적 — 'DB 저장' 규칙이 L7 로 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/naver/automation/image_processor.py": {
    "layer": "L5",
@@ -9881,84 +9769,12 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/automation/integration/workflow.py": {
+  "scripts/naver/workflow.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "naver",
    "reason": "업무 흐름 이름",
    "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/automation/inventory_monitor.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/notification_hub.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/order_automation.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/platform/__init__.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/platform/error_recovery.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "Page 복구·재시도 데코레이터와 알림 호출이 본체이고 SQLite 오류 기록은 부수적 — 'DB 저장' 규칙이 L7 로 오분류",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/naver/automation/platform/image_processor.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/platform/scheduler.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "naver",
-   "reason": "DB·저장 신호",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/automation/platform/session_manager.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/naver/automation/review_automation.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
    "source": "rule"
   },
   "scripts/naver/automation/scheduler.py": {
@@ -9969,28 +9785,12 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/automation/seo_optimizer.py": {
-   "layer": "L5",
-   "role": "site_module",
-   "domain": "naver",
-   "reason": "도메인(naver) 자동화",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/naver/automation/session_manager.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
    "reason": "도메인(naver) 자동화",
    "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/naver/automation/workflow.py": {
-   "layer": "L6",
-   "role": "workflow",
-   "domain": "naver",
-   "reason": "업무 흐름 이름",
-   "confidence": "high",
    "source": "rule"
   },
   "scripts/naver/base.py": {
@@ -10473,7 +10273,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/blog/selectors.py": {
+  "scripts/naver/blog/page_selectors.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -10961,7 +10761,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/calendar.py": {
+  "scripts/naver/common/calendar_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -10977,7 +10777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/content.py": {
+  "scripts/naver/common/content.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11009,7 +10809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/live_safety.py": {
+  "scripts/naver/common/live_safety.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "naver",
@@ -11305,7 +11105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/mybox.py": {
+  "scripts/naver/common/mybox.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11337,7 +11137,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/place.py": {
+  "scripts/naver/common/place.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11361,7 +11161,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/router_blog.py": {
+  "scripts/naver/blog/cli_router.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11369,7 +11169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/router_cafe.py": {
+  "scripts/naver/cafe/cli_router.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_cafe",
@@ -11377,7 +11177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/router_common.py": {
+  "scripts/naver/common/router_common.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -11561,7 +11361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/shopping_competitor.py": {
+  "scripts/naver/shopping/competitor_report.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -11881,7 +11681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/smartstore/product/selectors.py": {
+  "scripts/naver/smartstore/product/page_selectors.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "smartstore",
@@ -11977,7 +11777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/naver/talk.py": {
+  "scripts/naver/common/talk.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver",
@@ -12465,7 +12265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_gabia_site_settings_canonical_registry.py": {
+  "scripts/gabia/ops/audit_gabia_site_settings_canonical_registry.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "gabia",
@@ -12521,7 +12321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_google_gmail_function_contract.py": {
+  "scripts/google/audit_gmail_function_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12681,7 +12481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_action_item_dashboard.py": {
+  "scripts/naver/mail/analysis/audit_naver_mail_action_item_dashboard.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12689,7 +12489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_body_pipeline_batch.py": {
+  "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_batch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12697,7 +12497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_body_pipeline_v2.py": {
+  "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_v2.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12705,7 +12505,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_business_report.py": {
+  "scripts/naver/mail/analysis/audit_naver_mail_business_report.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12713,7 +12513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_dynamic_folder_discovery.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12721,7 +12521,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_dynamic_folder_discovery_closeout.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery_closeout.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12729,7 +12529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_inbox_p0_complete.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_inbox_p0_complete.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12737,7 +12537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_smart_folder_coverage.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_smart_folder_coverage.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12745,7 +12545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_unknown_classification_rules.py": {
+  "scripts/naver/mail/analysis/audit_naver_mail_unknown_classification_rules.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12753,7 +12553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_unread_filter_dom_fix.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_unread_filter_dom_fix.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12761,7 +12561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_naver_mail_unread_pagination_depth.py": {
+  "scripts/naver/mail/collection/audit_naver_mail_unread_pagination_depth.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_mail",
@@ -12905,7 +12705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/browser_watch.py": {
+  "scripts/browser/cdp/browser_watch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -13121,14 +12921,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/daily_cafe_marketing_pipeline.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "naver_cafe",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/deploy_diagnose.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -13249,7 +13041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/ig_batch.py": {
+  "scripts/instagram/ig_batch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "instagram",
@@ -13745,7 +13537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/preview_description.py": {
+  "scripts/naver/smartstore/preview_description.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -13753,7 +13545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/run_page_builder.py": {
+  "scripts/naver/smartstore/run_page_builder.py": {
    "layer": "L6",
    "role": "generic",
    "domain": "common",
@@ -13841,7 +13633,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/site_engine/types.py": {
+  "scripts/site_engine/site_types.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -13881,7 +13673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/smoke_naver_manual_login_probe.py": {
+  "scripts/naver/smoke_naver_manual_login_probe.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver",
@@ -14025,7 +13817,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/watch_log.py": {
+  "scripts/ops/watch_log.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -14065,7 +13857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/youtube/profile.py": {
+  "scripts/youtube/site_profile.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "youtube",
@@ -14193,7 +13985,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "orchestrator_v1/core/security_utils.py": {
+  "ai_orchestrator/core/security_utils.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "common",
@@ -19137,7 +18929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/local_agent_registry_exports.py": {
+  "ai_orchestrator/agent_hub/registry/exports.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -21121,7 +20913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_blog/naver_blog_collectors.py": {
+  "scripts/naver/shopping/naver_blog_collectors.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_blog",
@@ -21305,7 +21097,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search/naver_search_db.py": {
+  "scripts/naver/shopping/naver_search_db.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_search",
@@ -21313,7 +21105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search/naver_search_jobs.py": {
+  "scripts/naver/shopping/naver_search_jobs.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_search",
@@ -21321,7 +21113,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search/naver_search_queries.py": {
+  "scripts/naver/shopping/naver_search_queries.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_search",
@@ -21337,7 +21129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search/naver_search_run_log.py": {
+  "scripts/naver/shopping/naver_search_run_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_search",
@@ -21353,7 +21145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/connectors/naver_search/naver_search_state.py": {
+  "scripts/naver/shopping/naver_search_state.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "naver_search",
@@ -22081,7 +21873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/auth/login_session.py": {
+  "scripts/site_engine/login_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -22113,7 +21905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/cdp/browser_rpc_server.py": {
+  "scripts/browser/browser_rpc_server.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -22129,7 +21921,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/cdp/cdp_client.py": {
+  "scripts/browser/cdp_client.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -22233,7 +22025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/cdp_cli.py": {
+  "scripts/entry/cdp_cli.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "browser",
@@ -22417,15 +22209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser/popup/popup_monitor.py": {
-   "layer": "L4",
-   "role": "persistence",
-   "domain": "browser",
-   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/browser/navigator/navigator.py·popup_classifier.py 를 import. 지우면 층 역전 +3건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
-   "confidence": "high",
-   "source": "confirmed"
-  },
-  "scripts/browser/popup/popup_watcher.py": {
+  "scripts/browser/navigator/popup_watcher.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -22649,7 +22433,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/browser_tasks.py": {
+  "scripts/google/common/browser_tasks.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -22657,7 +22441,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/report_io.py": {
+  "scripts/google/common/report_io.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -22665,7 +22449,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/google/tab_live_summary.py": {
+  "scripts/google/common/tab_live_summary.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "google",
@@ -22729,7 +22513,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/naver/mail/imap/mailbox.py": {
+  "scripts/naver/mail/imap/imap_mailbox.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "naver_mail",
@@ -23009,7 +22793,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/site_engine/site_registry_sites.py": {
+  "scripts/entry/site_login_registry.py": {
    "layer": "L5",
    "role": "site_module",
    "domain": "common",
@@ -23853,6 +23637,302 @@
    "layer": "L11",
    "role": "test",
    "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/agent_hub/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/agent_hub/policy/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/agent_hub/registry/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "ai_orchestrator/agent_hub/router/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "local_agent/runtime/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/browser/navigator/popup_monitor.py": {
+   "layer": "L4",
+   "role": "persistence",
+   "domain": "browser",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L7 이나 실제로 상위 층의 scripts/browser/navigator/navigator.py·popup_classifier.py 를 import. 지우면 층 역전 +3건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/common/audit_cli.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/common/browser_js_dir.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/common/http_retry.py": {
+   "layer": "L3",
+   "role": "connector",
+   "domain": "common",
+   "reason": "HTTP 클라이언트",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/common/json_report.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/common/sqlite_helpers.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/entry/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/entry/site_access_cli.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "프로세스 시작점(직접 실행 main) — 사이트 등록표 조합(site_login_registry, L5)을 설치하고 엔진·탐색기를 부르는 맨 위 층(cdp_cli 와 같은 층·역할)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/entry/site_crawl_cli.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "프로세스 시작점(직접 실행 main) — 사이트 등록표 조합(site_login_registry, L5)을 설치하고 엔진·탐색기를 부르는 맨 위 층(cdp_cli 와 같은 층·역할)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/explorer/explore_after_login.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/google/common/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "google",
+   "reason": "도메인(google) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/google/common/workflows.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "google",
+   "reason": "google 도메인 site module 내부에서만 쓰는 공개 API aggregator(leaf 모듈 re-export) — 다른 도메인이 호출하는 범용 업무흐름이 아니라 google/ 사이트 모듈 상세 구현. 이름만 workflows라 L6로 오분류.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "scripts/hanafax/excel_merge_fit.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "hanafax",
+   "reason": "도메인(hanafax) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/agent_mixins/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver",
+   "reason": "도메인(naver) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/blog/marketing/chatgpt_prompt.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver_blog",
+   "reason": "도메인(naver_blog) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/naver/common/__init__.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver",
+   "reason": "도메인(naver) 자동화",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "scripts/naver/services.py": {
+   "layer": "L5",
+   "role": "site_module",
+   "domain": "naver",
+   "reason": "도메인(naver) 자동화",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/import_contracts_gen.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/site_engine/catalog_helpers.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tests/test_common_http_retry.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_import_paths_hygiene.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_naver_services_no_phantom_mail.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_naver_shared_helpers.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_ops_audit_cli.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_runtime_state_isolation_targets.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_shared_overlay_jsonl_helpers.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_site_registry_entrypoints.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_site_shared_helpers.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_status_store_atomic_lock_20261007.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_subprocess_script_targets_have_main.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_test_path_refs.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"

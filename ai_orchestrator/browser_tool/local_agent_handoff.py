@@ -191,7 +191,7 @@ def handoff_to_task_protocol(
     서버 task queue로 전달하기 위한 bridge 함수.
     민감 데이터 없음이 보장된다.
     """
-    from ai_orchestrator.local_agent.task_protocol import ALLOWED_TASK_ACTIONS, build_task
+    from ai_orchestrator.contracts.local_task_protocol import ALLOWED_TASK_ACTIONS, build_task
 
     raw_action = (handoff.get("action") or "open").lower()
     protocol_action = _HANDOFF_ACTION_TO_PROTOCOL.get(raw_action, "open_url")

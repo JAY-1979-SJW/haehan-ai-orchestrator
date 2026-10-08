@@ -1,8 +1,9 @@
-"""도구 분리(smartstore 자동화) — 스마트스토어 자동화 5개 모듈을 도구 폴더로 옮긴 뒤에도 옛 경로·공개 이름·경로 값이 그대로인지 고정한다."""
+"""도구 분리(smartstore 자동화) — 스마트스토어 자동화 모듈을 도구 폴더로 옮긴 뒤 옛 이중 경로가 없고 경로 값이 그대로인지 고정한다."""
 
 from __future__ import annotations
 
 import importlib
+import importlib.util
 
 from ai_orchestrator.paths import repo_root
 
@@ -10,10 +11,11 @@ MODS = ("analytics_dashboard", "competitor_analysis", "csv_import", "inventory_m
 NEW = "scripts.naver.smartstore.automation."
 
 
-def test_compat_reexports_still_work():
-    csv_old = importlib.import_module("scripts.naver.automation.csv_import")
-    csv_new = importlib.import_module(NEW + "csv_import")
-    assert csv_old.CSVImporter is csv_new.CSVImporter
+def test_old_duplicate_paths_removed():
+    """옛 이중 경로(scripts/naver/automation/<모듈>.py 재수출 shim)는 지웠다 — 정본은 smartstore/automation 하나."""
+    for m in (*MODS, "review_automation", "workflow"):
+        assert importlib.util.find_spec("scripts.naver.automation." + m) is None
+        assert importlib.import_module(NEW + m) is not None
 
 
 def test_root_constant_value_unchanged():

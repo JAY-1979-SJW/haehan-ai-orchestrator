@@ -43,7 +43,7 @@ class BlogAIWriter:
         return_seo: bool = True,
     ) -> dict:
         """AI로 글 초안 생성 + SEO 분석."""
-        from scripts.naver.automation.ai_responder import AIResponder
+        from scripts.naver.automation.integration.ai_responder import AIResponder
 
         ai = AIResponder()
 
@@ -63,7 +63,7 @@ class BlogAIWriter:
 
         # SEO 분석
         if return_seo and result["ok"]:
-            from scripts.naver.blog.seo import BlogSEO
+            from scripts.naver.blog.seo.seo import BlogSEO
 
             seo = BlogSEO(self.page)
             result["seo"] = seo.optimize_post(title, body, target_keywords=keywords)

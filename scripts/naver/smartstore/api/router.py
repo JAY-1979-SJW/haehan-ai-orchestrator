@@ -6,7 +6,7 @@ from pathlib import Path
 
 from scripts.common.gate import check as gate_check
 from scripts.common.logger import get_logger
-from scripts.naver.live_safety import before_live_navigation, ensure_page_safe
+from scripts.naver.common.live_safety import before_live_navigation, ensure_page_safe
 from scripts.naver.smartstore.api.actions import APPROVAL_CONFIRM_TEXT
 
 __status__ = {
@@ -98,7 +98,7 @@ def _cmd_actions(sub: str | None, args: list[str]) -> None:
     )
 
     if sub not in ("catalog", "actions", "list", None, ""):
-        print("usage: python scripts/browser/cdp/cdp_client.py smartstore actions catalog")
+        print("usage: python scripts/entry/cdp_cli.py smartstore actions catalog")
         return
     gate_check("scan_page")
     catalog = build_action_catalog()
@@ -111,7 +111,7 @@ def _cmd_prepare(sub: str | None, args: list[str]) -> None:
 
     if sub not in ("product", "register", "general", "group", None, ""):
         print(
-            "usage: python scripts/browser/cdp/cdp_client.py smartstore prepare product "
+            "usage: python scripts/entry/cdp_cli.py smartstore prepare product "
             "--data=<json> [--product-type=general|group] [--save-after] [--dry-run]"
         )
         return
@@ -311,17 +311,17 @@ def _cmd_session_check() -> None:
 def _print_help() -> None:
     print(
         """SmartStore usage:
-  python scripts/browser/cdp/cdp_client.py smartstore actions catalog
-  python scripts/browser/cdp/cdp_client.py smartstore prepare product --data=<json> [--dry-run]
-  python scripts/browser/cdp/cdp_client.py smartstore submit product --data=<json> --dry-run --approved --confirm=SMARTSTORE_APPROVED_SUBMIT
-  python scripts/browser/cdp/cdp_client.py smartstore product list --live-ok
-  python scripts/browser/cdp/cdp_client.py smartstore order new --live-ok
-  python scripts/browser/cdp/cdp_client.py smartstore inventory --live-ok
-  python scripts/browser/cdp/cdp_client.py smartstore seo
-  python scripts/browser/cdp/cdp_client.py smartstore ai <review-text>
-  python scripts/browser/cdp/cdp_client.py smartstore competitor <keyword>
-  python scripts/browser/cdp/cdp_client.py smartstore csv <file>
-  python scripts/browser/cdp/cdp_client.py smartstore analytics"""
+  python scripts/entry/cdp_cli.py smartstore actions catalog
+  python scripts/entry/cdp_cli.py smartstore prepare product --data=<json> [--dry-run]
+  python scripts/entry/cdp_cli.py smartstore submit product --data=<json> --dry-run --approved --confirm=SMARTSTORE_APPROVED_SUBMIT
+  python scripts/entry/cdp_cli.py smartstore product list --live-ok
+  python scripts/entry/cdp_cli.py smartstore order new --live-ok
+  python scripts/entry/cdp_cli.py smartstore inventory --live-ok
+  python scripts/entry/cdp_cli.py smartstore seo
+  python scripts/entry/cdp_cli.py smartstore ai <review-text>
+  python scripts/entry/cdp_cli.py smartstore competitor <keyword>
+  python scripts/entry/cdp_cli.py smartstore csv <file>
+  python scripts/entry/cdp_cli.py smartstore analytics"""
     )
 
 

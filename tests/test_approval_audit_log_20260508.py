@@ -2,7 +2,7 @@
 권한 실행 audit log 테스트
 """
 import pytest
-from ai_orchestrator.local_agent.approval_audit_log import (
+from local_agent.runtime.approval_audit_log import (
     log_permission_granted, log_permission_revoked,
     log_execution_started, log_execution_completed, log_execution_blocked,
     get_log, get_log_for_permission, clear_log, has_sensitive_data,

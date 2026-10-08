@@ -9,7 +9,7 @@ from email.message import EmailMessage
 
 import pytest
 
-from ai_orchestrator.local_agent.action_risk_policy import GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, classify_action
+from ai_orchestrator.contracts.action_risk_policy import GRADE_AUTO_ALLOWED, GRADE_USER_DELEGATED, classify_action
 from ai_orchestrator.services import scheduled_job_actions as actions
 from scripts.naver.mail.imap import reader, sender
 

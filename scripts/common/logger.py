@@ -124,7 +124,7 @@ def get_logger(name: str) -> logging.Logger:
     """모듈별 로거 반환.
 
     name은 보통 __name__ 사용.
-    scripts.google.calendar → 'google.calendar' 로 짧게 표시.
+    scripts.google.common.calendar_tasks → 'google.calendar_tasks' 로 짧게 표시.
     """
     # 'scripts.' 접두사를 붙여 루트 로거 아래 계층 구조 유지
     if not name.startswith("scripts"):

@@ -93,7 +93,9 @@ class BlogCommentResponder:
             # 답글 생성
             if use_ai:
                 try:
-                    from scripts.naver.automation.ai_responder import AIResponder
+                    from scripts.naver.automation.integration.ai_responder import (
+                        AIResponder,
+                    )
 
                     ai = AIResponder()
                     r = ai._call(

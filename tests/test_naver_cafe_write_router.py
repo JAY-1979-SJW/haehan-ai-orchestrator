@@ -1,4 +1,4 @@
-"""카페 글쓰기 라우터(router_cafe._cmd_cafe write/publish)가 새 write_post 시그니처로 호출하는지 검사."""
+"""카페 글쓰기 라우터(cafe/cli_router._cmd_cafe write/publish)가 새 write_post 시그니처로 호출하는지 검사."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from scripts.naver import router_cafe as router
+from scripts.naver.cafe import cli_router as router
 
 
 class _FakeCafe:
@@ -56,7 +56,7 @@ def test_publish_requires_approval_flags(fake_cafe):
 
 
 def test_publish_with_approval_publishes_directly(fake_cafe, capsys):
-    from scripts.naver.content import APPROVAL_CONFIRM_TEXT
+    from scripts.naver.common.content import APPROVAL_CONFIRM_TEXT
 
     fake_cafe.result = {"ok": True, "url": "https://cafe.naver.com/testcafe/1"}
     _run("publish", "--approved", f"--confirm={APPROVAL_CONFIRM_TEXT}")

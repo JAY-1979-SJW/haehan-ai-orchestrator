@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from scripts.site_engine.types import (
+from scripts.site_engine.site_types import (
     ExecutionLocation,
     GateDecision,
     SiteCapability,
@@ -299,12 +299,21 @@ def require_approval_for_action(action: str, capability: SiteCapability) -> bool
     return classify_action_sensitivity(action, capability) == ActionSensitivity.IRREVERSIBLE
 
 
+def matches_credential_extraction(action: str, credential_keywords: frozenset[str], extract_keywords: frozenset[str]) -> bool:
+    """action(소문자 비교)에 credential 키워드와 추출 키워드가 둘 다 들어 있으면 True.
+
+    block_for_sensitive_credential_action 과 action_planner._is_credential_extraction 이 키워드 표만 다르게
+    똑같이 복사해 쓰던 본문을 한 곳으로 모았다(키워드 표는 각자 그대로 넘긴다).
+    """
+    lower = action.lower()
+    has_cred = any(k in lower for k in credential_keywords)
+    has_extract = any(k in lower for k in extract_keywords)
+    return has_cred and has_extract
+
+
 def block_for_sensitive_credential_action(action: str) -> bool:
     """credential 추출 시도인지 판단. True면 차단 대상."""
-    lower = action.lower()
-    has_cred = any(k in lower for k in _CREDENTIAL_ACTION_KEYWORDS)
-    has_extract = any(k in lower for k in _CREDENTIAL_EXTRACT_KEYWORDS)
-    return has_cred and has_extract
+    return matches_credential_extraction(action, _CREDENTIAL_ACTION_KEYWORDS, _CREDENTIAL_EXTRACT_KEYWORDS)
 
 
 def resolve_execution_location(

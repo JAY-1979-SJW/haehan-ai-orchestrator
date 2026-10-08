@@ -1,7 +1,8 @@
 from pathlib import Path
 from uuid import uuid4
 
-from scripts.google import youtube, youtube_upload
+from scripts.google import youtube
+from scripts.google.common import youtube_upload
 
 
 def _video_fixture() -> Path:

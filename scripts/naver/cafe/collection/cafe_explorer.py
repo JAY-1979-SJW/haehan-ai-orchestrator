@@ -71,6 +71,8 @@
     python scripts/naver/cafe/cafe_explorer.py mycafes
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import sys
@@ -80,7 +82,10 @@ from pathlib import Path
 # 프로젝트 루트를 경로에 추가
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
 
-from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # 엔진 ↔ 믹스인 import 순환을 피하려고 타입 힌트로만 쓰고 실제 사용은 main 안에서 불러온다(T4 C12a)
+    from scripts.browser.agent.agent import BrowserAgent
 
 
 def _print_posts(posts: list[dict], show_views: bool = True):
@@ -533,6 +538,8 @@ def main():
     parser.add_argument("--json", action="store_true", dest="as_json", help="JSON 형식으로 출력")
 
     args = parser.parse_args()
+
+    from scripts.browser.agent.agent import BrowserAgent
 
     with BrowserAgent() as agent:
         _RUNNERS[args.command](agent, parser, args)

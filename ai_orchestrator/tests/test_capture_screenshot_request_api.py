@@ -33,8 +33,8 @@ def _isolated_storage(tmp_path, monkeypatch):
 
     import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.gates.approval as _ap
-    import ai_orchestrator.local_agent_registry as _reg
-    import ai_orchestrator.local_agent_registry_common as _reg_common
+    import ai_orchestrator.agent_hub.registry.facade as _reg
+    import ai_orchestrator.agent_hub.registry.common as _reg_common
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
@@ -68,7 +68,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -319,7 +319,7 @@ def test_audit_log_does_not_leak_path_or_filename(admin_user):
 
 
 def test_unapproved_request_not_in_ws_pending_list(admin_user):
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)

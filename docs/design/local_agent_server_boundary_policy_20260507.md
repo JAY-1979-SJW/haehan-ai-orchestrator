@@ -106,7 +106,7 @@
 | 사이트 준수 정책 | ai_orchestrator/browser_tool/site_compliance_policy.py |
 | 사이트 접근 감사 | ai_orchestrator/browser_tool/site_access_compatibility_auditor.py |
 | 로컬 Agent read-only 런타임 | local_agent/browser_readonly_runtime.py |
-| user-present 플로우 | ai_orchestrator/browser_tool/local_agent_user_present_flow.py |
+| user-present 플로우 | ai_orchestrator/agent_hub/user_present_flow.py |
 | user-present 상태 store | local_agent/user_present_state_store.py |
 | user-present UI 서버 | local_agent/user_present_ui_server.py |
 | 테스트 | tests/test_local_agent_server_boundary_policy_20260507.py |

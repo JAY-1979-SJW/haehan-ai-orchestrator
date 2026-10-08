@@ -58,7 +58,7 @@ REPRESENTATIVE_ACTIONS: tuple[tuple[str, dict[str, str]], ...] = (
 
 
 def build_report() -> dict:
-    from scripts.google import live_inputs, workflows
+    from scripts.google.common import live_inputs, workflows
 
     coverage = live_inputs.build_live_input_coverage()
     supported = {item["action_key"] for item in coverage["supported"]}
@@ -75,7 +75,7 @@ def build_report() -> dict:
                 "missing_inputs": plan["missing_inputs"],
                 "state_change": plan["state_change"],
                 "no_final_submit_command": (
-                    f"python scripts\\cdp_client.py google work live-fill "
+                    f"python scripts\\entry\\cdp_cli.py google work live-fill "
                     f"{plan_path} --no-final-submit"
                 ),
             }

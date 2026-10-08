@@ -38,9 +38,9 @@ The catalog currently indexes 50 Google surfaces. Core groups:
 ## Command
 
 ```powershell
-python scripts\cdp_client.py google surfaces catalog
-python scripts\cdp_client.py google surfaces explore --timeout-ms=45000
-python scripts\cdp_client.py google work catalog
+python scripts\entry\cdp_cli.py google surfaces catalog
+python scripts\entry\cdp_cli.py google surfaces explore --timeout-ms=45000
+python scripts\entry\cdp_cli.py google work catalog
 ```
 
 Outputs:

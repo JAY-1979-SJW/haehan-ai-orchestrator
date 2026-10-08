@@ -48,6 +48,10 @@ def pytest_configure(config):
         os.environ[key] = str(base)
     tempfile.tempdir = str(base)
     _isolate_dotenv_override()
+    # 시험 프로세스도 하나의 진입점이다 — 사이트 로그인 등록표를 설치한다(진입점이 install 을 빠뜨리면 get_site 가 RuntimeError).
+    from scripts.entry import site_login_registry
+
+    site_login_registry.install()
     # 수집(import) 시점에 브라우저에 접속하는 모듈 최상위 코드(tests/integration/manual/test_context.py 등)도 막도록 세션 전체에 설치한다.
     global _SESSION_MP
     from tests.cdp_port_guard import install_guard
@@ -99,7 +103,7 @@ def _isolate_runtime_state(monkeypatch, tmp_path):
     monkeypatch 하면 그쪽이 우선한다.
     """
     targets = (
-        ("ai_orchestrator.local_agent_registry_common", "_REGISTRY_STATE_PATH", "local_agent_registry_state.json"),
+        ("ai_orchestrator.agent_hub.registry.common", "_REGISTRY_STATE_PATH", "local_agent_registry_state.json"),
         ("ai_orchestrator.tasks.chat_sessions", "_STORE_PATH", "chat_sessions.json"),
     )
     # 마스터 키는 기본이 OS 자격 증명 관리자(keyring)다. 테스트가 이 PC 의 진짜 키를 만들거나 건드리지

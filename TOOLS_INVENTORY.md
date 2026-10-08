@@ -43,34 +43,34 @@ python scripts/browser/cdp/cdp_daemon.py stop
 
 ```bash
 # 페이지 이동
-python scripts/cdp_client.py goto <URL>
+python scripts/entry/cdp_cli.py goto <URL>
 
 # 로그인 대기
-python scripts/cdp_client.py wait-login <사이트> [타임아웃초]
+python scripts/entry/cdp_cli.py wait-login <사이트> [타임아웃초]
 
 # 클릭
-python scripts/cdp_client.py click-button <버튼텍스트>
+python scripts/entry/cdp_cli.py click-button <버튼텍스트>
 
 # 입력
-python scripts/cdp_client.py type-into <셀렉터> <텍스트>
+python scripts/entry/cdp_cli.py type-into <셀렉터> <텍스트>
 
 # 저장
-python scripts/cdp_client.py save-session <사이트>
+python scripts/entry/cdp_cli.py save-session <사이트>
 
 # 자동 로그인
-python scripts/cdp_client.py auto-login <사이트> [URL]
+python scripts/entry/cdp_cli.py auto-login <사이트> [URL]
 
 # 탭 상태 확인
-python scripts/cdp_client.py check-login
+python scripts/entry/cdp_cli.py check-login
 
 # 팝업 감지
-python scripts/cdp_client.py detect-popup
+python scripts/entry/cdp_cli.py detect-popup
 
 # 팝업 닫기
-python scripts/cdp_client.py close-popup
+python scripts/entry/cdp_cli.py close-popup
 
 # 페이지 탐색
-python scripts/cdp_client.py explore page|tabs [셀렉터]
+python scripts/entry/cdp_cli.py explore page|tabs [셀렉터]
 ```
 
 ---
@@ -112,7 +112,7 @@ is_logged_in, site = detect_login_on_current_tab(page)
 **용도**: 모든 열려있는 탭의 로그인 상태 스캔
 
 ```bash
-python scripts/cdp_client.py check-login
+python scripts/entry/cdp_cli.py check-login
 ```
 
 **출력**: 표 형식으로 모든 탭의 URL, 사이트, 로그인 여부 표시
@@ -144,7 +144,7 @@ ensure_login(page, "naver")  # 최대 5분 대기
 **용도**: 페이지 구조 추출 (links, inputs, buttons, forms, headings)
 
 ```bash
-python scripts/cdp_client.py explore page [save_dir]
+python scripts/entry/cdp_cli.py explore page [save_dir]
 ```
 
 **저장 위치**: `data/sitemap/{url_slug}.json`
@@ -162,7 +162,7 @@ python scripts/cdp_client.py explore page [save_dir]
 **용도**: 탭 인터페이스 순회 + 각 패널 내용 추출
 
 ```bash
-python scripts/cdp_client.py explore tabs [tab_selector] [panel_selector]
+python scripts/entry/cdp_cli.py explore tabs [tab_selector] [panel_selector]
 ```
 
 **기본 셀렉터**:
@@ -186,10 +186,10 @@ python scripts/cdp_client.py explore tabs [tab_selector] [panel_selector]
 
 ```bash
 # 팝업 감지
-python scripts/cdp_client.py detect-popup
+python scripts/entry/cdp_cli.py detect-popup
 
 # 팝업 닫기
-python scripts/cdp_client.py close-popup
+python scripts/entry/cdp_cli.py close-popup
 ```
 
 ```python
@@ -227,13 +227,13 @@ result = handle_page_popups(page)
 
 ```bash
 # 감시 설치
-python scripts/cdp_client.py popup-install
+python scripts/entry/cdp_cli.py popup-install
 
 # 이벤트 폴링
-python scripts/cdp_client.py popup-poll
+python scripts/entry/cdp_cli.py popup-poll
 
 # 자동 처리
-python scripts/cdp_client.py popup-auto
+python scripts/entry/cdp_cli.py popup-auto
 ```
 
 ```python
@@ -318,22 +318,22 @@ tail -f data/logs/app.log | grep "\[login-detector\]"
 
 ```bash
 # 방법 1: 자동 로그인 감지
-python scripts/cdp_client.py auto-login eum.cw.or.kr https://eum.cw.or.kr/main
+python scripts/entry/cdp_cli.py auto-login eum.cw.or.kr https://eum.cw.or.kr/main
 
 # 방법 2: 수동 + 자동 저장
-python scripts/cdp_client.py goto https://eum.cw.or.kr/main
+python scripts/entry/cdp_cli.py goto https://eum.cw.or.kr/main
 # → 브라우저에서 로그인
-python scripts/cdp_client.py save-session eum.cw.or.kr
+python scripts/entry/cdp_cli.py save-session eum.cw.or.kr
 ```
 
 #### 2️⃣ 현재 상태 확인
 
 ```bash
 # 모든 탭의 로그인 상태
-python scripts/cdp_client.py check-login
+python scripts/entry/cdp_cli.py check-login
 
 # 특정 팝업 감지
-python scripts/cdp_client.py detect-popup
+python scripts/entry/cdp_cli.py detect-popup
 
 # DB에서 세션 조회
 python scripts/browser/cdp/cdp_db.py sessions
@@ -343,10 +343,10 @@ python scripts/browser/cdp/cdp_db.py sessions
 
 ```bash
 # 단일 페이지 스냅샷
-python scripts/cdp_client.py explore page
+python scripts/entry/cdp_cli.py explore page
 
 # 탭 인터페이스 탐색
-python scripts/cdp_client.py explore tabs
+python scripts/entry/cdp_cli.py explore tabs
 
 # JSON 결과 확인
 ls -lh data/sitemap/
@@ -357,10 +357,10 @@ cat data/sitemap/eum.cw.or.kr*.json | jq '.'
 
 ```bash
 # 메일 작성
-python scripts/cdp_client.py naver mail compose skyjwshin@kakao.com "제목" "본문"
+python scripts/entry/cdp_cli.py naver mail compose skyjwshin@kakao.com "제목" "본문"
 
 # 메일 발송 (별도 승인)
-python scripts/cdp_client.py naver mail send
+python scripts/entry/cdp_cli.py naver mail send
 
 # 발송 이력 확인
 python scripts/browser/cdp/cdp_db.py mails
@@ -394,7 +394,7 @@ python scripts/browser/cdp/cdp_db.py mails
 # 빠른 참고용
 alias cdp-status='python scripts/browser/cdp/cdp_daemon.py status'
 alias cdp-logs='tail -f data/logs/app.log'
-alias cdp-check='python scripts/cdp_client.py check-login'
+alias cdp-check='python scripts/entry/cdp_cli.py check-login'
 alias cdp-db='python scripts/browser/cdp/cdp_db.py'
 
 # 예제

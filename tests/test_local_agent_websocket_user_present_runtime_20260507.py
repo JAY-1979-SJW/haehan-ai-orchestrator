@@ -13,13 +13,13 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.local_agent_user_present_status_handler import (
+from ai_orchestrator.agent_hub.user_present_status_handler import (
     clear_status_registry,
     get_user_present_status,
     handle_user_present_status_event,
     validate_user_present_status_event,
 )
-from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+from ai_orchestrator.contracts.user_present_ws_contract import (
     MSG_USER_PRESENT_STATUS,
     STATUS_CANCELLED,
     STATUS_FAILED,
@@ -130,7 +130,7 @@ class TestWebsocketClientUserPresentTask:
 
 class TestSensitiveFieldBlocking:
     def test_raw_url_not_stored(self, fresh_store):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             sanitize_user_present_ws_payload,
         )
 
@@ -139,7 +139,7 @@ class TestSensitiveFieldBlocking:
         assert "target_url" not in clean
 
     def test_password_not_stored(self, fresh_store):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             sanitize_user_present_ws_payload,
         )
 
@@ -148,7 +148,7 @@ class TestSensitiveFieldBlocking:
         assert "password" not in clean
 
     def test_otp_not_stored(self, fresh_store):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             sanitize_user_present_ws_payload,
         )
 
@@ -157,7 +157,7 @@ class TestSensitiveFieldBlocking:
         assert "otp" not in clean
 
     def test_certificate_password_not_stored(self, fresh_store):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             sanitize_user_present_ws_payload,
         )
 
@@ -166,7 +166,7 @@ class TestSensitiveFieldBlocking:
         assert "certificate_password" not in clean
 
     def test_token_cookie_session_not_stored(self, fresh_store):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             sanitize_user_present_ws_payload,
         )
 
@@ -322,7 +322,7 @@ class TestWebSocketCompatibility:
         assert callable(process_user_present_task)
 
     def test_no_conflict_with_browser_websocket_schema(self):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             _VALID_STATUS_VALUES,
         )
         from local_agent.browser_websocket_schema import VALID_TASK_STATUS
@@ -337,7 +337,7 @@ class TestSecurityPrinciples:
     def test_no_real_websocket_in_handler_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_handler as mod
+        import ai_orchestrator.agent_hub.user_present_status_handler as mod
 
         src = inspect.getsource(mod)
         assert "websockets.connect" not in src
@@ -345,7 +345,7 @@ class TestSecurityPrinciples:
     def test_no_db_write_in_handler_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_handler as mod
+        import ai_orchestrator.agent_hub.user_present_status_handler as mod
 
         src = inspect.getsource(mod)
         assert "INSERT INTO" not in src
@@ -354,7 +354,7 @@ class TestSecurityPrinciples:
     def test_no_browser_action_in_handler_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_handler as mod
+        import ai_orchestrator.agent_hub.user_present_status_handler as mod
 
         src = inspect.getsource(mod)
         forbidden = ["page.click(", "page.fill(", "page.goto("]
@@ -364,7 +364,7 @@ class TestSecurityPrinciples:
     def test_no_task_executor_in_handler_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_handler as mod
+        import ai_orchestrator.agent_hub.user_present_status_handler as mod
 
         src = inspect.getsource(mod)
         assert "TaskExecutor(" not in src
@@ -372,7 +372,7 @@ class TestSecurityPrinciples:
     def test_no_browser_worker_in_handler_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_status_handler as mod
+        import ai_orchestrator.agent_hub.user_present_status_handler as mod
 
         src = inspect.getsource(mod)
         assert "browser_worker" not in src
@@ -390,7 +390,7 @@ class TestSecurityPrinciples:
 
 class TestCompatibility:
     def test_compatible_with_ws_contract(self):
-        from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+        from ai_orchestrator.contracts.user_present_ws_contract import (
             build_user_present_ws_task_message,
             validate_user_present_ws_task_message,
         )

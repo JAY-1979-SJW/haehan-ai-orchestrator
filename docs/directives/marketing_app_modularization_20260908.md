@@ -34,7 +34,7 @@ apps/marketing-standalone/          ← 신규 최상위 디렉터리 (신규 �
 | Phase | 범위 | 근거 |
 |---|---|---|
 | **Phase 1 (이번 작업)** | 블로그 핵심 발행 경로 + 인스타 Graph API | 둘 다 `ai_orchestrator` 무의존 확인됨(실측) — 위험 최소 |
-| Phase 2 | 지식iN 리서치(`naver_kin_client`) + 카페참여(`blog_explorer`, `targeted_engage`) | `ai_orchestrator.connectors.naver_kin_client`, `ai_orchestrator.local_agent.browser.agent` 사본 분리 필요 |
+| Phase 2 | 지식iN 리서치(`naver_kin_client`) + 카페참여(`blog_explorer`, `targeted_engage`) | `ai_orchestrator.connectors.naver_kin_client`, `scripts.browser.agent.agent` 사본 분리 필요 |
 | Phase 3 | 유튜브 OAuth 업로드 | 고객별 GCP 프로젝트/OAuth 클라이언트 이슈 별도 검토 필요 |
 
 이번 지시("현재 코드에서 먼저 분리해서 모듈화")는 **Phase 1**을 우선

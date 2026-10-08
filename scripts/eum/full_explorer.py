@@ -17,7 +17,7 @@
 
 사용:
     python scripts/eum/full_explorer.py
-    python scripts/browser/cdp/cdp_client.py eum explore
+    python scripts/entry/cdp_cli.py eum explore
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ from scripts.eum.access_handler import detect_and_handle, is_access_blocked  # n
 from scripts.common.logger import get_logger  # noqa: E402
 from scripts.common.op_log import log_op, op_context  # noqa: E402
 from scripts.browser.popup.popup_classifier import classify  # noqa: E402
-from scripts.browser.popup.popup_watcher import install_watcher, poll_events  # noqa: E402
+from scripts.browser.navigator.popup_watcher import install_watcher, poll_events  # noqa: E402
 
 log = get_logger(__name__)
 

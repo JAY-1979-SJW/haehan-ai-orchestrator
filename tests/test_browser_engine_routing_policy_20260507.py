@@ -387,7 +387,7 @@ def test_no_conflict_with_site_compliance_policy():
 
 
 def test_no_conflict_with_local_agent_user_present_flow():
-    from ai_orchestrator.browser_tool.local_agent_user_present_flow import (
+    from ai_orchestrator.agent_hub.user_present_flow import (
         DECISION_REQUIRE_USER_PRESENT,
     )
 

@@ -11,7 +11,6 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.auth.login_session import ensure_login, is_logged_in  # noqa: E402
 from scripts.browser.page.page_helper import (  # noqa: E402
     page_goto,
     page_wait_click,
@@ -20,6 +19,7 @@ from scripts.browser.page.page_helper import (  # noqa: E402
 )
 from scripts.browser.page.web_connector import browser_session  # noqa: E402
 from scripts.common.logger import get_logger  # noqa: E402
+from scripts.site_engine.login_session import ensure_login, is_logged_in  # noqa: E402
 
 log = get_logger(__name__)
 

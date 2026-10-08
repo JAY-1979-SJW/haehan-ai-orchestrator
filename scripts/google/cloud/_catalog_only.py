@@ -1,7 +1,7 @@
 """Shared safe helpers for Google Cloud wrappers."""
 from __future__ import annotations
 
-from scripts.google import workflows
+from scripts.google.common import workflows
 
 from .registry import get_action, get_surface
 

@@ -6,7 +6,7 @@ import json
 
 from scripts.naver.mail import action_item_dashboard as aid
 from scripts.naver.mail import business_report as br
-from scripts.ops import audit_naver_mail_action_item_dashboard as audit
+from scripts.naver.mail.analysis import audit_naver_mail_action_item_dashboard as audit
 
 # ── 입력 헬퍼 ───────────────────────────────────────────────────────
 

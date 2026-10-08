@@ -3,7 +3,7 @@
  "target": 0,
  "reviewed_at": "",
  "count": 54,
- "note": "규칙 변경 동기화(integrate-4 가 before_exempt 10개·connectors 폴더화 규칙을 추가한 뒤 기준선 미갱신 — CI PR#164 FAIL(gh run 37777541642) 해결, 전부 origin/master 에 이미 존재하는 기존 파일): +20 -0 = 54",
+ "note": "규칙 변경 동기화(integrate-4 가 before_exempt 10개·connectors 폴더화 규칙을 추가한 뒤 기준선 미갱신 — CI PR#164 FAIL(gh run 37777541642) 해결, 전부 origin/master 에 이미 존재하는 기존 파일): +20 -0 = 54 | 병합 합집합(ours 54 + theirs 신규 0 = 54)",
  "files": [
   "admin-web/src/app/assistant/(legacy)/cafe/CafeClient.tsx",
   "admin-web/src/app/assistant/(legacy)/cafe/CategoryCard.tsx",

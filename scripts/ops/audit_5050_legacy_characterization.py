@@ -14,8 +14,6 @@ ASSISTANT_BACKEND_5050_LEGACY_CHARACTERIZATION_TEST_01
 
 from __future__ import annotations
 
-import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -659,16 +657,9 @@ def _print_report(audit: dict) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="5050 legacy characterization 감사")
-    parser.add_argument("--json", action="store_true")
-    args = parser.parse_args()
+    from scripts.common.audit_cli import run_json_or_report_cli
 
-    audit = run_audit()
-    if args.json:
-        print(json.dumps(audit, ensure_ascii=False, indent=2))
-    else:
-        _print_report(audit)
-    sys.exit(0 if audit["all_ok"] else 1)
+    run_json_or_report_cli("5050 legacy characterization 감사", run_audit, _print_report, "all_ok")
 
 
 if __name__ == "__main__":

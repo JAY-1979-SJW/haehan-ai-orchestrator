@@ -1,6 +1,6 @@
 """tests/test_security_program_permission_gate_20260508.py"""
 import pytest
-from ai_orchestrator.local_agent.security_program_permission_gate import (
+from local_agent.runtime.security_program_permission_gate import (
     create_install_permission, validate_permission, consume_permission,
     revoke_permission,
 )

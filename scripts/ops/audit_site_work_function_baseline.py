@@ -220,8 +220,8 @@ def audit() -> tuple[bool, list[str]]:
     if missing:
         failures.append("site work baseline missing phrase(s): " + ", ".join(missing))
 
-    from scripts.google import live_inputs, workflows
     from scripts.google.cloud.local_browser import dry_run_cloud_readonly_browser_task
+    from scripts.google.common import live_inputs, workflows
     from scripts.hiworks.actions import build_action_catalog as build_hiworks_action_catalog
     from scripts.naver.smartstore.actions import build_action_catalog as build_smartstore_action_catalog
     from scripts.site_engine.command_router import is_service_cmd
@@ -251,11 +251,10 @@ def audit() -> tuple[bool, list[str]]:
 
 
 def main() -> int:
+    from scripts.common.audit_cli import report_findings
+
     ok, findings = audit()
-    for finding in findings:
-        print(f"[{'PASS' if ok else 'FAIL'}] {finding}")
-    print(f"RESULT={'PASS_SITE_WORK_FUNCTION_BASELINE' if ok else 'FAIL_SITE_WORK_FUNCTION_BASELINE'}")
-    return 0 if ok else 1
+    return report_findings(ok, findings, "SITE_WORK_FUNCTION_BASELINE")
 
 
 if __name__ == "__main__":

@@ -107,18 +107,6 @@ MODULES: tuple[GateModule, ...] = (
         ),
     ),
     GateModule(
-        name="portable_install",
-        description="portable ZIP install scripts and contract",
-        steps=(
-            GateStep("portable_py_compile", (PY, "scripts/ops/quality/py_compile_no_cache.py", "verify_portable_zip_install.py")),
-            GateStep("portable_static_verify", (PY, "verify_portable_zip_install.py", "--static-only")),
-            GateStep(
-                "portable_contract_pytest",
-                (PY, "-m", "pytest", "tests/test_portable_zip_install_contract.py", "-q"),
-            ),
-        ),
-    ),
-    GateModule(
         name="desktop_auth_runtime",
         description="desktop diagnostics, auth token presence, and runtime dry-run",
         steps=(
@@ -194,8 +182,8 @@ MODULES: tuple[GateModule, ...] = (
                     "ai_orchestrator/gates/approval.py",
                     "ai_orchestrator/web_task/web_task_router.py",
                     "ai_orchestrator/services",  # 폴더째 컴파일 — 파일 하나를 이름으로 적으면 새 서비스가 빠지고, 코드맵이 services↔scripts 순환으로 읽는다
-                    "ai_orchestrator/local_agent_router.py",
-                    "ai_orchestrator/local_agent_registry.py",
+                    "ai_orchestrator/agent_hub/router/root.py",
+                    "ai_orchestrator/agent_hub/registry/facade.py",
                     "ai_orchestrator/server/action_task_api.py",
                     "ai_orchestrator/server/local_agent_task_api.py",
                     "ai_orchestrator/server/server_egress_policy.py",

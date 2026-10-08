@@ -12,13 +12,11 @@ import time
 
 from fastapi import APIRouter, Depends
 
-from ai_orchestrator.audit.audit_logger import log_event
-from ai_orchestrator.connectors.naver_search import naver_search_queries as q
-from ai_orchestrator.connectors.naver_search.naver_search_jobs import (
-    run_naver_blog_search_job,
-    run_naver_shopping_search_job,
-)
 from ai_orchestrator.gates.auth import require_role
+
+from ai_orchestrator.audit.audit_logger import log_event
+from scripts.naver.shopping import naver_search_queries as q
+from scripts.naver.shopping.naver_search_jobs import run_naver_blog_search_job, run_naver_shopping_search_job
 
 logger = logging.getLogger(__name__)
 
@@ -229,10 +227,9 @@ def api_crawl_shopping(
 ) -> dict:
     """CDP 브라우저 크롤링 — 리뷰·별점·구매수 포함 수집."""
     import sys
+    from pathlib import Path
 
-    from ai_orchestrator.paths import repo_root
-
-    sys.path.insert(0, str(repo_root()))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
@@ -267,10 +264,9 @@ def api_crawl_report(
 ) -> dict:
     """CDP 크롤링 수집 이력 보고서 — 리뷰·별점·구매수 포함."""
     import sys
+    from pathlib import Path
 
-    from ai_orchestrator.paths import repo_root
-
-    sys.path.insert(0, str(repo_root()))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
@@ -303,10 +299,9 @@ def api_price_distribution(
 ) -> dict:
     """가격 구간별 상품 수 집계."""
     import sys
+    from pathlib import Path as _Path
 
-    from ai_orchestrator.paths import repo_root
-
-    sys.path.insert(0, str(repo_root()))
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
@@ -338,10 +333,9 @@ def api_mall_analysis(
 ) -> dict:
     """업체별 집계: 상품수, 최저가, 평균가, 최고가, 브랜드수."""
     import sys
+    from pathlib import Path as _Path
 
-    from ai_orchestrator.paths import repo_root
-
-    sys.path.insert(0, str(repo_root()))
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
@@ -372,10 +366,9 @@ def api_brand_analysis(
 ) -> dict:
     """브랜드별 집계: 상품수, 가격 범위, 판매몰 수."""
     import sys
+    from pathlib import Path as _Path
 
-    from ai_orchestrator.paths import repo_root
-
-    sys.path.insert(0, str(repo_root()))
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
@@ -404,10 +397,9 @@ def api_keyword_summary(
 ) -> dict:
     """키워드별 요약: 상품수, 가격 min/avg/max, 업체수, 브랜드수."""
     import sys
+    from pathlib import Path as _Path
 
-    from ai_orchestrator.paths import repo_root
-
-    sys.path.insert(0, str(repo_root()))
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:
@@ -436,10 +428,9 @@ def api_competition_score(
 ) -> dict:
     """키워드 경쟁 강도 점수 (0~100). 높을수록 경쟁 치열."""
     import sys
+    from pathlib import Path as _Path
 
-    from ai_orchestrator.paths import repo_root
-
-    sys.path.insert(0, str(repo_root()))
+    sys.path.insert(0, str(_Path(__file__).resolve().parents[3]))
 
     t0 = time.monotonic()
     try:

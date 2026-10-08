@@ -506,7 +506,7 @@ git 없이 보려면: `C:\work\_backup\haehan-ai-orchestrator_deleted_20260923.z
 
 <details><summary><code>ai_orchestrator/local_agent</code> — 20개</summary>
 
-- `ai_orchestrator/local_agent/browser/site_map_store.py`
+- `scripts/browser/agent/site_map_store.py`
 - `ai_orchestrator/local_agent/official_alternative_route_finder.py`
 - `ai_orchestrator/local_agent/scenarios/__init__.py`
 - `ai_orchestrator/local_agent/scenarios/cafe_to_blog.py`
@@ -1004,7 +1004,7 @@ git checkout pre-openai-removal -- <경로>
 `git checkout <이 커밋>^ -- <경로>` (커밋 해시는 `git log -1 --grep="네이버 로그인 죽은 코드 삭제"` 로 확인).
 
 - `scripts/naver/cafe.py` — 같은 이름의 `scripts/naver/cafe/` 패키지가 가려 import 불가(실제 import 가 패키지로 해석됨을 확인)
-- `ai_orchestrator/local_agent/browser/secure_login.py` (+ `browser/__init__.py` 의 재내보내기 26개) — 가져다 쓰는 곳도 테스트도 없음
+- `scripts/browser/agent/secure_login.py` (+ `browser/__init__.py` 의 재내보내기 26개) — 가져다 쓰는 곳도 테스트도 없음
 - `scripts/naver/auth.py::_human_type` — deprecated, 호출자 없음
 - `scripts/login_detector.py::wait_for_logout` — 호출자 없음(독스트링에만 이름)
 - `scripts/credentials.py::list_naver_accounts` — 호출자 없음(세션 라우터 `list_accounts` 가 같은 일을 따로 구현)
@@ -1044,8 +1044,8 @@ git checkout pre-openai-removal -- <경로>
 
 - `ai_orchestrator/connectors/instagram_dm_db.py` — `set_legacy_ig_user_id`
 - `ai_orchestrator/gates/auth.py` — `get_tenant_context`(build_tenant_context 의 별칭)
-- `ai_orchestrator/local_agent/delegated_permission_store.py` — `get_store_snapshot`
-- `ai_orchestrator/local_agent/task_client.py` — `poll_loop`
+- `local_agent/runtime/delegated_permission_store.py` — `get_store_snapshot`
+- `local_agent/runtime/task_client.py` — `poll_loop`
 - `ai_orchestrator/openai_client.py` — `generate_plan_explanation`(호출되지 않는 유료 AI 호출 경로)
 - `ai_orchestrator/persistence/registration_code_store.py` — `reset_store_for_tests`
 - `ai_orchestrator/router.py` — `TelegramWebhookBody`

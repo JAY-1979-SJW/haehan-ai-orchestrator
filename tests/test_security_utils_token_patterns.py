@@ -1,8 +1,8 @@
-"""orchestrator_v1.core.security_utils 값-패턴 토큰 마스킹 (키 이름 없이 값만으로 드러나는 발급 토큰)."""
+"""ai_orchestrator.core.security_utils 값-패턴 토큰 마스킹 (키 이름 없이 값만으로 드러나는 발급 토큰)."""
 
 from __future__ import annotations
 
-from orchestrator_v1.core.security_utils import safe_preview
+from ai_orchestrator.core.security_utils import safe_preview
 
 
 def test_openai_key_masked():

@@ -15,7 +15,8 @@ from typing import Any
 from ai_orchestrator.paths import repo_root
 from scripts.naver.mail.imap import attachments as att
 from scripts.naver.mail.imap import html_sanitize as hs
-from scripts.naver.mail.imap import mailbox, reader, sender
+from scripts.naver.mail.imap import imap_mailbox as mailbox
+from scripts.naver.mail.imap import reader, sender
 
 from ai_orchestrator.connectors.naver_mail import draft_policy as policy
 from ai_orchestrator.connectors.naver_mail import draft_store as store

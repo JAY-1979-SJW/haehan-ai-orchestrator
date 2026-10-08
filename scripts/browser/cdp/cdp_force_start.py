@@ -112,9 +112,9 @@ def _sanitize_prefs() -> None:
 
 
 def _start_watch() -> None:
-    """탭 생성·이동 감시 로그(scripts/ops/browser_watch.py) 기동 — 실패해도 브라우저 시작은 막지 않는다."""
+    """탭 생성·이동 감시 로그(scripts/browser/cdp/browser_watch.py) 기동 — 실패해도 브라우저 시작은 막지 않는다."""
     try:
-        from scripts.ops import browser_watch
+        from scripts.browser.cdp import browser_watch
 
         print(f"  탭 감시 로그: {'시작' if browser_watch.start() else '이미 실행 중'}")
     except Exception as e:  # noqa: BLE001 - 감시는 부가 기능, 실패는 안내만
@@ -123,7 +123,7 @@ def _start_watch() -> None:
 
 def _stop_watch() -> None:
     try:
-        from scripts.ops import browser_watch
+        from scripts.browser.cdp import browser_watch
 
         if browser_watch.stop():
             print("✓ 탭 감시 로그 종료")

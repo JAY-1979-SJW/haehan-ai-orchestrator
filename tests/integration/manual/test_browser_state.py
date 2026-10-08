@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """현재 브라우저 상태 진단."""
 
-from ai_orchestrator.local_agent.browser.agent import BrowserAgent
-from ai_orchestrator.local_agent.browser.cdp_session_manager import get_cdp_cookies, get_logged_in_sites, is_logged_in
+from scripts.browser.agent.agent import BrowserAgent
+from scripts.browser.agent.cdp_session_manager import get_cdp_cookies, get_logged_in_sites, is_logged_in
 
 print("=" * 60)
 print("1. 로그인 상태 확인")

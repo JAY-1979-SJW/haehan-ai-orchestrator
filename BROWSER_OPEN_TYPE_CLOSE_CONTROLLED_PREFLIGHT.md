@@ -350,8 +350,8 @@ def open_type_close_controlled(
 ```
 
 **구현 대상 파일**:
-- browser_tool/backends/worker_backend.py (actual execution)
-- browser_tool/backends/mock_backend.py (dry_run)
+- browser_tool/worker_backend.py (actual execution)
+- browser_tool/mock_backend.py (dry_run)
 - browser_tool/policy.py (unblock action)
 - local_agent_redaction.py (response allowlist)
 - local_agent_risk_policy.py (risk=medium 확인)

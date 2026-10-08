@@ -64,7 +64,7 @@ def _cmd_session_check() -> None:
         print("[OK] 로그인 상태 정상")
     else:
         print("[X] 로그인 필요")
-        print("  python scripts/browser/cdp/cdp_client.py naver login")
+        print("  python scripts/entry/cdp_cli.py naver login")
 
     print("=" * 60)
 
@@ -76,7 +76,7 @@ def _cmd_login() -> None:
     CDP 데몬이 꺼져 있으면 자동 시작 후 연결.
     """
     from scripts.browser.page.web_connector import browser_session  # noqa: I001 - 이동 전부터 있던 미정렬 import(동작 변경 없음)
-    from scripts.auth.login_session import is_logged_in
+    from scripts.site_engine.login_session import is_logged_in
     from scripts.auth.login_detector import monitor_for_login
     from scripts.naver.browser_gate import require_naver_browser
 

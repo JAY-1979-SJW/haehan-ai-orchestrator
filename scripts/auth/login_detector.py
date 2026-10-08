@@ -764,3 +764,27 @@ def wait_for_login_generic(page, max_wait_s: int = 600, poll_interval: float = 3
         time.sleep(poll_interval)
 
     return {**detect_login_state(page), "timeout": True, "elapsed_s": int(time.time() - start)}
+
+
+def manual_only_login(page, *, site: str, is_logged_in, open_login_page, log) -> dict[str, Any]:
+    """수동 로그인 전용 사이트(OTP·SMS 등 필수) 공용 login 흐름.
+
+    gabia/kakao auth.login 이 똑같이 복사해 쓰던 본문을 한 곳으로 모았다.
+    이미 로그인됐으면 기존 세션 재사용 결과를, 아니면 로그인 페이지로 이동(open_login_page — 실패 처리는
+    각 사이트 모듈이 함)한 뒤 monitor_for_login 으로 감지하라는 수동 대기 결과를 돌려준다.
+    로그는 호출 모듈의 logger(log)로 "<site>: ..." 형식 그대로 남긴다.
+    """
+    if is_logged_in(page):
+        log.info("%s: 이미 로그인됨", site)
+        return {"ok": True, "reason": "기존 세션 재사용", "user": "", "needs_manual": False}
+
+    open_login_page(page)
+
+    log.info("%s: 수동 로그인 대기 (최대 5분)", site)
+    return {
+        "ok": False,
+        "reason": "manual_login_required",
+        "user": "",
+        "needs_manual": True,
+        "monitor": monitor_for_login,
+    }

@@ -332,7 +332,7 @@ def main() -> None:
 
     uid, pwd = _get_creds()
     if not uid or not pwd:
-        print("ERROR: 하나팩스 자격증명 없음. python scripts/browser/cdp/cdp_client.py cred set hanafax")
+        print("ERROR: 하나팩스 자격증명 없음. python scripts/entry/cdp_cli.py cred set hanafax")
         sys.exit(1)
 
     batches_to_run: list[int] = []

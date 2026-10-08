@@ -44,9 +44,9 @@ def test_domain_enum_no_conflict_with_scripts_schemas():
 
 
 def test_domain_enum_no_conflict_with_site_engine_execution_location():
-    """scripts/site_engine/types.py ExecutionLocation과 별개 공존."""
+    """scripts/site_engine/site_types.py ExecutionLocation과 별개 공존."""
     from ai_orchestrator.domain.enums import ExecutionLocation as OrchestratorEL
-    from scripts.site_engine.types import ExecutionLocation as SiteEngineEL
+    from scripts.site_engine.site_types import ExecutionLocation as SiteEngineEL
 
     assert OrchestratorEL is not SiteEngineEL
     # ai_orchestrator 5값, site_engine 3값 — 별개 도메인
@@ -150,9 +150,9 @@ def test_router_imports_clean():
     router.py 자체는 server.py와 순환 의존이 있으므로 직접 import하지 않는다.
     TestClient(app) 경로로 서버 전체 기동이 검증된다 (test_health_endpoint_unchanged).
     """
-    import ai_orchestrator.local_agent_router as lar
-    import ai_orchestrator.routers.admin_ui_router as aur
+    import ai_orchestrator.agent_hub.router.root as lar
     import ai_orchestrator.auth.auth_router as auth
+    import ai_orchestrator.routers.admin_ui_router as aur
     import ai_orchestrator.web_task.web_task_router as wtr
 
     assert lar.local_agent_router is not None
@@ -162,7 +162,9 @@ def test_router_imports_clean():
 
 
 def test_approval_record_router_imports_clean():
-    from ai_orchestrator.browser_tool.approval_record_router import approval_record_router
+    from ai_orchestrator.browser_tool.approval_record_router import (
+        approval_record_router,
+    )
 
     assert approval_record_router is not None
 

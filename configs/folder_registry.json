@@ -1,6 +1,6 @@
 {
  "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
- "count": 345,
+ "count": 337,
  "folders": [
   {
    "path": ".",
@@ -995,14 +995,6 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
-   "path": "ai_orchestrator/browser_tool/backends",
-   "purpose": "ai_orchestrator/browser_tool 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
    "path": "ai_orchestrator/browser_tool/worker",
    "purpose": "브라우저 워커(별도 컨테이너 앱, T4 때 재정리)",
    "kind": "앱",
@@ -1235,46 +1227,6 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2) — 목표 폴더(아직 비어 있을 수 있음)"
   },
   {
-   "path": "ai_orchestrator/local_agent",
-   "purpose": "PC 실행 에이전트 (ai_orchestrator 하위)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "ai_orchestrator/local_agent/actions",
-   "purpose": "ai_orchestrator/local_agent 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "ai_orchestrator/local_agent/browser",
-   "purpose": "ai_orchestrator/local_agent 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "ai_orchestrator/local_agent/browser/_js",
-   "purpose": "ai_orchestrator/local_agent/browser 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "ai_orchestrator/local_agent/browser/mixins",
-   "purpose": "ai_orchestrator/local_agent/browser 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
    "path": "ai_orchestrator/marketing",
    "purpose": "마케팅 운영실(F14)",
    "kind": "기능",
@@ -1374,14 +1326,6 @@
    "path": "ai_orchestrator/sites/adapters",
    "purpose": "어댑터(정리 대상) (ai_orchestrator/sites 하위)",
    "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "ai_orchestrator/sites/connectors",
-   "purpose": "외부 서비스 연결 API (ai_orchestrator/sites 하위)",
-   "kind": "도구",
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
@@ -1795,6 +1739,14 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "scripts/entry",
+   "purpose": "프로세스 시작점(CLI cdp_cli·site_access/site_crawl 직접 실행 main)과 사이트 로그인 조합(site_login_registry.install) — 모든 사이트 모듈을 아는 맨 위 층이라 사이트 모듈에서 도달 불가능해야 순환이 생기지 않는다",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(site_registry 조합 위치 승인, 지휘창 경유 2026-10-08)"
+  },
+  {
    "path": "scripts/eum",
    "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "도구",
@@ -1889,6 +1841,15 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/google/common",
+   "purpose": "구글 도구 공용 말단 — router 와 cloud·workspace·youtube 하위가 함께 쓰는 탭 로직·요약·보고서 입출력·표면·워크플로 카탈로그",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님",
+   "reason": "router↔cloud/workspace/youtube 부모-자식 모듈 순환 3건 해소 — 하위가 쓰는 공용 모듈을 부모가 아닌 독립 폴더로 빼 router→하위→common 을 일방향으로(scripts/common 은 구글 전용 로직을 둘 곳이 아님)"
   },
   {
    "path": "scripts/google/developer",
@@ -2011,38 +1972,6 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
-   "path": "scripts/local_agent",
-   "purpose": "PC 실행 에이전트 (scripts 하위)",
-   "kind": "도구",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "scripts/local_agent/g2b",
-   "purpose": "scripts/local_agent 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "도구",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "scripts/local_agent/gov",
-   "purpose": "scripts/local_agent 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "도구",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "scripts/local_agent/naver",
-   "purpose": "scripts/local_agent 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "도구",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
    "path": "scripts/mk_catalog",
    "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "도구",
@@ -2057,6 +1986,14 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/agent_mixins",
+   "purpose": "엔진(scripts/browser/agent) 이 다중상속으로 합성하는 네이버 블로그·카페·메일 믹스인 — 도구 스크립트(blog·cafe)와 다른 모듈로 두어 엔진↔도구 순환을 끊는다",
+   "kind": "도구",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(지휘창 전달, T4 순환 해소)"
   },
   {
    "path": "scripts/naver/automation",
@@ -2076,14 +2013,6 @@
   },
   {
    "path": "scripts/naver/automation/integration",
-   "purpose": "scripts/naver/automation 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "도구",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
-   "path": "scripts/naver/automation/platform",
    "purpose": "scripts/naver/automation 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
    "kind": "도구",
    "status": "approved",
@@ -2225,6 +2154,14 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
+  },
+  {
+   "path": "scripts/naver/common",
+   "purpose": "네이버 하위 도구(blog·cafe·smartstore·mail)가 함께 쓰는 공용 모듈",
+   "kind": "공용 기반",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님"
   },
   {
    "path": "scripts/naver/mail",

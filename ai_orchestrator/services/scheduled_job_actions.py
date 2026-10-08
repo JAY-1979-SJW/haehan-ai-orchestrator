@@ -1,7 +1,7 @@
 """L6 — 예약 작업 허용 목록. 이 목록에 있는 작업만 예약·실행할 수 있다(저장된 문자열을 import 해 실행하지 않는다).
 
 기준서: docs/specs/2026-10-01_user_scheduled_jobs.md
-위험 등급은 `local_agent.action_risk_policy.classify_action(risk_action)` 으로 판정한다.
+위험 등급은 `contracts.action_risk_policy.classify_action(risk_action)` 으로 판정한다.
 `USER_DELEGATED`(발행·전송) 작업은 예약 시각마다 사용자가 승인해야 실행된다(services/scheduled_job_service).
 """
 
@@ -11,7 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from ai_orchestrator.local_agent.action_risk_policy import GRADE_USER_DELEGATED, classify_action
+from ai_orchestrator.contracts.action_risk_policy import GRADE_USER_DELEGATED, classify_action
 
 DEFAULT_BLOG_TARGET = "skyjwsin"
 

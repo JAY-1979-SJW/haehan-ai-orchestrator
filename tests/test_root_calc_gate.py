@@ -96,21 +96,21 @@ def test_sys_path_bootstrap_allowed_in_scripts_only():
 
 def test_make_shim_bootstrap_marker_is_exempt_everywhere(tmp_path):
     (tmp_path / "scripts" / "instagram").mkdir(parents=True)
-    (tmp_path / "scripts" / "instagram" / "ig_batch.py").write_text(
+    (tmp_path / "scripts" / "instagram" / "demo_batch.py").write_text(
         "if __name__ == '__main__':\n    pass\n", encoding="utf-8"
     )
     make_shim(
-        "ai_orchestrator/tools/ig_batch.py", "scripts/instagram/ig_batch.py", tmp_path
+        "ai_orchestrator/tools/demo_batch.py", "scripts/instagram/demo_batch.py", tmp_path
     )  # 폴더 깊이 2 → parents[2]
-    body = (tmp_path / "ai_orchestrator" / "tools" / "ig_batch.py").read_text(encoding="utf-8")
+    body = (tmp_path / "ai_orchestrator" / "tools" / "demo_batch.py").read_text(encoding="utf-8")
     assert "parents[2]" in body
     lines = body.splitlines()
     added = [(i + 1, ln) for i, ln in enumerate(lines)]
-    assert not gate.check_file("ai_orchestrator/tools/ig_batch.py", added, body, CFG)
+    assert not gate.check_file("ai_orchestrator/tools/demo_batch.py", added, body, CFG)
     # 마커를 지우면 같은 줄이 차단된다(마커가 예외의 근거라는 대조)
     stripped = body.replace("haehan-root-bootstrap", "removed")
     assert gate.check_file(
-        "ai_orchestrator/tools/ig_batch.py", [(i + 1, ln) for i, ln in enumerate(stripped.splitlines())], stripped, CFG
+        "ai_orchestrator/tools/demo_batch.py", [(i + 1, ln) for i, ln in enumerate(stripped.splitlines())], stripped, CFG
     )
 
 

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from scripts.naver import content
+from scripts.naver.common import content
 
 
 def _surface_report():

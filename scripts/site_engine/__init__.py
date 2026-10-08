@@ -1,4 +1,7 @@
-"""scripts.site_engine — 범용 사이트 자동화 엔진 기반."""
+"""scripts.site_engine — 범용 사이트 자동화 엔진 기반.
+
+브라우저 어댑터(adapters/browser.py)는 여기서 다시 내보내지 않는다 — 어댑터가 엔진 타입을 import 하므로 재수출하면
+site_engine ↔ site_engine/adapters 순환이 된다. 쓰는 쪽은 scripts.site_engine.adapters.browser 를 직접 import 한다."""
 
 from scripts.site_engine.action_planner import (
     ActionPlan,
@@ -10,17 +13,6 @@ from scripts.site_engine.action_planner import (
     build_action_plan,
     require_gate_for_sensitive_action,
     summarize_action_plan,
-)
-from scripts.site_engine.adapters.browser import (
-    BrowserActionKind,
-    BrowserActionPlan,
-    BrowserActionResult,
-    build_click_plan,
-    build_download_plan,
-    build_input_plan,
-    build_readonly_navigation_plan,
-    build_submit_plan,
-    build_upload_plan,
 )
 from scripts.site_engine.audit import (
     SiteEngineAuditEvent,
@@ -56,7 +48,7 @@ from scripts.site_engine.form_resolver import (
 )
 from scripts.site_engine.profiles import SiteActionPolicy, SiteProfile
 from scripts.site_engine.registry import SiteProfileRegistry, get_default_registry
-from scripts.site_engine.types import (
+from scripts.site_engine.site_types import (
     ExecutionLocation,
     GateDecision,
     SiteActionKind,
@@ -91,9 +83,6 @@ __all__ = [
     "ActionPlanStatus",
     "ActionPlanStep",
     "ActionSensitivity",
-    "BrowserActionKind",
-    "BrowserActionPlan",
-    "BrowserActionResult",
     "CapabilityDetectionInput",
     "CapabilityDetectionResult",
     "ExecutionDecision",
@@ -128,12 +117,6 @@ __all__ = [
     "block_for_sensitive_credential_action",
     "build_action_plan",
     "build_audit_event",
-    "build_click_plan",
-    "build_download_plan",
-    "build_input_plan",
-    "build_readonly_navigation_plan",
-    "build_submit_plan",
-    "build_upload_plan",
     "build_workflow_plan",
     "classify_field_sensitivity",
     "detect_capabilities_from_snapshot",

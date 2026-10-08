@@ -50,7 +50,7 @@ EUM은 조회 업무와 상태 변경 업무를 분리한다.
 
 ```
 사용자 명령
-  -> scripts/cdp_client.py eum <workflow>
+  -> scripts/entry/cdp_cli.py eum <workflow>
   -> scripts/eum/router.py
   -> gate.check()
   -> get_page()로 기존 브라우저/탭 재사용
@@ -107,20 +107,20 @@ EUM은 조회 업무와 상태 변경 업무를 분리한다.
 직접 명령:
 
 ```bash
-python scripts/cdp_client.py eum registration <project_code> <device_id> [location]
-python scripts/cdp_client.py eum deregistration <device_id> [date]
+python scripts/entry/cdp_cli.py eum registration <project_code> <device_id> [location]
+python scripts/entry/cdp_cli.py eum deregistration <device_id> [date]
 ```
 
 공통 work 명령:
 
 ```bash
-python scripts/cdp_client.py eum work registration <project_code> <device_id> <location> --dry-run
-python scripts/cdp_client.py eum work registration <project_code> <device_id> <location> --prepare
-python scripts/cdp_client.py eum work registration <project_code> <device_id> <location> --submit
+python scripts/entry/cdp_cli.py eum work registration <project_code> <device_id> <location> --dry-run
+python scripts/entry/cdp_cli.py eum work registration <project_code> <device_id> <location> --prepare
+python scripts/entry/cdp_cli.py eum work registration <project_code> <device_id> <location> --submit
 
-python scripts/cdp_client.py eum work deregistration <device_id> [date] --dry-run
-python scripts/cdp_client.py eum work deregistration <device_id> [date] --prepare
-python scripts/cdp_client.py eum work deregistration <device_id> [date] --submit
+python scripts/entry/cdp_cli.py eum work deregistration <device_id> [date] --dry-run
+python scripts/entry/cdp_cli.py eum work deregistration <device_id> [date] --prepare
+python scripts/entry/cdp_cli.py eum work deregistration <device_id> [date] --submit
 ```
 
 정책:
@@ -146,7 +146,7 @@ python scripts/cdp_client.py eum work deregistration <device_id> [date] --submit
     "title": "Human readable title",
     "code": "PAGECODE",
     "risk": "read" | "approval",
-    "command": "python scripts/cdp_client.py <site> ...",
+    "command": "python scripts/entry/cdp_cli.py <site> ...",
     "auto_execute": True | False,
 }
 ```

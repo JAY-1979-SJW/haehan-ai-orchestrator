@@ -88,12 +88,13 @@ def test_workspace_catalog_only_wrappers_do_not_execute_live_actions() -> None:
 
 def test_workspace_legacy_wrappers_delegate(monkeypatch) -> None:
     calls: list[tuple[str, str, list[str]]] = []
+    wrapper_modules = {"calendar": "calendar_tasks"}  # 표준 calendar 가림 방지 이름(A005)
     wrappers = {
-        "gmail": ("scripts.google.gmail", "list"),
-        "drive": ("scripts.google.drive", "list"),
-        "calendar": ("scripts.google.calendar", "today"),
-        "docs": ("scripts.google.docs", "recent"),
-        "sheets": ("scripts.google.sheets", "recent"),
+        "gmail": ("scripts.google.common.gmail", "list"),
+        "drive": ("scripts.google.common.drive", "list"),
+        "calendar": ("scripts.google.common.calendar_tasks", "today"),
+        "docs": ("scripts.google.common.docs", "recent"),
+        "sheets": ("scripts.google.common.sheets", "recent"),
     }
 
     for service, (legacy_module_name, expected_default) in wrappers.items():
@@ -103,6 +104,6 @@ def test_workspace_legacy_wrappers_delegate(monkeypatch) -> None:
             "run",
             lambda task, args, service=service: calls.append((service, task, args)),
         )
-        wrapper = import_module(f"scripts.google.workspace.{service}")
+        wrapper = import_module(f"scripts.google.workspace.{wrapper_modules.get(service, service)}")
         wrapper.run("", ["arg1"])
         assert calls[-1] == (service, expected_default, ["arg1"])

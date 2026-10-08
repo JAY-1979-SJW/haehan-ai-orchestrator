@@ -7,7 +7,7 @@ from datetime import datetime
 import pytest
 
 from ai_orchestrator.connectors.naver_auth import session_guard as G
-from scripts.naver import auth as A
+from scripts.naver.common import auth as A
 from scripts.naver.blog.automation import account_probe as P
 
 NOW = datetime(2026, 10, 1, 9, 0, 0)

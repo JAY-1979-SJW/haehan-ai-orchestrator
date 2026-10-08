@@ -1,6 +1,6 @@
 """tests/test_security_installer_candidate_finder_20260508.py"""
 
-from ai_orchestrator.local_agent.security_installer_candidate_finder import (
+from local_agent.runtime.security_installer_candidate_finder import (
     find_installer_candidates,
     validate_installer_url,
 )

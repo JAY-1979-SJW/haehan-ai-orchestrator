@@ -1,14 +1,14 @@
 """Router for Google Workspace wrappers."""
 from __future__ import annotations
 
-from . import calendar, chat, contacts, docs, drive, forms, gmail, keep, meet, sheets, slides, tasks
+from . import calendar_tasks, chat, contacts, docs, drive, forms, gmail, keep, meet, sheets, slides, tasks
 from .registry import workspace_summary
 
 _RUNNERS = {
     "gmail": gmail.run,
     "mail": gmail.run,
     "drive": drive.run,
-    "calendar": calendar.run,
+    "calendar": calendar_tasks.run,
     "docs": docs.run,
     "sheets": sheets.run,
     "slides": slides.run,

@@ -6,12 +6,12 @@ from collections.abc import Mapping, Sequence
 
 import pytest
 
-from scripts.gabia.profile import GABIA_PROFILE
-from scripts.google.profile import GOOGLE_PROFILE
-from scripts.hiworks.profile import HIWORKS_PROFILE
+from scripts.gabia.site_profile import GABIA_PROFILE
+from scripts.google.site_profile import GOOGLE_PROFILE
+from scripts.hiworks.site_profile import HIWORKS_PROFILE
 from scripts.site_engine.profiles import SiteActionPolicy, SiteProfile
-from scripts.site_engine.types import GateDecision, SiteCapability
-from scripts.youtube.profile import YOUTUBE_PROFILE
+from scripts.site_engine.site_types import GateDecision, SiteCapability
+from scripts.youtube.site_profile import YOUTUBE_PROFILE
 
 _CAPS = list(SiteCapability)
 _READ = _CAPS[0]

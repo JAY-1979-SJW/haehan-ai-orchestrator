@@ -19,16 +19,16 @@ class ConnectionVerdict:
 
 # 핵심 서버 모듈/심볼
 _SERVER_REQUIRED = [
-    ("ai_orchestrator.local_agent_router", "local_agent_router"),
+    ("ai_orchestrator.agent_hub.router.root", "local_agent_router"),
     # 라우터 분할 후 등록 핸들러는 registration leaf 모듈에 있다(local_agent_router 는 조립만 함)
-    ("ai_orchestrator.local_agent_router_registration", "register_local_agent"),
-    ("ai_orchestrator.local_agent_router_registration", "register_with_code"),
-    ("ai_orchestrator.local_agent_registry", "register_agent"),
-    ("ai_orchestrator.local_agent_registry", "authenticate_agent"),
-    ("ai_orchestrator.local_agent_registry", "set_agent_connected"),
-    ("ai_orchestrator.local_agent_registry", "set_agent_last_seen"),
-    ("ai_orchestrator.local_agent_registry", "set_agent_disconnected"),
-    ("ai_orchestrator.local_agent_registry", "get_agent_status"),
+    ("ai_orchestrator.agent_hub.router.registration", "register_local_agent"),
+    ("ai_orchestrator.agent_hub.router.registration", "register_with_code"),
+    ("ai_orchestrator.agent_hub.registry.facade", "register_agent"),
+    ("ai_orchestrator.agent_hub.registry.facade", "authenticate_agent"),
+    ("ai_orchestrator.agent_hub.registry.facade", "set_agent_connected"),
+    ("ai_orchestrator.agent_hub.registry.facade", "set_agent_last_seen"),
+    ("ai_orchestrator.agent_hub.registry.facade", "set_agent_disconnected"),
+    ("ai_orchestrator.agent_hub.registry.facade", "get_agent_status"),
     ("ai_orchestrator.auth.registration_codes", "issue_code"),
     ("ai_orchestrator.auth.registration_codes", "consume_code"),
 ]

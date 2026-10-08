@@ -1,4 +1,4 @@
-from ai_orchestrator.local_agent.browser import approval_server
+from scripts.browser.agent import approval_server
 
 
 def test_local_ui_fallback_disabled_by_default(monkeypatch):
@@ -19,7 +19,7 @@ def test_request_approval_uses_api_by_default(monkeypatch):
         assert kwargs["label"] == "test"
         return Result()
 
-    import ai_orchestrator.local_agent.browser.approval_api_client as api_client
+    import scripts.browser.agent.approval_api_client as api_client
     monkeypatch.setattr(api_client, "request_approval_via_api", fake_api)
 
     assert approval_server.request_approval("submit", "test") is True
