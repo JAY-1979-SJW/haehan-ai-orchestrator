@@ -14,10 +14,6 @@ import sys
 import threading
 import time
 
-import uvicorn
-
-from ai_orchestrator import asgi
-
 
 def _parent_alive(pid: int) -> bool:
     if sys.platform == "win32":
@@ -63,8 +59,16 @@ def start_parent_watchdog(poll_seconds: float = 2.0, on_gone=lambda: os._exit(0)
 
 
 def main() -> None:
+    # uvicorn·asgi 는 서버를 띄울 때만 불러온다 — 이 모듈의 start_parent_watchdog 를 가벼운 다른 번들 진입점
+    # (scripts/local_agent_ai_entry.py)도 재사용하므로, 모듈 import 만으로 서버 전체가 딸려 오면 안 된다.
+    import uvicorn
+
+    from ai_orchestrator import asgi
+    from ai_orchestrator.logging_setup import uvicorn_log_config
+
     start_parent_watchdog()
-    uvicorn.run(asgi.app, host=asgi.APP_HOST, port=asgi.APP_PORT, reload=False)
+    # 접근 로그의 ?license= 등 비밀값은 fastapi.log 에 남기 전에 가린다
+    uvicorn.run(asgi.app, host=asgi.APP_HOST, port=asgi.APP_PORT, reload=False, log_config=uvicorn_log_config())
 
 
 if __name__ == "__main__":

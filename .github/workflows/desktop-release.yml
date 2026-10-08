@@ -85,6 +85,16 @@ jobs:
         shell: bash
         run: python -m PyInstaller local-agent.spec --noconfirm --clean --distpath dist
 
+      - name: PyInstaller — local-agent-ai (AI 작업 콘솔 로컬 에이전트)
+        # local_agent/agent.py(--auto-connect, /api/v1/local-agents/ws). 설치 앱의 AI 작업 콘솔이 "연결된 로컬 에이전트가 없습니다"(503)가
+        # 되던 결함(2026-10-08)의 원인 — 이 에이전트가 설치본에 없었다. 위 local-agent(스마트스토어 전용 옛 에이전트)와는 별개다.
+        shell: bash
+        run: |
+          python -m PyInstaller local-agent-ai.spec --noconfirm --clean --distpath dist
+          # 번들된 exe 가 실제로 떠서 Windows 자격증명 저장소(keyring)를 쓸 수 있는지 — 빠지면 등록 토큰을 못 저장해 영원히 미연결
+          HAEHAN_AGENT_DESKTOP_CONFIG="$RUNNER_TEMP/agent-smoke.json" dist/local-agent-ai/local-agent-ai.exe --status --server http://127.0.0.1:8401 | tee "$RUNNER_TEMP/agent-status.json"
+          python -c "import json,sys; d=json.load(open(sys.argv[1], encoding='utf-8')); assert d['keyring_usable'] is True, d" "$RUNNER_TEMP/agent-status.json"
+
       - name: PyInstaller — haehan-mcp (Claude Desktop MCP 연동)
         shell: bash
         run: python -m PyInstaller mcp-server.spec --noconfirm --clean --distpath dist
@@ -150,7 +160,7 @@ jobs:
           HAEHAN_BUILD_VERSION: ${{ steps.buildinfo.outputs.version }}
         run: npx electron-builder --win dir --publish never -c.extraMetadata.version=${{ steps.buildinfo.outputs.pkg_version }}
 
-      - name: E2E (Electron, 빌드 산출물) — app/user_flow/fresh_install_signup
+      - name: E2E (Electron, 빌드 산출물) — app/user_flow/fresh_install_signup/ai_agent_connected
         # 기존 e2e-electron/*.spec.ts·playwright.electron.config.ts 재사용(신규 프레임워크 없음).
         # 제외: diagnose.spec.ts(mail/google 조회 버튼이 실제 외부 OAuth 계정을 침),
         # agent_employee_eval.spec.ts(외부 사이트 books.toscrape.com·cafe.naver.com 접속,
@@ -164,7 +174,7 @@ jobs:
           HAEHAN_E2E_SKIP_PAID_API: "1"
           # Playwright 의 Electron 실행 대기 과정을 로그로 남긴다(앱은 떴는데 launch 가 시간 초과되는 원인 확정용)
           DEBUG: pw:browser*,pw:electron*
-        run: npx playwright test -c playwright.electron.config.ts app user_flow fresh_install_signup
+        run: npx playwright test -c playwright.electron.config.ts app user_flow fresh_install_signup ai_agent_connected
 
       - name: Collect app logs (시작 단계 시간·서버·UI 서버 로그)
         # 앱 로그는 userData\logs 에 남는다(기본 %APPDATA%\Haehan AI, 새 PC 점검은 임시 폴더). 실패 원인을 확정하려면 이 로그가 필요하다.

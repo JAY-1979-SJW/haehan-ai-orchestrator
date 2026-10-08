@@ -1,7 +1,8 @@
 """로컬 CDP 에이전트 WebSocket 브릿지.
 
 흐름:
-  로컬 에이전트 → WS /smartstore/agent/ws?license=KEY
+  로컬 에이전트 → WS /smartstore/agent/ws  (키는 X-License-Key 헤더 — URL·접근 로그에 남지 않게.
+                  옛 에이전트의 ?license=KEY 쿼리도 호환용으로 받는다)
   서버 chat.py  → call_local_tool(license_key, tool, inputs)
                → WS로 명령 전송 → 에이전트 실행 → 결과 반환
 """
@@ -12,7 +13,7 @@ import asyncio
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Header, Query, WebSocket, WebSocketDisconnect
 
 from .license import touch, verify
 
@@ -33,7 +34,12 @@ def get_connected_agents() -> list[str]:
 
 
 @router.websocket("/agent/ws")
-async def agent_ws(ws: WebSocket, license: str = Query(...)):
+async def agent_ws(
+    ws: WebSocket,
+    license: str | None = Query(None),
+    x_license_key: str | None = Header(None),
+):
+    license = x_license_key or license or ""
     ok, rec, reason = verify(license)
     if not ok:
         await ws.close(code=4001, reason=reason)

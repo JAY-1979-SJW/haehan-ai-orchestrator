@@ -15,7 +15,7 @@ from pathlib import Path
 from ai_orchestrator.paths import repo_root
 
 ROOT = repo_root()
-SPECS = ("haehan-server.spec", "local-agent.spec", "mcp-server.spec")
+SPECS = ("haehan-server.spec", "local-agent.spec", "local-agent-ai.spec", "mcp-server.spec")
 
 
 def _entry_files(spec: Path) -> list[Path]:
@@ -49,3 +49,15 @@ def test_next_standalone_node_modules_is_bundled():
     pkg = json.loads((ROOT / "admin-web" / "electron" / "package.json").read_text(encoding="utf-8"))
     pairs = {(r.get("from"), r.get("to")) for r in pkg["build"]["extraResources"]}
     assert ("../.next/standalone/node_modules", "nextjs/node_modules") in pairs
+
+
+def test_ai_console_agent_is_bundled_and_started():
+    """2026-10-08 결함: 설치 앱이 AI 작업 콘솔 에이전트(local_agent.agent)를 번들·기동하지 않아 콘솔이 항상 미연결(503)이었다."""
+    pkg = json.loads((ROOT / "admin-web" / "electron" / "package.json").read_text(encoding="utf-8"))
+    pairs = {(r.get("from"), r.get("to")) for r in pkg["build"]["extraResources"]}
+    assert ("../../dist/local-agent-ai", "local-agent-ai") in pairs
+    agent_js = (ROOT / "admin-web" / "electron" / "lib" / "agent.js").read_text(encoding="utf-8")
+    assert "local-agent-ai.exe" in agent_js
+    assert "미지원" not in agent_js  # 패키징 빌드에서 조용히 건너뛰는 분기가 되살아나지 않게
+    wf = (ROOT / ".github" / "workflows" / "desktop-release.yml").read_text(encoding="utf-8")
+    assert "local-agent-ai.spec" in wf

@@ -425,12 +425,12 @@ app.on("before-quit", (event) => {
   appQuitting = true;
   if (cdpWatchdogTimer) clearInterval(cdpWatchdogTimer);
   setQuiting(true);
-  stopAgent();
+  const agentStopped = stopAgent();
   stopCdpBrowser();
   // 두 서버가 실제로 끝날 때까지 기다린 뒤 종료한다(고정 대기 대신) — 서버가 userData 파일·포트를 쥔 채 남지 않게.
   // 한쪽이 멈춰도 앱이 영원히 안 끝나지 않도록 상한을 둔다.
   Promise.race([
-    Promise.all([stopFastAPIServer(), stopNextServer()]),
+    Promise.all([stopFastAPIServer(), stopNextServer(), agentStopped]),
     new Promise((r) => setTimeout(r, 8000)),
   ]).finally(() => app.quit());
 });

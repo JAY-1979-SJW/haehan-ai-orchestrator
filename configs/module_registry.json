@@ -22680,6 +22680,30 @@
    "reason": "admin-web",
    "confidence": "high",
    "source": "rule"
+  },
+  "admin-web/electron/e2e-electron/ai_agent_connected.spec.ts": {
+   "layer": "L9",
+   "role": "ui",
+   "domain": "common",
+   "reason": "admin-web",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/local_agent_ai_entry.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "local_agent",
+   "reason": "데스크톱 번들(PyInstaller local-agent-ai) 진입점 — local_agent.agent 를 불러 실행(desktop_entry 와 같은 진입점 계층)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tests/test_log_secret_masking.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

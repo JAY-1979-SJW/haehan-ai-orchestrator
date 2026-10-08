@@ -1,4 +1,9 @@
 {
+ "scripts/local_agent_ai_entry.py": {
+  "layer": "L8",
+  "role": "api",
+  "reason": "데스크톱 번들(PyInstaller local-agent-ai) 진입점 — local_agent.agent 를 불러 실행(desktop_entry 와 같은 진입점 계층)"
+ },
  "ai_orchestrator/server/desktop_entry.py": {
   "layer": "L8",
   "role": "api",

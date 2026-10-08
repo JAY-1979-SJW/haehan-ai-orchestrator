@@ -150,8 +150,8 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8401/api/v1/users/<user_id
 2. Python 3.14, Node 20 설정(npm 캐시)
 3. `admin-web`·`admin-web/electron` 각각 `npm ci`
 4. `npm run build`(admin-web) — `next.config`의 `output: "standalone"`으로 `.next/standalone` 생성
-5. PyInstaller 3종 — 저장소 루트의 `haehan-server.spec`·`local-agent.spec`·`mcp-server.spec`로
-   `dist/haehan-server`·`dist/local-agent`·`dist/haehan-mcp` 생성
+5. PyInstaller 4종 — 저장소 루트의 `haehan-server.spec`·`local-agent.spec`·`local-agent-ai.spec`·`mcp-server.spec`로
+   `dist/haehan-server`·`dist/local-agent`·`dist/local-agent-ai`(AI 작업 콘솔 에이전트, keyring 스모크 포함)·`dist/haehan-mcp` 생성
 6. `build-info.json` 작성(`admin-web/electron/build-info.json` — git_sha·build_time·version)
 7. `electron-builder --win portable` — `dist-electron-new/HaehanAI-<version>-portable.exe`
 8. SHA256 체크섬(`checksums.txt`)

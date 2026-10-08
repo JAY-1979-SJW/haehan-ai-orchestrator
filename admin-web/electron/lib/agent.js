@@ -7,6 +7,7 @@ const path = require("path");
 const fs = require("fs");
 const { spawn, execSync } = require("child_process");
 const { FASTAPI_URL, getEnabledSites } = require("./config");
+const { writePid, clearPid, killPreviousFromPidFile, killTreeAndWait } = require("./pid_guard");
 
 let agentProc = null;
 let mcpAgentProc = null;
@@ -81,6 +82,52 @@ function startAgent(licenseKey) {
   startMcpAgent();
 }
 
+// 설치본: resources/local-agent-ai/local-agent-ai.exe (PyInstaller 번들 = local_agent/agent.py).
+// 2026-10-08 결함: 이 분기가 아무것도 띄우지 않고 건너뛰어져 설치 앱의 AI 작업 콘솔이 항상 "연결된 로컬 에이전트가 없습니다"(503)였다.
+// 서버와 같은 원칙 — 데이터는 userData 아래, 부모(앱)가 사라지면 스스로 종료(HAEHAN_PARENT_PID), PID 를 기록해 비정상 종료 뒤 남은 것을 다음 실행이 정리.
+function startPackagedMcpAgent() {
+  const exePath = path.join(process.resourcesPath, "local-agent-ai", "local-agent-ai.exe");
+  if (!fs.existsSync(exePath)) {
+    console.error("[mcp-agent] local-agent-ai.exe 없음:", exePath);
+    return;
+  }
+  const prev = killPreviousFromPidFile("mcp-agent");
+  if (prev.killed) console.log("[mcp-agent] 이전 실행의 에이전트를 정리했다 (PID %d)", prev.pid);
+
+  const dataRoot = app.getPath("userData");
+  const logDir = path.join(dataRoot, "logs");
+  const agentDir = path.join(dataRoot, "agent");
+  fs.mkdirSync(logDir, { recursive: true });
+  fs.mkdirSync(agentDir, { recursive: true });
+  const logStream = fs.createWriteStream(path.join(logDir, "local-agent-ai.log"), { flags: "a" });
+
+  console.log("[mcp-agent] 시작(auto-connect, 번들):", exePath);
+  const proc = spawn(exePath, ["--auto-connect", "--server", FASTAPI_URL], {
+    cwd: path.dirname(exePath),
+    detached: false,
+    windowsHide: true,
+    stdio: ["ignore", "pipe", "pipe"],
+    env: {
+      ...process.env,
+      HAEHAN_AGENT_WS_ENABLED: "true",
+      HAEHAN_AGENT_SERVER: FASTAPI_URL,
+      HAEHAN_PARENT_PID: String(process.pid), // 앱이 강제 종료돼도 에이전트가 고아로 남지 않게
+      HAEHAN_DATA_ROOT: dataRoot,
+      HAEHAN_DATA_DIR: path.join(dataRoot, "data"),
+      // 등록 정보(agent_id·서버 주소)는 이 userData 전용 — 다른 프로필/점검 실행과 섞이지 않게(토큰은 Windows 자격증명 저장소)
+      HAEHAN_AGENT_DESKTOP_CONFIG: path.join(agentDir, "config.json"),
+      HAEHAN_AGENT_TOKEN_DIR: path.join(agentDir, "tokens"),
+      PYTHONUTF8: "1",
+      PYTHONIOENCODING: "utf-8",
+    },
+  });
+  mcpAgentProc = proc;
+  writePid("mcp-agent", proc.pid, path.basename(exePath));
+  proc.stdout.pipe(logStream, { end: false });
+  proc.stderr.pipe(logStream, { end: false });
+  wireMcpAgentLifecycle(proc, () => { clearPid("mcp-agent", proc.pid); logStream.end(); });
+}
+
 // 2026-09-29 추가: 앱 내 "AI 상담"(run_claude_agent, MCP)이 실제 동작하려면
 // local_agent/agent.py(--auto-connect, /api/v1/local-agents/ws 대상)가 상시 연결돼
 // 있어야 한다. 이건 위 agentProc(scripts/local_agent.py, 스마트스토어 전용 구
@@ -94,10 +141,7 @@ function startMcpAgent() {
   mcpAgentStopRequested = false;
 
   if (app.isPackaged) {
-    // 패키징 배포판에는 아직 local_agent.agent 전용 번들이 없다(별도 exe 빌드 파이프라인
-    // 필요 — docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md §10 참고).
-    // 개발 모드에서만 자동 기동하고, 배포판은 다음 세션 후보로 남긴다.
-    console.log("[mcp-agent] 패키징 빌드는 아직 미지원 — 개발 모드에서만 자동 기동");
+    startPackagedMcpAgent();
     return;
   }
 
@@ -119,24 +163,27 @@ function startMcpAgent() {
 
   mcpAgentProc.stdout.on("data", (d) => console.log("[mcp-agent]", d.toString().trim()));
   mcpAgentProc.stderr.on("data", (d) => console.error("[mcp-agent]", d.toString().trim()));
+  wireMcpAgentLifecycle(mcpAgentProc, () => {});
+}
 
-  const spawnedProc = mcpAgentProc;
-  // 60초 이상 안 죽고 살아있으면 "안정적으로 떴다"로 보고 재시도 카운터 리셋 — 어쩌다 한 번
-  // 크래시가 이후의 진짜 영구 실패(파이썬 없음 등) 감지를 방해하지 않게 함.
+// 종료 감시·재기동(개발/설치본 공통). 60초 이상 살아 있으면 "안정적으로 떴다"로 보고 재시도 카운터를 리셋 —
+// 어쩌다 한 번 크래시가 이후의 진짜 영구 실패(파이썬/exe 없음 등) 감지를 방해하지 않게 한다.
+function wireMcpAgentLifecycle(proc, onExit) {
   const stableTimer = setTimeout(() => {
-    if (mcpAgentProc === spawnedProc) mcpAgentRestartCount = 0;
+    if (mcpAgentProc === proc) mcpAgentRestartCount = 0;
   }, 60000);
 
-  mcpAgentProc.on("exit", (code) => {
+  proc.on("exit", (code) => {
     clearTimeout(stableTimer);
+    onExit();
     console.log("[mcp-agent] 종료:", code);
-    mcpAgentProc = null;
+    if (mcpAgentProc === proc) mcpAgentProc = null;
 
     // 2026-09-30 추가: 이 프로세스가 죽어도 기존엔 재기동 로직이 없어 Electron을 통째로
     // 재시작해야만 MCP 파이프라인(버튼→AI 채팅→헤드리스 claude -p)이 복구됐다
     // (docs/defect_index.json — 세션 내 FastAPI 재기동 등으로 실제 재현·확인).
     // stopMcpAgent()로 의도적으로 멈춘 경우(앱 종료 등)는 재기동하지 않는다.
-    if (mcpAgentStopRequested) return;
+    if (mcpAgentStopRequested || proc.haehanStopped) return; // 의도적으로 멈춘 프로세스(이 프로세스 자체의 표지)
     if (mcpAgentRestartCount >= MCP_AGENT_MAX_RESTARTS) {
       console.error(`[mcp-agent] ${MCP_AGENT_MAX_RESTARTS}회 연속 재기동 실패 — 자동 재시도 중단`);
       return;
@@ -151,38 +198,21 @@ function startMcpAgent() {
   });
 }
 
+/** 에이전트 프로세스 트리를 종료하고 끝날 때까지 기다리는 Promise (앱 종료가 기다려야 고아가 안 남는다). */
 function stopMcpAgent() {
   mcpAgentStopRequested = true;
   clearTimeout(mcpAgentRestartTimer);
-  if (!mcpAgentProc) return;
-  const pid = mcpAgentProc.pid;
-  try {
-    if (process.platform === "win32" && pid) {
-      execSync(`taskkill /pid ${pid} /T /F`, { stdio: "ignore" });
-    } else {
-      mcpAgentProc.kill();
-    }
-  } catch {
-    try { mcpAgentProc.kill(); } catch {}
-  }
+  const proc = mcpAgentProc;
   mcpAgentProc = null;
+  if (proc) proc.haehanStopped = true;
+  return killTreeAndWait(proc);
 }
 
 function stopAgent() {
-  stopMcpAgent();
-  if (!agentProc) return;
-  const pid = agentProc.pid;
-  try {
-    if (process.platform === "win32" && pid) {
-      // Windows: 자식 프로세스 트리까지 강제 종료 (kill()은 트리 미정리)
-      execSync(`taskkill /pid ${pid} /T /F`, { stdio: "ignore" });
-    } else {
-      agentProc.kill();
-    }
-  } catch {
-    try { agentProc.kill(); } catch {}
-  }
+  const mcp = stopMcpAgent();
+  const proc = agentProc;
   agentProc = null;
+  return Promise.all([mcp, killTreeAndWait(proc)]);
 }
 
 module.exports = { startAgent, stopAgent };

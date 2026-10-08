@@ -13,7 +13,7 @@ from ai_orchestrator.paths import (
 from . import config
 from .config import APP_HOST, APP_PORT
 from .connectors.naver_search_runner import schedule_loop
-from .logging_setup import setup_logging
+from .logging_setup import setup_logging, uvicorn_log_config
 from .router import router
 
 logger = logging.getLogger(__name__)
@@ -247,4 +247,10 @@ app.add_middleware(
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("ai_orchestrator.asgi:app", host=APP_HOST, port=APP_PORT, reload=False)
+    uvicorn.run(
+        "ai_orchestrator.asgi:app",
+        host=APP_HOST,
+        port=APP_PORT,
+        reload=False,
+        log_config=uvicorn_log_config(),  # 접근 로그의 ?license= 등 비밀값 마스킹
+    )

@@ -281,7 +281,9 @@ def _on_agent_message(ws, message, enabled_sites: set[str] | None) -> None:
 
 
 def run_agent(server_url: str, license_key: str, retry_interval: int = 5, enabled_sites: set[str] | None = None):
-    ws_url = f"{server_url}/api/v1/smartstore/agent/ws?license={license_key}"
+    # 키는 URL 쿼리가 아니라 헤더로 보낸다 — 쿼리는 서버 접근 로그(fastapi.log)에 평문으로 남는다.
+    ws_url = f"{server_url}/api/v1/smartstore/agent/ws"
+    ws_headers = [f"X-License-Key: {license_key}"]
     print(f"[에이전트] 서버 연결 중: {ws_url}")
     if enabled_sites:
         print(f"[에이전트] 활성 사이트 제한: {sorted(enabled_sites)}")
@@ -299,6 +301,7 @@ def run_agent(server_url: str, license_key: str, retry_interval: int = 5, enable
         try:
             ws = websocket.WebSocketApp(
                 ws_url,
+                header=ws_headers,
                 on_message=on_message,
                 on_error=on_error,
                 on_close=on_close,

@@ -31,7 +31,12 @@ def test_complete_bundle_passes(tmp_path):
     assert vdb.main([str(unpacked)]) == 0
 
 
-@pytest.mark.parametrize("missing", ["nextjs/.next/static", "nextjs/public", "server/haehan-server/haehan-server.exe"])
+@pytest.mark.parametrize("missing", [
+        "nextjs/.next/static",
+        "nextjs/public",
+        "server/haehan-server/haehan-server.exe",
+        "local-agent-ai/local-agent-ai.exe",
+    ])
 def test_missing_item_fails(tmp_path, missing, capsys):
     # 2026-10-08 실제 결함(.next/static·public 누락)과 서버 exe 누락을 심으면 반드시 실패해야 한다
     unpacked = _make_bundle(tmp_path, skip=missing)

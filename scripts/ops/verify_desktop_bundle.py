@@ -21,6 +21,8 @@ from pathlib import Path
 REQUIRED: list[tuple[str, str]] = [
     ("server/haehan-server/haehan-server.exe", "file"),
     ("local-agent/local-agent.exe", "file"),
+    # AI 작업 콘솔 로컬 에이전트 — 빠지면 설치 앱의 콘솔이 항상 "연결된 로컬 에이전트가 없습니다"(503)
+    ("local-agent-ai/local-agent-ai.exe", "file"),
     ("mcp/haehan-mcp/haehan-mcp.exe", "file"),
     ("nextjs/server.js", "file"),
     ("nextjs/node_modules/next", "dir"),

@@ -41,6 +41,10 @@
         "to": "local-agent"
       },
       {
+        "from": "../../dist/local-agent-ai",
+        "to": "local-agent-ai"
+      },
+      {
         "from": "../../dist/haehan-mcp",
         "to": "mcp/haehan-mcp"
       },
