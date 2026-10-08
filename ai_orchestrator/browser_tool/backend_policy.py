@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from .schemas import BrowserActionName, BrowserTaskPolicy
 
-
 # Browser action risk and approval policies
 _ACTION_POLICIES: dict[BrowserActionName, BrowserTaskPolicy] = {
     "inspect": BrowserTaskPolicy(

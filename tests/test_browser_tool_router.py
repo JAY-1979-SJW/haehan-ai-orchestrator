@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ai_orchestrator.browser_tool import policy
+from ai_orchestrator.browser_tool import backend_policy as policy
 from ai_orchestrator.browser_tool.router import route_browser_task, route_browser_task_with_params
 from ai_orchestrator.browser_tool.schemas import BrowserResult, BrowserTask
 

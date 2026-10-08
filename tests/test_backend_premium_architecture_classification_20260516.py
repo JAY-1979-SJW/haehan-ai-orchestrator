@@ -123,7 +123,7 @@ DOMAIN_CORE_MAP = {
     },
     "SafetyPolicy": {
         "impl_files": [
-            "ai_orchestrator/browser_tool/policy.py",
+            "ai_orchestrator/browser_tool/backend_policy.py",
             "ai_orchestrator/server/server_egress_policy.py",
             "local_agent/runtime/security_guard.py",
             "ai_orchestrator/sites/secrets_policy.py",
@@ -259,7 +259,7 @@ SERVICE_LAYER_DESIGN = {
     },
     "execution_policy_service": {
         "purpose": "ExecutionLocation 결정, 위험도 판정, 차단 여부 결정",
-        "current_location": "ai_orchestrator/server/execution_location_guard.py + browser_tool/policy.py (scattered)",
+        "current_location": "ai_orchestrator/server/execution_location_guard.py + browser_tool/backend_policy.py (scattered)",
         "extraction_priority": "HIGH",
         "must_not_call": ["db_write", "external_site"],
         "test_criteria": ["location 판정 단위 테스트", "차단 조건 검증"],
@@ -301,7 +301,7 @@ SERVICE_LAYER_DESIGN = {
     },
     "safety_policy_service": {
         "purpose": "SafetyPolicy 통합 판정, 금지선 적용, secret 차단",
-        "current_location": "SCATTERED (browser_tool/policy.py, server/server_egress_policy.py, local_agent/security_guard.py)",
+        "current_location": "SCATTERED (browser_tool/backend_policy.py, server/server_egress_policy.py, local_agent/security_guard.py)",
         "extraction_priority": "HIGH",
         "must_not_call": ["router", "db_write"],
         "test_criteria": ["금지 필드 전수 검증", "secret 차단 검증"],
@@ -848,7 +848,7 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/tasks/external_work_registry.py",
     "ai_orchestrator/routers/ops_router.py",
     "ai_orchestrator/browser_tool/routing/execution_location_policy.py",
-    "ai_orchestrator/browser_tool/policy.py",
+    "ai_orchestrator/browser_tool/backend_policy.py",
     "ai_orchestrator/server/server_egress_policy.py",
 ]
 

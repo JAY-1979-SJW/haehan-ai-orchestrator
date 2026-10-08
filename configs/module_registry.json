@@ -2865,7 +2865,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/policy.py": {
+  "ai_orchestrator/browser_tool/backend_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",

@@ -151,7 +151,7 @@ forbidden_modules =
     ai_orchestrator.browser_tool.local_agent_user_present_status_handler
     ai_orchestrator.browser_tool.local_agent_user_present_status_store
     ai_orchestrator.browser_tool.local_agent_user_present_ws_contract
-    ai_orchestrator.browser_tool.policy
+    ai_orchestrator.browser_tool.backend_policy
     ai_orchestrator.browser_tool.router
     ai_orchestrator.browser_tool.policy.security_signal_detector
     ai_orchestrator.browser_tool.policy.server_browser_boundary_policy
@@ -1241,7 +1241,7 @@ source_modules =
     ai_orchestrator.browser_tool.policy.domain_profile_registry
     ai_orchestrator.browser_tool.routing.execution_location_policy
     ai_orchestrator.browser_tool.preflight.gate_approval_preflight
-    ai_orchestrator.browser_tool.policy
+    ai_orchestrator.browser_tool.backend_policy
     ai_orchestrator.browser_tool.policy.server_browser_boundary_policy
     ai_orchestrator.browser_tool.policy.site_compliance_policy
     ai_orchestrator.browser_tool.approval.submit_approval_state
@@ -2330,7 +2330,7 @@ forbidden_modules =
     ai_orchestrator.browser_tool.local_agent_user_present_status_handler
     ai_orchestrator.browser_tool.local_agent_user_present_status_store
     ai_orchestrator.browser_tool.local_agent_user_present_ws_contract
-    ai_orchestrator.browser_tool.policy
+    ai_orchestrator.browser_tool.backend_policy
     ai_orchestrator.browser_tool.router
     ai_orchestrator.browser_tool.policy.security_signal_detector
     ai_orchestrator.browser_tool.policy.server_browser_boundary_policy
@@ -5395,7 +5395,7 @@ forbidden_modules =
     ai_orchestrator.browser_tool.local_agent_user_present_flow
     ai_orchestrator.browser_tool.local_agent_user_present_status_handler
     ai_orchestrator.browser_tool.local_agent_user_present_ws_contract
-    ai_orchestrator.browser_tool.policy
+    ai_orchestrator.browser_tool.backend_policy
     ai_orchestrator.browser_tool.router
     ai_orchestrator.browser_tool.policy.security_signal_detector
     ai_orchestrator.browser_tool.policy.server_browser_boundary_policy
