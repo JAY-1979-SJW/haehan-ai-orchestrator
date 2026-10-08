@@ -1090,3 +1090,11 @@ git checkout pre-openai-removal -- <경로>
 복원: `git checkout 2687e9d0 -- scripts/ops/quality/install_git_hooks.py`
 
 - `scripts/ops/quality/install_git_hooks.py` — core.hooksPath 만 설정하는 중복 설치기
+
+## 2026-10-08 삭제(4차) — 실행 불가인 유료 OpenAI 호출 코드 (stage/ops-folders)
+
+`scripts/ops/office/ai_check_a4.py`(GPT-4o-mini 로 A4 서식 품질 평가) — CLAUDE.md "외부 유료 AI API 호출 승인제"·2026-09-24 "OpenAI 호출 코드 완전 삭제" 결정에 맞지 않고, 필요한 `shared` 패키지가 저장소에 없어 이전부터 실행되지 않았다. 지휘창 승인(2026-10-08)으로 "호출처 정리 + 삭제" 묶음 커밋.
+확인 ①~⑥: 운영 코드 호출 2곳은 함께 정리 — check_a4.py 직접 실행부의 통과 후 subprocess 호출 제거, scripts/eum/validate_pipeline.py 의 7단계(stage_ai_check, 이 스크립트가 없어 항상 FAIL 하던 단계) 제거. 문자열 경로·워크플로·훅 설정 0(hook_check_a4 는 이미 비활성으로 건너뜀, 주석만 정리), docs(openai_removal 명세·defect_index)는 "삭제됨(사유)"로 갱신, 조정 문서 언급은 PR 본문 서술뿐, 예약 작업 0.
+복원: `git checkout face69c8 -- scripts/ops/office/ai_check_a4.py`
+
+- `scripts/ops/office/ai_check_a4.py` — 실행 불가 유료 OpenAI 호출 코드

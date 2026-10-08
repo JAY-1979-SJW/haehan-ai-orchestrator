@@ -7,8 +7,6 @@
     python scripts/ops/office/check_a4.py data/견적서_아람정보통신_v6.xlsx
 """
 
-import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -117,17 +115,4 @@ if __name__ == "__main__":
         sys.exit(1)
 
     ok = check_a4(sys.argv[1])
-
-    if ok:
-        try:
-            here = Path(__file__).resolve().parent
-            ai_script = here / "ai_check_a4.py"
-            subprocess.run(
-                [sys.executable, str(ai_script), sys.argv[1]],
-                check=False,
-                env=os.environ.copy(),
-            )
-        except Exception as e:  # noqa: BLE001 - 엑셀 A4 인쇄설정 점검 스크립트(COM 자동화, 읽기전용 점검) — 그리드라인 속성 조회 실패는 기본값 True로 폴백, 전체 점검/AI검증 실행 실패는 오류 출력 후 False 반환
-            print(f"[check_a4] AI 검증 실행 실패: {e}")
-
     sys.exit(0 if ok else 1)

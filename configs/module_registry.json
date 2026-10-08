@@ -11737,14 +11737,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/office/ai_check_a4.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/ops/hooks/ai_code_review_gate.py": {
    "layer": "L12",
    "role": "ops_tool",

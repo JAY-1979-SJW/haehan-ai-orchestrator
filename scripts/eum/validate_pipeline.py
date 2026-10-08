@@ -177,44 +177,6 @@ def stage_generator() -> StageResult:
 # ── 파이프라인 실행 ──────────────────────────────────────────────────────────
 
 
-# ── 단계 7: AI 품질 검사 ─────────────────────────────────────────────────────
-def stage_ai_check() -> StageResult:
-    """subprocess 로 ai_check_a4.py 실행 — COM 충돌 방지."""
-    try:
-        test_file = Path("data/validate_pipeline_test.xlsx")
-        if not test_file.exists():
-            return StageResult(name="ai_check", passed=False, errors=["테스트 파일 없음 — 4단계 먼저 실행"])
-        import subprocess
-
-        root = Path(__file__).resolve().parents[2]
-        result = subprocess.run(
-            [sys.executable, str(root / "scripts" / "ops" / "office" / "ai_check_a4.py"), str(test_file)],
-            cwd=str(root),
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
-        output = result.stdout + result.stderr
-        print(output)
-        passed = result.returncode == 0
-        # 등급 파싱
-        import re
-
-        m = re.search(r"등급: ([🏆✅⚠️❓]+)\s*([ABC?])등급", output)
-        grade = m.group(2) if m else "?"
-        # 이슈 파싱
-        issues = re.findall(r"❌ \[(.+?)\] (.+)", output)
-        return StageResult(
-            name="ai_check",
-            passed=passed,
-            errors=[f"[{i}] {d}" for i, d in issues],
-            detail=f"등급: {grade}",
-        )
-    except Exception:  # noqa: BLE001 - 견적서 생성 파이프라인 검증 스테이지(schema/style/엑셀엔진/생성기 등) - 각 stage 실패시 StageResult(passed=False, errors=[...]) 반환, 읽기전용 검증
-        return StageResult(name="ai_check", passed=False, errors=[traceback.format_exc()])
-
-
 STAGES = [
     (1, "schema", stage_schema),
     (2, "style", stage_style),
@@ -222,7 +184,6 @@ STAGES = [
     (4, "openpyxl", stage_openpyxl),
     (5, "live", stage_live),
     (6, "generator", stage_generator),
-    (7, "ai_check", stage_ai_check),
 ]
 
 

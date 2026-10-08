@@ -2,11 +2,9 @@
 
 흐름:
   1. check_a4.py  — 인쇄 설정·행높이·여백 등 기계 검사 (비용 없음)
-  2. ai_check_a4.py — (비활성) GPT-4o-mini 품질 평가. CLAUDE.md "외부 유료 AI API
-     호출 승인제"(사전 승인 없이는 유료 AI API 호출 금지) + 2026-09-24
-     docs/deleted_code_index.md 의 "OpenAI 호출 코드 완전 삭제"(앱 런타임 유료
-     AI 호출 0) 결정과 충돌해 2026-09-29 정리에서 의도적으로 계속 건너뛴다.
-     되살리려면 이 파일이 아니라 사용자 승인부터 받을 것.
+  (참고) 예전에는 ai_check_a4.py 가 2단계로 GPT-4o-mini 품질 평가를 했으나, CLAUDE.md "외부 유료 AI API
+  호출 승인제"와 2026-09-24 "OpenAI 호출 코드 완전 삭제" 결정에 맞지 않고 이미 실행 불가여서 2026-10-08
+  삭제했다(docs/deleted_code_index.md). 되살리려면 이 파일이 아니라 사용자 승인부터 받을 것.
 
 훅 stdin: {"tool_name": ..., "tool_input": {"file_path": ...}, ...}
 비정상 종료 시 Claude Code 가 이슈를 인지하고 자동 수정 진행.
