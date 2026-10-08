@@ -223,7 +223,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "scripts/ops/audits/agent/audit_local_agent_e2e_baseline_contract.py",
         "scripts/ops/audits/app/audit_approval_flow_baseline_contract.py",
         "scripts/ops/audits/agent/audit_playwright_ai_baseline_contract.py",
-        "scripts/ops/audit_root_legacy_scripts.py",
+        "scripts/ops/repo_gates/audit_root_legacy_scripts.py",
         "scripts/ops/quality/module_quality_gate.py --module repo_guard",
     )
     missing_needles = [needle for needle in required_needles if needle not in required_rendered]
@@ -258,7 +258,7 @@ def check_module_boundary_contract() -> tuple[bool, str]:
 
 def check_root_legacy_script_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audit_root_legacy_scripts.py"],
+        [PY, "scripts/ops/repo_gates/audit_root_legacy_scripts.py"],
         timeout=120,
     )
     if not ok:

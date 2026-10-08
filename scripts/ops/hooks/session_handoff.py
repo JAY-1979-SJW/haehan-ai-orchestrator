@@ -1,9 +1,9 @@
 """상시 작업기록 + 인계 파일 생성/정리. docs/specs/2026-09-24_session_handoff_guard.md
 
 명령:
-  python scripts/ops/session_handoff.py write            # HANDOFF.md 생성 + 검증
-  python scripts/ops/session_handoff.py verify            # 기존 HANDOFF.md 검증만
-  python scripts/ops/session_handoff.py start [--apply-cleanup]  # 새 세션 시작 요약 + 정리
+  python scripts/ops/hooks/session_handoff.py write            # HANDOFF.md 생성 + 검증
+  python scripts/ops/hooks/session_handoff.py verify            # 기존 HANDOFF.md 검증만
+  python scripts/ops/hooks/session_handoff.py start [--apply-cleanup]  # 새 세션 시작 요약 + 정리
 
 AI 가 작성하지 않는다 — git/파일시스템에서 결정론적으로 생성한다.
 """

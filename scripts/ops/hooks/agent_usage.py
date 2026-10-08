@@ -3,8 +3,8 @@
 작업(기준서 id)별 에이전트 토큰·도구 호출 수를 data/ops/agent_usage.jsonl 에 기록하고
 단계별 합계를 보고한다. 기준서에 budget_tokens 를 주면 초과 시 경고.
 
-  python scripts/ops/agent_usage.py record <spec-id> <role> <tokens> <tool_calls> [--stage S]
-  python scripts/ops/agent_usage.py report [<spec-id>] [--budget N]
+  python scripts/ops/hooks/agent_usage.py record <spec-id> <role> <tokens> <tool_calls> [--stage S]
+  python scripts/ops/hooks/agent_usage.py report [<spec-id>] [--budget N]
 """
 
 from __future__ import annotations
@@ -15,7 +15,8 @@ import sys
 import time
 from pathlib import Path
 
-LOG = Path(__file__).resolve().parents[2] / "data" / "ops" / "agent_usage.jsonl"
+_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
+LOG = _ROOT / "data" / "ops" / "agent_usage.jsonl"
 
 
 def record(spec_id, role, tokens, tool_calls, stage="", log=LOG):

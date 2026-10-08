@@ -9,7 +9,7 @@ skeleton_gate, module_separation_gate, check_blog_separability)만 재고 있었
 정본은 계속 기존 설정이다(.importlinter 는 손으로 고치지 않는 생성물):
   - 층·허용 방향: configs/module_registry.json 의 files[].layer + allowed_deps (없으면 layer_rules.classify_path)
   - 금지 import 쌍: scripts/ops/code_map/layer_rules.py 의 _FORBIDDEN_IMPORT_PAIRS
-  - leaf 분리: scripts/ops/module_separation_gate.py 의 SEPARATED_MODULES
+  - leaf 분리: scripts/ops/repo_gates/module_separation_gate.py 의 SEPARATED_MODULES
   - 블로그 분리: scripts/naver/blog/cli/check_blog_separability.py 의 FORBIDDEN_DOMAINS (import 하지 않고 AST 로 읽는다 —
     운영 도구가 들어낼 수 있어야 하는 블로그 모듈에 import 의존을 새로 만들지 않도록)
 
@@ -42,7 +42,7 @@ if str(_BOOT) not in sys.path:
 
 from scripts.common.app_paths import repo_root  # noqa: E402
 from scripts.ops.code_map.layer_rules import _FORBIDDEN_IMPORT_PAIRS, classify_path  # noqa: E402
-from scripts.ops.module_separation_gate import SEPARATED_MODULES  # noqa: E402
+from scripts.ops.repo_gates.module_separation_gate import SEPARATED_MODULES  # noqa: E402
 
 ROOT = repo_root()
 OUT = ROOT / ".importlinter"
@@ -206,7 +206,7 @@ def render(root: Path) -> tuple[str, list[str]]:
     pairs, skipped = pair_contracts(modules)
     head = [
         "# 생성물 — 손으로 고치지 말 것. 다시 만들기: python scripts/ops/import_contracts_gen.py",
-        "# 정본: configs/module_registry.json · scripts/ops/code_map/layer_rules.py · scripts/ops/module_separation_gate.py ·",
+        "# 정본: configs/module_registry.json · scripts/ops/code_map/layer_rules.py · scripts/ops/repo_gates/module_separation_gate.py ·",
         "#       scripts/naver/blog/cli/check_blog_separability.py (머리말: scripts/ops/import_contracts_gen.py)",
         f"# import-linter 가 볼 수 없는 층 파일 {len(gaps)}개(루트 평면·namespace 폴더) — 목록: --gaps",
     ]

@@ -34,11 +34,11 @@ def {name}(x, y):
 @pytest.fixture
 def repo(tmp_path, monkeypatch):
     """dup_gate.py를 격리된 임시 git 저장소에 복사해 실행 — 실제 저장소 상태에 의존하지 않는다."""
-    (tmp_path / "scripts" / "ops").mkdir(parents=True)
+    (tmp_path / "scripts" / "ops" / "repo_gates").mkdir(parents=True)
     (tmp_path / "configs").mkdir()
     (tmp_path / "scripts" / "ops" / "dup_gate.py").write_bytes(DUP_GATE.read_bytes())
-    (tmp_path / "scripts" / "ops" / "_dup_structure_hash.py").write_bytes(
-        (ROOT / "scripts" / "ops" / "_dup_structure_hash.py").read_bytes()
+    (tmp_path / "scripts" / "ops" / "repo_gates" / "_dup_structure_hash.py").write_bytes(
+        (ROOT / "scripts" / "ops" / "repo_gates" / "_dup_structure_hash.py").read_bytes()
     )
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     subprocess.run(["git", "config", "user.email", "t@t.local"], cwd=tmp_path, check=True)

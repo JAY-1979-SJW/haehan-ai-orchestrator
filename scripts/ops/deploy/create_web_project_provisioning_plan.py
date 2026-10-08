@@ -3,10 +3,10 @@
 ASSISTANT_WEB_PROJECT_PROVISIONING_SCRIPT_FACTORY_01
 
 실행:
-    python scripts/ops/create_web_project_provisioning_plan.py --fqdn autowork.haehan-ai.kr
-    python scripts/ops/create_web_project_provisioning_plan.py --fqdn newservice.haehan-ai.kr \\
+    python scripts/ops/deploy/create_web_project_provisioning_plan.py --fqdn autowork.haehan-ai.kr
+    python scripts/ops/deploy/create_web_project_provisioning_plan.py --fqdn newservice.haehan-ai.kr \\
         --project-id newservice --display-name "새 업무동" --json
-    python scripts/ops/create_web_project_provisioning_plan.py --fqdn autowork.haehan-ai.kr --check-only
+    python scripts/ops/deploy/create_web_project_provisioning_plan.py --fqdn autowork.haehan-ai.kr --check-only
 
 금지:
     실제 DNS 변경 금지 / nginx 수정 금지 / certbot 실행 금지
@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 sys.path.insert(0, str(ROOT))
 
 # ── 전역 상수 ────────────────────────────────────────────────────────────────

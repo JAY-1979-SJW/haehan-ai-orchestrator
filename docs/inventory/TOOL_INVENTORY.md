@@ -61,7 +61,7 @@ notes
 | Gmail functions | `scripts/google/common/gmail_analysis.py`, Gmail workflow coverage | site | locked | local-agent/user-direct for state-changing work | Google/Gmail function contract | `python scripts/google/audit_gmail_function_contract.py` |
 | Desktop runtime | `desktop/main_launcher.py`, `desktop/local_server.py`, desktop audits | desktop | locked | desktop subordinate to server | `DESKTOP_AUTH_RUNTIME_BASELINE.md` | `python scripts/ops/audits/agent/audit_desktop_auth_runtime_baseline_contract.py` |
 | Release preflight | release preflight audits/tests | ops | locked | audit-only | `RELEASE_PREFLIGHT_BASELINE.md` | `python scripts/ops/audit_release_preflight_baseline_contract.py` |
-| Root legacy scripts | root-level script inventory | legacy | locked | audit-only unless separately approved | repo guard | `python scripts/ops/audit_root_legacy_scripts.py` |
+| Root legacy scripts | root-level script inventory | legacy | locked | audit-only unless separately approved | repo guard | `python scripts/ops/repo_gates/audit_root_legacy_scripts.py` |
 | Legacy desktop UI runtime | removed legacy desktop UI entrypoints/archive | legacy | deprecated | none | server-first operating baseline | `python scripts/ops/audits/backend/audit_legacy_app_runtime_cleanup.py` |
 
 ## Lock Needed Queue

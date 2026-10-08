@@ -4,7 +4,7 @@
 docs/deploy_troubleshooting.md 참고. push 후 새 코드가 프로덕션에 반영됐는지
 원격 엔드포인트로 판별한다.
 
-    python scripts/ops/deploy_diagnose.py
+    python scripts/ops/deploy/deploy_diagnose.py
 """
 
 from __future__ import annotations

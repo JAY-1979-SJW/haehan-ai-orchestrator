@@ -1,6 +1,6 @@
 {
  "generated_by": "scripts/ops/dup_gate.py build-baseline",
- "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
+ "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/repo_gates/_dup_structure_hash.py)",
  "min_statements": 4,
  "hash_count": 32,
  "hashes": {

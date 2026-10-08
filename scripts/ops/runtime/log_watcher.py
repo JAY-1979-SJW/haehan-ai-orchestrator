@@ -1,7 +1,7 @@
 """서버 로그 실시간 감시 — ERROR/WARNING/Exception 감지 시 콘솔 출력.
 
 사용:
-    python scripts/ops/log_watcher.py [로그파일경로]
+    python scripts/ops/runtime/log_watcher.py [로그파일경로]
     기본: data/logs/server.log
 """
 
@@ -11,7 +11,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 LOG_PATH = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "data" / "logs" / "server.log"
 
 ALERT_KEYWORDS = (

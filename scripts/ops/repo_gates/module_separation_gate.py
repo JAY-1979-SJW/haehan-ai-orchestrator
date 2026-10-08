@@ -9,8 +9,8 @@ docs/module_separation_standard.md 기준을 강제한다. 분리한 모듈을 �
 판정: ROOT_TOO_LARGE > 0 또는 LEAF_COUPLING > 0 → FAIL.
 
 사용:
-    python scripts/ops/module_separation_gate.py
-    python scripts/ops/module_separation_gate.py --json
+    python scripts/ops/repo_gates/module_separation_gate.py
+    python scripts/ops/repo_gates/module_separation_gate.py --json
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 
 # ── 분리 완료/진행 모듈 레지스트리 ───────────────────────────────────────────
 # 모듈을 분리할 때마다 등록하고, 루트가 줄면 max_root_loc 를 낮춘다(ratchet).

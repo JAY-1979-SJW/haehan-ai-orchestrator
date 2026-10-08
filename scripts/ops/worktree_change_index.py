@@ -196,8 +196,8 @@ def build_index(status_output: str | None = None, *, root: Path = ROOT) -> dict[
             "docs/realtime_audit_logging.md",
             "docs/pre_change_dry_run_policy_20260513.md",
             "scripts/ops/quality/quality_gate.py",
-            "scripts/ops/pre_change_dry_run.py",
-            "scripts/ops/deploy_dry_run.py",
+            "scripts/ops/devflow/pre_change_dry_run.py",
+            "scripts/ops/deploy/deploy_dry_run.py",
         ],
         "changes": [asdict(row) for row in changes],
     }

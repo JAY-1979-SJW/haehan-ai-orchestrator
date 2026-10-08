@@ -727,10 +727,10 @@
 - 04:37 **[지시]** <task-notification> <task-id>byl3zerfn</task-id> <tool-use-id>toolu_01HvJdh1NmDCc5gTtb4TZXbF</tool-use-id> <output-file>C:\Users\skyjw\AppData\Local\Temp\claude\C--work-01--haehan-ai-orchestrator\8...
 - 04:35 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m PyInstaller haehan-server.spec --noconfirm --clean --distpath dist ...`
 - 04:34 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git commit -m "$(cat <<'EOF' fix(sessions): 로그인 세션 새로고침 frozen-safe 능동 점검으로 수...`
-- 04:34 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add .gitignore scripts/ops/session_probe.py ai_orchestrator/connectors/se...`
-- 04:34 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== 무시 규칙 확인 ===" git check-ignore -v scripts/ops/session_probe.py docs...`
-- 04:33 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add scripts/ops/session_probe.py ai_orchestrator/connectors/session_statu...`
-- 04:33 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m py_compile scripts/ops/session_probe.py ai_orchestrator/connectors/...`
+- 04:34 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add .gitignore scripts/ops/runtime/session_probe.py ai_orchestrator/connectors/se...`
+- 04:34 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== 무시 규칙 확인 ===" git check-ignore -v scripts/ops/runtime/session_probe.py docs...`
+- 04:33 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" git add scripts/ops/runtime/session_probe.py ai_orchestrator/connectors/session_statu...`
+- 04:33 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" python -m py_compile scripts/ops/runtime/session_probe.py ai_orchestrator/connectors/...`
 - 04:32 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== subprocess / SCRIPT 잔여 사용처 ===" grep -nE "subprocess|SCRIPT" ai_orc...`
 - 04:29 **[실행]** `cd "C:\work\01. haehan-ai-orchestrator" echo "=== 라인수 + 주요 함수 ===" wc -l scripts/ops/login_session_monitor.py grep -n...`
 - 04:29 **[지시]** 1
@@ -2082,7 +2082,7 @@
 - 15:16 **[실행]** `grep -n "APP_HOST\|APP_PORT\|host\|port" "C:\work\01. haehan-ai-orchestrator\ai_orchestrator\server.py" | head -20`
 - 15:15 **[실행]** `grep -n "host\|CORS\|origins\|allow_origins\|0\.0\.0\.0\|localhost\|127\.0\.0\.1" "C:\work\01. haehan-ai-orchestrator...`
 - 15:14 **[지시]** 다른 컴퓨터에서   서버로 접속해서 위 기능을 사용할 수 있지?
-- 15:13 **[지시]** ● UserPromptSubmit operation blocked by    hook:   [python scripts/ops/worklog_realtime.py    prompt]: C:\Users\skyjw\AppData\Local\Py   thon\pythoncore-3.14-64\python.exe:    can't open file 'C:\\...
+- 15:13 **[지시]** ● UserPromptSubmit operation blocked by    hook:   [python scripts/ops/hooks/worklog_realtime.py    prompt]: C:\Users\skyjw\AppData\Local\Py   thon\pythoncore-3.14-64\python.exe:    can't open file 'C:\\...
 - 15:06 **[지시]** 다시 검토해
 - 15:04 **[지시]** 앱 exe 로 되는건가?
 - 14:40 **[지시]** 실행해봐

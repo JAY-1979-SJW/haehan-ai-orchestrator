@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -21,7 +21,7 @@ def main() -> int:
 
     command = [part for part in args.command if part != "--"]
     if not command:
-        print("usage: python scripts/ops/deploy_dry_run.py -- <dry-run command>", file=sys.stderr)
+        print("usage: python scripts/ops/deploy/deploy_dry_run.py -- <dry-run command>", file=sys.stderr)
         return 2
 
     result = subprocess.run(

@@ -308,8 +308,8 @@ ROOT = Path(
 # 모든 커밋을 data/ops/worklog.jsonl 에 1줄 기록 (session_handoff_guard).
 # 커밋 자체를 절대 실패시키지 않는다(never fail the commit).
 try:
-    sys.path.insert(0, str(ROOT / "scripts" / "ops"))
-    import session_handoff as sh
+    sys.path.insert(0, str(ROOT))
+    from scripts.ops.hooks import session_handoff as sh
 
     _enc = {"encoding": "utf-8", "errors": "replace"}
     h = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(ROOT), capture_output=True, text=True, **_enc).stdout.strip()

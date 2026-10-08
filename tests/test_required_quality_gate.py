@@ -73,7 +73,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/ops/audits/app/audit_approval_flow_baseline_contract.py" in rendered
     assert "scripts/ops/audits/agent/audit_playwright_ai_baseline_contract.py" in rendered
     assert "scripts/ops/audits/app/audit_module_boundaries.py" in rendered
-    assert "scripts/ops/audit_root_legacy_scripts.py" in rendered
+    assert "scripts/ops/repo_gates/audit_root_legacy_scripts.py" in rendered
     assert "scripts/ops/audits/google/audit_google_home_login_gate.py" in rendered
     assert "scripts/ops/audits/google/audit_google_automation_baseline_contract.py" in rendered
     assert "scripts/ops/audits/app/audit_site_sso_subdomain_runtime_baseline.py" in rendered

@@ -17,7 +17,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.ops import verify_runtime_drift  # noqa: E402
+from scripts.ops.runtime import verify_runtime_drift  # noqa: E402
 
 DEFAULT_LATEST = ROOT / "data" / "runtime" / "runtime_drift_latest.json"
 DEFAULT_HISTORY = ROOT / "data" / "runtime" / "runtime_drift_history.jsonl"

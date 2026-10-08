@@ -11729,7 +11729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/agent_usage.py": {
+  "scripts/ops/hooks/agent_usage.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12065,7 +12065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_cdp_tab_lifecycle_gate.py": {
+  "scripts/ops/repo_gates/audit_cdp_tab_lifecycle_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12385,7 +12385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_root_legacy_scripts.py": {
+  "scripts/ops/repo_gates/audit_root_legacy_scripts.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12649,7 +12649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/create_web_project_provisioning_plan.py": {
+  "scripts/ops/deploy/create_web_project_provisioning_plan.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12657,7 +12657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/deploy_diagnose.py": {
+  "scripts/ops/deploy/deploy_diagnose.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12817,7 +12817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/log_watcher.py": {
+  "scripts/ops/runtime/log_watcher.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12873,7 +12873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/module_separation_gate.py": {
+  "scripts/ops/repo_gates/module_separation_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12905,7 +12905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/pre_change_dry_run.py": {
+  "scripts/ops/devflow/pre_change_dry_run.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13041,7 +13041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/session_guard.py": {
+  "scripts/ops/hooks/session_guard.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13049,7 +13049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/session_handoff.py": {
+  "scripts/ops/hooks/session_handoff.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13057,7 +13057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/session_probe.py": {
+  "scripts/ops/runtime/session_probe.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13153,7 +13153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/validate_common_operations_index.py": {
+  "scripts/ops/repo_gates/validate_common_operations_index.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13169,7 +13169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/vendor_api_registry.py": {
+  "scripts/ops/hooks/vendor_api_registry.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13193,7 +13193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify_runtime_drift.py": {
+  "scripts/ops/runtime/verify_runtime_drift.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13209,7 +13209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/worklog_realtime.py": {
+  "scripts/ops/hooks/worklog_realtime.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19137,7 +19137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_api_contract_frontend_backend.py": {
+  "scripts/ops/repo_gates/audit_api_contract_frontend_backend.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19409,7 +19409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/_dup_structure_hash.py": {
+  "scripts/ops/repo_gates/_dup_structure_hash.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22345,7 +22345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/app_realtime_check.py": {
+  "scripts/ops/runtime/app_realtime_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22377,7 +22377,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/deploy_dry_run.py": {
+  "scripts/ops/deploy/deploy_dry_run.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22577,7 +22577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/watch_log.py": {
+  "scripts/ops/runtime/watch_log.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23174,6 +23174,46 @@
    "role": "test",
    "domain": "common",
    "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/deploy/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/devflow/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/hooks/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/repo_gates/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "scripts/ops/runtime/__init__.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
   }

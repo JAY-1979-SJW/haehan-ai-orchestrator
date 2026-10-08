@@ -17,7 +17,7 @@
     },
     {
       "gate_id": "pre_change_dry_run",
-      "command": "python scripts/ops/pre_change_dry_run.py --scope <scope> --reason <reason> -- <command>",
+      "command": "python scripts/ops/devflow/pre_change_dry_run.py --scope <scope> --reason <reason> -- <command>",
       "required_for": ["code_change", "deploy_change"]
     },
     {

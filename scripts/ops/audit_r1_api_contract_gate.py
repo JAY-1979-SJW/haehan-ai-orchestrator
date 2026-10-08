@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from audit_api_contract_frontend_backend import _call_id, load_baseline, run_audit  # noqa: E402
+from scripts.ops.repo_gates.audit_api_contract_frontend_backend import _call_id, load_baseline, run_audit  # noqa: E402
 
 
 def main() -> int:
@@ -39,7 +39,7 @@ def main() -> int:
             print(f"  - {nid} ({c.file}:{c.line})")
         print("허용 목록(configs/r1_api_contract_baseline.json)에 의도적으로 추가하려면")
         print(
-            "scripts/ops/audit_api_contract_frontend_backend.py --write-baseline 재실행 후 변경 사유를 커밋 메시지에 남기세요."
+            "scripts/ops/repo_gates/audit_api_contract_frontend_backend.py --write-baseline 재실행 후 변경 사유를 커밋 메시지에 남기세요."
         )
         return 1
 

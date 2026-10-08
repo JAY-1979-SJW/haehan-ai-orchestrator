@@ -1,7 +1,7 @@
 import uuid
 from pathlib import Path
 
-from scripts.ops import audit_root_legacy_scripts as audit
+from scripts.ops.repo_gates import audit_root_legacy_scripts as audit
 
 
 ROOT = Path(__file__).resolve().parents[1]

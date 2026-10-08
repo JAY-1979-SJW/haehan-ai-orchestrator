@@ -2,7 +2,7 @@
 
 The command is meant to be run after the worktree index and before code edits:
 
-    python scripts/ops/pre_change_dry_run.py --scope smartstore --reason "router update" -- python -m pytest tests/test_smartstore_actions.py -q
+    python scripts/ops/devflow/pre_change_dry_run.py --scope smartstore --reason "router update" -- python -m pytest tests/test_smartstore_actions.py -q
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 LATEST_PATH = ROOT / "data" / "logs" / "pre_change_dry_run_latest.json"
 HISTORY_DIR = ROOT / "data" / "logs" / "pre_change_dry_runs"
 WORKTREE_INDEX_PATH = ROOT / "data" / "worktree_change_index_latest.json"
@@ -159,7 +159,7 @@ def main() -> int:
     command = [part for part in args.command if part != "--"]
     if not command:
         print(
-            "usage: python scripts/ops/pre_change_dry_run.py --scope <scope> --reason <reason> -- <dry-run command>",
+            "usage: python scripts/ops/devflow/pre_change_dry_run.py --scope <scope> --reason <reason> -- <dry-run command>",
             file=sys.stderr,
         )
         return 2

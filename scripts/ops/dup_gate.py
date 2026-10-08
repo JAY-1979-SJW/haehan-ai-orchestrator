@@ -5,7 +5,7 @@ staged(또는 지정한) .py 파일의 함수 중 '구조 동일 중복'(이름�
 기존에 이미 있던 중복 묶음은 기준선(configs/dup_baseline.json)에 고정해 두고 건드리지
 않는다 — "새로 생긴 중복만" 막는다(CLAUDE.md 공통 원칙과 동일).
 
-알고리즘은 scripts/ops/_dup_structure_hash.py(= C:/work/audit-tools/dupscan/src/dupscan/
+알고리즘은 scripts/ops/repo_gates/_dup_structure_hash.py(= C:/work/audit-tools/dupscan/src/dupscan/
 extractor.py에서 그대로 가져온 구조 해시)를 쓴다. dupscan 자체를 CI에 설치하지 않는 이유:
 그 저장소는 이 PC의 개인 작업 경로(C:/work/audit-tools/dupscan)에만 있고 패키지로 배포돼
 있지 않아, CI 러너(다른 머신·컨테이너)에서는 pip install -e 할 경로가 없다. 알고리즘
@@ -35,7 +35,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))  # sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from _dup_structure_hash import (  # noqa: E402
+from scripts.ops.repo_gates._dup_structure_hash import (  # noqa: E402
     body_statement_count,
     is_test_path,
     iter_functions,
@@ -110,7 +110,7 @@ def cmd_build_baseline(_args: argparse.Namespace) -> int:
     dup_hashes = {h: locs for h, locs in index.items() if len(locs) >= 2}
     payload = {
         "generated_by": "scripts/ops/dup_gate.py build-baseline",
-        "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
+        "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/repo_gates/_dup_structure_hash.py)",
         "min_statements": MIN_STATEMENTS,
         "hash_count": len(dup_hashes),
         "hashes": {h: [f"{f}:{q}" for f, q in sorted(locs)] for h, locs in sorted(dup_hashes.items())},

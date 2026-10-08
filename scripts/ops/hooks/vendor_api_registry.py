@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parents[2]
+_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 REGISTRY_FILE = _ROOT / "configs" / "vendor_apis.json"
 
 STATUS_AVAILABLE = "available"  # 이미 쓸 수 있음

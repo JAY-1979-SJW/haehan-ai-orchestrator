@@ -28,9 +28,9 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.vendor_api_registry import cdp_warning as vendor_cdp_warning  # noqa: E402
-from scripts.ops.vendor_api_registry import find as find_vendor_apis  # noqa: E402
-from scripts.ops.vendor_api_registry import format_report as format_vendor_report  # noqa: E402
+from scripts.ops.hooks.vendor_api_registry import cdp_warning as vendor_cdp_warning  # noqa: E402
+from scripts.ops.hooks.vendor_api_registry import find as find_vendor_apis  # noqa: E402
+from scripts.ops.hooks.vendor_api_registry import format_report as format_vendor_report  # noqa: E402
 
 
 def _search_terms(argv: list[str]) -> list[str]:

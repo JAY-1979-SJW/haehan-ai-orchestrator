@@ -16,7 +16,7 @@ from pathlib import Path
 
 from ai_orchestrator.paths.runtime import data_dir
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 OUTPUT_PATH = data_dir() / "login_session_monitor_latest.json"
 CDP_URL = "http://127.0.0.1:9222"
 
