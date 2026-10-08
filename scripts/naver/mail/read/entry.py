@@ -14,8 +14,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
-from local_agent import site_entry_policy as sep
-
+from local_agent.policy import site_entry_policy as sep
 from scripts.naver.mail.read import cdp
 
 # 진입 결과 상수

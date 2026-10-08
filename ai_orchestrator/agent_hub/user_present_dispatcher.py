@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import Any
 
 try:
-    from ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun import (
+    from ai_orchestrator.browser_tool.routing.browser_engine_routing_dispatch_dryrun import (
         DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
     )
 except ImportError:

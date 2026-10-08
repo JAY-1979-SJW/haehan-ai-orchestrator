@@ -13,14 +13,14 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.controlled_submit import (
+from ai_orchestrator.browser_tool.submit.controlled_submit import (
     build_controlled_submit_result,
 )
-from ai_orchestrator.browser_tool.submit_policy import (
+from ai_orchestrator.browser_tool.submit.submit_policy import (
     SubmitValidationRequest,
     validate_submit_policy,
 )
-from ai_orchestrator.browser_tool.submit_preview import (
+from ai_orchestrator.browser_tool.submit.submit_preview import (
     SubmitPreviewInput,
     build_submit_preview,
 )
@@ -129,7 +129,7 @@ class TestControlledBrowserSmoke:
 
     def test_06_controlled_internal_origin_check(self):
         """Test 6: internal.mock is recognized as controlled internal."""
-        from ai_orchestrator.browser_tool.controlled_submit import is_controlled_internal_origin
+        from ai_orchestrator.browser_tool.submit.controlled_submit import is_controlled_internal_origin
 
         assert is_controlled_internal_origin("https://internal.mock/form") is True
         assert is_controlled_internal_origin("https://external.example.com/form") is False
@@ -206,7 +206,7 @@ class TestControlledBrowserSmoke:
             "https://g2b.go.kr/form",
         ]
 
-        from ai_orchestrator.browser_tool.controlled_submit import is_controlled_internal_origin
+        from ai_orchestrator.browser_tool.submit.controlled_submit import is_controlled_internal_origin
 
         for url in allowed_urls:
             assert is_controlled_internal_origin(url) is True
@@ -230,7 +230,7 @@ class TestControlledBrowserSmoke:
 
     def test_10_audit_redaction(self):
         """Test 10: Audit uses redacted payload (no original secrets)."""
-        from ai_orchestrator.browser_tool.submit_preview import mask_field_value
+        from ai_orchestrator.browser_tool.submit.submit_preview import mask_field_value
 
         email_original = "test@example.com"
         email_masked = mask_field_value("email", email_original)
@@ -247,7 +247,7 @@ class TestControlledBrowserSmoke:
 
     def test_12_fixture_matches_controlled_origin(self, allowlist):
         """Test 12: Fixture origin matches controlled internal requirements."""
-        from ai_orchestrator.browser_tool.controlled_submit import is_controlled_internal_origin
+        from ai_orchestrator.browser_tool.submit.controlled_submit import is_controlled_internal_origin
 
         # Fixture uses internal.mock
         assert is_controlled_internal_origin("https://internal.mock/form") is True

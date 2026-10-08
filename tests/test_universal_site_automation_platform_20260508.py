@@ -1,27 +1,27 @@
 """tests/test_universal_site_automation_platform_20260508.py - 플랫폼 통합 테스트"""
 
-from local_agent.runtime.selector_pack_registry import (
+from local_agent.runtime.site_profile.selector_pack_registry import (
     _FORBIDDEN_SELECTOR_KEYS,
     _PACKS,
 )
-from local_agent.runtime.site_capability_matrix import (
+from local_agent.runtime.site_profile.site_capability_matrix import (
     _CAPABILITY_GRADE,
     GRADE_BLOCKED,
 )
-from local_agent.runtime.site_profile_registry import (
+from local_agent.runtime.site_profile.site_profile_registry import (
     _COMMON_BLOCKED,
     _REGISTRY,
 )
-from local_agent.runtime.universal_safe_result import (
+from local_agent.runtime.universal.universal_safe_result import (
     STATUS_COMPLETED,
     build_universal_result,
     validate_universal_result,
 )
-from local_agent.runtime.universal_workflow_runner import (
+from local_agent.runtime.universal.universal_workflow_runner import (
     run_single_action,
     run_workflow,
 )
-from local_agent.runtime.workflow_template_engine import _TEMPLATES
+from local_agent.runtime.universal.workflow_template_engine import _TEMPLATES
 
 _SAFE_FIELDS = [
     "cookie_exported",

@@ -1,17 +1,17 @@
 """tests/test_universal_task_planner_20260508.py"""
 
-from local_agent.runtime.site_capability_matrix import (
+from local_agent.runtime.site_profile.site_capability_matrix import (
     GRADE_AUTO_ALLOWED,
     GRADE_USER_DELEGATED,
     GRADE_USER_DIRECT,
 )
-from local_agent.runtime.universal_task_planner import (
+from local_agent.runtime.universal.universal_task_planner import (
     create_plan,
     get_auto_only_plan,
     plan_has_blocked,
     plan_needs_permission,
 )
-from local_agent.runtime.user_intent_parser import parse_intent
+from local_agent.runtime.universal.user_intent_parser import parse_intent
 
 
 def _make_plan(instruction, host="unknown.example.com", text="", buttons=None, risk_signals=None, has_permissions=None):

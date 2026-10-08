@@ -1,10 +1,10 @@
 """tests/test_site_onboarding_tool_20260508.py - site onboarding 도구 단위 테스트"""
 
-from local_agent.runtime.selector_pack_registry import (
+from local_agent.runtime.site_profile.selector_pack_registry import (
     _FORBIDDEN_SELECTOR_KEYS,
     get_selector_pack,
 )
-from local_agent.runtime.site_profile_registry import (
+from local_agent.runtime.site_profile.site_profile_registry import (
     _COMMON_BLOCKED,
     CAT_FORUM,
     CAT_GENERIC,

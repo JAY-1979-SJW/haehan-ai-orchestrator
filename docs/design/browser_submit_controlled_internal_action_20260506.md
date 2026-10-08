@@ -307,7 +307,7 @@ audit_record = {
 ## 13. 파일 구성
 
 ```
-ai_orchestrator/browser_tool/controlled_submit.py (269줄)
+ai_orchestrator/browser_tool/submit/controlled_submit.py (269줄)
   - ControlledSubmitInput
   - ControlledSubmitResult
   - is_controlled_internal_origin()

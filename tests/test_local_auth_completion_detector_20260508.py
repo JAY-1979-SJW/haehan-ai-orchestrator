@@ -2,7 +2,7 @@
 auth_completion_detector 테스트
 """
 
-from local_agent.runtime.auth_completion_detector import (
+from local_agent.runtime.auth.auth_completion_detector import (
     check_auth_completed_from_dict,
     check_auth_completed_from_page_state,
 )

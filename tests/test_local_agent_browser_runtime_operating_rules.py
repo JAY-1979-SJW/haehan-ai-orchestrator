@@ -2,13 +2,12 @@ from pathlib import Path
 
 import pytest
 
-from local_agent.cdp_attach import (
+from local_agent.browser.cdp_attach import (
     CDPAttachValidationError,
     normalize_cdp_endpoint,
     summarize_cdp_tabs,
 )
 from scripts.archive.misc import chrome_ui_monitor
-
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_DOC = ROOT / "docs" / "architecture" / "local_agent_browser_runtime_operating_rules_20260523.md"

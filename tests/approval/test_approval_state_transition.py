@@ -10,7 +10,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-import ai_orchestrator.browser_tool.approval_record_router as router_mod
+import ai_orchestrator.browser_tool.approval.approval_record_router as router_mod
 from ai_orchestrator.asgi import app
 
 _BASE = "/api/v1/browser-approvals/requests"

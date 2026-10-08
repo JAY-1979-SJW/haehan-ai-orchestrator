@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.site_compliance_policy import (
+from ai_orchestrator.browser_tool.policy.site_compliance_policy import (
     evaluate_site_compliance,
     get_site_compliance_policy,
     validate_site_compliance_result,
@@ -351,7 +351,7 @@ class TestNoForbiddenImports:
         import ast
         import inspect
 
-        from ai_orchestrator.browser_tool import site_compliance_policy
+        from ai_orchestrator.browser_tool.policy import site_compliance_policy
 
         source = inspect.getsource(site_compliance_policy)
         tree = ast.parse(source)
@@ -369,7 +369,7 @@ class TestNoForbiddenImports:
         """Module should not write to database."""
         import inspect
 
-        from ai_orchestrator.browser_tool import site_compliance_policy
+        from ai_orchestrator.browser_tool.policy import site_compliance_policy
 
         source = inspect.getsource(site_compliance_policy)
 

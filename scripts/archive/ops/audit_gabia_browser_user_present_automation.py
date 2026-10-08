@@ -169,7 +169,7 @@ def _check_audit_events() -> dict[str, Any]:
 
 def _check_domain_profile() -> bool:
     try:
-        from ai_orchestrator.browser_tool.domain_profile_registry import get_domain_profile
+        from ai_orchestrator.browser_tool.policy.domain_profile_registry import get_domain_profile
 
         profile = get_domain_profile("gabia.com")
         return (

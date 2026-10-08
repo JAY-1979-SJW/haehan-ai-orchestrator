@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.submit_execution_gate import (
+from ai_orchestrator.browser_tool.submit.submit_execution_gate import (
     BlockReason,
     ExecutionGateInput,
     ExecutionGateResult,

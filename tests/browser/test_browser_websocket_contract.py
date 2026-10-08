@@ -9,8 +9,8 @@ Verifies:
 """
 
 from ai_orchestrator.agent_hub.registry import facade as _reg
-from local_agent.browser_approval_verifier import BrowserApprovalStore, BrowserApprovalVerifier
-from local_agent.browser_task_handler import BrowserTaskPayload, BrowserTaskResult
+from local_agent.browser.approval.browser_approval_verifier import BrowserApprovalStore, BrowserApprovalVerifier
+from local_agent.browser.browser_task_handler import BrowserTaskPayload, BrowserTaskResult
 
 
 class TestBrowserActionRegistration:
@@ -324,7 +324,7 @@ class TestRiskyActionProtection:
 
     def test_risky_keywords_blocked_in_action_contract(self):
         """Risky keywords (delete, submit, payment) should be detected"""
-        from local_agent.browser_action_contract import assess_action_risk
+        from local_agent.browser.browser_action_contract import assess_action_risk
 
         # Delete is risky
         risk, needs_final = assess_action_risk("browser.execute_click", "#delete-btn")

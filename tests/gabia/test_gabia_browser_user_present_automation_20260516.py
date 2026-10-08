@@ -344,7 +344,7 @@ def test_state_machine_blocked_transitions():
 
 
 def test_gabia_domain_profile_registered():
-    from ai_orchestrator.browser_tool.domain_profile_registry import get_domain_profile
+    from ai_orchestrator.browser_tool.policy.domain_profile_registry import get_domain_profile
 
     profile = get_domain_profile("gabia.com")
     assert profile.get("category") == "domain_dns"

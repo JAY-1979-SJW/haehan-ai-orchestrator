@@ -18,13 +18,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from local_agent.browser_approval_db_store import (
+from local_agent.browser.approval.browser_approval_db_store import (
     SQLiteBrowserApprovalStore,
 )
-from local_agent.browser_approval_persistent_store import (
+from local_agent.browser.approval.browser_approval_persistent_store import (
     PersistentBrowserApprovalStore,
 )
-from local_agent.browser_approval_verifier import (
+from local_agent.browser.approval.browser_approval_verifier import (
     BrowserApprovalStore,
     BrowserApprovalVerifier,
     DuplicateApprovalError,
@@ -194,11 +194,11 @@ class TestVerifierStillWorks(unittest.TestCase):
         import asyncio
         from unittest.mock import MagicMock
 
-        from local_agent.browser_task_handler import (
+        from local_agent.browser.browser_task_handler import (
             BrowserTaskHandler,
             BrowserTaskPayload,
         )
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         for store_cls in [BrowserApprovalStore, PersistentBrowserApprovalStore, SQLiteBrowserApprovalStore]:
             with self.subTest(store=store_cls.__name__):
@@ -268,7 +268,7 @@ class DuplicateApprovalErrorLocationTests(unittest.TestCase):
     """층간 위반 정리(L7 저장소가 L2 검증기를 가져오던 구조): 예외는 작은 L1 모듈에 있고 검증기가 재노출한다."""
 
     def test_verifier_reexports_the_same_class(self) -> None:
-        from local_agent import browser_approval_errors, browser_approval_verifier
+        from local_agent.browser.approval import browser_approval_errors, browser_approval_verifier
 
         self.assertIs(browser_approval_verifier.DuplicateApprovalError, browser_approval_errors.DuplicateApprovalError)
         self.assertTrue(issubclass(browser_approval_errors.DuplicateApprovalError, ValueError))

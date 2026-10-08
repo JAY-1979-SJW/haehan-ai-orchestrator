@@ -17,7 +17,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from ai_orchestrator.contracts.local_task_protocol import build_task  # noqa: E402
-from local_agent.runtime.playwright_bootstrap import (  # noqa: E402
+from local_agent.runtime.playwright.playwright_bootstrap import (  # noqa: E402
     PLAYWRIGHT_READY,
     check_playwright_status,
 )
@@ -30,7 +30,7 @@ def _fixture_url() -> str:
 
 
 def _run_smoke() -> list[dict]:
-    from local_agent.runtime.playwright_runner import run_task
+    from local_agent.runtime.playwright.playwright_runner import run_task
 
     results = []
 

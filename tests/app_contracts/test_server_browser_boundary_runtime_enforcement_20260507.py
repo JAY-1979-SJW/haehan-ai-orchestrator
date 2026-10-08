@@ -313,19 +313,19 @@ class TestSourceCodePolicy:
 class TestCompatibilityWithBoundaryPolicy:
     def test_decision_constants_match_boundary_policy(self):
         """ai_orchestrator/browser_tool/worker/policy.py와 server_browser_boundary_policy.py decision 문자열 일치."""
-        from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+        from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
             DECISION_BLOCK as BP_BLOCK,
         )
-        from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+        from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
             DECISION_REQUIRE_API_CONNECTOR as BP_API,
         )
-        from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+        from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
             DECISION_REQUIRE_LOCAL_AGENT as BP_LOCAL,
         )
-        from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+        from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
             DECISION_REQUIRE_USER_PRESENT as BP_UP,
         )
-        from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+        from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
             DECISION_SERVER_BROWSER_ALLOWED_READONLY as BP_ALLOWED,
         )
 
@@ -349,7 +349,7 @@ class TestCompatibilityWithBoundaryPolicy:
 
     def test_compatible_google_accounts_decision(self):
         """Google accounts: 양쪽 정책 모두 BLOCK."""
-        from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+        from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
             classify_restricted_site_for_server_browser,
         )
 
@@ -364,7 +364,7 @@ class TestCompatibilityWithBoundaryPolicy:
 
     def test_compatible_bank_decision(self):
         """은행 카테고리: 양쪽 정책 모두 금지."""
-        from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+        from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
             classify_restricted_site_for_server_browser,
         )
 

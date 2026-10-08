@@ -13,7 +13,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from local_agent.runtime.delegated_action_executor import (
+from local_agent.runtime.permission.delegated_action_executor import (
     EXEC_ALLOWED,
 )
 from scripts.naver.blog.naver_blog_workflow import (

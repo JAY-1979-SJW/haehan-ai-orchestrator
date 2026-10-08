@@ -18,7 +18,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from ai_orchestrator.asgi import app
-from ai_orchestrator.browser_tool.approval_record_store import (
+from ai_orchestrator.browser_tool.approval.approval_record_store import (
     read_approval_records,
 )
 from ai_orchestrator.core.config import APPROVAL_RECORD_STORE_PATH

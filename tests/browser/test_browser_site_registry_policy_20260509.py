@@ -3,11 +3,18 @@ from __future__ import annotations
 
 import pytest
 
-from local_agent.runtime.browser_site_registry import (
-    SitePolicy, register_site, get_site, resolve_url, validate_raw_url,
-    list_sites, clear_all,
-    EXECUTION_LOCAL_AGENT_REQUIRED, LOGIN_PUBLIC_READONLY,
-    CRED_NO_CAPTURE, CAPTURE_NONE,
+from local_agent.runtime.site_profile.browser_site_registry import (
+    CAPTURE_NONE,
+    CRED_NO_CAPTURE,
+    EXECUTION_LOCAL_AGENT_REQUIRED,
+    LOGIN_PUBLIC_READONLY,
+    SitePolicy,
+    clear_all,
+    get_site,
+    list_sites,
+    register_site,
+    resolve_url,
+    validate_raw_url,
 )
 
 

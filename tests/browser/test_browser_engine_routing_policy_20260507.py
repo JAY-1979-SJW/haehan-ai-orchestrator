@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
+from ai_orchestrator.browser_tool.routing.browser_engine_routing_policy import (
     ENGINE_SEL_API_CONNECTOR,
     ENGINE_SEL_LOCAL_SYSTEM_BROWSER,
     ENGINE_SEL_NONE,
@@ -31,7 +31,7 @@ from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
 
 FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_engine_routing_policy_20260507.json"
 
-MODULE_PATH = Path(__file__).parent.parent.parent / "ai_orchestrator" / "browser_tool" / "browser_engine_routing_policy.py"
+MODULE_PATH = Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "routing" / "browser_engine_routing_policy.py"
 
 
 @pytest.fixture(scope="module")
@@ -343,7 +343,7 @@ def test_no_browser_action_calls():
 
 
 def test_compatible_with_capability_classifier():
-    from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
+    from ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier import (
         classify_browser_engine_capability,
     )
 
@@ -359,7 +359,7 @@ def test_compatible_with_capability_classifier():
 
 
 def test_no_conflict_with_server_browser_boundary_policy():
-    from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+    from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
         classify_restricted_site_for_server_browser,
     )
 
@@ -372,7 +372,7 @@ def test_no_conflict_with_server_browser_boundary_policy():
 
 
 def test_no_conflict_with_site_compliance_policy():
-    from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
+    from ai_orchestrator.browser_tool.policy.site_compliance_policy import evaluate_site_compliance
 
     # Gmail 은 CDP_READ_ONLY 완화 정책(5177645b): 읽기 = ALLOW_BROWSER_READONLY, 쓰기성 = BLOCK
     result = evaluate_site_compliance({"target_domain": "mail.google.com", "operation_type": "read"})

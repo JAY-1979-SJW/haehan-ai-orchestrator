@@ -12,13 +12,13 @@
 
 from __future__ import annotations
 
-from typing import Any
 import sys
 import tempfile
 import threading
 import time
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 # haehan-root-bootstrap: 정본 paths 를 import 하기 전이라 루트를 직접 찾는다 — 폴더가 옮겨져도 깨지지 않게 pyproject.toml 이 있는 상위 폴더를 찾는다
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
@@ -27,8 +27,8 @@ sys.path.insert(0, str(ROOT))
 from ai_orchestrator.agent_dispatch import agent_dispatch_service as svc  # noqa: E402
 from ai_orchestrator.agent_dispatch import agent_dispatch_store as store  # noqa: E402
 from ai_orchestrator.agent_hub.redaction import _strip_result_data  # noqa: E402
-from local_agent.actions import action_run_claude_agent  # noqa: E402
-from local_agent.websocket_client import _build_result_message  # noqa: E402
+from local_agent.connection.actions import action_run_claude_agent  # noqa: E402
+from local_agent.connection.websocket_client import _build_result_message  # noqa: E402
 
 T0 = time.monotonic()
 LOCK = threading.Lock()

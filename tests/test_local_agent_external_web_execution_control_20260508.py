@@ -21,29 +21,29 @@ from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_USER_DIRECT,
     classify_action,
 )
-from local_agent.runtime.local_security_installer_runner import (
-    GRADE_BLOCKED as INSTALLER_GRADE_BLOCKED,
-)
-from local_agent.runtime.local_security_installer_runner import (
-    STATUS_INSTALL_PERMISSION_REQUIRED,
-    STATUS_WAITING_USER_UAC,
-    check_action_allowed,
-)
-from local_agent.runtime.site_type_classifier import (
-    SITE_GOVERNMENT,
-    classify_site,
-)
-from local_agent.runtime.universal_safe_result import (
-    STATUS_COMPLETED,
-    build_universal_result,
-    sanitize_universal_result,
-)
 from ai_orchestrator.server.execution_location_guard import (
     LOCAL_AGENT_REQUIRED,
     SERVER_INTERNAL_ONLY,
     classify_execution_location_for_server,
 )
 from ai_orchestrator.server.universal_agent_task_api import clear_all, create_task
+from local_agent.runtime.security_program.local_security_installer_runner import (
+    GRADE_BLOCKED as INSTALLER_GRADE_BLOCKED,
+)
+from local_agent.runtime.security_program.local_security_installer_runner import (
+    STATUS_INSTALL_PERMISSION_REQUIRED,
+    STATUS_WAITING_USER_UAC,
+    check_action_allowed,
+)
+from local_agent.runtime.site_profile.site_type_classifier import (
+    SITE_GOVERNMENT,
+    classify_site,
+)
+from local_agent.runtime.universal.universal_safe_result import (
+    STATUS_COMPLETED,
+    build_universal_result,
+    sanitize_universal_result,
+)
 
 _SAFE_FIELDS = [
     "cookie_exported",

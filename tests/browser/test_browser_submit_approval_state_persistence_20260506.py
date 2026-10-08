@@ -13,7 +13,7 @@ import json
 
 import pytest
 
-from ai_orchestrator.browser_tool.submit_approval_state import (
+from ai_orchestrator.browser_tool.approval.submit_approval_state import (
     ApprovalStateError,
     ValidationError,
     append_approval_state_event,

@@ -2657,7 +2657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/agent_action_registry.py": {
+  "ai_orchestrator/browser_tool/preflight/agent_action_registry.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -2745,7 +2745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/action_registry_preflight.py": {
+  "ai_orchestrator/browser_tool/preflight/action_registry_preflight.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2753,7 +2753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/allowlist_preflight.py": {
+  "ai_orchestrator/browser_tool/preflight/allowlist_preflight.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2761,7 +2761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/approval_record_router.py": {
+  "ai_orchestrator/browser_tool/approval/approval_record_router.py": {
    "layer": "L8",
    "role": "api",
    "domain": "browser",
@@ -2769,7 +2769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/approval_record_store.py": {
+  "ai_orchestrator/browser_tool/approval/approval_record_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "browser",
@@ -2793,7 +2793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/browser_engine_capability_classifier.py": {
+  "ai_orchestrator/browser_tool/routing/browser_engine_capability_classifier.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2801,7 +2801,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/browser_tool/browser_engine_routing_dispatch_dryrun.py": {
+  "ai_orchestrator/browser_tool/routing/browser_engine_routing_dispatch_dryrun.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2809,7 +2809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/browser_engine_routing_policy.py": {
+  "ai_orchestrator/browser_tool/routing/browser_engine_routing_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2817,7 +2817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/browser_engine_routing_preflight_chain.py": {
+  "ai_orchestrator/browser_tool/routing/browser_engine_routing_preflight_chain.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2825,7 +2825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/controlled_submit.py": {
+  "ai_orchestrator/browser_tool/submit/controlled_submit.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2833,7 +2833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/domain_profile_registry.py": {
+  "ai_orchestrator/browser_tool/policy/domain_profile_registry.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2841,7 +2841,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/browser_tool/execution_location_policy.py": {
+  "ai_orchestrator/browser_tool/routing/execution_location_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2849,7 +2849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/fallback_decision_engine.py": {
+  "ai_orchestrator/browser_tool/routing/fallback_decision_engine.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2857,7 +2857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/gate_approval_preflight.py": {
+  "ai_orchestrator/browser_tool/preflight/gate_approval_preflight.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2865,7 +2865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/local_agent_handoff.py": {
+  "ai_orchestrator/browser_tool/routing/local_agent_handoff.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -2913,7 +2913,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/policy.py": {
+  "ai_orchestrator/browser_tool/backend_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2937,7 +2937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/security_signal_detector.py": {
+  "ai_orchestrator/browser_tool/policy/security_signal_detector.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2945,7 +2945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/server_browser_boundary_policy.py": {
+  "ai_orchestrator/browser_tool/policy/server_browser_boundary_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2953,7 +2953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/site_access_compatibility_auditor.py": {
+  "ai_orchestrator/browser_tool/policy/site_access_compatibility_auditor.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -2961,7 +2961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/site_compliance_policy.py": {
+  "ai_orchestrator/browser_tool/policy/site_compliance_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2969,7 +2969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/submit_approval_state.py": {
+  "ai_orchestrator/browser_tool/approval/submit_approval_state.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2977,7 +2977,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/submit_audit_log.py": {
+  "ai_orchestrator/browser_tool/approval/submit_audit_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "browser",
@@ -2985,7 +2985,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/submit_execution_gate.py": {
+  "ai_orchestrator/browser_tool/submit/submit_execution_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -2993,7 +2993,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/submit_policy.py": {
+  "ai_orchestrator/browser_tool/submit/submit_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -3001,7 +3001,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/submit_preview.py": {
+  "ai_orchestrator/browser_tool/submit/submit_preview.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -3025,7 +3025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/unified_execution_router.py": {
+  "ai_orchestrator/browser_tool/routing/unified_execution_router.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -3033,7 +3033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/browser_tool/workflow_audit_writer.py": {
+  "ai_orchestrator/browser_tool/approval/workflow_audit_writer.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "browser",
@@ -3729,7 +3729,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/approval_audit_log.py": {
+  "local_agent/runtime/permission/approval_audit_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -3737,7 +3737,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/auth_completion_detector.py": {
+  "local_agent/runtime/auth/auth_completion_detector.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3745,7 +3745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/auth_wait_controller.py": {
+  "local_agent/runtime/auth/auth_wait_controller.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3753,7 +3753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/auto_resume_after_auth.py": {
+  "local_agent/runtime/auth/auto_resume_after_auth.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4185,7 +4185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/browser_allowlist_expansion_preflight.py": {
+  "local_agent/runtime/site_profile/browser_allowlist_expansion_preflight.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4193,7 +4193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/browser_discovery_candidates.py": {
+  "local_agent/runtime/site_profile/browser_discovery_candidates.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4201,7 +4201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/browser_foreground_adapter.py": {
+  "local_agent/runtime/playwright/browser_foreground_adapter.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4209,7 +4209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/browser_policy_integration.py": {
+  "local_agent/runtime/site_profile/browser_policy_integration.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4217,7 +4217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/browser_site_registry.py": {
+  "local_agent/runtime/site_profile/browser_site_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4225,7 +4225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/browser_value_registry.py": {
+  "local_agent/runtime/site_profile/browser_value_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4257,7 +4257,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/content_publish_guard.py": {
+  "local_agent/runtime/permission/content_publish_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4265,7 +4265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/content_workflow_policy.py": {
+  "local_agent/runtime/permission/content_workflow_policy.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4273,7 +4273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/delegated_action_executor.py": {
+  "local_agent/runtime/permission/delegated_action_executor.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4281,7 +4281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/delegated_permission_gate.py": {
+  "local_agent/runtime/permission/delegated_permission_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4289,7 +4289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/delegated_permission_policy.py": {
+  "local_agent/runtime/permission/delegated_permission_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4297,7 +4297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/delegated_permission_store.py": {
+  "local_agent/runtime/permission/delegated_permission_store.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4305,7 +4305,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/download_policy.py": {
+  "local_agent/runtime/download/download_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4313,7 +4313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/download_result_sanitizer.py": {
+  "local_agent/runtime/download/download_result_sanitizer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4321,7 +4321,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/download_upload_manifest.py": {
+  "local_agent/runtime/download/download_upload_manifest.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4329,7 +4329,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/generic_selector_discovery.py": {
+  "local_agent/runtime/universal/generic_selector_discovery.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4337,7 +4337,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/installer_folder_presenter.py": {
+  "local_agent/runtime/security_program/installer_folder_presenter.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4345,7 +4345,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/learned_site_profile_store.py": {
+  "local_agent/runtime/universal/learned_site_profile_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -4353,7 +4353,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/local_security_installer_runner.py": {
+  "local_agent/runtime/security_program/local_security_installer_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4369,7 +4369,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/natural_language_task_api.py": {
+  "local_agent/runtime/universal/natural_language_task_api.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4409,7 +4409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/playwright_bootstrap.py": {
+  "local_agent/runtime/playwright/playwright_bootstrap.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4417,7 +4417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/playwright_runner.py": {
+  "local_agent/runtime/playwright/playwright_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4425,7 +4425,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/real_site_smoke_runner.py": {
+  "local_agent/runtime/universal/real_site_smoke_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4457,7 +4457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/security_installer_candidate_finder.py": {
+  "local_agent/runtime/security_program/security_installer_candidate_finder.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4465,7 +4465,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/security_installer_policy.py": {
+  "local_agent/runtime/security_program/security_installer_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4473,7 +4473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/security_program_auto_resume.py": {
+  "local_agent/runtime/security_program/security_program_auto_resume.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4481,7 +4481,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/security_program_detector.py": {
+  "local_agent/runtime/security_program/security_program_detector.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4489,7 +4489,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/security_program_install_completion_detector.py": {
+  "local_agent/runtime/security_program/security_program_install_completion_detector.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4497,7 +4497,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/security_program_install_result_sanitizer.py": {
+  "local_agent/runtime/security_program/security_program_install_result_sanitizer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4505,7 +4505,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/security_program_permission_gate.py": {
+  "local_agent/runtime/security_program/security_program_permission_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4513,7 +4513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/selector_pack_registry.py": {
+  "local_agent/runtime/site_profile/selector_pack_registry.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4521,7 +4521,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/site_capability_matrix.py": {
+  "local_agent/runtime/site_profile/site_capability_matrix.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4529,7 +4529,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/site_profile_registry.py": {
+  "local_agent/runtime/site_profile/site_profile_registry.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4537,7 +4537,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/site_type_classifier.py": {
+  "local_agent/runtime/site_profile/site_type_classifier.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4561,7 +4561,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/universal_action_verifier.py": {
+  "local_agent/runtime/universal/universal_action_verifier.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4569,7 +4569,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/universal_agent_session.py": {
+  "local_agent/runtime/universal/universal_agent_session.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4577,7 +4577,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/universal_ai_site_agent.py": {
+  "local_agent/runtime/universal/universal_ai_site_agent.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4585,7 +4585,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/universal_page_observer.py": {
+  "local_agent/runtime/universal/universal_page_observer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4593,7 +4593,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/universal_safe_result.py": {
+  "local_agent/runtime/universal/universal_safe_result.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4601,7 +4601,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/universal_task_planner.py": {
+  "local_agent/runtime/universal/universal_task_planner.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4609,7 +4609,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/universal_workflow_runner.py": {
+  "local_agent/runtime/universal/universal_workflow_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4617,7 +4617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/unknown_site_fallback_policy.py": {
+  "local_agent/runtime/universal/unknown_site_fallback_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4633,7 +4633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/user_assisted_installer.py": {
+  "local_agent/runtime/security_program/user_assisted_installer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4641,7 +4641,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/user_attention_notifier.py": {
+  "local_agent/runtime/notify/user_attention_notifier.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4649,7 +4649,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/user_intent_parser.py": {
+  "local_agent/runtime/universal/user_intent_parser.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4657,7 +4657,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/user_notification_adapter.py": {
+  "local_agent/runtime/notify/user_notification_adapter.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4665,7 +4665,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/workflow_template_engine.py": {
+  "local_agent/runtime/universal/workflow_template_engine.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -6561,7 +6561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/actions.py": {
+  "local_agent/connection/actions.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6577,7 +6577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/audit.py": {
+  "local_agent/common/audit.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6585,7 +6585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_action_contract.py": {
+  "local_agent/browser/browser_action_contract.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6593,7 +6593,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_action_executor.py": {
+  "local_agent/browser/browser_action_executor.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6601,7 +6601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_actions.py": {
+  "local_agent/browser/browser_actions.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6609,7 +6609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_approval_db_store.py": {
+  "local_agent/browser/approval/browser_approval_db_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -6617,7 +6617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_approval_errors.py": {
+  "local_agent/browser/approval/browser_approval_errors.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -6625,7 +6625,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/browser_approval_persistent_store.py": {
+  "local_agent/browser/approval/browser_approval_persistent_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -6633,7 +6633,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/browser_approval_verifier.py": {
+  "local_agent/browser/approval/browser_approval_verifier.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -6641,7 +6641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_audit_contract.py": {
+  "local_agent/browser/approval/browser_audit_contract.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6649,7 +6649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_controller.py": {
+  "local_agent/browser/browser_controller.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6657,7 +6657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_instance_guard.py": {
+  "local_agent/browser/browser_instance_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -6665,7 +6665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_login_probe.py": {
+  "local_agent/browser/browser_login_probe.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6673,7 +6673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_reader.py": {
+  "local_agent/browser/browser_reader.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6681,7 +6681,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_readonly_runtime.py": {
+  "local_agent/browser/browser_readonly_runtime.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6689,7 +6689,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_realtime_watcher.py": {
+  "local_agent/browser/browser_realtime_watcher.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6697,7 +6697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_session_store.py": {
+  "local_agent/browser/browser_session_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -6705,7 +6705,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/browser_task_handler.py": {
+  "local_agent/browser/browser_task_handler.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6713,7 +6713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_websocket_bridge.py": {
+  "local_agent/browser/bridge/browser_websocket_bridge.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6721,7 +6721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_websocket_handshake.py": {
+  "local_agent/browser/bridge/browser_websocket_handshake.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6729,7 +6729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/browser_websocket_schema.py": {
+  "local_agent/browser/bridge/browser_websocket_schema.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6737,7 +6737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/cdp_attach.py": {
+  "local_agent/browser/cdp_attach.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6745,7 +6745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/config.py": {
+  "local_agent/common/config.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "local_agent",
@@ -6753,7 +6753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/connection_diagnostics.py": {
+  "local_agent/connection/connection_diagnostics.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6761,7 +6761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/desktop_config.py": {
+  "local_agent/common/desktop_config.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6769,7 +6769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/file_scanner.py": {
+  "local_agent/tools/file_scanner.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6777,7 +6777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui_chat_state.py": {
+  "local_agent/gui/gui_chat_state.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6785,7 +6785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui_icons.py": {
+  "local_agent/gui/gui_icons.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6793,7 +6793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui_log_buffer.py": {
+  "local_agent/gui/gui_log_buffer.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6801,7 +6801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui_state.py": {
+  "local_agent/gui/gui_state.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6809,7 +6809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/internal_test_allowlist.py": {
+  "local_agent/policy/internal_test_allowlist.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -6817,7 +6817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/kras_connector.py": {
+  "local_agent/tools/kras_connector.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6825,7 +6825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/login_auto_flow.py": {
+  "local_agent/browser/login_auto_flow.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6833,7 +6833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/login_state_detector.py": {
+  "local_agent/browser/login_state_detector.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6841,7 +6841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/network_bypass.py": {
+  "local_agent/connection/network_bypass.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6849,7 +6849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/redaction.py": {
+  "local_agent/common/redaction.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6857,7 +6857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/registration_client.py": {
+  "local_agent/connection/registration_client.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6865,7 +6865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/server_action_adapter.py": {
+  "local_agent/browser/server_action_adapter.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6873,7 +6873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/site_compliance_gate.py": {
+  "local_agent/policy/site_compliance_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -6881,7 +6881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/site_entry_policy.py": {
+  "local_agent/policy/site_entry_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -6889,7 +6889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/site_mapper.py": {
+  "local_agent/browser/site_mapper.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6897,7 +6897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/tenant_scope_contract.py": {
+  "local_agent/policy/tenant_scope_contract.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6905,7 +6905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/token_store.py": {
+  "local_agent/connection/token_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -6913,7 +6913,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/user_present_state_store.py": {
+  "local_agent/user_present/user_present_state_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -6921,7 +6921,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/user_present_status_sender.py": {
+  "local_agent/user_present/user_present_status_sender.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6929,7 +6929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/user_present_ui_server.py": {
+  "local_agent/user_present/user_present_ui_server.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -6937,7 +6937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/user_present_ws_adapter.py": {
+  "local_agent/user_present/user_present_ws_adapter.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6945,7 +6945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/web_reader.py": {
+  "local_agent/browser/web_reader.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6953,7 +6953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/websocket_client.py": {
+  "local_agent/connection/websocket_client.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -9337,7 +9337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/controller.py": {
+  "local_agent/connection/controller.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -9377,7 +9377,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/process_guard.py": {
+  "local_agent/connection/process_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -9433,7 +9433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/status_store.py": {
+  "local_agent/connection/status_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -24070,6 +24070,182 @@
    "role": "test",
    "domain": "youtube",
    "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/approval/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/policy/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/preflight/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/routing/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "ai_orchestrator/browser_tool/submit/__init__.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/browser/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/browser/approval/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/browser/bridge/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/common/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/connection/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/gui/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/policy/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/auth/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/download/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/notify/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/permission/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/playwright/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/security_program/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/site_profile/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/universal/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/tools/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/user_present/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
    "confidence": "high",
    "source": "rule"
   }

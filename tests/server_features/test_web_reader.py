@@ -1,4 +1,4 @@
-"""local_agent.web_reader 검증 (read-only Stage 1).
+"""local_agent.browser.web_reader 검증 (read-only Stage 1).
 
 HTML 문자열 기반 테스트만 사용한다. 실제 외부 사이트 접속은 하지 않는다.
 """
@@ -64,7 +64,7 @@ _HTML_BASIC = """
 
 
 def test_title_and_headings_extracted() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     r = analyze_html_structure(_HTML_BASIC)
     assert r["ok"] is True
@@ -74,7 +74,7 @@ def test_title_and_headings_extracted() -> None:
 
 
 def test_links_extracted_and_normalized() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     r = analyze_html_structure(_HTML_BASIC, base_url="https://example.com/proj/")
     hrefs = {link["text"]: link for link in r["links"]}
@@ -88,7 +88,7 @@ def test_links_extracted_and_normalized() -> None:
 
 
 def test_buttons_extracted() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     r = analyze_html_structure(_HTML_BASIC)
     texts = {b["text"] for b in r["buttons"]}
@@ -104,7 +104,7 @@ def test_buttons_extracted() -> None:
 
 
 def test_write_buttons_classified_danger_write() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     r = analyze_html_structure(_HTML_BASIC)
     by_text = {b["text"]: b for b in r["buttons"]}
@@ -114,7 +114,7 @@ def test_write_buttons_classified_danger_write() -> None:
 
 
 def test_read_buttons_classified_safe_read() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     r = analyze_html_structure(_HTML_BASIC)
     by_text = {b["text"]: b for b in r["buttons"]}
@@ -126,7 +126,7 @@ def test_read_buttons_classified_safe_read() -> None:
 
 
 def test_password_value_not_in_result() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     r = analyze_html_structure(_HTML_BASIC)
     # 직렬화 결과에 password value 가 포함되어 있지 않아야 함
@@ -137,7 +137,7 @@ def test_password_value_not_in_result() -> None:
 
 
 def test_hidden_csrf_value_not_in_result() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     r = analyze_html_structure(_HTML_BASIC)
     serialized = json.dumps(r, ensure_ascii=False)
@@ -148,7 +148,7 @@ def test_hidden_csrf_value_not_in_result() -> None:
 
 
 def test_form_has_password_and_hidden() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     r = analyze_html_structure(_HTML_BASIC)
     assert len(r["forms"]) == 1
@@ -165,7 +165,7 @@ def test_form_has_password_and_hidden() -> None:
 
 
 def test_table_headers_rows_columns() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     r = analyze_html_structure(_HTML_BASIC)
     assert len(r["tables"]) == 1
@@ -180,7 +180,7 @@ def test_table_headers_rows_columns() -> None:
 
 
 def test_business_keyword_scoring_on_links() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     html = """
     <a href="/projects/contracts">계약 현황</a>
@@ -198,7 +198,7 @@ def test_business_keyword_scoring_on_links() -> None:
 
 
 def test_empty_html_returns_safe_empty_result() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     r = analyze_html_structure("")
     assert r["ok"] is True
@@ -212,7 +212,7 @@ def test_empty_html_returns_safe_empty_result() -> None:
 
 
 def test_recommended_actions_are_read_only() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     r = analyze_html_structure(_HTML_BASIC)
     recs = r["recommended_actions"]
@@ -226,7 +226,7 @@ def test_recommended_actions_are_read_only() -> None:
 
 
 def test_full_html_body_not_in_result() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     unique_marker = "UNIQUE_PLAIN_TEXT_MARKER_ABCDEFG_12345"
     html = f"<html><body><div>preamble {unique_marker} tail</div><p>extra</p></body></html>"
@@ -253,7 +253,7 @@ def test_full_html_body_not_in_result() -> None:
     ],
 )
 def test_validate_url_blocks_dangerous_schemes(url: str) -> None:
-    from local_agent.web_reader import validate_url_for_readonly_open
+    from local_agent.browser.web_reader import validate_url_for_readonly_open
 
     r = validate_url_for_readonly_open(url)
     assert r["ok"] is False
@@ -277,7 +277,7 @@ def test_validate_url_blocks_dangerous_schemes(url: str) -> None:
     ],
 )
 def test_validate_url_blocks_internal_addresses(url: str) -> None:
-    from local_agent.web_reader import validate_url_for_readonly_open
+    from local_agent.browser.web_reader import validate_url_for_readonly_open
 
     r = validate_url_for_readonly_open(url)
     assert r["ok"] is False
@@ -285,7 +285,7 @@ def test_validate_url_blocks_internal_addresses(url: str) -> None:
 
 
 def test_validate_url_accepts_public_https() -> None:
-    from local_agent.web_reader import validate_url_for_readonly_open
+    from local_agent.browser.web_reader import validate_url_for_readonly_open
 
     r = validate_url_for_readonly_open("https://example.com/path?x=1")
     assert r["ok"] is True
@@ -294,7 +294,7 @@ def test_validate_url_accepts_public_https() -> None:
 
 
 def test_validate_url_allow_private_network_opt_in() -> None:
-    from local_agent.web_reader import validate_url_for_readonly_open
+    from local_agent.browser.web_reader import validate_url_for_readonly_open
 
     blocked = validate_url_for_readonly_open("http://127.0.0.1/")
     assert blocked["ok"] is False
@@ -306,7 +306,7 @@ def test_validate_url_allow_private_network_opt_in() -> None:
 
 
 def test_execute_action_web_analyze_html() -> None:
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     result = execute_action(
         "web_analyze_html",
@@ -320,7 +320,7 @@ def test_execute_action_web_analyze_html() -> None:
 
 
 def test_execute_action_web_analyze_html_missing_html() -> None:
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     result = execute_action("web_analyze_html", {})
     assert result.success is False
@@ -331,7 +331,7 @@ def test_execute_action_web_analyze_html_missing_html() -> None:
 
 
 def test_result_contains_no_known_sensitive_tokens() -> None:
-    from local_agent.web_reader import analyze_html_structure
+    from local_agent.browser.web_reader import analyze_html_structure
 
     html = """
     <html><body>
@@ -363,8 +363,8 @@ def test_no_browser_automation_or_mutation_apis() -> None:
     """web_reader / 새 action 코드에 클릭·입력·브라우저 자동화 호출이 없는지."""
     from pathlib import Path
 
-    import local_agent.actions as ac
-    import local_agent.web_reader as wr
+    import local_agent.browser.web_reader as wr
+    import local_agent.connection.actions as ac
 
     reader_src = Path(wr.__file__).read_text(encoding="utf-8")
     actions_src = Path(ac.__file__).read_text(encoding="utf-8")

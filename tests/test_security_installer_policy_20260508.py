@@ -1,6 +1,6 @@
 """tests/test_security_installer_policy_20260508.py"""
 
-from local_agent.runtime.security_installer_policy import (
+from local_agent.runtime.security_program.security_installer_policy import (
     POLICY_ALLOWED,
     POLICY_BLOCKED,
     POLICY_NEEDS_PERMISSION,

@@ -20,9 +20,11 @@ _REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from local_agent.runtime.security_installer_candidate_finder import find_installer_candidates  # noqa: E402
-from local_agent.runtime.security_program_detector import detect_security_signals  # noqa: E402
-from local_agent.runtime.security_program_install_result_sanitizer import (  # noqa: E402
+from local_agent.runtime.security_program.security_installer_candidate_finder import (  # noqa: E402
+    find_installer_candidates,
+)
+from local_agent.runtime.security_program.security_program_detector import detect_security_signals  # noqa: E402
+from local_agent.runtime.security_program.security_program_install_result_sanitizer import (  # noqa: E402
     check_result_has_no_sensitive_data,
 )
 

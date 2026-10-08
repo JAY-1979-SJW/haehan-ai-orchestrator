@@ -8,7 +8,7 @@ import json
 
 import pytest
 
-from ai_orchestrator.browser_tool.submit_audit_log import (
+from ai_orchestrator.browser_tool.approval.submit_audit_log import (
     SubmitAuditEvent,
     append_submit_audit_event,
     build_submit_audit_event,
@@ -649,7 +649,7 @@ class TestProductionSafeguards:
         # that all functions are pure Python with no imports of network/DB libs
         import inspect
 
-        from ai_orchestrator.browser_tool import submit_audit_log
+        from ai_orchestrator.browser_tool.approval import submit_audit_log
 
         for name, func in inspect.getmembers(submit_audit_log, inspect.isfunction):
             source = inspect.getsource(func)

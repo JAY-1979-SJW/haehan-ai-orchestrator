@@ -1,6 +1,6 @@
 """tests/test_user_assisted_installer_20260508.py"""
 
-from local_agent.runtime.user_assisted_installer import (
+from local_agent.runtime.security_program.user_assisted_installer import (
     STATUS_INSTALL_COMPLETED_DETECTED,
     STATUS_RETRY_ORIGINAL_TASK_READY,
     STATUS_USER_INSTALL_IN_PROGRESS,

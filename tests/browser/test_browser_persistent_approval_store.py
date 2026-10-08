@@ -17,12 +17,12 @@ import json
 import tempfile
 from pathlib import Path
 
-from local_agent.browser_approval_persistent_store import (
+from local_agent.browser.approval.browser_approval_persistent_store import (
     PersistentBrowserApprovalStore,
     _hash_token,
 )
-from local_agent.browser_approval_verifier import BrowserApprovalVerifier
-from local_agent.browser_task_handler import BrowserTaskPayload
+from local_agent.browser.approval.browser_approval_verifier import BrowserApprovalVerifier
+from local_agent.browser.browser_task_handler import BrowserTaskPayload
 
 
 class TestTokenHashing:

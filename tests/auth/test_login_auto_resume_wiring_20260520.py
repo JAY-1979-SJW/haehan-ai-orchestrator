@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import asyncio
 
-from local_agent import login_state_detector as det
-from local_agent.login_auto_flow import (
+from local_agent.browser import login_state_detector as det
+from local_agent.browser.login_auto_flow import (
     EVT_COMMAND_AUTO_RESUMED,
     EVT_COMMAND_RESUME_FAILED,
     EVT_LOGGED_IN_DETECTED,

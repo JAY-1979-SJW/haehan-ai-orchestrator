@@ -27,7 +27,7 @@ OUT_OF_SCOPE = {
     "scripts/ops/verify_remote_browser.py",
 }
 DESIGN_DOC = ROOT / "docs" / "design" / "local_agent_cdp_attach_dry_run_20260523.md"
-HELPER = ROOT / "local_agent" / "cdp_attach.py"
+HELPER = ROOT / "local_agent" / "browser" / "cdp_attach.py"
 CDP_DAEMON = ROOT / "scripts" / "browser" / "cdp" / "cdp_daemon.py"
 APP_REALTIME_CHECK = ROOT / "scripts" / "ops" / "runtime" / "app_realtime_check.py"
 CHROME_UI_MONITOR = ROOT / "scripts" / "archive" / "misc" / "chrome_ui_monitor.py"
@@ -111,7 +111,7 @@ def check_helper_contract(findings: list[Finding]) -> None:
     if not HELPER.exists():
         add(findings, "FAIL", "cdp_attach_helper", "missing")
         return
-    from local_agent.cdp_attach import (
+    from local_agent.browser.cdp_attach import (
         CDPAttachValidationError,
         build_cdp_list_url,
         build_cdp_version_url,

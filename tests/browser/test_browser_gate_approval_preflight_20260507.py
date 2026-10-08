@@ -6,12 +6,12 @@ Uses temporary JSONL approval store for each test.
 
 import json
 
-from ai_orchestrator.browser_tool.approval_record_store import (
+from ai_orchestrator.browser_tool.approval.approval_record_store import (
     append_approval_record,
     build_approval_decision,
     build_approval_request,
 )
-from ai_orchestrator.browser_tool.gate_approval_preflight import (
+from ai_orchestrator.browser_tool.preflight.gate_approval_preflight import (
     build_gate_approval_context,
     evaluate_gate_approval_preflight,
     validate_gate_approval_result,
@@ -602,7 +602,7 @@ class TestEvaluateGateApprovalPreflight:
         import ast
         import inspect
 
-        from ai_orchestrator.browser_tool import gate_approval_preflight
+        from ai_orchestrator.browser_tool.preflight import gate_approval_preflight
 
         # Get source code
         source = inspect.getsource(gate_approval_preflight)

@@ -7,7 +7,7 @@ Pure controlled submit decision validation only.
 
 import pytest
 
-from ai_orchestrator.browser_tool.controlled_submit import (
+from ai_orchestrator.browser_tool.submit.controlled_submit import (
     ControlledSubmitResult,
     build_controlled_submit_result,
     get_blocking_reason,
@@ -273,7 +273,7 @@ class TestNoSideEffects:
 
     def test_no_network_calls(self):
         """Module should not import network libraries."""
-        import ai_orchestrator.browser_tool.controlled_submit as module
+        import ai_orchestrator.browser_tool.submit.controlled_submit as module
 
         module_code = module.__dict__
         assert "requests" not in module_code

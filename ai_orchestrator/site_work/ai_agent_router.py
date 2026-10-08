@@ -2,7 +2,7 @@
 
 앱 버튼/채팅에서 Claude(MCP)를 실제로 실행시키는 진입점. 2026-09-28 기준서
 (docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md)에서 구현·검증된
-run_claude_agent 액션(local_agent/actions.py) + 기존 local_agent_registry 작업 큐를
+run_claude_agent 액션(local_agent/connection/actions.py) + 기존 local_agent_registry 작업 큐를
 그대로 재사용한다 — 신규 실행 로직 없음, 신규 큐/프로세스 없음.
 
 이 라우터가 추가하는 건 딱 하나: "어느 로컬 에이전트로 보낼지"를 프런트가 몰라도 되게
@@ -17,11 +17,11 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..tasks import chat_sessions as _chat_store
-from ..contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
-from ..agent_hub.registry import facade as _reg
 from .. import mcp_tool_names as _tool_names
+from ..agent_hub.registry import facade as _reg
+from ..contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
 from ..gates.auth import require_role
+from ..tasks import chat_sessions as _chat_store
 
 ai_agent_router = APIRouter(prefix="/ai-agent", tags=["ai-agent"])
 
@@ -85,7 +85,7 @@ def run_agent(
     if body.chat_id:
         # 같은 채팅의 이전 대화가 있으면 그 claude_session_id로 이어간다(--resume) —
         # 공식 --system-prompt-snapshot 문서 근거로 콜드 스타트 지연을 줄인다
-        # (local_agent/actions.py::action_run_claude_agent 참고).
+        # (local_agent/connection/actions.py::action_run_claude_agent 참고).
         chat_session = _chat_store.get_session(body.chat_id)
         if chat_session and chat_session.claude_session_id:
             params["resume_session_id"] = chat_session.claude_session_id

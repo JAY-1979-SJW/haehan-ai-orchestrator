@@ -13,7 +13,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 # 온디맨드 컨트롤러 3개(T4 C11 에서 scripts/local_agent/ → local_agent/) — 금지 패턴 검사 대상은 그대로다
-_CONTROLLER_FILES = [pathlib.Path("local_agent") / name for name in ("controller.py", "process_guard.py", "status_store.py")]
+_CONTROLLER_FILES = [pathlib.Path("local_agent/connection") / name for name in ("controller.py", "process_guard.py", "status_store.py")]
 
 # ── fixture: 임시 data/local_agent 디렉터리 ────────────────────────────
 
@@ -23,8 +23,8 @@ def _isolated_data_dir(tmp_path, monkeypatch):
     """각 테스트마다 독립적인 data/local_agent 디렉터리 사용."""
     agent_dir = tmp_path / "data" / "local_agent"
     agent_dir.mkdir(parents=True)
-    import local_agent.process_guard as pg
-    import local_agent.status_store as ss
+    import local_agent.connection.process_guard as pg
+    import local_agent.connection.status_store as ss
 
     monkeypatch.setattr(ss, "_STATUS_DIR", agent_dir)
     monkeypatch.setattr(ss, "_STATUS_FILE", agent_dir / "status.json")
@@ -38,8 +38,8 @@ def _isolated_data_dir(tmp_path, monkeypatch):
 
 
 def test_start_creates_lock_and_status():
-    from local_agent.controller import get_local_agent_status, start_local_agent
-    from local_agent.status_store import lock_exists
+    from local_agent.connection.controller import get_local_agent_status, start_local_agent
+    from local_agent.connection.status_store import lock_exists
 
     result = start_local_agent(
         task_id="t001",
@@ -58,7 +58,7 @@ def test_start_creates_lock_and_status():
 
 
 def test_duplicate_start_blocked():
-    from local_agent.controller import start_local_agent
+    from local_agent.connection.controller import start_local_agent
 
     r1 = start_local_agent(
         "t001", "gabia", ["dns_read"], approval={"decision": "LOCAL_AGENT_REQUIRED", "blocked": False}
@@ -75,7 +75,7 @@ def test_duplicate_start_blocked():
 
 
 def test_status_no_secret():
-    from local_agent.controller import get_local_agent_status, start_local_agent
+    from local_agent.connection.controller import get_local_agent_status, start_local_agent
 
     start_local_agent("t001", "gabia", ["dns_read"], approval={"decision": "LOCAL_AGENT_REQUIRED", "blocked": False})
     status = get_local_agent_status()
@@ -88,8 +88,8 @@ def test_status_no_secret():
 
 
 def test_stop_releases_lock():
-    from local_agent.controller import start_local_agent, stop_local_agent
-    from local_agent.status_store import lock_exists
+    from local_agent.connection.controller import start_local_agent, stop_local_agent
+    from local_agent.connection.status_store import lock_exists
 
     start_local_agent("t001", "gabia", ["dns_read"], approval={"decision": "LOCAL_AGENT_REQUIRED", "blocked": False})
     assert lock_exists()
@@ -102,7 +102,7 @@ def test_stop_releases_lock():
 
 
 def test_cleanup_default_dry_run():
-    from local_agent.controller import cleanup_stale
+    from local_agent.connection.controller import cleanup_stale
 
     result = cleanup_stale()
     assert result["dry_run"] is True
@@ -110,8 +110,8 @@ def test_cleanup_default_dry_run():
 
 
 def test_cleanup_stale_detects_orphan_lock(_isolated_data_dir):
-    from local_agent.controller import cleanup_stale
-    from local_agent.status_store import _LOCK_FILE, write_status
+    from local_agent.connection.controller import cleanup_stale
+    from local_agent.connection.status_store import _LOCK_FILE, write_status
 
     # lock 파일만 있고 running=False인 stale 상태
     _LOCK_FILE.write_text("orphan_task", encoding="utf-8")
@@ -125,7 +125,7 @@ def test_cleanup_stale_detects_orphan_lock(_isolated_data_dir):
 
 
 def test_blocked_action_cannot_start():
-    from local_agent.controller import start_local_agent
+    from local_agent.connection.controller import start_local_agent
 
     result = start_local_agent(
         "t001",
@@ -141,7 +141,7 @@ def test_blocked_action_cannot_start():
 
 
 def test_approved_local_agent_action_can_start():
-    from local_agent.controller import start_local_agent
+    from local_agent.connection.controller import start_local_agent
 
     result = start_local_agent(
         "t001",
@@ -157,7 +157,7 @@ def test_approved_local_agent_action_can_start():
 
 
 def test_expired_approval_denied():
-    from local_agent.controller import start_local_agent
+    from local_agent.connection.controller import start_local_agent
 
     past = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
     result = start_local_agent(
@@ -178,7 +178,7 @@ def test_expired_approval_denied():
 
 
 def test_idle_timeout_policy_in_status():
-    from local_agent.controller import get_local_agent_status, start_local_agent
+    from local_agent.connection.controller import get_local_agent_status, start_local_agent
 
     start_local_agent(
         "t001",
@@ -193,7 +193,7 @@ def test_idle_timeout_policy_in_status():
 
 
 def test_idle_timeout_constant_exists():
-    from local_agent.process_guard import DEFAULT_IDLE_TIMEOUT_S
+    from local_agent.connection.process_guard import DEFAULT_IDLE_TIMEOUT_S
 
     assert DEFAULT_IDLE_TIMEOUT_S > 0
 
@@ -219,7 +219,7 @@ def test_no_windows_service_code():
 
 
 def test_no_infinite_daemon_loop():
-    controller_src = pathlib.Path("local_agent/controller.py").read_text(encoding="utf-8")
+    controller_src = pathlib.Path("local_agent/connection/controller.py").read_text(encoding="utf-8")
     # while True 무한 루프가 없어야 함
     assert "while True:" not in controller_src
     assert "while True :" not in controller_src
@@ -277,7 +277,7 @@ def test_evidence_policy_in_policy_doc():
 
 
 def test_user_direct_required_blocked():
-    from local_agent.controller import start_local_agent
+    from local_agent.connection.controller import start_local_agent
 
     result = start_local_agent(
         "t001",
@@ -293,7 +293,7 @@ def test_user_direct_required_blocked():
 
 
 def test_stop_records_reason():
-    from local_agent.controller import start_local_agent, stop_local_agent
+    from local_agent.connection.controller import start_local_agent, stop_local_agent
 
     start_local_agent("t001", "gabia", ["dns_read"], approval={"decision": "LOCAL_AGENT_REQUIRED", "blocked": False})
     result = stop_local_agent(reason="failed")

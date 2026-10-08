@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 SPEC = Path("docs/design/local_agent_gui_ux_design_spec_ai_chat_amend_20260521.md")
 
 
@@ -208,11 +207,11 @@ def test_regression_prev_ux_spec_unchanged():
 
 
 def test_regression_gui_state_unchanged():
-    from local_agent import gui_state as gs
+    from local_agent.gui import gui_state as gs
     assert hasattr(gs, "GuiController")
 
 
 def test_regression_connection_diagnostics_unchanged():
-    from local_agent import connection_diagnostics as cd
+    from local_agent.connection import connection_diagnostics as cd
     assert hasattr(cd, "render_user_block")
     assert hasattr(cd, "explain_error")

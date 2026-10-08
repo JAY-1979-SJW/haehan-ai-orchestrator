@@ -6,37 +6,37 @@
 
 import pytest
 
-from local_agent.runtime.content_workflow_policy import (
-    GRADE_USER_DIRECT,
-    get_workflow_grade,
-    is_workflow_auto_allowed,
-    requires_permission,
-)
-from local_agent.runtime.delegated_action_executor import (
-    EXEC_ALLOWED,
-    EXEC_BLOCKED,
-    EXEC_NEED_PERMISSION,
-    EXEC_USER_DIRECT,
-    execute_delegated_action,
-)
-from local_agent.runtime.delegated_permission_policy import (
-    CHECK_EXHAUSTED,
-    CHECK_EXPIRED,
-    CHECK_REVOKED,
-    CHECK_SCOPE_EXCEEDED,
-)
-from local_agent.runtime.delegated_permission_store import (
-    clear_all,
-    grant_permission,
-    revoke,
-)
-from local_agent.runtime.approval_audit_log import (
+from local_agent.runtime.permission.approval_audit_log import (
     EVENT_EXECUTION_COMPLETED,
     EVENT_EXECUTION_STARTED,
     clear_log,
     get_log,
     get_log_for_permission,
     has_sensitive_data,
+)
+from local_agent.runtime.permission.content_workflow_policy import (
+    GRADE_USER_DIRECT,
+    get_workflow_grade,
+    is_workflow_auto_allowed,
+    requires_permission,
+)
+from local_agent.runtime.permission.delegated_action_executor import (
+    EXEC_ALLOWED,
+    EXEC_BLOCKED,
+    EXEC_NEED_PERMISSION,
+    EXEC_USER_DIRECT,
+    execute_delegated_action,
+)
+from local_agent.runtime.permission.delegated_permission_policy import (
+    CHECK_EXHAUSTED,
+    CHECK_EXPIRED,
+    CHECK_REVOKED,
+    CHECK_SCOPE_EXCEEDED,
+)
+from local_agent.runtime.permission.delegated_permission_store import (
+    clear_all,
+    grant_permission,
+    revoke,
 )
 
 
@@ -265,7 +265,7 @@ class TestExistingSystemRegression:
         from ai_orchestrator.contracts.local_task_protocol import (
             STATUS_WAITING_USER_AUTH,
         )
-        from local_agent.runtime.auth_wait_controller import (
+        from local_agent.runtime.auth.auth_wait_controller import (
             AUTH_SIGNAL_LOGIN,
             enter_auth_wait,
         )
@@ -275,7 +275,7 @@ class TestExistingSystemRegression:
         assert result["sensitive_data_collected"] is False
 
     def test_naver_domain_profile_registered(self):
-        from ai_orchestrator.browser_tool.domain_profile_registry import (
+        from ai_orchestrator.browser_tool.policy.domain_profile_registry import (
             get_domain_profile,
         )
 
@@ -283,7 +283,7 @@ class TestExistingSystemRegression:
         assert profile["default_execution"] == "LOCAL_BROWSER_DEFAULT"
 
     def test_download_policy_still_works(self):
-        from local_agent.runtime.download_policy import check_file
+        from local_agent.runtime.download.download_policy import check_file
 
         assert check_file("입찰공고문.pdf", task_downloaded_files=["입찰공고문.pdf"])["upload_allowed"] is True
         assert check_file("cert.pfx", task_downloaded_files=["cert.pfx"])["upload_allowed"] is False

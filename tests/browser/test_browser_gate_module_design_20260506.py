@@ -260,6 +260,7 @@ def test_no_task_executor_import():
     files_to_check = [
         Path(__file__),
         Path(__file__).parent.parent.parent / "ai_orchestrator" / "browser_tool" / "submit_execution_gate.py",
+        Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "submit" / "submit_execution_gate.py",
     ]
     blocked = ["task_executor", "browser_worker", "ai_orchestrator.browser_tool.worker"]
 

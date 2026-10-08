@@ -64,8 +64,8 @@ def test_task_status_covers_task_state():
 
 
 def test_task_status_covers_local_agent_status_policy():
-    from ai_orchestrator.domain.enums import TaskStatus
     from ai_orchestrator.agent_hub.policy.status_policy import KNOWN_TASK_STATUSES
+    from ai_orchestrator.domain.enums import TaskStatus
 
     for v in KNOWN_TASK_STATUSES:
         assert TaskStatus(v).value == v
@@ -102,7 +102,7 @@ def test_verdict_values():
     for v in ("PASS", "WARN", "FAIL", "BLOCK", "SKIP", "ERROR"):
         assert Verdict(v).value == v
     # BrowserAuditStatus 기존 값(PASS/WARN/FAIL/SKIP/ERROR)이 Verdict에 포함됨
-    from local_agent.browser_audit_contract import BrowserAuditStatus
+    from local_agent.browser.approval.browser_audit_contract import BrowserAuditStatus
 
     for bs in BrowserAuditStatus:
         assert Verdict(bs.value).value == bs.value

@@ -21,7 +21,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from local_agent.browser_controller import (
+from local_agent.browser.browser_controller import (
     BrowserController,
     ExecuteClickResult,
     ExecuteTypeResult,

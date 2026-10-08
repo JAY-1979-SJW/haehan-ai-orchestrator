@@ -68,7 +68,7 @@ DOMAIN_CORE_MAP = {
         "impl_files": [
             "ai_orchestrator/audit/audit_logger.py",
             "ai_orchestrator/server/action_approval_audit_store.py",
-            "local_agent/runtime/approval_audit_log.py",
+            "local_agent/runtime/permission/approval_audit_log.py",
             "ai_orchestrator/audit_evidence/models.py",  # STEP 3: 표준 스키마 기준선
             "ai_orchestrator/audit_evidence/adapters.py",  # STEP 4: read-only adapter
         ],
@@ -79,7 +79,7 @@ DOMAIN_CORE_MAP = {
         "impl_files": [
             "ai_orchestrator/server/execution_location_guard.py",
             "ai_orchestrator/domain/enums.py",
-            "ai_orchestrator/browser_tool/execution_location_policy.py",
+            "ai_orchestrator/browser_tool/routing/execution_location_policy.py",
         ],
         "status": "FUNCTIONAL",
         "needs": ["unified_enum_source", "bridge_location_enum"],
@@ -123,7 +123,7 @@ DOMAIN_CORE_MAP = {
     },
     "SafetyPolicy": {
         "impl_files": [
-            "ai_orchestrator/browser_tool/policy.py",
+            "ai_orchestrator/browser_tool/backend_policy.py",
             "ai_orchestrator/server/server_egress_policy.py",
             "local_agent/runtime/security_guard.py",
             "ai_orchestrator/sites/secrets_policy.py",
@@ -145,7 +145,7 @@ DOMAIN_CORE_MAP = {
     },
     "UserDirectAction": {
         "impl_files": [
-            "ai_orchestrator/browser_tool/browser_engine_routing_policy.py",
+            "ai_orchestrator/browser_tool/routing/browser_engine_routing_policy.py",
         ],
         "status": "PARTIAL",
         "needs": ["UserDirectAction_entity", "instruction_record", "user_confirmation_required"],
@@ -259,7 +259,7 @@ SERVICE_LAYER_DESIGN = {
     },
     "execution_policy_service": {
         "purpose": "ExecutionLocation 결정, 위험도 판정, 차단 여부 결정",
-        "current_location": "ai_orchestrator/server/execution_location_guard.py + browser_tool/policy.py (scattered)",
+        "current_location": "ai_orchestrator/server/execution_location_guard.py + browser_tool/backend_policy.py (scattered)",
         "extraction_priority": "HIGH",
         "must_not_call": ["db_write", "external_site"],
         "test_criteria": ["location 판정 단위 테스트", "차단 조건 검증"],
@@ -301,7 +301,7 @@ SERVICE_LAYER_DESIGN = {
     },
     "safety_policy_service": {
         "purpose": "SafetyPolicy 통합 판정, 금지선 적용, secret 차단",
-        "current_location": "SCATTERED (browser_tool/policy.py, server/server_egress_policy.py, local_agent/security_guard.py)",
+        "current_location": "SCATTERED (browser_tool/backend_policy.py, server/server_egress_policy.py, local_agent/security_guard.py)",
         "extraction_priority": "HIGH",
         "must_not_call": ["router", "db_write"],
         "test_criteria": ["금지 필드 전수 검증", "secret 차단 검증"],
@@ -636,19 +636,19 @@ POLICY_LAYER_MAP = {
         "risk_gap": None,
     },
     "approval_gate": {
-        "impl": "ai_orchestrator/browser_tool/gate_approval_preflight.py",
+        "impl": "ai_orchestrator/browser_tool/preflight/gate_approval_preflight.py",
         "status": "IMPLEMENTED",
         "test_covered": True,
         "risk_gap": None,
     },
     "local_agent_required_policy": {
-        "impl": "ai_orchestrator/browser_tool/execution_location_policy.py",
+        "impl": "ai_orchestrator/browser_tool/routing/execution_location_policy.py",
         "status": "IMPLEMENTED",
         "test_covered": True,
         "risk_gap": None,
     },
     "user_direct_required_policy": {
-        "impl": "desktop/task_receiver.py + browser_tool/execution_location_policy.py",
+        "impl": "desktop/task_receiver.py + browser_tool/routing/execution_location_policy.py",
         "status": "PARTIAL",
         "test_covered": True,
         "risk_gap": "server-side UserDirect 정책 미통합",
@@ -847,8 +847,8 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/web_task/web_task_templates.py",
     "ai_orchestrator/tasks/external_work_registry.py",
     "ai_orchestrator/routers/ops_router.py",
-    "ai_orchestrator/browser_tool/execution_location_policy.py",
-    "ai_orchestrator/browser_tool/policy.py",
+    "ai_orchestrator/browser_tool/routing/execution_location_policy.py",
+    "ai_orchestrator/browser_tool/backend_policy.py",
     "ai_orchestrator/server/server_egress_policy.py",
 ]
 

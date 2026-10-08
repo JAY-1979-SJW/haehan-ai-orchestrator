@@ -15,9 +15,7 @@ import inspect
 
 
 def test_pipeline_modules_present():
-    from local_agent import (
-        browser_instance_guard,
-    )
+    from local_agent.browser import browser_instance_guard
 
     assert browser_instance_guard.DEFAULT_CDP_PORT == 9222
     assert "ai_chrome" in str(browser_instance_guard.DEFAULT_PROFILE_DIR)
@@ -33,7 +31,7 @@ def test_pipeline_modules_present():
 
 
 def test_engine_exposes_all_required_event_types():
-    from local_agent import login_auto_flow as f
+    from local_agent.browser import login_auto_flow as f
 
     required = {
         f.EVT_LOGIN_ACTION_STARTED,
@@ -59,7 +57,7 @@ def test_engine_exposes_all_required_event_types():
 
 
 def test_classify_emits_core_states():
-    from local_agent import login_state_detector as d
+    from local_agent.browser import login_state_detector as d
 
     cases = {
         d.LOGIN_REQUIRED: ("https://example.com/login", "Sign in", ""),
@@ -78,7 +76,7 @@ def test_classify_emits_core_states():
 
 
 def test_sanitize_and_mask_in_watcher_events():
-    from local_agent import browser_realtime_watcher as rw
+    from local_agent.browser import browser_realtime_watcher as rw
 
     src = inspect.getsource(rw)
     assert "sanitize_url" in src
@@ -98,7 +96,7 @@ def test_g4_popup_waiting_accepted_placeholder():
     재감사 시점 결정: 차기 팝업 분류 확장을 위한 자리표시로 ACCEPTED.
     제거하거나 사용처가 생기면 본 테스트 수정.
     """
-    from local_agent import login_state_detector as d
+    from local_agent.browser import login_state_detector as d
 
     assert d.POPUP_WAITING == "POPUP_WAITING"
     classify_src = inspect.getsource(d.classify)
@@ -111,8 +109,8 @@ def test_g4_popup_waiting_accepted_placeholder():
 def test_g3_login_action_started_emitted_by_engine_only():
     """classify() 는 페이지 표면 신호로만 분류하고, ACTION_STARTED 는
     엔진이 LOGIN_REQUIRED 감지 후 결정 — 책임 분리는 의도된 설계."""
-    from local_agent import login_auto_flow as f
-    from local_agent import login_state_detector as d
+    from local_agent.browser import login_auto_flow as f
+    from local_agent.browser import login_state_detector as d
 
     # classify 가 LOGIN_ACTION_STARTED 를 결과 state 로 절대 반환하지 않음.
     sample_urls = [
@@ -139,7 +137,7 @@ def test_g3_login_action_started_emitted_by_engine_only():
 
 
 def test_command_resume_failed_event_exposed():
-    from local_agent import login_auto_flow as f
+    from local_agent.browser import login_auto_flow as f
 
     assert hasattr(f, "EVT_COMMAND_RESUME_FAILED")
     assert f.EVT_COMMAND_RESUME_FAILED == "command_resume_failed"
@@ -151,7 +149,7 @@ def test_command_resume_failed_event_exposed():
 def test_pending_command_extended_fields_present():
     from dataclasses import fields
 
-    from local_agent.login_auto_flow import PendingCommand
+    from local_agent.browser.login_auto_flow import PendingCommand
 
     names = {fld.name for fld in fields(PendingCommand)}
     assert {
@@ -173,8 +171,8 @@ def test_pending_command_extended_fields_present():
 
 
 def test_challenge_then_logged_in_unblocks_engine():
-    from local_agent import login_state_detector as d
-    from local_agent.login_auto_flow import LoginAutoFlowEngine
+    from local_agent.browser import login_state_detector as d
+    from local_agent.browser.login_auto_flow import LoginAutoFlowEngine
 
     eng = LoginAutoFlowEngine()
     # 1) LOGIN_REQUIRED
@@ -211,6 +209,6 @@ def test_audit_test_file_isolated():
     import sys
 
     # 다른 시험의 import 부수효과에 기대지 않도록 직접 import 한 뒤 모듈 등록을 확인한다.
-    import local_agent.browser_session_store  # noqa: F401
+    import local_agent.browser.browser_session_store  # noqa: F401
 
-    assert "local_agent.browser_session_store" in sys.modules
+    assert "local_agent.browser.browser_session_store" in sys.modules

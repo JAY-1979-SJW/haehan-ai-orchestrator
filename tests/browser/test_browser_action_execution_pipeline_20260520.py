@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import asyncio
 
-from local_agent import browser_action_executor as bx
-from local_agent.browser_session_store import default_store as _bs
+from local_agent.browser import browser_action_executor as bx
+from local_agent.browser.browser_session_store import default_store as _bs
 
 
 def _run(coro):

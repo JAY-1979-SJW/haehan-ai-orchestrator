@@ -159,11 +159,11 @@ class TestRealBrowserControlledClickSmoke:
 
     def test_08_preview_bundle_generation(self, allowlist):
         """Test 8: Preview bundle can be generated from form data."""
-        from ai_orchestrator.browser_tool.submit_policy import (
+        from ai_orchestrator.browser_tool.submit.submit_policy import (
             SubmitValidationRequest,
             validate_submit_policy,
         )
-        from ai_orchestrator.browser_tool.submit_preview import (
+        from ai_orchestrator.browser_tool.submit.submit_preview import (
             SubmitPreviewInput,
             build_submit_preview,
         )
@@ -229,7 +229,7 @@ class TestRealBrowserControlledClickSmoke:
 
     def test_10_policy_validator_allows_controlled(self, allowlist):
         """Test 10: Policy validator returns ALLOW for controlled internal."""
-        from ai_orchestrator.browser_tool.submit_policy import (
+        from ai_orchestrator.browser_tool.submit.submit_policy import (
             SubmitValidationRequest,
             validate_submit_policy,
         )
@@ -251,14 +251,14 @@ class TestRealBrowserControlledClickSmoke:
 
     def test_11_controlled_submit_result_structure(self, allowlist):
         """Test 11: Controlled submit result has correct structure."""
-        from ai_orchestrator.browser_tool.controlled_submit import (
+        from ai_orchestrator.browser_tool.submit.controlled_submit import (
             build_controlled_submit_result,
         )
-        from ai_orchestrator.browser_tool.submit_policy import (
+        from ai_orchestrator.browser_tool.submit.submit_policy import (
             SubmitValidationRequest,
             validate_submit_policy,
         )
-        from ai_orchestrator.browser_tool.submit_preview import (
+        from ai_orchestrator.browser_tool.submit.submit_preview import (
             SubmitPreviewInput,
             build_submit_preview,
         )
@@ -403,11 +403,11 @@ class TestRealBrowserControlledClickSmoke:
 
     def test_15_verify_audit_redacted_payload(self, allowlist):
         """Test 15: Audit payload contains only redacted data (no original secrets)."""
-        from ai_orchestrator.browser_tool.submit_policy import (
+        from ai_orchestrator.browser_tool.submit.submit_policy import (
             SubmitValidationRequest,
             validate_submit_policy,
         )
-        from ai_orchestrator.browser_tool.submit_preview import (
+        from ai_orchestrator.browser_tool.submit.submit_preview import (
             SubmitPreviewInput,
             build_submit_preview,
         )
@@ -494,7 +494,7 @@ class TestRealBrowserControlledClickSmoke:
 
     def test_17_full_flow_integration(self, fixture_data_url, allowlist):
         """Test 17: Full integration flow - load, fill, validate, submit."""
-        from ai_orchestrator.browser_tool.submit_policy import (
+        from ai_orchestrator.browser_tool.submit.submit_policy import (
             SubmitValidationRequest,
             validate_submit_policy,
         )

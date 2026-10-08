@@ -25,7 +25,7 @@ from typing import Any
 
 from ai_orchestrator.agent_hub.registry import facade as reg
 from ai_orchestrator.auth import registration_codes as rc
-from local_agent import connection_diagnostics as cd
+from local_agent.connection import connection_diagnostics as cd
 
 OUT_DIR = Path("data/inspection/local_desktop_agent_live_connection")
 OUT_DIR.mkdir(parents=True, exist_ok=True)

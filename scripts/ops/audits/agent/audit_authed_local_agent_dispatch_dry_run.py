@@ -207,7 +207,7 @@ def _audit_actions_ws(findings):
     else:
         add(findings, "FAIL", "readonly_action_registered", "missing action or risk policy entry")
 
-    ws = read_text("local_agent/websocket_client.py")
+    ws = read_text("local_agent/connection/websocket_client.py")
     if "await asyncio.to_thread(process_task, task)" in ws:
         add(findings, "PASS", "ws_off_event_loop", "process_task uses asyncio.to_thread")
     else:

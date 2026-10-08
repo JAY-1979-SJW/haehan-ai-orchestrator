@@ -1,4 +1,4 @@
-"""local_agent.site_mapper 검증 (Stage 4 preparation).
+"""local_agent.browser.site_mapper 검증 (Stage 4 preparation).
 
 본 테스트는 합성된 page_observation dict 만 사용한다.
   - 실제 웹사이트 접속 금지.
@@ -144,7 +144,7 @@ def _sample_domain_profile() -> dict:
 
 
 def test_generic_page_role_candidates_without_profile() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload(_sample_table_observation())
     assert payload["ok"] is True
@@ -158,7 +158,7 @@ def test_generic_page_role_candidates_without_profile() -> None:
 
 
 def test_table_observation_produces_table_and_list_roles() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload(_sample_table_observation())
     role_names = {r["role"] for r in payload["heuristic_candidates"]["page_role_candidates"]}
@@ -170,7 +170,7 @@ def test_table_observation_produces_table_and_list_roles() -> None:
 
 
 def test_form_observation_produces_form_and_search_roles() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     obs = _sample_form_observation(with_password=False)
     obs["page_structure"]["buttons"].append(
@@ -186,7 +186,7 @@ def test_form_observation_produces_form_and_search_roles() -> None:
 
 
 def test_login_page_role_detected() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload(_sample_form_observation(True))
     roles = payload["heuristic_candidates"]["page_role_candidates"]
@@ -199,7 +199,7 @@ def test_login_page_role_detected() -> None:
 
 
 def test_domain_profile_matches_populate_only_when_profile_given() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     obs = _sample_table_observation()
     obs["title"] = "샘플업무 진입"
@@ -222,7 +222,7 @@ def test_domain_profile_matches_populate_only_when_profile_given() -> None:
 
 
 def test_no_specific_tasks_without_domain_profile() -> None:
-    from local_agent.site_mapper import (
+    from local_agent.browser.site_mapper import (
         GENERIC_TASK_POOL,
         build_site_map_prompt_payload,
     )
@@ -235,7 +235,7 @@ def test_no_specific_tasks_without_domain_profile() -> None:
 
 
 def test_domain_profile_task_candidate_picked_up() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     obs = _sample_table_observation()
     obs["title"] = "샘플업무 진입"
@@ -252,7 +252,7 @@ def test_domain_profile_task_candidate_picked_up() -> None:
 
 
 def test_user_goal_boosts_task_confidence() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     base = build_site_map_prompt_payload(_sample_table_observation())
     boosted = build_site_map_prompt_payload(
@@ -278,7 +278,7 @@ def test_user_goal_boosts_task_confidence() -> None:
 
 
 def test_keyword_hints_boost_safe_navigation_score() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     obs = _sample_table_observation()
     obs["page_structure"]["links"].append(
@@ -301,7 +301,7 @@ def test_keyword_hints_boost_safe_navigation_score() -> None:
 
 
 def test_write_buttons_collected_as_danger_elements() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload(_sample_table_observation())
     texts = {e["text"] for e in payload["heuristic_candidates"]["danger_elements"]}
@@ -312,7 +312,7 @@ def test_write_buttons_collected_as_danger_elements() -> None:
 
 
 def test_safe_read_items_collected_as_safe_navigation() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload(_sample_table_observation())
     safe = payload["heuristic_candidates"]["safe_navigation_candidates"]
@@ -324,7 +324,7 @@ def test_safe_read_items_collected_as_safe_navigation() -> None:
 
 
 def test_danger_items_not_in_safe_navigation() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload(_sample_table_observation())
     safe_texts = {c["text"] for c in payload["heuristic_candidates"]["safe_navigation_candidates"]}
@@ -336,7 +336,7 @@ def test_danger_items_not_in_safe_navigation() -> None:
 
 
 def test_sensitive_values_redacted_in_payload() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     obs = _sample_form_observation(with_password=True)
     # 일부러 raw value / 민감 href 주입 (실제 web_reader 는 주지 않지만 방어 검증)
@@ -367,7 +367,7 @@ def test_sensitive_values_redacted_in_payload() -> None:
 
 
 def test_raw_html_not_in_payload() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     obs = _sample_table_observation()
     obs["html"] = "<html>UNIQUE_RAW_HTML_MARKER_ABC</html>"
@@ -383,7 +383,7 @@ def test_raw_html_not_in_payload() -> None:
 
 
 def test_expected_json_schema_has_required_fields() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload(_sample_table_observation())
     schema = payload["expected_json_schema"]
@@ -413,7 +413,7 @@ def test_expected_json_schema_has_required_fields() -> None:
 
 
 def test_gpt_instruction_forbids_write_actions() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload(_sample_table_observation())
     instr = payload["gpt_instruction"]
@@ -427,7 +427,7 @@ def test_gpt_instruction_forbids_write_actions() -> None:
 
 
 def test_max_items_limit_applied() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     many_links = [
         {"text": f"조회 {i}", "href": f"/q/{i}", "risk_hint": "safe_read", "keyword_score": 0} for i in range(200)
@@ -454,7 +454,7 @@ def test_max_items_limit_applied() -> None:
 
 
 def test_empty_observation_returns_ok_with_warning() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload({})
     assert payload["ok"] is True
@@ -467,7 +467,7 @@ def test_empty_observation_returns_ok_with_warning() -> None:
 
 
 def test_non_dict_observation_returns_ok_with_warning() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     payload = build_site_map_prompt_payload("not-a-dict")  # type: ignore[arg-type]
     assert payload["ok"] is True
@@ -478,7 +478,7 @@ def test_non_dict_observation_returns_ok_with_warning() -> None:
 
 
 def test_action_web_build_site_map_prompt_returns_ok() -> None:
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     result = execute_action(
         "web_build_site_map_prompt",
@@ -496,7 +496,7 @@ def test_action_web_build_site_map_prompt_returns_ok() -> None:
 
 
 def test_action_web_build_site_map_prompt_missing_observation() -> None:
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     result = execute_action("web_build_site_map_prompt", {})
     assert result.success is False
@@ -504,7 +504,7 @@ def test_action_web_build_site_map_prompt_missing_observation() -> None:
 
 
 def test_action_web_build_site_map_prompt_invalid_goal_type() -> None:
-    from local_agent.actions import execute_action
+    from local_agent.connection.actions import execute_action
 
     result = execute_action(
         "web_build_site_map_prompt",
@@ -521,7 +521,7 @@ def test_action_web_build_site_map_prompt_invalid_goal_type() -> None:
 
 
 def test_production_site_mapper_has_no_domain_keywords() -> None:
-    import local_agent.site_mapper as sm
+    import local_agent.browser.site_mapper as sm
 
     src_path = Path(sm.__file__)
     text = src_path.read_text(encoding="utf-8")
@@ -550,7 +550,7 @@ def test_production_site_mapper_has_no_domain_keywords() -> None:
 
 
 def test_production_site_mapper_has_no_network_or_llm_calls() -> None:
-    import local_agent.site_mapper as sm
+    import local_agent.browser.site_mapper as sm
 
     src_path = Path(sm.__file__)
     text = src_path.read_text(encoding="utf-8")
@@ -577,7 +577,7 @@ def test_production_site_mapper_has_no_network_or_llm_calls() -> None:
 
 
 def test_universal_terms_present_and_generic() -> None:
-    from local_agent.site_mapper import (
+    from local_agent.browser.site_mapper import (
         UNIVERSAL_DANGER_WRITE_TERMS,
         UNIVERSAL_SAFE_READ_TERMS,
     )
@@ -610,7 +610,7 @@ def test_universal_terms_present_and_generic() -> None:
 
 
 def test_gpt_instruction_is_deterministic_string() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     a = build_site_map_prompt_payload(_sample_menu_observation())
     b = build_site_map_prompt_payload(_sample_menu_observation())
@@ -623,7 +623,7 @@ def test_gpt_instruction_is_deterministic_string() -> None:
 
 
 def test_domain_profile_danger_terms_extend_classification() -> None:
-    from local_agent.site_mapper import build_site_map_prompt_payload
+    from local_agent.browser.site_mapper import build_site_map_prompt_payload
 
     obs = {
         "url": "https://example.com/",

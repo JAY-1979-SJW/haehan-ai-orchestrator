@@ -31,8 +31,10 @@ import warnings
 warnings.filterwarnings("ignore")
 os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
-from ai_orchestrator.browser_tool.server_browser_boundary_policy import evaluate_server_browser_allowed  # noqa: E402
-from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance  # noqa: E402
+from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (  # noqa: E402
+    evaluate_server_browser_allowed,
+)
+from ai_orchestrator.browser_tool.policy.site_compliance_policy import evaluate_site_compliance  # noqa: E402
 
 FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "g2b_public_notice_readonly_matrix_20260507.json"
 

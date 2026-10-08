@@ -13,10 +13,10 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
+from ai_orchestrator.browser_tool.routing.browser_engine_routing_policy import (
     should_fallback_to_local_agent,
 )
-from ai_orchestrator.browser_tool.browser_engine_routing_preflight_chain import (
+from ai_orchestrator.browser_tool.routing.browser_engine_routing_preflight_chain import (
     CHAIN_APPROVAL_REQUIRED,
     CHAIN_BLOCK,
     CHAIN_MANUAL_REVIEW_REQUIRED,
@@ -36,7 +36,7 @@ from ai_orchestrator.browser_tool.browser_engine_routing_preflight_chain import 
 
 FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_engine_routing_preflight_chain_20260507.json"
 MODULE_PATH = (
-    Path(__file__).parent.parent.parent / "ai_orchestrator" / "browser_tool" / "browser_engine_routing_preflight_chain.py"
+    Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "routing" / "browser_engine_routing_preflight_chain.py"
 )
 
 
@@ -379,7 +379,7 @@ def test_no_db_write_code():
 
 
 def test_compatible_with_capability_classifier():
-    from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
+    from ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier import (
         classify_browser_engine_capability,
     )
 
@@ -395,7 +395,7 @@ def test_compatible_with_capability_classifier():
 
 
 def test_compatible_with_routing_policy():
-    from ai_orchestrator.browser_tool.browser_engine_routing_policy import (
+    from ai_orchestrator.browser_tool.routing.browser_engine_routing_policy import (
         evaluate_browser_engine_routing,
     )
 
@@ -411,7 +411,7 @@ def test_compatible_with_routing_policy():
 
 
 def test_no_conflict_with_server_boundary_policy():
-    from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+    from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
         classify_restricted_site_for_server_browser,
     )
 
@@ -424,7 +424,7 @@ def test_no_conflict_with_server_boundary_policy():
 
 
 def test_no_conflict_with_site_compliance_policy():
-    from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
+    from ai_orchestrator.browser_tool.policy.site_compliance_policy import evaluate_site_compliance
 
     # Gmail 은 CDP_READ_ONLY 완화 정책(5177645b): 읽기 = ALLOW_BROWSER_READONLY, 쓰기성 = BLOCK
     result = evaluate_site_compliance({"target_domain": "mail.google.com", "operation_type": "read"})

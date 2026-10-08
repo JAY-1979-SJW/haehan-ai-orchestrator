@@ -18,25 +18,7 @@ from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_USER_DIRECT,
     classify_action,
 )
-from local_agent.runtime.delegated_action_executor import (
-    EXEC_ALLOWED,
-    EXEC_BLOCKED,
-    EXEC_NEED_PERMISSION,
-    EXEC_USER_DIRECT,
-    execute_delegated_action,
-)
-from local_agent.runtime.delegated_permission_policy import (
-    CHECK_EXHAUSTED,
-    CHECK_EXPIRED,
-    CHECK_REVOKED,
-    CHECK_SCOPE_EXCEEDED,
-)
-from local_agent.runtime.delegated_permission_store import (
-    clear_all,
-    grant_permission,
-    revoke,
-)
-from local_agent.runtime.approval_audit_log import (
+from local_agent.runtime.permission.approval_audit_log import (
     EVENT_EXECUTION_BLOCKED,
     EVENT_EXECUTION_COMPLETED,
     EVENT_EXECUTION_STARTED,
@@ -44,6 +26,24 @@ from local_agent.runtime.approval_audit_log import (
     get_log,
     get_log_for_permission,
     has_sensitive_data,
+)
+from local_agent.runtime.permission.delegated_action_executor import (
+    EXEC_ALLOWED,
+    EXEC_BLOCKED,
+    EXEC_NEED_PERMISSION,
+    EXEC_USER_DIRECT,
+    execute_delegated_action,
+)
+from local_agent.runtime.permission.delegated_permission_policy import (
+    CHECK_EXHAUSTED,
+    CHECK_EXPIRED,
+    CHECK_REVOKED,
+    CHECK_SCOPE_EXCEEDED,
+)
+from local_agent.runtime.permission.delegated_permission_store import (
+    clear_all,
+    grant_permission,
+    revoke,
 )
 from local_agent.runtime.safe_write_result_sanitizer import validate_write_result
 
@@ -367,7 +367,7 @@ class TestRegressionExistingSystem:
         from ai_orchestrator.contracts.local_task_protocol import (
             STATUS_WAITING_USER_AUTH,
         )
-        from local_agent.runtime.auth_wait_controller import (
+        from local_agent.runtime.auth.auth_wait_controller import (
             AUTH_SIGNAL_LOGIN,
             enter_auth_wait,
         )
@@ -378,14 +378,14 @@ class TestRegressionExistingSystem:
 
     def test_existing_auto_resume_after_auth_still_works(self):
         """기존 auto resume 회귀."""
-        from local_agent.runtime.auto_resume_after_auth import can_auto_resume
+        from local_agent.runtime.auth.auto_resume_after_auth import can_auto_resume
 
         assert can_auto_resume("read_page") is True
         assert can_auto_resume("submit") is False
 
     def test_existing_download_policy_still_works(self):
         """기존 다운로드 정책 회귀."""
-        from local_agent.runtime.download_policy import check_file
+        from local_agent.runtime.download.download_policy import check_file
 
         result = check_file("입찰공고문.pdf", task_downloaded_files=["입찰공고문.pdf"])
         assert result["upload_allowed"] is True

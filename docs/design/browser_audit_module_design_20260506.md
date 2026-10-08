@@ -163,7 +163,7 @@ class AuditEntry:
 ## 10. 구현 예정 파일 (다음 단계)
 
 ```
-ai_orchestrator/browser_tool/submit_audit_log.py  (신규)
+ai_orchestrator/browser_tool/approval/submit_audit_log.py  (신규)
   → AuditEntry 데이터클래스
   → append_audit_log(entry: AuditEntry, path: Path) -> None
   → audit log JSONL 직렬화

@@ -8,7 +8,7 @@
 
 import pytest
 
-from ai_orchestrator.browser_tool.security_signal_detector import (
+from ai_orchestrator.browser_tool.policy.security_signal_detector import (
     SIG_BID_SUBMIT,
     SIG_CERT_AUTH,
     SIG_CONTRACT_SUBMIT,
@@ -18,17 +18,17 @@ from ai_orchestrator.browser_tool.security_signal_detector import (
     SIG_PAYMENT_OR_TRANSFER,
     detect_from_page_text,
 )
-from local_agent.runtime.auto_resume_after_auth import (
+from ai_orchestrator.contracts.local_task_protocol import (
+    EXEC_MODE_LOCAL_PLAYWRIGHT,
+    build_task,
+)
+from local_agent.runtime.auth.auto_resume_after_auth import (
     can_auto_resume,
     classify_resume_eligibility,
 )
 from local_agent.runtime.security_guard import (
     block_forbidden_action,
     validate_task_before_run,
-)
-from ai_orchestrator.contracts.local_task_protocol import (
-    EXEC_MODE_LOCAL_PLAYWRIGHT,
-    build_task,
 )
 
 G2B_HOST = "www.g2b.go.kr"

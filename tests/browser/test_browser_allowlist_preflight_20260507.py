@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from ai_orchestrator.browser_tool.allowlist_preflight import (
+from ai_orchestrator.browser_tool.preflight.allowlist_preflight import (
     build_allowlist_context,
     evaluate_allowlist_preflight,
     normalize_url_for_policy,
@@ -234,7 +234,7 @@ class TestNoForbiddenImports:
         import ast
         import inspect
 
-        from ai_orchestrator.browser_tool import allowlist_preflight
+        from ai_orchestrator.browser_tool.preflight import allowlist_preflight
 
         source = inspect.getsource(allowlist_preflight)
         tree = ast.parse(source)

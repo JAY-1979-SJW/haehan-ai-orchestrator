@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.submit_policy import (
+from ai_orchestrator.browser_tool.submit.submit_policy import (
     SubmitPolicyResult,
     SubmitValidationRequest,
     contains_denied_field,

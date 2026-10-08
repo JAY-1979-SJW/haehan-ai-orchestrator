@@ -9,7 +9,7 @@ import json
 
 import pytest
 
-from ai_orchestrator.browser_tool.submit_preview import (
+from ai_orchestrator.browser_tool.submit.submit_preview import (
     AuditPreviewRecord,
     SubmitPreviewBundle,
     SubmitPreviewInput,
@@ -416,7 +416,7 @@ class TestNoSideEffects:
     def test_no_network_calls(self, basic_request, policy_result):
         """No network calls should be made."""
         # Test that the module doesn't import network libraries
-        import ai_orchestrator.browser_tool.submit_preview as preview_module
+        import ai_orchestrator.browser_tool.submit.submit_preview as preview_module
 
         # Check imports
         module_code = preview_module.__dict__
@@ -436,7 +436,7 @@ class TestNoSideEffects:
 
     def test_no_db_calls(self, basic_request, policy_result):
         """No database calls should be made."""
-        import ai_orchestrator.browser_tool.submit_preview as preview_module
+        import ai_orchestrator.browser_tool.submit.submit_preview as preview_module
 
         source = str(preview_module.__dict__)
         assert "sql" not in source.lower()

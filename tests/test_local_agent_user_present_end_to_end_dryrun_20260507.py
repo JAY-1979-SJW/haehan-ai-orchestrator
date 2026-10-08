@@ -50,13 +50,13 @@ from ai_orchestrator.agent_hub.user_present_status_handler import (  # noqa: E40
     get_user_present_status,
     handle_user_present_status_event,
 )
-from local_agent.user_present_state_store import (  # noqa: E402
+from local_agent.user_present.user_present_state_store import (  # noqa: E402
     STATE_CANCELLED,
     STATE_USER_CONFIRMED,
     STATE_WAITING_FOR_USER,
     UserPresentStateStore,
 )
-from local_agent.user_present_ws_adapter import (  # noqa: E402
+from local_agent.user_present.user_present_ws_adapter import (  # noqa: E402
     build_waiting_status_event,
     create_local_user_present_task_from_ws,
     mark_local_user_cancelled_and_build_event,
@@ -535,7 +535,7 @@ class TestFullE2EFlow:
         import inspect
 
         import ai_orchestrator.agent_hub.user_present_dispatcher as disp_mod
-        import local_agent.user_present_ws_adapter as adapter_mod
+        import local_agent.user_present.user_present_ws_adapter as adapter_mod
 
         for mod, name in [(disp_mod, "dispatcher"), (adapter_mod, "adapter")]:
             src = inspect.getsource(mod)
@@ -552,7 +552,7 @@ class TestLocalUIServer:
     def _make_app_with_task(self, wfid: str):
         from fastapi.testclient import TestClient
 
-        from local_agent.user_present_ui_server import create_app
+        from local_agent.user_present.user_present_ui_server import create_app
 
         store = UserPresentStateStore()
         msg = _make_ws_task_message(wfid)
@@ -563,7 +563,7 @@ class TestLocalUIServer:
     def test_ui_health_ok(self):
         from fastapi.testclient import TestClient
 
-        from local_agent.user_present_ui_server import create_app
+        from local_agent.user_present.user_present_ui_server import create_app
 
         store = UserPresentStateStore()
         app = create_app(store)

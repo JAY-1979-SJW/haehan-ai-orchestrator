@@ -683,7 +683,7 @@ class ExecutionPolicyService:
     def is_gabia_browser_action_blocked(self, action: str) -> bool:
         """가비아 domain profile 기반으로 해당 action이 차단되는지 확인한다."""
         try:
-            from ai_orchestrator.browser_tool.domain_profile_registry import (
+            from ai_orchestrator.browser_tool.policy.domain_profile_registry import (
                 is_action_blocked_for_domain,
             )
 
@@ -695,7 +695,7 @@ class ExecutionPolicyService:
     def is_gabia_browser_action_user_direct(self, action: str) -> bool:
         """가비아 domain profile 기반으로 해당 action이 사용자 직접 수행인지 확인한다."""
         try:
-            from ai_orchestrator.browser_tool.domain_profile_registry import (
+            from ai_orchestrator.browser_tool.policy.domain_profile_registry import (
                 is_user_direct_action_for_domain,
             )
 

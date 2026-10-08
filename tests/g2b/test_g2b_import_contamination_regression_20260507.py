@@ -24,7 +24,7 @@ _repo_root = Path(__file__).resolve().parent.parent.parent
 
 def test_01_g2b_import_does_not_break_allowlist_result():
     """g2b live execution 모듈 import 후 allowlist_preflight 결과가 변하지 않는다."""
-    from ai_orchestrator.browser_tool.allowlist_preflight import (
+    from ai_orchestrator.browser_tool.preflight.allowlist_preflight import (
         evaluate_allowlist_preflight,
     )
 
@@ -41,7 +41,7 @@ def test_01_g2b_import_does_not_break_allowlist_result():
 
 def test_02_g2b_execution_gate_import_does_not_break_site_compliance():
     """g2b_public_notice_execution_gate import 후 site_compliance 결과 불변."""
-    from ai_orchestrator.browser_tool.site_compliance_policy import (
+    from ai_orchestrator.browser_tool.policy.site_compliance_policy import (
         get_site_compliance_policy,
     )
 
@@ -61,7 +61,7 @@ def test_03_g2b_workflow_import_does_not_mutate_allowlist():
     import ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate
     import ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner
     import ai_orchestrator.connectors.g2b.g2b_public_notice_workflow  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
-    from ai_orchestrator.browser_tool.allowlist_preflight import (
+    from ai_orchestrator.browser_tool.preflight.allowlist_preflight import (
         evaluate_allowlist_preflight,
     )
 
@@ -158,7 +158,7 @@ def test_08_router_no_browser_worker_at_import_time():
 
 def test_09_preflight_chain_no_browser_worker_at_module_level():
     """browser_engine_routing_preflight_chain.py module-level에 browser_worker import 없다."""
-    chain_path = _repo_root / "ai_orchestrator" / "browser_tool" / "browser_engine_routing_preflight_chain.py"
+    chain_path = _repo_root / "ai_orchestrator" / "browser_tool" / "routing" / "browser_engine_routing_preflight_chain.py"
     source = chain_path.read_text(encoding="utf-8")
     lines = source.split("\n")
     module_level_imports = [

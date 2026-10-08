@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ai_orchestrator.browser_tool.execution_location_policy import (
+from ai_orchestrator.browser_tool.routing.execution_location_policy import (
     BLOCKED,
     LOCAL_BROWSER_DEFAULT,
     SERVER_ALLOWED,

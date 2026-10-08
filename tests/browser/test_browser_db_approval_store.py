@@ -13,15 +13,15 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from local_agent.browser_approval_db_store import (
+from local_agent.browser.approval.browser_approval_db_store import (
     _FORBIDDEN_DB_COLUMNS,
     DatabaseBrowserApprovalStore,
     SQLiteBrowserApprovalStore,
 )
-from local_agent.browser_approval_persistent_store import (
+from local_agent.browser.approval.browser_approval_persistent_store import (
     PersistentBrowserApprovalStore,
 )
-from local_agent.browser_approval_verifier import (
+from local_agent.browser.approval.browser_approval_verifier import (
     BrowserApprovalVerifier,
 )
 
@@ -277,8 +277,8 @@ class TestVerifierWithDbStore(unittest.TestCase):
         Verifies that the handler correctly validates approval via DB store
         and rejects a wrong token — without needing a real browser/adapter.
         """
-        from local_agent.browser_task_handler import BrowserTaskHandler, BrowserTaskPayload
-        from local_agent.server_action_adapter import ServerActionAdapter
+        from local_agent.browser.browser_task_handler import BrowserTaskHandler, BrowserTaskPayload
+        from local_agent.browser.server_action_adapter import ServerActionAdapter
 
         store = SQLiteBrowserApprovalStore()
         verifier = BrowserApprovalVerifier(store)

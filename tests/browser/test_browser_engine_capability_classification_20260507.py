@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
+from ai_orchestrator.browser_tool.routing.browser_engine_capability_classifier import (
     ENGINE_API_CONNECTOR_REQUIRED,
     ENGINE_AUTOMATION_BLOCKED,
     ENGINE_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
@@ -32,7 +32,7 @@ from ai_orchestrator.browser_tool.browser_engine_capability_classifier import (
 FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_engine_capability_classification_20260507.json"
 
 MODULE_PATH = (
-    Path(__file__).parent.parent.parent / "ai_orchestrator" / "browser_tool" / "browser_engine_capability_classifier.py"
+    Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "routing" / "browser_engine_capability_classifier.py"
 )
 
 
@@ -327,7 +327,7 @@ def test_no_browser_action_calls():
 
 
 def test_no_conflict_with_server_browser_boundary_policy():
-    from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+    from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
         classify_restricted_site_for_server_browser,
     )
 
@@ -340,7 +340,7 @@ def test_no_conflict_with_server_browser_boundary_policy():
 
 
 def test_no_conflict_with_site_compliance_policy():
-    from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
+    from ai_orchestrator.browser_tool.policy.site_compliance_policy import evaluate_site_compliance
 
     result = evaluate_site_compliance({"target_domain": "example.com", "operation_type": "read"})
     assert "compliance_decision" in result
@@ -351,7 +351,7 @@ def test_no_conflict_with_site_compliance_policy():
 
 
 def test_no_conflict_with_site_access_compatibility_auditor():
-    from ai_orchestrator.browser_tool.site_access_compatibility_auditor import (
+    from ai_orchestrator.browser_tool.policy.site_access_compatibility_auditor import (
         evaluate_site_access_policy,
     )
 

@@ -13,15 +13,15 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from local_agent.runtime.delegated_action_executor import (
+from ai_orchestrator.contracts.local_task_protocol import (
+    build_task,
+)
+from local_agent.runtime.permission.delegated_action_executor import (
     execute_delegated_action,
 )
 from scripts.naver.blog.naver_content_safe_result import (
     build_cafe_read_result,
     sanitize_naver_result,
-)
-from ai_orchestrator.contracts.local_task_protocol import (
-    build_task,
 )
 
 # ── 카페 workflow 상태 상수 ───────────────────────────────────────────────────
@@ -188,6 +188,6 @@ def write_cafe_comment(
 
 def get_cafe_workflow_grade(step: str) -> str:
     """카페 workflow 단계의 실행 등급 반환."""
-    from local_agent.runtime.content_workflow_policy import get_workflow_grade
+    from local_agent.runtime.permission.content_workflow_policy import get_workflow_grade
 
     return get_workflow_grade(step)

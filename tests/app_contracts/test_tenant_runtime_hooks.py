@@ -130,7 +130,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_agent_hello_message_has_organization_id_field(self):
         """AgentHelloMessage에 organization_id field 있음"""
-        from local_agent.browser_websocket_handshake import AgentHelloMessage
+        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
             agent_id="agent-1",
@@ -142,7 +142,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_agent_hello_message_has_registration_user_id_field(self):
         """AgentHelloMessage에 registration_user_id field 있음"""
-        from local_agent.browser_websocket_handshake import AgentHelloMessage
+        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
             agent_id="agent-1",
@@ -155,7 +155,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_agent_hello_to_dict_includes_organization_id(self):
         """AgentHelloMessage.to_dict()에 organization_id 포함"""
-        from local_agent.browser_websocket_handshake import AgentHelloMessage
+        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
             agent_id="agent-1",
@@ -169,7 +169,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_agent_hello_safe_dict_keeps_organization_id(self):
         """AgentHelloMessage.safe_dict()에 organization_id 포함"""
-        from local_agent.browser_websocket_handshake import AgentHelloMessage
+        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
             agent_id="agent-1",
@@ -184,7 +184,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_agent_hello_safe_dict_keeps_registration_user_id(self):
         """AgentHelloMessage.safe_dict()에 registration_user_id 포함"""
-        from local_agent.browser_websocket_handshake import AgentHelloMessage
+        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
             agent_id="agent-1",
@@ -199,7 +199,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_agent_hello_validation_accepts_organization_id(self):
         """validate_agent_hello_message가 organization_id 수용"""
-        from local_agent.browser_websocket_handshake import validate_agent_hello_message
+        from local_agent.browser.bridge.browser_websocket_handshake import validate_agent_hello_message
 
         msg = {
             "message_type": "agent.hello",
@@ -215,7 +215,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_server_policy_message_has_organization_id_field(self):
         """ServerPolicyMessage에 organization_id field 있음"""
-        from local_agent.browser_websocket_handshake import ServerPolicyMessage
+        from local_agent.browser.bridge.browser_websocket_handshake import ServerPolicyMessage
 
         msg = ServerPolicyMessage(
             organization_id="org-1",
@@ -227,7 +227,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_server_policy_to_dict_includes_organization_id(self):
         """ServerPolicyMessage.to_dict()에 organization_id 포함"""
-        from local_agent.browser_websocket_handshake import ServerPolicyMessage
+        from local_agent.browser.bridge.browser_websocket_handshake import ServerPolicyMessage
 
         msg = ServerPolicyMessage(
             organization_id="org-1",
@@ -244,7 +244,7 @@ class TestScopeValidationRules:
 
     def test_task_approval_agent_same_org_validates(self):
         """assert_task_approval_agent_same_org 함수 작동"""
-        from local_agent.tenant_scope_contract import (
+        from local_agent.policy.tenant_scope_contract import (
             BrowserApprovalScope,
             BrowserTaskScope,
             LocalAgentScope,
@@ -273,7 +273,7 @@ class TestScopeValidationRules:
 
     def test_task_approval_org_mismatch_rejected(self):
         """org mismatch → ValueError"""
-        from local_agent.tenant_scope_contract import (
+        from local_agent.policy.tenant_scope_contract import (
             BrowserApprovalScope,
             BrowserTaskScope,
             LocalAgentScope,
@@ -303,7 +303,7 @@ class TestScopeValidationRules:
 
     def test_result_task_scope_validates(self):
         """assert_result_task_same_org 함수 작동"""
-        from local_agent.tenant_scope_contract import (
+        from local_agent.policy.tenant_scope_contract import (
             BrowserResultScope,
             BrowserTaskScope,
             assert_result_task_same_org,
@@ -325,7 +325,7 @@ class TestScopeValidationRules:
 
     def test_result_task_org_mismatch_rejected(self):
         """result.org != task.org → ValueError"""
-        from local_agent.tenant_scope_contract import (
+        from local_agent.policy.tenant_scope_contract import (
             BrowserResultScope,
             BrowserTaskScope,
             assert_result_task_same_org,
@@ -352,7 +352,7 @@ class TestSecurityValidation:
 
     def test_safe_dict_removes_approval_token(self):
         """safe_dict에서 approval_token 제거"""
-        from local_agent.tenant_scope_contract import safe_tenant_scope_dict
+        from local_agent.policy.tenant_scope_contract import safe_tenant_scope_dict
 
         data = {
             "approval_token": "secret-token",
@@ -366,7 +366,7 @@ class TestSecurityValidation:
 
     def test_safe_dict_removes_token_hash(self):
         """safe_dict에서 token_hash 제거"""
-        from local_agent.tenant_scope_contract import safe_tenant_scope_dict
+        from local_agent.policy.tenant_scope_contract import safe_tenant_scope_dict
 
         data = {
             "token_hash": "sha256:abc123",
@@ -379,7 +379,7 @@ class TestSecurityValidation:
 
     def test_websocket_safe_dict_removes_password(self):
         """WebSocket safe_dict에서 password 제거"""
-        from local_agent.browser_websocket_handshake import safe_dict
+        from local_agent.browser.bridge.browser_websocket_handshake import safe_dict
 
         data = {
             "password": "secret123",
@@ -392,7 +392,7 @@ class TestSecurityValidation:
 
     def test_websocket_safe_dict_removes_raw_hostname(self):
         """WebSocket safe_dict에서 raw hostname 제거"""
-        from local_agent.browser_websocket_handshake import safe_dict
+        from local_agent.browser.bridge.browser_websocket_handshake import safe_dict
 
         data = {
             "hostname": "my-computer.local",
@@ -422,7 +422,7 @@ class TestBackwardCompatibility:
 
     def test_agent_hello_optional_organization_id(self):
         """AgentHelloMessage organization_id optional (backward compat)"""
-        from local_agent.browser_websocket_handshake import AgentHelloMessage
+        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         # Should be creatable without organization_id
         msg = AgentHelloMessage(
@@ -436,7 +436,7 @@ class TestBackwardCompatibility:
 
     def test_server_policy_optional_organization_id(self):
         """ServerPolicyMessage organization_id optional"""
-        from local_agent.browser_websocket_handshake import ServerPolicyMessage
+        from local_agent.browser.bridge.browser_websocket_handshake import ServerPolicyMessage
 
         # Should be creatable without organization_id
         msg = ServerPolicyMessage()
@@ -456,7 +456,7 @@ class TestGapCoverageAndRegression:
 
     def test_existing_websocket_validation_still_works(self):
         """existing handshake validation still works"""
-        from local_agent.browser_websocket_handshake import validate_agent_hello_message
+        from local_agent.browser.bridge.browser_websocket_handshake import validate_agent_hello_message
 
         # Backward compat: message without organization_id still valid
         msg = {
