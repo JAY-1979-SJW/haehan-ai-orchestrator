@@ -30,6 +30,32 @@ _FORBIDDEN_FIELDS = {
 }
 
 
+class _AnyCurrentUserOverrides(dict):
+    """이름이 get_current_user 인 의존성은 어느 객체든 같은 사용자로 대체하는 dependency_overrides."""
+
+    def __init__(self, user: dict):
+        super().__init__()
+        self._user = user
+
+    def __bool__(self) -> bool:  # FastAPI 는 빈 dict 면 override 조회 자체를 건너뛴다
+        return True
+
+    def get(self, key, default=None):
+        if getattr(key, "__name__", "") == "get_current_user":
+            return lambda: self._user
+        return super().get(key, default)
+
+
+def _override_current_user(app, current_get_current_user, user: dict) -> None:
+    """앱 라우트가 실제로 묶고 있는 get_current_user 를 객체 동일성과 무관하게 override 한다.
+
+    다른 시험 파일의 fixture 가 importlib.reload(gates.auth) 를 하면 gates.auth.get_current_user 는 새 객체가
+    되지만 이미 import 된 라우터는 옛 객체에 묶여 남는다. 그 상태에서 새 객체만 override 하면 라우터는 실제
+    의존성(AUTH_ENABLED=False → 고정 owner)을 쓰게 되어 시험 실행 순서에 따라 결과가 달라진다.
+    """
+    app.dependency_overrides = _AnyCurrentUserOverrides(user)
+
+
 def _make_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
@@ -39,7 +65,7 @@ def _make_client(user_override: dict):
 
     app = FastAPI()
     app.include_router(auth_router, prefix="/api/v1")
-    app.dependency_overrides[get_current_user] = lambda: user_override
+    _override_current_user(app, get_current_user, user_override)
     return TestClient(app, raise_server_exceptions=True)
 
 

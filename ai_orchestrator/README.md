@@ -146,7 +146,7 @@ python -m ai_orchestrator.app
 # 테스트 전체
 python ai_orchestrator/tests/test_risk_classifier.py
 python ai_orchestrator/tests/test_policy_gate.py
-python ai_orchestrator/tests/test_approval.py
+python tests/approval/test_approval.py
 python ai_orchestrator/tests/test_audit_logger.py
 python ai_orchestrator/tests/test_openai_client.py
 ```

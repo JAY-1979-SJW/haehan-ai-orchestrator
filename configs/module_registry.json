@@ -5745,54 +5745,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_approval.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/tests/test_approval_audit_log.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/tests/test_approval_execution_flow.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/tests/test_approval_public_id.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/tests/test_approval_read_api.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/tests/test_approval_v2.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/tests/test_audit_dev_reg_approvals.py": {
    "layer": "L11",
    "role": "test",
@@ -5802,38 +5754,6 @@
    "source": "rule"
   },
   "ai_orchestrator/tests/test_audit_logger.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/tests/test_auth_basic_enforcement.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/tests/test_auth_enforcement.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/tests/test_auth_foundation.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/tests/test_auth_me.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -6009,34 +5929,10 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/tests/test_gmail_reader.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "naver_mail",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/tests/test_hiworks_integration.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "hiworks",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/tests/test_inbox.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "ai_orchestrator/tests/test_instagram_dm.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "instagram",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
@@ -23397,6 +23293,110 @@
    "layer": "L11",
    "role": "test",
    "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/approval/test_approval.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/approval/test_approval_audit_log.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/approval/test_approval_execution_flow.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/approval/test_approval_public_id.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/approval/test_approval_read_api.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/approval/test_approval_v2.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/auth/test_auth_basic_enforcement.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/auth/test_auth_enforcement.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/auth/test_auth_foundation.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/auth/test_auth_me.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/google/test_gmail_reader.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_mail",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/hiworks/test_hiworks_integration.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "hiworks",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/instagram/test_instagram_dm.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "instagram",
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
