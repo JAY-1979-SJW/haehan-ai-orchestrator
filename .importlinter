@@ -548,10 +548,10 @@ forbidden_modules =
     local_agent.connection_diagnostics
     local_agent.desktop_config
     local_agent.file_scanner
-    local_agent.gui_chat_state
-    local_agent.gui_icons
-    local_agent.gui_log_buffer
-    local_agent.gui_state
+    local_agent.gui.gui_chat_state
+    local_agent.gui.gui_icons
+    local_agent.gui.gui_log_buffer
+    local_agent.gui.gui_state
     local_agent.internal_test_allowlist
     local_agent.kras_connector
     local_agent.login_auto_flow
@@ -1671,10 +1671,10 @@ forbidden_modules =
     local_agent.connection_diagnostics
     local_agent.desktop_config
     local_agent.file_scanner
-    local_agent.gui_chat_state
-    local_agent.gui_icons
-    local_agent.gui_log_buffer
-    local_agent.gui_state
+    local_agent.gui.gui_chat_state
+    local_agent.gui.gui_icons
+    local_agent.gui.gui_log_buffer
+    local_agent.gui.gui_state
     local_agent.kras_connector
     local_agent.login_auto_flow
     local_agent.login_state_detector
@@ -2726,10 +2726,10 @@ forbidden_modules =
     local_agent.connection_diagnostics
     local_agent.desktop_config
     local_agent.file_scanner
-    local_agent.gui_chat_state
-    local_agent.gui_icons
-    local_agent.gui_log_buffer
-    local_agent.gui_state
+    local_agent.gui.gui_chat_state
+    local_agent.gui.gui_icons
+    local_agent.gui.gui_log_buffer
+    local_agent.gui.gui_state
     local_agent.internal_test_allowlist
     local_agent.kras_connector
     local_agent.login_auto_flow
@@ -3822,10 +3822,10 @@ forbidden_modules =
     local_agent.connection_diagnostics
     local_agent.desktop_config
     local_agent.file_scanner
-    local_agent.gui_chat_state
-    local_agent.gui_icons
-    local_agent.gui_log_buffer
-    local_agent.gui_state
+    local_agent.gui.gui_chat_state
+    local_agent.gui.gui_icons
+    local_agent.gui.gui_log_buffer
+    local_agent.gui.gui_state
     local_agent.kras_connector
     local_agent.login_auto_flow
     local_agent.login_state_detector
@@ -4984,10 +4984,10 @@ forbidden_modules =
     local_agent.connection_diagnostics
     local_agent.desktop_config
     local_agent.file_scanner
-    local_agent.gui_chat_state
-    local_agent.gui_icons
-    local_agent.gui_log_buffer
-    local_agent.gui_state
+    local_agent.gui.gui_chat_state
+    local_agent.gui.gui_icons
+    local_agent.gui.gui_log_buffer
+    local_agent.gui.gui_state
     local_agent.kras_connector
     local_agent.login_auto_flow
     local_agent.login_state_detector
@@ -5271,10 +5271,10 @@ forbidden_modules =
     local_agent.connection_diagnostics
     local_agent.desktop_config
     local_agent.file_scanner
-    local_agent.gui_chat_state
-    local_agent.gui_icons
-    local_agent.gui_log_buffer
-    local_agent.gui_state
+    local_agent.gui.gui_chat_state
+    local_agent.gui.gui_icons
+    local_agent.gui.gui_log_buffer
+    local_agent.gui.gui_state
     local_agent.kras_connector
     local_agent.login_auto_flow
     local_agent.login_state_detector
@@ -5762,10 +5762,10 @@ forbidden_modules =
     local_agent.connection_diagnostics
     local_agent.desktop_config
     local_agent.file_scanner
-    local_agent.gui_chat_state
-    local_agent.gui_icons
-    local_agent.gui_log_buffer
-    local_agent.gui_state
+    local_agent.gui.gui_chat_state
+    local_agent.gui.gui_icons
+    local_agent.gui.gui_log_buffer
+    local_agent.gui.gui_state
     local_agent.internal_test_allowlist
     local_agent.kras_connector
     local_agent.login_auto_flow
@@ -6442,10 +6442,10 @@ source_modules =
     local_agent.connection_diagnostics
     local_agent.desktop_config
     local_agent.file_scanner
-    local_agent.gui_chat_state
-    local_agent.gui_icons
-    local_agent.gui_log_buffer
-    local_agent.gui_state
+    local_agent.gui.gui_chat_state
+    local_agent.gui.gui_icons
+    local_agent.gui.gui_log_buffer
+    local_agent.gui.gui_state
     local_agent.kras_connector
     local_agent.login_auto_flow
     local_agent.login_state_detector

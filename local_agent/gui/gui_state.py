@@ -10,7 +10,7 @@ import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
-from . import connection_diagnostics as cd
+from local_agent import connection_diagnostics as cd
 
 KST = timezone(timedelta(hours=9))
 

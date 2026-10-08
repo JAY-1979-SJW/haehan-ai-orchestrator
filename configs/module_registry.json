@@ -7105,7 +7105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui_chat_state.py": {
+  "local_agent/gui/gui_chat_state.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7113,7 +7113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui_icons.py": {
+  "local_agent/gui/gui_icons.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7121,7 +7121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui_log_buffer.py": {
+  "local_agent/gui/gui_log_buffer.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7129,7 +7129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui_state.py": {
+  "local_agent/gui/gui_state.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -23330,6 +23330,14 @@
    "source": "rule"
   },
   "local_agent/user_present/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/gui/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

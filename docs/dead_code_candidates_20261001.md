@@ -69,7 +69,7 @@
 - `local_agent/browser_controller.py`: `BrowserApprovalError`(class,L113), `BrowserSensitiveFieldError`(class,L119), `create_and_inspect`(function,L663)
 - `local_agent/browser_realtime_watcher.py`: `detect_login_states`(function,L170)
 - `local_agent/browser_websocket_schema.py`: `safe_result_dict`(function,L497)
-- `local_agent/gui_chat_state.py`: `mode_label_kr`(function,L24), `ai_status_label_kr`(function,L40), `ChatUiController`(class,L99)
+- `local_agent/gui/gui_chat_state.py`: `mode_label_kr`(function,L24), `ai_status_label_kr`(function,L40), `ChatUiController`(class,L99)
 - `scripts/browser/cdp/browser_tab_monitor.py`: `ensure_single_tab`(function,L138)
 - `scripts/community/sites/iboss.py`: `list_board`(function,L53), `fetch_post_detail`(function,L99)
 - `scripts/google/developer/__init__.py`: `android_app_labels`(function,L23), `android_app_report`(function,L27)

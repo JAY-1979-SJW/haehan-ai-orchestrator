@@ -422,10 +422,10 @@ HaehanAI.exe 실행
 본 설계서는 **설계만** 수행한다. 다음은 별도 cleanup 공정 (HAEHAN_AGENT_EXE_CLEANUP_01)에서 처리:
 
 - `local_agent/gui_app.py` 4탭 코드 정리
-- `local_agent/gui_log_buffer.py` 제거
+- `local_agent/gui/gui_log_buffer.py` 제거
 - `HaehanAI-Agent.spec` 삭제
 - `scripts/build_desktop_agent_windows.py` 삭제
-- `local_agent/gui_chat_state.py` (CTk) 제거
+- `local_agent/gui/gui_chat_state.py` (CTk) 제거
 - Agent.exe 설치 문서 archive 이동
 
 본 공정에서는 위 항목 **분류만** 한다 (§2 통합 처분 표).
