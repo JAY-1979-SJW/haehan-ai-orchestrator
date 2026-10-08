@@ -4361,7 +4361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/browser_foreground_adapter.py": {
+  "local_agent/runtime/playwright/browser_foreground_adapter.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4569,7 +4569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/playwright_bootstrap.py": {
+  "local_agent/runtime/playwright/playwright_bootstrap.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4577,7 +4577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/playwright_runner.py": {
+  "local_agent/runtime/playwright/playwright_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -23306,6 +23306,14 @@
    "source": "rule"
   },
   "local_agent/runtime/notify/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/runtime/playwright/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

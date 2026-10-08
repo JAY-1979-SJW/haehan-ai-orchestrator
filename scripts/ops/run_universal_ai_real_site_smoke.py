@@ -181,7 +181,7 @@ def test_live_readonly_smoke(target_url: str):
         return
 
     try:
-        from local_agent.runtime.playwright_runner import run_task
+        from local_agent.runtime.playwright.playwright_runner import run_task
 
         # 1. 페이지 열기
         open_result = run_task({"action": "open_url", "target_url": target_url, "task_id": "smoke_open"})

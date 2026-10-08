@@ -29,18 +29,18 @@ from __future__ import annotations
 from typing import Any
 from urllib.parse import urlparse
 
-from local_agent.runtime.auth_wait_controller import (
-    AUTH_SIGNAL_CERT,
-    AUTH_SIGNAL_LOGIN,
-    AUTH_SIGNAL_OTP,
-    enter_auth_wait,
-)
 from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_BLOCKED,
     STATUS_COMPLETED,
     STATUS_FAILED,
     STATUS_WAITING_USER_AUTH,
     build_result,
+)
+from local_agent.runtime.auth_wait_controller import (
+    AUTH_SIGNAL_CERT,
+    AUTH_SIGNAL_LOGIN,
+    AUTH_SIGNAL_OTP,
+    enter_auth_wait,
 )
 
 # ── 로그인/인증 감지 패턴 (text 기반, value 수집 없음) ─────────────────────────

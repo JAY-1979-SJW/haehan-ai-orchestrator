@@ -86,7 +86,7 @@ def request_browser_foreground(
     실패해도 WARN 처리하며 작업은 계속된다.
     """
     try:
-        from local_agent.runtime.browser_foreground_adapter import (
+        from local_agent.runtime.playwright.browser_foreground_adapter import (
             request_foreground,
         )
 

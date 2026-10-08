@@ -15,7 +15,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from local_agent.runtime.playwright_bootstrap import (  # noqa: E402
+from local_agent.runtime.playwright.playwright_bootstrap import (  # noqa: E402
     PLAYWRIGHT_BROWSER_MISSING,
     PLAYWRIGHT_PACKAGE_MISSING,
     PLAYWRIGHT_READY,

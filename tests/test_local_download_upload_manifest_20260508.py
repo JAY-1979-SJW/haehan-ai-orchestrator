@@ -207,7 +207,7 @@ class TestServerUploadPolicy:
 
 class TestSmoke:
     def test_playwright_runner_import_ok(self):
-        from local_agent.runtime import playwright_runner
+        from local_agent.runtime.playwright import playwright_runner
 
         assert hasattr(playwright_runner, "run_task")
 
@@ -228,7 +228,7 @@ class TestSmoke:
         assert callable(send_notification)
 
     def test_browser_foreground_import_ok(self):
-        from local_agent.runtime.browser_foreground_adapter import request_foreground
+        from local_agent.runtime.playwright.browser_foreground_adapter import request_foreground
 
         result = request_foreground(is_headed=False)
         assert result["sensitive_data_read"] is False

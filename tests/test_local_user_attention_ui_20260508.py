@@ -11,14 +11,14 @@ from local_agent.runtime.auth_wait_controller import (
     AUTH_SIGNAL_LOGIN,
     AUTH_SIGNAL_OTP,
 )
-from local_agent.runtime.browser_foreground_adapter import (
-    HEADED_BROWSER_REQUIRED,
-)
 from local_agent.runtime.notify.user_attention_notifier import (
     build_auth_attention_notice,
     get_notifier_status,
     notify_auth_required,
     request_browser_foreground,
+)
+from local_agent.runtime.playwright.browser_foreground_adapter import (
+    HEADED_BROWSER_REQUIRED,
 )
 
 
@@ -94,7 +94,7 @@ class TestNotifyAuthRequired:
 
     def test_foreground_failure_does_not_fail_status(self):
         with patch(
-            "local_agent.runtime.browser_foreground_adapter._try_bring_to_foreground",
+            "local_agent.runtime.playwright.browser_foreground_adapter._try_bring_to_foreground",
             side_effect=Exception("win32 error"),
         ):
             result = notify_auth_required(AUTH_SIGNAL_LOGIN)
@@ -183,6 +183,6 @@ class TestSmoke:
         assert is_safe_for_export(result) is True
 
     def test_playwright_runner_imports_ok(self):
-        from local_agent.runtime import playwright_runner
+        from local_agent.runtime.playwright import playwright_runner
 
         assert hasattr(playwright_runner, "run_task")
