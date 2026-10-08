@@ -23216,6 +23216,22 @@
    "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_no_real_cdp_daemon_in_tests.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "browser",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_hook_gates_wired.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

@@ -124,7 +124,22 @@ _REQUIRED_HOOK_NEEDLES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("pre-commit", ("commit_checklist", "pre-commit.orig")),
     (
         "pre-commit.orig",
-        ("ruff_new_only_gate", "skeleton_gate", "audit_kit_gate", '"--staged"', "quality_gate"),
+        (
+            "ruff_new_only_gate",
+            "skeleton_gate",
+            "audit_kit_gate",
+            '"--staged"',
+            "quality_gate",
+            # 2026-10-08 PR #162 사고: 설치기가 정본을 덮어써 아래 게이트 연결 96줄이 사라진 채 커밋됐다 — 다시 빠지면 막는다
+            "move_preflight",
+            "tool_home_gate",
+            "flat_root_gate",
+            "bundle_path_gate",
+            "folder_gate",
+            "root_calc_gate",
+            "audit_r1_api_contract_gate",
+            "dup_gate",
+        ),
     ),
     ("pre-push", ("ai_code_review_gate",)),
 )
