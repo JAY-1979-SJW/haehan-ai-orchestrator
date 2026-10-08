@@ -7241,7 +7241,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/user_present_state_store.py": {
+  "local_agent/user_present/user_present_state_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -7249,7 +7249,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/user_present_status_sender.py": {
+  "local_agent/user_present/user_present_status_sender.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -7257,7 +7257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/user_present_ui_server.py": {
+  "local_agent/user_present/user_present_ui_server.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -7265,7 +7265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/user_present_ws_adapter.py": {
+  "local_agent/user_present/user_present_ws_adapter.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -23322,6 +23322,14 @@
    "source": "rule"
   },
   "local_agent/runtime/auth/__init__.py": {
+   "layer": "L10",
+   "role": "local_agent",
+   "domain": "local_agent",
+   "reason": "로컬 에이전트 패키지",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "local_agent/user_present/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

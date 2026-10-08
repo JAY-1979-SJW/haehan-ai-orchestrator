@@ -39,10 +39,10 @@ class WebSocketDependencyMissing(RuntimeError):
 
 
 try:
-    from .user_present_ws_adapter import (
+    from local_agent.user_present.user_present_ws_adapter import (  # noqa: F401
         create_local_user_present_task_from_ws,
-        mark_local_user_cancelled_and_build_event,  # noqa: F401
-        mark_local_user_confirmed_and_build_event,  # noqa: F401
+        mark_local_user_cancelled_and_build_event,
+        mark_local_user_confirmed_and_build_event,
     )
 
     _USER_PRESENT_ADAPTER_AVAILABLE = True
@@ -50,7 +50,7 @@ except ImportError:
     _USER_PRESENT_ADAPTER_AVAILABLE = False
 
 try:
-    from .user_present_status_sender import run_user_present_status_send_once
+    from local_agent.user_present.user_present_status_sender import run_user_present_status_send_once
 
     _STATUS_SENDER_AVAILABLE = True
 except ImportError:

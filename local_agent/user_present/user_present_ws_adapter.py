@@ -15,27 +15,26 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from .user_present_state_store import (
-    UserPresentStateStore,
-    default_store,
-    STATE_WAITING_FOR_USER,
-    STATE_USER_CONFIRMED,
-    STATE_CANCELLED,
-    STATE_BLOCKED,
-    STATE_FAILED,
-    _CONFIRMABLE_STATES,
-    _CANCELLABLE_STATES,
-)
-
 from ai_orchestrator.contracts.user_present_ws_contract import (
-    STATUS_WAITING_FOR_USER,
-    STATUS_USER_CONFIRMED,
-    STATUS_CANCELLED,
     STATUS_BLOCKED,
+    STATUS_CANCELLED,
     STATUS_FAILED,
+    STATUS_USER_CONFIRMED,
+    STATUS_WAITING_FOR_USER,
     build_user_present_ws_status_event,
     sanitize_user_present_ws_payload,
     validate_user_present_ws_task_message,
+)
+from local_agent.user_present.user_present_state_store import (
+    _CANCELLABLE_STATES,
+    _CONFIRMABLE_STATES,
+    STATE_BLOCKED,
+    STATE_CANCELLED,
+    STATE_FAILED,
+    STATE_USER_CONFIRMED,
+    STATE_WAITING_FOR_USER,
+    UserPresentStateStore,
+    default_store,
 )
 
 

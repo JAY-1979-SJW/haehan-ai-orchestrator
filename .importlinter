@@ -565,10 +565,10 @@ forbidden_modules =
     local_agent.site_mapper
     local_agent.tenant_scope_contract
     local_agent.token_store
-    local_agent.user_present_state_store
-    local_agent.user_present_status_sender
-    local_agent.user_present_ui_server
-    local_agent.user_present_ws_adapter
+    local_agent.user_present.user_present_state_store
+    local_agent.user_present.user_present_status_sender
+    local_agent.user_present.user_present_ui_server
+    local_agent.user_present.user_present_ws_adapter
     local_agent.web_reader
     local_agent.websocket_client
     orchestrator_v1.inbox.email_classifier
@@ -1684,9 +1684,9 @@ forbidden_modules =
     local_agent.server_action_adapter
     local_agent.site_mapper
     local_agent.tenant_scope_contract
-    local_agent.user_present_status_sender
-    local_agent.user_present_ui_server
-    local_agent.user_present_ws_adapter
+    local_agent.user_present.user_present_status_sender
+    local_agent.user_present.user_present_ui_server
+    local_agent.user_present.user_present_ws_adapter
     local_agent.web_reader
     local_agent.websocket_client
     orchestrator_v1.inbox.email_classifier
@@ -2743,10 +2743,10 @@ forbidden_modules =
     local_agent.site_mapper
     local_agent.tenant_scope_contract
     local_agent.token_store
-    local_agent.user_present_state_store
-    local_agent.user_present_status_sender
-    local_agent.user_present_ui_server
-    local_agent.user_present_ws_adapter
+    local_agent.user_present.user_present_state_store
+    local_agent.user_present.user_present_status_sender
+    local_agent.user_present.user_present_ui_server
+    local_agent.user_present.user_present_ws_adapter
     local_agent.web_reader
     local_agent.websocket_client
     orchestrator_v1.inbox.email_classifier
@@ -3835,9 +3835,9 @@ forbidden_modules =
     local_agent.server_action_adapter
     local_agent.site_mapper
     local_agent.tenant_scope_contract
-    local_agent.user_present_status_sender
-    local_agent.user_present_ui_server
-    local_agent.user_present_ws_adapter
+    local_agent.user_present.user_present_status_sender
+    local_agent.user_present.user_present_ui_server
+    local_agent.user_present.user_present_ws_adapter
     local_agent.web_reader
     local_agent.websocket_client
     orchestrator_v1.inbox.notice_radar.browser_collector
@@ -4997,9 +4997,9 @@ forbidden_modules =
     local_agent.server_action_adapter
     local_agent.site_mapper
     local_agent.tenant_scope_contract
-    local_agent.user_present_status_sender
-    local_agent.user_present_ui_server
-    local_agent.user_present_ws_adapter
+    local_agent.user_present.user_present_status_sender
+    local_agent.user_present.user_present_ui_server
+    local_agent.user_present.user_present_ws_adapter
     local_agent.web_reader
     local_agent.websocket_client
     orchestrator_v1.inbox.notice_radar.pipeline
@@ -5284,9 +5284,9 @@ forbidden_modules =
     local_agent.server_action_adapter
     local_agent.site_mapper
     local_agent.tenant_scope_contract
-    local_agent.user_present_status_sender
-    local_agent.user_present_ui_server
-    local_agent.user_present_ws_adapter
+    local_agent.user_present.user_present_status_sender
+    local_agent.user_present.user_present_ui_server
+    local_agent.user_present.user_present_ws_adapter
     local_agent.web_reader
     local_agent.websocket_client
     orchestrator_v1.inbox.notice_router
@@ -5339,7 +5339,7 @@ source_modules =
     local_agent.browser_approval_persistent_store
     local_agent.browser_session_store
     local_agent.token_store
-    local_agent.user_present_state_store
+    local_agent.user_present.user_present_state_store
     orchestrator_v1.inbox.inbox_store
     orchestrator_v1.tasks.candidate_store
     orchestrator_v1.tasks.email_task_store
@@ -5778,9 +5778,9 @@ forbidden_modules =
     local_agent.site_entry_policy
     local_agent.site_mapper
     local_agent.tenant_scope_contract
-    local_agent.user_present_status_sender
-    local_agent.user_present_ui_server
-    local_agent.user_present_ws_adapter
+    local_agent.user_present.user_present_status_sender
+    local_agent.user_present.user_present_ui_server
+    local_agent.user_present.user_present_ws_adapter
     local_agent.web_reader
     local_agent.websocket_client
     orchestrator_v1.inbox.email_classifier
@@ -6455,8 +6455,8 @@ source_modules =
     local_agent.server_action_adapter
     local_agent.site_mapper
     local_agent.tenant_scope_contract
-    local_agent.user_present_status_sender
-    local_agent.user_present_ws_adapter
+    local_agent.user_present.user_present_status_sender
+    local_agent.user_present.user_present_ws_adapter
     local_agent.web_reader
     local_agent.websocket_client
 forbidden_modules =
@@ -6635,7 +6635,7 @@ forbidden_modules =
     ai_orchestrator.vendor_directory.vendor_directory_service
     ai_orchestrator.web_task.web_task_registry
     ai_orchestrator.web_task.web_task_router
-    local_agent.user_present_ui_server
+    local_agent.user_present.user_present_ui_server
     orchestrator_v1.inbox.notice_radar.browser_collector
     orchestrator_v1.inbox.notice_radar.collector
     orchestrator_v1.inbox.notice_radar.pipeline
