@@ -53,7 +53,7 @@ def test_bytes_mode_passes_stdin_and_returns_bytes():
 
 def test_audit_kit_raw_findings_returns_none_instead_of_hanging_when_the_kit_leaves_a_pipe_holder(monkeypatch, tmp_path):
     """PR #160 verify: audit-kit hook 이 자손을 남겨 파이프를 물면 subprocess.run(timeout) 이 영원히 멈췄다 → 트리째 종료하고 None(검사 못 함)."""
-    import audit_kit_gate as gate
+    from scripts.ops import audit_kit_gate as gate
 
     fake_kit = tmp_path / "fake_kit.py"
     fake_kit.write_text(PARENT_WITH_PIPE_HOLDING_CHILD, encoding="utf-8")
