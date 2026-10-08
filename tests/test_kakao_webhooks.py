@@ -25,7 +25,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import inbox_store
+import orchestrator_v1.inbox.inbox_store as inbox_store
 from orchestrator_v1.inbox import kakaowork_reader
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ def tmp_inbox(tmp_path):
 def flask_app():
     os.environ.setdefault("ORCH_DASHBOARD_USER", "test")
     os.environ.setdefault("ORCH_DASHBOARD_PASSWORD", "test")
-    from dashboard import create_app
+    from orchestrator_v1.monitoring.dashboard import create_app
 
     app = create_app()
     app.config["TESTING"] = True
@@ -311,8 +311,8 @@ def test_app_boot_with_webhook_routes(flask_app):
 
 def test_no_conflict_with_existing_policies(tmp_inbox):
     """카카오 webhook 수신이 기존 approval_manager/task_store에 영향 없음."""
-    import approval_manager
-    import task_store
+    import orchestrator_v1.tasks.approval_manager as approval_manager
+    import orchestrator_v1.tasks.task_store as task_store
 
     before_approval = dict(approval_manager._store)
     before_task = dict(task_store._store)
@@ -335,7 +335,7 @@ def test_no_conflict_with_existing_policies(tmp_inbox):
 
 def test_kakao_does_not_auto_execute(client):
     """webhook 수신 후 자동 실행 미발생."""
-    import task_store as ts
+    import orchestrator_v1.tasks.task_store as ts
 
     ts.clear()
 
@@ -468,7 +468,7 @@ def test_kakaotalk_skill_valid_payload_returns_skill_response(client):
 
 def test_kakaotalk_skill_message_saved_to_inbox(client, tmp_path, monkeypatch):
     """스킬 요청도 inbox에 저장되어 사람이 이어서 확인 가능해야 한다."""
-    import inbox_store
+    import orchestrator_v1.inbox.inbox_store as inbox_store
 
     tmp_inbox = str(tmp_path / "inbox_skill.jsonl")
     monkeypatch.setattr(inbox_store, "_INBOX_PATH", tmp_inbox)
@@ -499,7 +499,7 @@ def test_kakaotalk_skill_invalid_payload_still_returns_valid_skill_response(clie
 
 def test_kakaotalk_skill_no_auto_execute(client):
     """스킬 요청도 기존 task/approval 파이프라인을 건드리지 않는다."""
-    import task_store as ts
+    import orchestrator_v1.tasks.task_store as ts
 
     ts.clear()
 

@@ -4,8 +4,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-from models import ExecutionPlan, RiskAssessment, TaskRequest
-from policy_engine import load_policy
+from orchestrator_v1.core.models import ExecutionPlan, RiskAssessment, TaskRequest
+from orchestrator_v1.tasks.policy_engine import load_policy
 from orchestrator_v1.tasks.whitelist_executor import can_execute, execute_allowed
 
 _TMPDIR = tempfile.gettempdir()

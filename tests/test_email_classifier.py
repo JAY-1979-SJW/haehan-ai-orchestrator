@@ -13,8 +13,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import candidate_store
-import inbox_store
+import orchestrator_v1.inbox.inbox_store as inbox_store
+import orchestrator_v1.tasks.candidate_store as candidate_store
 from orchestrator_v1.inbox.email_classifier import classify
 
 # ── 공통 inbox item 팩토리 ────────────────────────────────────────────────────
@@ -273,7 +273,7 @@ def test_app_boot_with_classify_routes():
     _os.environ.setdefault("ORCH_DASHBOARD_USER", "test")
     _os.environ.setdefault("ORCH_DASHBOARD_PASSWORD", "test")
 
-    from dashboard import create_app
+    from orchestrator_v1.monitoring.dashboard import create_app
 
     app = create_app()
     assert "inbox" in app.blueprints

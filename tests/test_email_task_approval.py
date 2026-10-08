@@ -16,8 +16,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-import email_task_approval
-import email_task_store
+import orchestrator_v1.tasks.email_task_approval as email_task_approval
+import orchestrator_v1.tasks.email_task_store as email_task_store
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -157,8 +157,8 @@ def test_get_approval_not_found(token_path):
 
 def test_no_conflict_with_existing_approval(task_path, token_path):
     """기존 approval_manager / task_store가 변경되지 않는지 확인."""
-    import approval_manager
-    import task_store
+    import orchestrator_v1.tasks.approval_manager as approval_manager
+    import orchestrator_v1.tasks.task_store as task_store
 
     before_task_store = dict(task_store._store)
     before_approval_store = dict(approval_manager._store)
@@ -194,7 +194,7 @@ def test_app_boot_with_approval_routes():
     _os.environ.setdefault("ORCH_DASHBOARD_USER", "test")
     _os.environ.setdefault("ORCH_DASHBOARD_PASSWORD", "test")
 
-    from dashboard import create_app
+    from orchestrator_v1.monitoring.dashboard import create_app
 
     app = create_app()
     rules = {r.rule for r in app.url_map.iter_rules()}

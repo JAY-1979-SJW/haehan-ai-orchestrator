@@ -87,7 +87,7 @@ def test_hard_fail_expired_pending_triggers_alert(tmp_path, capsys):
         ],
     )
 
-    with mock.patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": True}) as mock_send:
+    with mock.patch("ai_orchestrator.core.telegram_sender.send_message", return_value={"ok": True}) as mock_send:
         exit_code = _mod.audit_and_alert(store_path=store, alert_enabled=True, log_run=False)
 
     mock_send.assert_called_once()
@@ -102,7 +102,7 @@ def test_storage_fail_triggers_alert(tmp_path, capsys):
     store.write_text("dummy\n", encoding="utf-8")
 
     with (
-        mock.patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": True}) as mock_send,
+        mock.patch("ai_orchestrator.core.telegram_sender.send_message", return_value={"ok": True}) as mock_send,
         mock.patch.object(_mod, "_load_records", return_value=([], "PermissionError: 거부")),
     ):
         exit_code = _mod.audit_and_alert(store_path=store, alert_enabled=True, log_run=False)
@@ -177,7 +177,7 @@ def test_alert_disabled_no_send_on_warn(tmp_path, capsys):
         ],
     )
 
-    with mock.patch("ai_orchestrator.clients.telegram_sender.send_message") as mock_send:
+    with mock.patch("ai_orchestrator.core.telegram_sender.send_message") as mock_send:
         _mod.audit_and_alert(store_path=store, alert_enabled=False, log_run=False)
 
     mock_send.assert_not_called()
@@ -187,7 +187,7 @@ def test_alert_disabled_no_send_on_fail(tmp_path, capsys):
     store = tmp_path / "dev_reg_approvals.jsonl"
 
     with (
-        mock.patch("ai_orchestrator.clients.telegram_sender.send_message") as mock_send,
+        mock.patch("ai_orchestrator.core.telegram_sender.send_message") as mock_send,
         mock.patch.object(_mod, "_load_records", return_value=([], "OSError: 읽기 불가")),
     ):
         _mod.audit_and_alert(store_path=store, alert_enabled=False, log_run=False)
@@ -372,7 +372,7 @@ def test_run_log_written_with_alert_fields(tmp_path, capsys):
         ],
     )
 
-    with mock.patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": True}):
+    with mock.patch("ai_orchestrator.core.telegram_sender.send_message", return_value={"ok": True}):
         _mod.audit_and_alert(store_path=store, alert_enabled=False, log_run=True, audit_log_path=log_path)
 
     runs = load_recent_runs(1, path=log_path)
@@ -402,7 +402,7 @@ def test_run_log_no_sensitive_fields(tmp_path, capsys):
         ],
     )
 
-    with mock.patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": True}):
+    with mock.patch("ai_orchestrator.core.telegram_sender.send_message", return_value={"ok": True}):
         _mod.audit_and_alert(store_path=store, alert_enabled=False, log_run=True, audit_log_path=log_path)
 
     with log_path.open(encoding="utf-8") as f:

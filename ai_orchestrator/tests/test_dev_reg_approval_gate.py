@@ -401,7 +401,7 @@ def test_approval_triggers_submit_form(tmp_path):
 def test_audit_log_events_recorded(tmp_path):
     """DEV_REG_TASK_CREATED, DEV_REG_TELEGRAM_SENT 이벤트가 감사 로그에 기록된다."""
     # telegram_sender.send_photo 를 mock (실제 HTTP 호출 방지)
-    with patch("ai_orchestrator.clients.telegram_sender.send_photo", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.core.telegram_sender.send_photo", return_value={"ok": False, "skipped": True}):
         adapter = _make_adapter()
         from ai_orchestrator.dev_reg.dev_reg_runner import run_dev_reg
 
@@ -493,7 +493,7 @@ def test_sensitive_fields_not_in_audit_log(tmp_path):
     _SENSITIVE = ["my_secret_password", "session_cookie_abc123", "Bearer eyJhbGci"]
 
     # params 에 민감 값 포함 — adapter 의 summary 에는 포함되지 않아야 함
-    with patch("ai_orchestrator.clients.telegram_sender.send_photo", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.core.telegram_sender.send_photo", return_value={"ok": False, "skipped": True}):
         adapter = _make_adapter()
         from ai_orchestrator.dev_reg.dev_reg_runner import run_dev_reg
 

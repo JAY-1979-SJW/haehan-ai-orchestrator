@@ -9,7 +9,7 @@ import base64
 
 import pytest
 
-import dashboard
+import orchestrator_v1.monitoring.dashboard as dashboard
 from ai_orchestrator.auth import user_db
 
 _USER = "tuser"

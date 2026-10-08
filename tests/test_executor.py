@@ -13,16 +13,19 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+from typing import Literal
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-import approval_manager
-import executor as exec_mod
-import task_store
-from models import RiskAssessment, TaskRequest
-from policy_engine import load_policy
+import orchestrator_v1.tasks.approval_manager as approval_manager
+import orchestrator_v1.tasks.executor as exec_mod
+import orchestrator_v1.tasks.task_store as task_store
+from orchestrator_v1.core.models import RiskAssessment, TaskRequest
+from orchestrator_v1.tasks.policy_engine import load_policy
+
+RiskLevel = Literal["low", "medium", "high", "critical"]
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -48,7 +51,7 @@ def _policy_with_tmp() -> dict:
     return policy
 
 
-def _register_task(task_id: str, action_type: str, risk_level: str, target: str = "") -> tuple:
+def _register_task(task_id: str, action_type: str, risk_level: RiskLevel, target: str = "") -> tuple:
     if not target:
         # 실제 readable 파일 생성
         f = tempfile.NamedTemporaryFile(
@@ -74,7 +77,7 @@ def _register_task(task_id: str, action_type: str, risk_level: str, target: str 
     return task, risk, policy
 
 
-def _issue_and_approve(task_id: str, risk_level: str) -> str:
+def _issue_and_approve(task_id: str, risk_level: RiskLevel) -> str:
     token_id = f"tok-{task_id}"
     approval_manager._store[token_id] = {
         "task_id": task_id,
@@ -181,9 +184,9 @@ def test_execution_log_error_on_fail(tmp_path):
 
 def test_dashboard_approve_triggers_execution(tmp_path, monkeypatch):
     """dashboard POST /approve → execute_task 호출 → execution 결과 응답에 포함"""
-    import audit_logger as al
-    import dashboard as dash_mod
-    import log_analyzer
+    import orchestrator_v1.core.audit_logger as al
+    import orchestrator_v1.monitoring.dashboard as dash_mod
+    import orchestrator_v1.monitoring.log_analyzer as log_analyzer
 
     monkeypatch.setattr(log_analyzer, "_AUDIT_PATH", str(tmp_path / "audit.jsonl"))
     monkeypatch.setattr(log_analyzer, "_HISTORY_PATH", str(tmp_path / "history.jsonl"))
@@ -216,7 +219,7 @@ def test_dashboard_approve_triggers_execution(tmp_path, monkeypatch):
 
     _auth_hdr = {"Authorization": "Basic " + base64.b64encode(b"test:test").decode()}
 
-    from dashboard import create_app
+    from orchestrator_v1.monitoring.dashboard import create_app
 
     app = create_app()
     app.config["TESTING"] = True

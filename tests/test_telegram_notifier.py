@@ -10,12 +10,12 @@ os.environ.pop("TELEGRAM_CHAT_ID", None)
 
 import importlib
 
-import telegram_notifier
+import orchestrator_v1.monitoring.telegram_notifier as telegram_notifier
 
 importlib.reload(telegram_notifier)
 
-from models import ExecutionPlan, RiskAssessment, TaskRequest  # noqa: E402
-from telegram_notifier import send_approval_request, send_status_message  # noqa: E402
+from orchestrator_v1.core.models import ExecutionPlan, RiskAssessment, TaskRequest  # noqa: E402
+from orchestrator_v1.monitoring.telegram_notifier import send_approval_request, send_status_message  # noqa: E402
 
 
 def _make_fixtures():

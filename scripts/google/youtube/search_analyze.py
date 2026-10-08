@@ -35,7 +35,7 @@ from scripts.google.youtube.search_search import (
     search_videos,
 )
 from scripts.google.youtube.search_transcript import collect_visible_transcript_summary
-from security_utils import safe_preview
+from ai_orchestrator.core.security_utils import safe_preview
 
 
 def analyze_ranked_videos(

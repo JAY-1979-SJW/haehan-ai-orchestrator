@@ -1,10 +1,10 @@
 """로컬 PC 탐색 도구 — 설치 프로그램·프로세스·서비스·포트·시작프로그램 수집.
 
 단독 실행:
-  python scripts/local/pc_inventory.py
-  python scripts/local/pc_inventory.py --json       # JSON 출력
-  python scripts/local/pc_inventory.py --save       # data/local/ 저장
-  python scripts/local/pc_inventory.py --section apps  # 특정 섹션만
+  python scripts/ops/pc_inventory.py
+  python scripts/ops/pc_inventory.py --json       # JSON 출력
+  python scripts/ops/pc_inventory.py --save       # data/local/ 저장
+  python scripts/ops/pc_inventory.py --section apps  # 특정 섹션만
 
 보안:
   - 레지스트리 읽기 전용

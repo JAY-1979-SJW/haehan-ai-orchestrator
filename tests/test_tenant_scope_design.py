@@ -86,7 +86,7 @@ class TestBrowserApprovalModelGap:
 
     def test_approval_manager_lacks_persistence(self):
         """현재 approval_manager는 메모리 기반"""
-        from approval_manager import _store
+        from orchestrator_v1.tasks.approval_manager import _store
 
         # _store는 dict (메모리 기반)
         assert isinstance(_store, dict), "Current implementation uses in-memory dict"
@@ -97,15 +97,15 @@ class TestBrowserApprovalModelGap:
 
     def test_approval_lacks_organization_id_field(self):
         """approval_manager token record에 organization_id 없음"""
-        from approval_manager import issue_token
-        from models import RiskAssessment, TaskRequest
+        from orchestrator_v1.core.models import RiskAssessment, TaskRequest
+        from orchestrator_v1.tasks.approval_manager import issue_token
 
         task = TaskRequest(task_id="test-task-1", source="pc", action_type="click", target="button", description="test")
         risk = RiskAssessment(risk_level="low")
 
         token_id = issue_token(task, risk)
         if token_id:
-            from approval_manager import _store
+            from orchestrator_v1.tasks.approval_manager import _store
 
             record = _store.get(token_id, {})
             # Gap: organization_id 필드 없음
@@ -280,7 +280,9 @@ class TestLocalAgentModelGap:
         # agent.py는 모듈이고 LocalAgent 클래스가 정의되어 있지 않음
         # gap: LocalAgent 모델 클래스 전무
         try:
-            from local_agent.agent import LocalAgent  # noqa: F401 — 존재 여부만 확인(gap 테스트)
+            from local_agent.agent import (
+                LocalAgent,  # noqa: F401 — 존재 여부만 확인(gap 테스트)
+            )
 
             pytest.fail("LocalAgent class should not exist yet")
         except ImportError:
@@ -417,7 +419,9 @@ class TestGapDocumentation:
     def test_gap_g2_organization_model_required(self):
         """G2: Organization model 필수"""
         try:
-            from ai_orchestrator.core.models import Organization  # noqa: F401 — 존재 여부만 확인(gap 테스트)
+            from ai_orchestrator.core.models import (
+                Organization,  # noqa: F401 — 존재 여부만 확인(gap 테스트)
+            )
 
             pytest.skip("G2 already implemented")
         except ImportError:
@@ -438,7 +442,7 @@ class TestApprovalTokenStorage:
         """Approval token은 plaintext 저장 금지"""
         # 설계 원칙 검증
         # 현재 approval_manager는 token_id만 저장 (token 원문은 메모리/클라이언트에만)
-        from approval_manager import _store
+        from orchestrator_v1.tasks.approval_manager import _store
 
         # Gap: token 자체는 저장하지 않지만, persistent store 필요 시
         # token_hash를 사용해야 함

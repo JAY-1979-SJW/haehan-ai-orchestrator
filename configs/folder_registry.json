@@ -1011,14 +1011,6 @@
    "approved_by": "대표님(S6 결정 2026-10-08 00:00, 지휘창 전달)"
   },
   {
-   "path": "ai_orchestrator/clients",
-   "purpose": "ai_orchestrator 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
-  },
-  {
    "path": "ai_orchestrator/connectors",
    "purpose": "외부 서비스 연결 API (ai_orchestrator 하위)",
    "kind": "기능",
@@ -1962,14 +1954,6 @@
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님"
-  },
-  {
-   "path": "scripts/local",
-   "purpose": "scripts 하위 — 현재 트리 기준 등록(세부 목적은 폴더 승인 때 보강)",
-   "kind": "도구",
-   "status": "approved",
-   "approved_at": "2026-10-07",
-   "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
    "path": "scripts/mk_catalog",

@@ -2,7 +2,7 @@
 
 기존 장치를 재사용만 한다(신규 채널 금지):
   - 기록: scripts/common/op_log.py(L7) log_op — 파일(data/logs/ops.log) + DB(data/cdp.db)
-  - 알림: ai_orchestrator/clients/telegram_sender.py(L3) send_message —
+  - 알림: ai_orchestrator/core/telegram_sender.py(L3) send_message —
     TELEGRAM_BOT_TOKEN/TELEGRAM_APPROVER_CHAT_ID 미설정 시 자동 skip(예외 없음)
 
 L5 는 allowed_deps 상 L3·L7 을 모두 허용하므로 이 조합을 여기(L5)에 둔다
@@ -42,7 +42,7 @@ _NOTIFY_PREFIX = "❌"  # ❌
 def _notify(text: str) -> None:
     """텔레그램 알림. 전송 자체의 실패는 stderr 에만 남기고 삼킨다(원래 흐름 보존)."""
     try:
-        from ai_orchestrator.clients.telegram_sender import send_message
+        from ai_orchestrator.core.telegram_sender import send_message
 
         result = send_message(text)
         if not result.get("ok") and not result.get("skipped"):

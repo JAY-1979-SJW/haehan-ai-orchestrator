@@ -33,7 +33,7 @@ from scripts.browser.page.human_input import safe_human_input
 from scripts.browser.popup.popup_detector import handle_page_popups
 from scripts.common.critical_logger import log_critical
 from scripts.common.logger import get_logger
-from security_utils import mask_identifier
+from ai_orchestrator.core.security_utils import mask_identifier
 
 _log = get_logger(__name__)
 

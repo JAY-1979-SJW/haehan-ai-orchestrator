@@ -1,749 +1,764 @@
 {
- "acked": [
-  {
-   "file": "scripts/archive/one_off/temp_oauth_revoke.py",
-   "reason": "S2 archive 이동 — 일회성 스크립트, 직접 실행 호출처 없음(참조는 시험 경로 갱신 완료)",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/quality/install_git_hooks.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/quality/install_quality_gate.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/quality/log_code_change.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/quality/module_quality_gate.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/quality/py_compile_no_cache.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/quality/quality_gate.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/quality/required_quality_gate.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/common/realtime_audit.py",
-   "reason": "S2-C common 이동 — 옛 경로 직접 실행 호출처 없음(문서 언급뿐), 참조 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/auth/auth_session.py",
-   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/auth/check_login_status.py",
-   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/auth/credentials.py",
-   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/auth/local_user_secret_store.py",
-   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/site_engine/site_access.py",
-   "reason": "S2-E site_engine 이동 — 옛 경로 직접 실행(python -m scripts.site_engine.site_access)은 역사 보고서 문서에만 있음(보존), 나머지 참조 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/archive/one_off/mock_task_server.py",
-   "reason": "W15 archive 이동 — 참조 0(전수 grep), 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/smoke/local_agent_public_external_readonly_live_smoke.py",
-   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/verify/verify_agent_ws_auth.py",
-   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/verify/verify_live_agent_smoke.py",
-   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/verify/verify_live_browser_readonly_dispatch.py",
-   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/verify/verify_live_task_dispatch.py",
-   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/verify/verify_local_runtime_dry_run.py",
-   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "browser_api/server.py",
-   "new": "scripts/archive/misc/browser_api_server.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · browser_api 패키지는 import 하는 곳 없음(S6 943118d9), codebase_layer_audit 목록에서도 뺌, Dockerfile·compose 0건 · 새 위치 scripts/archive/misc/browser_api_server.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/video/ai_g2b_youtube_ep01.py",
-   "new": "scripts/archive/one_off/ai_g2b_youtube_ep01.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/ai_g2b_youtube_ep01.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/video/ai_g2b_youtube_ep01_real.py",
-   "new": "scripts/archive/one_off/ai_g2b_youtube_ep01_real.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 docs/HANDOFF 이력·TOOL_HOME 측정표뿐 · 새 위치 scripts/archive/one_off/ai_g2b_youtube_ep01_real.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/video/ai_g2b_youtube_ep02.py",
-   "new": "scripts/archive/one_off/ai_g2b_youtube_ep02.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/ai_g2b_youtube_ep02.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/build_ep_batch_content.py",
-   "new": "scripts/archive/one_off/build_ep_batch_content.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 gov2 사본 docstring 의 '동일 구조' 설명뿐 · 새 위치 scripts/archive/one_off/build_ep_batch_content.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/build_ep_batch_content_gov2.py",
-   "new": "scripts/archive/one_off/build_ep_batch_content_gov2.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/build_ep_batch_content_gov2.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/video/ig_dm_bot_ep01.py",
-   "new": "scripts/archive/one_off/ig_dm_bot_ep01.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/ig_dm_bot_ep01.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/video/ig_dm_bot_ep01_captions.py",
-   "new": "scripts/archive/one_off/ig_dm_bot_ep01_captions.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/ig_dm_bot_ep01_captions.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/video/ig_dm_bot_ep01_thumbnail.py",
-   "new": "scripts/archive/one_off/ig_dm_bot_ep01_thumbnail.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/ig_dm_bot_ep01_thumbnail.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/video/ig_dm_bot_ep01_visuals.py",
-   "new": "scripts/archive/one_off/ig_dm_bot_ep01_visuals.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 dead_code_candidates·deleted_code_index 이력뿐 · 새 위치 scripts/archive/one_off/ig_dm_bot_ep01_visuals.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/video/kakao_skill_bot_ep01.py",
-   "new": "scripts/archive/one_off/kakao_skill_bot_ep01.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/kakao_skill_bot_ep01.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/video/kakao_skill_bot_ep01_visuals.py",
-   "new": "scripts/archive/one_off/kakao_skill_bot_ep01_visuals.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/kakao_skill_bot_ep01_visuals.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/video/kotara_ctc_shorts.py",
-   "new": "scripts/archive/one_off/kotara_ctc_shorts.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/kotara_ctc_shorts.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/audit_gabia_browser_user_present_automation.py",
-   "new": "scripts/archive/ops/audit_gabia_browser_user_present_automation.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 자기 docstring 실행 예시는 새 경로로 수정 · 새 위치 scripts/archive/ops/audit_gabia_browser_user_present_automation.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/audit_gabia_dns_user_approval_workflow.py",
-   "new": "scripts/archive/ops/audit_gabia_dns_user_approval_workflow.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 자기 docstring 실행 예시는 새 경로로 수정 · 새 위치 scripts/archive/ops/audit_gabia_dns_user_approval_workflow.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/audit_gabia_session_storage_safety.py",
-   "new": "scripts/archive/ops/audit_gabia_session_storage_safety.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/audit_gabia_session_storage_safety.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/check_naver_session_validity_20260520.py",
-   "new": "scripts/archive/ops/check_naver_session_validity_20260520.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/check_naver_session_validity_20260520.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/generate_naver_mail_action_dashboard.py",
-   "new": "scripts/archive/ops/generate_naver_mail_action_dashboard.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/generate_naver_mail_action_dashboard.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/live_check_login_realtime_20260520.py",
-   "new": "scripts/archive/ops/live_check_login_realtime_20260520.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/live_check_login_realtime_20260520.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/make_inspection_video.py",
-   "new": "scripts/archive/ops/make_inspection_video.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 backlog·deleted_code_index 의 '실행 불가(ImportError)' 기록뿐 · 새 위치 scripts/archive/ops/make_inspection_video.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/naver_mail_priority_body_review_20260520.py",
-   "new": "scripts/archive/ops/naver_mail_priority_body_review_20260520.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/naver_mail_priority_body_review_20260520.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/naver_mail_unread_report_20260520.py",
-   "new": "scripts/archive/ops/naver_mail_unread_report_20260520.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/naver_mail_unread_report_20260520.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/regenerate_naver_mail_dashboard_with_unknown_rules.py",
-   "new": "scripts/archive/ops/regenerate_naver_mail_dashboard_with_unknown_rules.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/regenerate_naver_mail_dashboard_with_unknown_rules.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/report_naver_mail_inbox_consolidated.py",
-   "new": "scripts/archive/ops/report_naver_mail_inbox_consolidated.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 docs/defect_index.json 이력(해결 완료 항목)뿐 · 새 위치 scripts/archive/ops/report_naver_mail_inbox_consolidated.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/smoke_naver_mail_body_pipeline_batch_live.py",
-   "new": "scripts/archive/ops/smoke_naver_mail_body_pipeline_batch_live.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/smoke_naver_mail_body_pipeline_batch_live.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/smoke_naver_mail_body_pipeline_v2_live.py",
-   "new": "scripts/archive/ops/smoke_naver_mail_body_pipeline_v2_live.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/smoke_naver_mail_body_pipeline_v2_live.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/smoke_naver_mail_dynamic_folder_discovery_live.py",
-   "new": "scripts/archive/ops/smoke_naver_mail_dynamic_folder_discovery_live.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/smoke_naver_mail_dynamic_folder_discovery_live.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/smoke_naver_mail_inbox_p0_live.py",
-   "new": "scripts/archive/ops/smoke_naver_mail_inbox_p0_live.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/smoke_naver_mail_inbox_p0_live.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/smoke_naver_mail_smart_folder_coverage_live.py",
-   "new": "scripts/archive/ops/smoke_naver_mail_smart_folder_coverage_live.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/smoke_naver_mail_smart_folder_coverage_live.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/verify_naver_main_first_live_20260520.py",
-   "new": "scripts/archive/ops/verify_naver_main_first_live_20260520.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/verify_naver_main_first_live_20260520.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/eum_export_excel.py",
-   "new": "scripts/eum/export_excel.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/eum/export_excel.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/eum_send_mail_batch.py",
-   "new": "scripts/eum/send_mail_batch.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 docs/specs 설명뿐 · 새 위치 scripts/eum/send_mail_batch.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/smoke/g2b_user_present_attachment_smoke.py",
-   "new": "scripts/g2b/smoke/g2b_user_present_attachment_smoke.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/g2b/smoke/g2b_user_present_attachment_smoke.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/login_gabia_datago.py",
-   "new": "scripts/gabia/ops/login_gabia_datago.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/gabia/ops/login_gabia_datago.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/gonobi_download_images.py",
-   "new": "scripts/naver/blog/gonobi/download_images.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/naver/blog/gonobi/download_images.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/gonobi_gallery_check.py",
-   "new": "scripts/naver/blog/gonobi/gallery_check.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/naver/blog/gonobi/gallery_check.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/gonobi_reclassify_images.py",
-   "new": "scripts/naver/blog/gonobi/reclassify_images.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/naver/blog/gonobi/reclassify_images.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/gonobi_redownload_small.py",
-   "new": "scripts/naver/blog/gonobi/redownload_small.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/naver/blog/gonobi/redownload_small.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/gonobi_scrape.py",
-   "new": "scripts/naver/blog/gonobi/scrape.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/naver/blog/gonobi/scrape.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/ops/export_cafe_keywords_excel.py",
-   "new": "scripts/naver/cafe/ops/export_cafe_keywords_excel.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 dead_code_candidates·deleted_code_index 이력뿐 · 새 위치 scripts/naver/cafe/ops/export_cafe_keywords_excel.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/smoke_youtube_manual_login_probe.py",
-   "new": "scripts/youtube/smoke_youtube_manual_login_probe.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · docs/manual_login_smoke_policy.md 실행 예시는 새 경로로 수정, 테스트는 이미 새 경로 사용 · 새 위치 scripts/youtube/smoke_youtube_manual_login_probe.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/yt_upload/step1_navigate.py",
-   "new": "scripts/youtube/upload/step1_navigate.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 docs/specs 드라이런 표뿐 · 새 위치 scripts/youtube/upload/step1_navigate.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/yt_upload/step2_open_dialog.py",
-   "new": "scripts/youtube/upload/step2_open_dialog.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/youtube/upload/step2_open_dialog.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/yt_upload/step3_set_file.py",
-   "new": "scripts/youtube/upload/step3_set_file.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/youtube/upload/step3_set_file.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/yt_upload/step4_metadata.py",
-   "new": "scripts/youtube/upload/step4_metadata.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/youtube/upload/step4_metadata.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/yt_upload/step5_publish.py",
-   "new": "scripts/youtube/upload/step5_publish.py",
-   "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/youtube/upload/step5_publish.py",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/temp_oauth_revoke.py",
-   "reason": "S2 archive 이동 — 일회성 스크립트, 직접 실행 호출처 없음(참조는 시험 경로 갱신 완료)",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/install_git_hooks.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/install_quality_gate.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/log_code_change.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/module_quality_gate.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/py_compile_no_cache.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/quality_gate.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/required_quality_gate.py",
-   "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/realtime_audit.py",
-   "reason": "S2-C common 이동 — 옛 경로 직접 실행 호출처 없음(문서 언급뿐), 참조 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/auth_session.py",
-   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/check_login_status.py",
-   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/credentials.py",
-   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/local_user_secret_store.py",
-   "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/site_access.py",
-   "reason": "S2-E site_engine 이동 — 옛 경로 직접 실행(python -m scripts.site_access)은 역사 보고서 문서에만 있음(보존), 나머지 참조 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/mock_task_server.py",
-   "reason": "W15 archive 이동 — 참조 0(전수 grep), 직접 실행 호출처 없음",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/smoke/local_agent_public_external_readonly_live_smoke.py",
-   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/verify/verify_agent_ws_auth.py",
-   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/verify/verify_live_agent_smoke.py",
-   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/verify/verify_live_browser_readonly_dispatch.py",
-   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/verify/verify_live_task_dispatch.py",
-   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/verify/verify_local_runtime_dry_run.py",
-   "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
-   "date": "2026-10-07"
-  },
-  {
-   "file": "scripts/naver/mail/analysis/audit_naver_mail_action_item_dashboard.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/naver/mail/analysis/audit_naver_mail_business_report.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/naver/mail/analysis/audit_naver_mail_unknown_classification_rules.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_batch.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_v2.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery_closeout.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/naver/mail/collection/audit_naver_mail_inbox_p0_complete.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/naver/mail/collection/audit_naver_mail_smart_folder_coverage.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/naver/mail/collection/audit_naver_mail_unread_filter_dom_fix.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/naver/mail/collection/audit_naver_mail_unread_pagination_depth.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/gabia/ops/audit_gabia_site_settings_canonical_registry.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/google/audit_gmail_function_contract.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/instagram/ig_batch.py",
-   "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/app_realtime_check.py",
-   "reason": "W16 평면 → scripts/ops/ 이동 — 명시 참조(시험·dry_run_local_agent_cdp_attach·worktree_change_index·문서)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/deploy_dry_run.py",
-   "reason": "W16 평면 → scripts/ops/ 이동 — 명시 참조(시험·dry_run_local_agent_cdp_attach·worktree_change_index·문서)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/watch_log.py",
-   "reason": "W16 평면 → scripts/ops/ 이동 — 명시 참조(시험·dry_run_local_agent_cdp_attach·worktree_change_index·문서)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/naver/smoke_naver_manual_login_probe.py",
-   "reason": "W16 평면 → 도구 집(scripts/naver/…) 이동 — 명시 참조(시험·일일 카페 파이프라인 import)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/naver/cafe/ops/marketing_summary_build.py",
-   "reason": "W16 평면 → 도구 집(scripts/naver/…) 이동 — 명시 참조(시험·일일 카페 파이프라인 import)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "ai_orchestrator/dev_reg/dev_reg_cli.py",
-   "reason": "W16 평면 → 기능 폴더(ai_orchestrator/dev_reg·gongmu, folder_registry 승인 폴더) 이동 — 시험 import 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0). 새 실행은 python -m",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "ai_orchestrator/gongmu/fetch_nts_interpretations.py",
-   "reason": "W16 평면 → 기능 폴더(ai_orchestrator/dev_reg·gongmu, folder_registry 승인 폴더) 이동 — 시험 import 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0). 새 실행은 python -m",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "ai_orchestrator/gongmu/fetch_tax_precedent_summary.py",
-   "reason": "W16 평면 → 기능 폴더(ai_orchestrator/dev_reg·gongmu, folder_registry 승인 폴더) 이동 — 시험 import 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0). 새 실행은 python -m",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/form/personal_profile.py",
-   "reason": "A005 표준 모듈 가림 해소 — 같은 폴더 안 이름 변경(profile → personal_profile). 명시 참조(-m 사용 안내·import·시험)는 새 이름으로 수정, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml 검색 0)",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/dev_reg_cli.py",
-   "new": "ai_orchestrator/dev_reg/dev_reg_cli.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/fetch_nts_interpretations.py",
-   "new": "ai_orchestrator/gongmu/fetch_nts_interpretations.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/fetch_tax_precedent_summary.py",
-   "new": "ai_orchestrator/gongmu/fetch_tax_precedent_summary.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/form/profile.py",
-   "new": "scripts/form/personal_profile.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_gabia_site_settings_canonical_registry.py",
-   "new": "scripts/gabia/ops/audit_gabia_site_settings_canonical_registry.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_google_gmail_function_contract.py",
-   "new": "scripts/google/audit_gmail_function_contract.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/ig_batch.py",
-   "new": "scripts/instagram/ig_batch.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/marketing_summary_build.py",
-   "new": "scripts/naver/cafe/ops/marketing_summary_build.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_naver_mail_action_item_dashboard.py",
-   "new": "scripts/naver/mail/analysis/audit_naver_mail_action_item_dashboard.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_naver_mail_business_report.py",
-   "new": "scripts/naver/mail/analysis/audit_naver_mail_business_report.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_naver_mail_unknown_classification_rules.py",
-   "new": "scripts/naver/mail/analysis/audit_naver_mail_unknown_classification_rules.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_naver_mail_dynamic_folder_discovery.py",
-   "new": "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_naver_mail_dynamic_folder_discovery_closeout.py",
-   "new": "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery_closeout.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_naver_mail_inbox_p0_complete.py",
-   "new": "scripts/naver/mail/collection/audit_naver_mail_inbox_p0_complete.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_naver_mail_smart_folder_coverage.py",
-   "new": "scripts/naver/mail/collection/audit_naver_mail_smart_folder_coverage.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_naver_mail_unread_filter_dom_fix.py",
-   "new": "scripts/naver/mail/collection/audit_naver_mail_unread_filter_dom_fix.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_naver_mail_unread_pagination_depth.py",
-   "new": "scripts/naver/mail/collection/audit_naver_mail_unread_pagination_depth.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_naver_mail_body_pipeline_batch.py",
-   "new": "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_batch.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/ops/audit_naver_mail_body_pipeline_v2.py",
-   "new": "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_v2.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/smoke_naver_manual_login_probe.py",
-   "new": "scripts/naver/smoke_naver_manual_login_probe.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/app_realtime_check.py",
-   "new": "scripts/ops/app_realtime_check.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/deploy_dry_run.py",
-   "new": "scripts/ops/deploy_dry_run.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/watch_log.py",
-   "new": "scripts/ops/watch_log.py",
-   "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  },
-  {
-   "file": "scripts/google/domain_taxonomy.py",
-   "new": "scripts/google/common/domain_taxonomy.py",
-   "reason": "google-common 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(설정·시험·baseline 문서 포함)에서 grep 해 0건으로 수정 확인, 직접 실행 호출처 없음",
-   "date": "2026-10-08"
-  }
- ]
+  "acked": [
+    {
+      "file": "scripts/archive/one_off/temp_oauth_revoke.py",
+      "reason": "S2 archive 이동 — 일회성 스크립트, 직접 실행 호출처 없음(참조는 시험 경로 갱신 완료)",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/quality/install_git_hooks.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/quality/install_quality_gate.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/quality/log_code_change.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/quality/module_quality_gate.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/quality/py_compile_no_cache.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/quality/quality_gate.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/quality/required_quality_gate.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/common/realtime_audit.py",
+      "reason": "S2-C common 이동 — 옛 경로 직접 실행 호출처 없음(문서 언급뿐), 참조 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/auth/auth_session.py",
+      "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/auth/check_login_status.py",
+      "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/auth/credentials.py",
+      "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/auth/local_user_secret_store.py",
+      "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/site_engine/site_access.py",
+      "reason": "S2-E site_engine 이동 — 옛 경로 직접 실행(python -m scripts.site_engine.site_access)은 역사 보고서 문서에만 있음(보존), 나머지 참조 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/archive/one_off/mock_task_server.py",
+      "reason": "W15 archive 이동 — 참조 0(전수 grep), 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/smoke/local_agent_public_external_readonly_live_smoke.py",
+      "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/verify/verify_agent_ws_auth.py",
+      "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/verify/verify_live_agent_smoke.py",
+      "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/verify/verify_live_browser_readonly_dispatch.py",
+      "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/verify/verify_live_task_dispatch.py",
+      "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/verify/verify_local_runtime_dry_run.py",
+      "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "browser_api/server.py",
+      "new": "scripts/archive/misc/browser_api_server.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · browser_api 패키지는 import 하는 곳 없음(S6 943118d9), codebase_layer_audit 목록에서도 뺌, Dockerfile·compose 0건 · 새 위치 scripts/archive/misc/browser_api_server.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/video/ai_g2b_youtube_ep01.py",
+      "new": "scripts/archive/one_off/ai_g2b_youtube_ep01.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/ai_g2b_youtube_ep01.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/video/ai_g2b_youtube_ep01_real.py",
+      "new": "scripts/archive/one_off/ai_g2b_youtube_ep01_real.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 docs/HANDOFF 이력·TOOL_HOME 측정표뿐 · 새 위치 scripts/archive/one_off/ai_g2b_youtube_ep01_real.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/video/ai_g2b_youtube_ep02.py",
+      "new": "scripts/archive/one_off/ai_g2b_youtube_ep02.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/ai_g2b_youtube_ep02.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/build_ep_batch_content.py",
+      "new": "scripts/archive/one_off/build_ep_batch_content.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 gov2 사본 docstring 의 '동일 구조' 설명뿐 · 새 위치 scripts/archive/one_off/build_ep_batch_content.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/build_ep_batch_content_gov2.py",
+      "new": "scripts/archive/one_off/build_ep_batch_content_gov2.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/build_ep_batch_content_gov2.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/video/ig_dm_bot_ep01.py",
+      "new": "scripts/archive/one_off/ig_dm_bot_ep01.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/ig_dm_bot_ep01.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/video/ig_dm_bot_ep01_captions.py",
+      "new": "scripts/archive/one_off/ig_dm_bot_ep01_captions.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/ig_dm_bot_ep01_captions.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/video/ig_dm_bot_ep01_thumbnail.py",
+      "new": "scripts/archive/one_off/ig_dm_bot_ep01_thumbnail.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/ig_dm_bot_ep01_thumbnail.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/video/ig_dm_bot_ep01_visuals.py",
+      "new": "scripts/archive/one_off/ig_dm_bot_ep01_visuals.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 dead_code_candidates·deleted_code_index 이력뿐 · 새 위치 scripts/archive/one_off/ig_dm_bot_ep01_visuals.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/video/kakao_skill_bot_ep01.py",
+      "new": "scripts/archive/one_off/kakao_skill_bot_ep01.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/kakao_skill_bot_ep01.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/video/kakao_skill_bot_ep01_visuals.py",
+      "new": "scripts/archive/one_off/kakao_skill_bot_ep01_visuals.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/kakao_skill_bot_ep01_visuals.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/video/kotara_ctc_shorts.py",
+      "new": "scripts/archive/one_off/kotara_ctc_shorts.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/one_off/kotara_ctc_shorts.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/audit_gabia_browser_user_present_automation.py",
+      "new": "scripts/archive/ops/audit_gabia_browser_user_present_automation.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 자기 docstring 실행 예시는 새 경로로 수정 · 새 위치 scripts/archive/ops/audit_gabia_browser_user_present_automation.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/audit_gabia_dns_user_approval_workflow.py",
+      "new": "scripts/archive/ops/audit_gabia_dns_user_approval_workflow.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 자기 docstring 실행 예시는 새 경로로 수정 · 새 위치 scripts/archive/ops/audit_gabia_dns_user_approval_workflow.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/audit_gabia_session_storage_safety.py",
+      "new": "scripts/archive/ops/audit_gabia_session_storage_safety.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/audit_gabia_session_storage_safety.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/check_naver_session_validity_20260520.py",
+      "new": "scripts/archive/ops/check_naver_session_validity_20260520.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/check_naver_session_validity_20260520.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/generate_naver_mail_action_dashboard.py",
+      "new": "scripts/archive/ops/generate_naver_mail_action_dashboard.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/generate_naver_mail_action_dashboard.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/live_check_login_realtime_20260520.py",
+      "new": "scripts/archive/ops/live_check_login_realtime_20260520.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/live_check_login_realtime_20260520.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/make_inspection_video.py",
+      "new": "scripts/archive/ops/make_inspection_video.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 backlog·deleted_code_index 의 '실행 불가(ImportError)' 기록뿐 · 새 위치 scripts/archive/ops/make_inspection_video.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/naver_mail_priority_body_review_20260520.py",
+      "new": "scripts/archive/ops/naver_mail_priority_body_review_20260520.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/naver_mail_priority_body_review_20260520.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/naver_mail_unread_report_20260520.py",
+      "new": "scripts/archive/ops/naver_mail_unread_report_20260520.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/naver_mail_unread_report_20260520.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/regenerate_naver_mail_dashboard_with_unknown_rules.py",
+      "new": "scripts/archive/ops/regenerate_naver_mail_dashboard_with_unknown_rules.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/regenerate_naver_mail_dashboard_with_unknown_rules.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/report_naver_mail_inbox_consolidated.py",
+      "new": "scripts/archive/ops/report_naver_mail_inbox_consolidated.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 docs/defect_index.json 이력(해결 완료 항목)뿐 · 새 위치 scripts/archive/ops/report_naver_mail_inbox_consolidated.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/smoke_naver_mail_body_pipeline_batch_live.py",
+      "new": "scripts/archive/ops/smoke_naver_mail_body_pipeline_batch_live.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/smoke_naver_mail_body_pipeline_batch_live.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/smoke_naver_mail_body_pipeline_v2_live.py",
+      "new": "scripts/archive/ops/smoke_naver_mail_body_pipeline_v2_live.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/smoke_naver_mail_body_pipeline_v2_live.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/smoke_naver_mail_dynamic_folder_discovery_live.py",
+      "new": "scripts/archive/ops/smoke_naver_mail_dynamic_folder_discovery_live.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/smoke_naver_mail_dynamic_folder_discovery_live.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/smoke_naver_mail_inbox_p0_live.py",
+      "new": "scripts/archive/ops/smoke_naver_mail_inbox_p0_live.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/smoke_naver_mail_inbox_p0_live.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/smoke_naver_mail_smart_folder_coverage_live.py",
+      "new": "scripts/archive/ops/smoke_naver_mail_smart_folder_coverage_live.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/smoke_naver_mail_smart_folder_coverage_live.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/verify_naver_main_first_live_20260520.py",
+      "new": "scripts/archive/ops/verify_naver_main_first_live_20260520.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/archive/ops/verify_naver_main_first_live_20260520.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/eum_export_excel.py",
+      "new": "scripts/eum/export_excel.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/eum/export_excel.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/eum_send_mail_batch.py",
+      "new": "scripts/eum/send_mail_batch.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 docs/specs 설명뿐 · 새 위치 scripts/eum/send_mail_batch.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/smoke/g2b_user_present_attachment_smoke.py",
+      "new": "scripts/g2b/smoke/g2b_user_present_attachment_smoke.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/g2b/smoke/g2b_user_present_attachment_smoke.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/login_gabia_datago.py",
+      "new": "scripts/gabia/ops/login_gabia_datago.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/gabia/ops/login_gabia_datago.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/gonobi_download_images.py",
+      "new": "scripts/naver/blog/gonobi/download_images.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/naver/blog/gonobi/download_images.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/gonobi_gallery_check.py",
+      "new": "scripts/naver/blog/gonobi/gallery_check.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/naver/blog/gonobi/gallery_check.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/gonobi_reclassify_images.py",
+      "new": "scripts/naver/blog/gonobi/reclassify_images.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/naver/blog/gonobi/reclassify_images.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/gonobi_redownload_small.py",
+      "new": "scripts/naver/blog/gonobi/redownload_small.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/naver/blog/gonobi/redownload_small.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/gonobi_scrape.py",
+      "new": "scripts/naver/blog/gonobi/scrape.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/naver/blog/gonobi/scrape.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/ops/export_cafe_keywords_excel.py",
+      "new": "scripts/naver/cafe/ops/export_cafe_keywords_excel.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 dead_code_candidates·deleted_code_index 이력뿐 · 새 위치 scripts/naver/cafe/ops/export_cafe_keywords_excel.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/smoke_youtube_manual_login_probe.py",
+      "new": "scripts/youtube/smoke_youtube_manual_login_probe.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · docs/manual_login_smoke_policy.md 실행 예시는 새 경로로 수정, 테스트는 이미 새 경로 사용 · 새 위치 scripts/youtube/smoke_youtube_manual_login_probe.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/yt_upload/step1_navigate.py",
+      "new": "scripts/youtube/upload/step1_navigate.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 남은 언급은 docs/specs 드라이런 표뿐 · 새 위치 scripts/youtube/upload/step1_navigate.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/yt_upload/step2_open_dialog.py",
+      "new": "scripts/youtube/upload/step2_open_dialog.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/youtube/upload/step2_open_dialog.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/yt_upload/step3_set_file.py",
+      "new": "scripts/youtube/upload/step3_set_file.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/youtube/upload/step3_set_file.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/yt_upload/step4_metadata.py",
+      "new": "scripts/youtube/upload/step4_metadata.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/youtube/upload/step4_metadata.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/yt_upload/step5_publish.py",
+      "new": "scripts/youtube/upload/step5_publish.py",
+      "reason": "외부 실행 경로 없음 — 옛 경로·옛 모듈명·파일명 grep: 저장소 추적 파일 전체(bat/cmd/ps1/sh/js/ts/spec/Dockerfile/compose/.github/workflows/configs/package.json/docs/README/py 문자열) 실행 호출 0건, 이 PC 작업 스케줄러 193개 0건, C:\\work·바탕화면 bat/cmd/ps1/vbs/sh/xml 실행 호출 0건(일치는 audit-tools 테스트 결과 junit.xml 뿐) (2026-10-07) · 새 위치 scripts/youtube/upload/step5_publish.py",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/temp_oauth_revoke.py",
+      "reason": "S2 archive 이동 — 일회성 스크립트, 직접 실행 호출처 없음(참조는 시험 경로 갱신 완료)",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/install_git_hooks.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/install_quality_gate.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/log_code_change.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/module_quality_gate.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/py_compile_no_cache.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/quality_gate.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/required_quality_gate.py",
+      "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/realtime_audit.py",
+      "reason": "S2-C common 이동 — 옛 경로 직접 실행 호출처 없음(문서 언급뿐), 참조 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/auth_session.py",
+      "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/check_login_status.py",
+      "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/credentials.py",
+      "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/local_user_secret_store.py",
+      "reason": "S2-D auth 이동 — 옛 경로 직접 실행 호출처 없음(전수 grep: 훅·설정·문서·시험 모두 새 경로로 수정)",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/site_access.py",
+      "reason": "S2-E site_engine 이동 — 옛 경로 직접 실행(python -m scripts.site_access)은 역사 보고서 문서에만 있음(보존), 나머지 참조 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/mock_task_server.py",
+      "reason": "W15 archive 이동 — 참조 0(전수 grep), 직접 실행 호출처 없음",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/smoke/local_agent_public_external_readonly_live_smoke.py",
+      "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/verify/verify_agent_ws_auth.py",
+      "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/verify/verify_live_agent_smoke.py",
+      "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/verify/verify_live_browser_readonly_dispatch.py",
+      "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/verify/verify_live_task_dispatch.py",
+      "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/verify/verify_local_runtime_dry_run.py",
+      "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
+      "date": "2026-10-07"
+    },
+    {
+      "file": "scripts/naver/mail/analysis/audit_naver_mail_action_item_dashboard.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/naver/mail/analysis/audit_naver_mail_business_report.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/naver/mail/analysis/audit_naver_mail_unknown_classification_rules.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_batch.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_v2.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery_closeout.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/naver/mail/collection/audit_naver_mail_inbox_p0_complete.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/naver/mail/collection/audit_naver_mail_smart_folder_coverage.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/naver/mail/collection/audit_naver_mail_unread_filter_dom_fix.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/naver/mail/collection/audit_naver_mail_unread_pagination_depth.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/gabia/ops/audit_gabia_site_settings_canonical_registry.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/google/audit_gmail_function_contract.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/instagram/ig_batch.py",
+      "reason": "W11 도구 집 이동 — 명시 참조(시험·archive 스크립트·required_quality_gate·문서·SKILL)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/json/작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/app_realtime_check.py",
+      "reason": "W16 평면 → scripts/ops/ 이동 — 명시 참조(시험·dry_run_local_agent_cdp_attach·worktree_change_index·문서)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/deploy_dry_run.py",
+      "reason": "W16 평면 → scripts/ops/ 이동 — 명시 참조(시험·dry_run_local_agent_cdp_attach·worktree_change_index·문서)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/watch_log.py",
+      "reason": "W16 평면 → scripts/ops/ 이동 — 명시 참조(시험·dry_run_local_agent_cdp_attach·worktree_change_index·문서)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/naver/smoke_naver_manual_login_probe.py",
+      "reason": "W16 평면 → 도구 집(scripts/naver/…) 이동 — 명시 참조(시험·일일 카페 파이프라인 import)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/naver/cafe/ops/marketing_summary_build.py",
+      "reason": "W16 평면 → 도구 집(scripts/naver/…) 이동 — 명시 참조(시험·일일 카페 파이프라인 import)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "ai_orchestrator/dev_reg/dev_reg_cli.py",
+      "reason": "W16 평면 → 기능 폴더(ai_orchestrator/dev_reg·gongmu, folder_registry 승인 폴더) 이동 — 시험 import 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0). 새 실행은 python -m",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "ai_orchestrator/gongmu/fetch_nts_interpretations.py",
+      "reason": "W16 평면 → 기능 폴더(ai_orchestrator/dev_reg·gongmu, folder_registry 승인 폴더) 이동 — 시험 import 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0). 새 실행은 python -m",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "ai_orchestrator/gongmu/fetch_tax_precedent_summary.py",
+      "reason": "W16 평면 → 기능 폴더(ai_orchestrator/dev_reg·gongmu, folder_registry 승인 폴더) 이동 — 시험 import 수정 완료, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml·작업 스케줄러 검색 0). 새 실행은 python -m",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/form/personal_profile.py",
+      "reason": "A005 표준 모듈 가림 해소 — 같은 폴더 안 이름 변경(profile → personal_profile). 명시 참조(-m 사용 안내·import·시험)는 새 이름으로 수정, 옛 경로 직접 실행 호출처 없음(bat/ps1/js/json/yml 검색 0)",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/dev_reg_cli.py",
+      "new": "ai_orchestrator/dev_reg/dev_reg_cli.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/fetch_nts_interpretations.py",
+      "new": "ai_orchestrator/gongmu/fetch_nts_interpretations.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/fetch_tax_precedent_summary.py",
+      "new": "ai_orchestrator/gongmu/fetch_tax_precedent_summary.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/form/profile.py",
+      "new": "scripts/form/personal_profile.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_gabia_site_settings_canonical_registry.py",
+      "new": "scripts/gabia/ops/audit_gabia_site_settings_canonical_registry.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_google_gmail_function_contract.py",
+      "new": "scripts/google/audit_gmail_function_contract.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/ig_batch.py",
+      "new": "scripts/instagram/ig_batch.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/marketing_summary_build.py",
+      "new": "scripts/naver/cafe/ops/marketing_summary_build.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_naver_mail_action_item_dashboard.py",
+      "new": "scripts/naver/mail/analysis/audit_naver_mail_action_item_dashboard.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_naver_mail_business_report.py",
+      "new": "scripts/naver/mail/analysis/audit_naver_mail_business_report.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_naver_mail_unknown_classification_rules.py",
+      "new": "scripts/naver/mail/analysis/audit_naver_mail_unknown_classification_rules.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_naver_mail_dynamic_folder_discovery.py",
+      "new": "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_naver_mail_dynamic_folder_discovery_closeout.py",
+      "new": "scripts/naver/mail/collection/audit_naver_mail_dynamic_folder_discovery_closeout.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_naver_mail_inbox_p0_complete.py",
+      "new": "scripts/naver/mail/collection/audit_naver_mail_inbox_p0_complete.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_naver_mail_smart_folder_coverage.py",
+      "new": "scripts/naver/mail/collection/audit_naver_mail_smart_folder_coverage.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_naver_mail_unread_filter_dom_fix.py",
+      "new": "scripts/naver/mail/collection/audit_naver_mail_unread_filter_dom_fix.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_naver_mail_unread_pagination_depth.py",
+      "new": "scripts/naver/mail/collection/audit_naver_mail_unread_pagination_depth.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_naver_mail_body_pipeline_batch.py",
+      "new": "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_batch.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/ops/audit_naver_mail_body_pipeline_v2.py",
+      "new": "scripts/naver/mail/processing/audit_naver_mail_body_pipeline_v2.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/smoke_naver_manual_login_probe.py",
+      "new": "scripts/naver/smoke_naver_manual_login_probe.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/app_realtime_check.py",
+      "new": "scripts/ops/app_realtime_check.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/deploy_dry_run.py",
+      "new": "scripts/ops/deploy_dry_run.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/watch_log.py",
+      "new": "scripts/ops/watch_log.py",
+      "reason": "integrate-5 ① w11-w16 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(bat/ps1/sh/js/ts/spec/yml/설정/시험)에서 grep 해 0 건 확인(문서·이력 제외), 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/google/domain_taxonomy.py",
+      "new": "scripts/google/common/domain_taxonomy.py",
+      "reason": "google-common 이동 — 옛 경로·옛 모듈명 참조를 추적 파일 전체(설정·시험·baseline 문서 포함)에서 grep 해 0건으로 수정 확인, 직접 실행 호출처 없음",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/local/pc_inventory.py",
+      "reason": "scripts/ops 로 이동. 실행 참조 전수 수정: .mcp.json·.codex/config.toml 의 MCP 실행 경로와 파일 안 사용법 주석을 새 경로로 바꿨다(코드·시험·bat·spec·Electron 참조 0). 같은 폴더 3개가 함께 이동해 pc_inventory_mcp 의 같은 폴더 import 유지.",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/local/pc_inventory_mcp.py",
+      "reason": "scripts/ops 로 이동. 실행 참조 전수 수정: .mcp.json·.codex/config.toml 의 MCP 실행 경로와 파일 안 사용법 주석을 새 경로로 바꿨다(코드·시험·bat·spec·Electron 참조 0). 같은 폴더 3개가 함께 이동해 pc_inventory_mcp 의 같은 폴더 import 유지.",
+      "date": "2026-10-08"
+    },
+    {
+      "file": "scripts/local/pc_inventory_server.py",
+      "reason": "scripts/ops 로 이동. 실행 참조 전수 수정: .mcp.json·.codex/config.toml 의 MCP 실행 경로와 파일 안 사용법 주석을 새 경로로 바꿨다(코드·시험·bat·spec·Electron 참조 0). 같은 폴더 3개가 함께 이동해 pc_inventory_mcp 의 같은 폴더 import 유지.",
+      "date": "2026-10-08"
+    }
+  ]
 }

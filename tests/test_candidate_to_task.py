@@ -17,9 +17,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-import candidate_store
+import orchestrator_v1.tasks.candidate_store as candidate_store
+import orchestrator_v1.tasks.email_task_store as email_task_store
 from orchestrator_v1.tasks import candidate_to_task
-import email_task_store
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -95,7 +95,7 @@ def test_promoted_task_is_pending(cand_path, task_path):
 
 def test_task_not_auto_executed(cand_path, task_path):
     """생성된 task가 executor의 실행 흐름에 진입하지 않는지 확인."""
-    import task_store as ts
+    import orchestrator_v1.tasks.task_store as ts
 
     ts.clear()
 
@@ -206,8 +206,8 @@ def test_operations_category_risk_high(cand_path, task_path):
 
 def test_no_conflict_with_existing_policy():
     """기존 approval_manager / task_store가 변경되지 않았는지 확인."""
-    import approval_manager
-    import task_store
+    import orchestrator_v1.tasks.approval_manager as approval_manager
+    import orchestrator_v1.tasks.task_store as task_store
 
     before_store = dict(task_store._store)
     before_approval = dict(approval_manager._store)
@@ -263,7 +263,7 @@ def test_app_boot_with_promote_routes():
     _os.environ.setdefault("ORCH_DASHBOARD_USER", "test")
     _os.environ.setdefault("ORCH_DASHBOARD_PASSWORD", "test")
 
-    from dashboard import create_app
+    from orchestrator_v1.monitoring.dashboard import create_app
 
     app = create_app()
     rules = {r.rule for r in app.url_map.iter_rules()}

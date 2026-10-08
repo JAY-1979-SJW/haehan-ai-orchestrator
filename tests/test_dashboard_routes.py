@@ -17,9 +17,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-import approval_manager
-import dashboard as dash_mod
-from dashboard import create_app
+import orchestrator_v1.monitoring.dashboard as dash_mod
+import orchestrator_v1.tasks.approval_manager as approval_manager
+from orchestrator_v1.monitoring.dashboard import create_app
 
 # ── 테스트용 Basic Auth 래퍼 ─────────────────────────────────────────────────
 _TEST_USER = "test"
@@ -54,7 +54,7 @@ class _AuthClient:
 
 @pytest.fixture()
 def client(tmp_path, monkeypatch):
-    import log_analyzer
+    import orchestrator_v1.monitoring.log_analyzer as log_analyzer
 
     monkeypatch.setattr(log_analyzer, "_AUDIT_PATH", str(tmp_path / "audit.jsonl"))
     monkeypatch.setattr(log_analyzer, "_HISTORY_PATH", str(tmp_path / "history.jsonl"))
@@ -62,7 +62,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(dash_mod, "_DECISIONS_PATH", str(tmp_path / "decisions.jsonl"))
 
     # Redirect audit_logger writes to tmp dir
-    import audit_logger as al
+    import orchestrator_v1.core.audit_logger as al
 
     tmp_logs = str(tmp_path / "logs")
     Path(tmp_logs).mkdir(parents=True, exist_ok=True)
@@ -263,8 +263,8 @@ def test_reject_records_decision(client, tmp_path):
 
 def test_high_approval_does_not_enable_execution(client):
     """admin이 high를 승인해도 whitelist_executor는 여전히 BLOCKED 반환."""
-    from models import ExecutionPlan, RiskAssessment, TaskRequest
-    from policy_engine import load_policy
+    from orchestrator_v1.core.models import ExecutionPlan, RiskAssessment, TaskRequest
+    from orchestrator_v1.tasks.policy_engine import load_policy
     from orchestrator_v1.tasks.whitelist_executor import can_execute
 
     token_id = _add_token("task-high-exec", "high")
@@ -296,8 +296,8 @@ def test_high_approval_does_not_enable_execution(client):
 
 def test_dashboard_no_auth_returns_401(tmp_path, monkeypatch):
     """인증 없이 접근하면 401 반환."""
-    import audit_logger as al
-    import log_analyzer
+    import orchestrator_v1.core.audit_logger as al
+    import orchestrator_v1.monitoring.log_analyzer as log_analyzer
 
     monkeypatch.setattr(log_analyzer, "_AUDIT_PATH", str(tmp_path / "audit.jsonl"))
     monkeypatch.setattr(log_analyzer, "_HISTORY_PATH", str(tmp_path / "history.jsonl"))
@@ -317,8 +317,8 @@ def test_dashboard_no_auth_returns_401(tmp_path, monkeypatch):
 
 def test_dashboard_wrong_password_returns_401(tmp_path, monkeypatch):
     """잘못된 비밀번호로 접근하면 401 반환."""
-    import audit_logger as al
-    import log_analyzer
+    import orchestrator_v1.core.audit_logger as al
+    import orchestrator_v1.monitoring.log_analyzer as log_analyzer
 
     monkeypatch.setattr(log_analyzer, "_AUDIT_PATH", str(tmp_path / "audit.jsonl"))
     monkeypatch.setattr(log_analyzer, "_HISTORY_PATH", str(tmp_path / "history.jsonl"))

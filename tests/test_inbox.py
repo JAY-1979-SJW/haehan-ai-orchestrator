@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import inbox_store
+import orchestrator_v1.inbox.inbox_store as inbox_store
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -120,7 +120,7 @@ def test_app_boot(monkeypatch):
     monkeypatch.setenv("ORCH_DASHBOARD_USER", "test_user")
     monkeypatch.setenv("ORCH_DASHBOARD_PASSWORD", "test_pass")
 
-    from dashboard import create_app
+    from orchestrator_v1.monitoring.dashboard import create_app
 
     app = create_app()
     assert app is not None

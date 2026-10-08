@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 from pathlib import Path
 
-from dashboard import create_app
+from orchestrator_v1.monitoring.dashboard import create_app
 
 
 def _auth_header() -> dict[str, str]:

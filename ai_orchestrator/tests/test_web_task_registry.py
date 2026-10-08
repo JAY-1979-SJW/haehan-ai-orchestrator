@@ -245,7 +245,7 @@ def test_real_run_creates_pending_approval(admin_user):
     """dry_run=false 이면 pending approval 레코드가 생성된다."""
     import ai_orchestrator.dev_reg.dev_reg_approval as _dra
 
-    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.core.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         resp = client.post(
             "/api/v1/web-tasks/run",
@@ -272,7 +272,7 @@ def test_real_run_creates_pending_approval(admin_user):
 
 def test_real_run_response_fields(admin_user):
     """dry_run=false 응답에 필수 필드가 포함된다."""
-    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.core.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         resp = client.post(
             "/api/v1/web-tasks/run",
@@ -354,7 +354,7 @@ def test_sensitive_params_not_in_response(admin_user):
     """params 의 민감 필드(password, cookie 등)가 API 응답에 포함되지 않는다."""
     _SENSITIVE = "ultra_secret_password_xyz123"
 
-    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.core.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         resp = client.post(
             "/api/v1/web-tasks/run",
@@ -379,7 +379,7 @@ def test_sensitive_params_not_in_audit_log(admin_user, tmp_path):
     """params 의 민감 필드가 감사 로그에 포함되지 않는다."""
     _SENSITIVE = "my_super_secret_token_98765"
 
-    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.core.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         client.post(
             "/api/v1/web-tasks/run",
@@ -531,7 +531,7 @@ def test_dry_run_audit_event_recorded(admin_user):
 
 def test_real_run_audit_events_recorded(admin_user):
     """dry_run=false 시 WEB_TASK_RUN_REQUESTED + WEB_TASK_PENDING_APPROVAL_CREATED 기록."""
-    with patch("ai_orchestrator.clients.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
+    with patch("ai_orchestrator.core.telegram_sender.send_message", return_value={"ok": False, "skipped": True}):
         client = _make_test_client(admin_user)
         client.post(
             "/api/v1/web-tasks/run",

@@ -26,7 +26,7 @@ from scripts.common.youtube_api_common import (
     _stamp,
     _write_report,
 )
-from security_utils import safe_preview
+from ai_orchestrator.core.security_utils import safe_preview
 
 
 def build_transcript_collection_plan(video_id: str, *, owned: bool = False) -> tuple[dict[str, Any], Path]:

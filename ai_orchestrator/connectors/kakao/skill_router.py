@@ -21,7 +21,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from ai_orchestrator.clients import telegram_sender
+from ai_orchestrator.core import telegram_sender
 
 from ...paths import repo_root
 from ...tasks.inbox import create_inbox_item, exists_by_external_id

@@ -21,9 +21,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-import email_task_approval
+import orchestrator_v1.tasks.email_task_approval as email_task_approval
+import orchestrator_v1.tasks.email_task_store as email_task_store
 from orchestrator_v1.tasks import email_task_executor
-import email_task_store
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -123,7 +123,7 @@ def test_medium_risk_execution_skipped(task_path, token_path):
     assert result["risk_level"] == "medium"
 
     # task_store에 등록되지 않아야 함 (자동 실행 없음)
-    import task_store as ts
+    import orchestrator_v1.tasks.task_store as ts
 
     assert ts.get("etask-med001") is None
 
@@ -214,7 +214,7 @@ def test_execute_not_found(task_path, token_path):
 
 def test_no_auto_execution_on_approve(task_path, token_path):
     """approve_task 호출 자체가 실행을 트리거하지 않음."""
-    import task_store as ts
+    import orchestrator_v1.tasks.task_store as ts
 
     ts.clear()
 
@@ -235,8 +235,8 @@ def test_no_auto_execution_on_approve(task_path, token_path):
 
 
 def test_no_conflict_with_existing_approval_manager(task_path, token_path):
-    import approval_manager
-    import task_store
+    import orchestrator_v1.tasks.approval_manager as approval_manager
+    import orchestrator_v1.tasks.task_store as task_store
 
     before_approval = dict(approval_manager._store)
     before_task = dict(task_store._store)
@@ -258,7 +258,7 @@ def test_app_boot_with_executor_routes():
     _os.environ.setdefault("ORCH_DASHBOARD_USER", "test")
     _os.environ.setdefault("ORCH_DASHBOARD_PASSWORD", "test")
 
-    from dashboard import create_app
+    from orchestrator_v1.monitoring.dashboard import create_app
 
     app = create_app()
     rules = {r.rule for r in app.url_map.iter_rules()}

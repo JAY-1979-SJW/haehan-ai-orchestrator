@@ -84,7 +84,6 @@
       "layer": "L12",
       "paths": [
         "app.py",
-        "dashboard.py",
         "orchestrator_v1/core/audit_logger.py",
         "orchestrator_v1/tasks/approval_manager.py",
         "orchestrator_v1/tasks/executor.py"

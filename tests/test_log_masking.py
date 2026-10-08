@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-from logging_utils import mask_sensitive, safe_json, safe_log_dict, truncate_large_text
+from ai_orchestrator.core.logging_utils import mask_sensitive, safe_json, safe_log_dict, truncate_large_text
 
 # ── mask_sensitive ─────────────────────────────────────────────
 

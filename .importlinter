@@ -171,7 +171,7 @@ forbidden_modules =
     ai_orchestrator.browser_tool.worker.policy
     ai_orchestrator.browser_tool.worker.service
     ai_orchestrator.browser_tool.workflow_audit_writer
-    ai_orchestrator.clients.telegram_sender
+    ai_orchestrator.core.telegram_sender
     ai_orchestrator.connectors.cdp_screen_router
     ai_orchestrator.connectors.community_router
     ai_orchestrator.connectors.community_scheduler
@@ -2288,7 +2288,7 @@ as_packages = False
 name = 층 L3 는 L1,L3 만 직접 import (module_registry allowed_deps)
 type = forbidden
 source_modules =
-    ai_orchestrator.clients.telegram_sender
+    ai_orchestrator.core.telegram_sender
     orchestrator_v1.monitoring.telegram_notifier
     scripts.explorer.preflight_fetch
     scripts.form.bot_radar
@@ -5414,7 +5414,7 @@ forbidden_modules =
     ai_orchestrator.browser_tool.worker.policy
     ai_orchestrator.browser_tool.worker.service
     ai_orchestrator.browser_tool.workflow_audit_writer
-    ai_orchestrator.clients.telegram_sender
+    ai_orchestrator.core.telegram_sender
     ai_orchestrator.connectors.cdp_screen_router
     ai_orchestrator.connectors.community_router
     ai_orchestrator.connectors.community_scheduler
