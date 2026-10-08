@@ -113,6 +113,48 @@ def raw_findings(kit: list[str], path: Path, root: Path | None = None) -> list[s
     return [ln.strip() for ln in lines if ln.strip().startswith("[") and not any(n in ln for n in _NOISE)]
 
 
+def _hook_lines(messages: list[str]) -> list[str]:
+    """hook 메시지 → `raw_findings` 와 같은 규칙으로 거른 항목('['로 시작, 환경 잡음 제외)."""
+    return [m.strip() for m in messages if m.strip().startswith("[") and not any(n in m for n in _NOISE)]
+
+
+def batch_raw_findings(
+    kit: list[str], root: Path, rels: list[str], *, workers: int = 4, timeout_s: int = 1500
+) -> dict[str, list[str]]:
+    """여러 파일의 audit-kit 검사를 프로세스 몇 개에서 묶어 돈다(`scripts/ops/audit_kit_batch.py`) — 프로젝트 그래프를 프로세스마다 한 번만 만든다.
+
+    파일마다 `raw_findings`(= `audit-kit hook` 호출)를 따로 부르면 호출마다 그래프를 새로 만들어 파일당 수 초가 걸린다(PR #160 verify 정지의 원인).
+    돌려주는 dict 에 없는 파일(진짜 audit-kit 가 아니거나 묶음 실행이 실패한 경우)은 호출 쪽이 `raw_findings` 로 단독 재시도한다.
+    """
+    py = mypy_python(kit)  # audit-kit 가상환경의 python (진짜 audit-kit 일 때만 — 시험용 가짜 kit 이면 None)
+    if py is None or not rels:
+        return {}
+    script = Path(__file__).with_name("audit_kit_batch.py")
+    chunks = [rels[i::workers] for i in range(min(workers, len(rels)))]
+
+    def run_chunk(chunk: list[str]) -> dict[str, list[str]]:
+        try:
+            proc = run_tree_killed(
+                [py, str(script), str(root)],
+                input=json.dumps(chunk).encode("utf-8"),
+                text=False,
+                timeout=timeout_s,
+                cwd=str(root),
+                env=_utf8_env(),
+                **no_window_kwargs(),
+            )
+            data = json.loads(proc.stdout.decode("utf-8")) if proc.returncode == 0 else {}
+        except (OSError, subprocess.TimeoutExpired, ValueError):
+            return {}
+        return {rel: _hook_lines(msgs) for rel, msgs in data.items() if isinstance(msgs, list)}
+
+    found: dict[str, list[str]] = {}
+    with ThreadPoolExecutor(len(chunks)) as pool:
+        for part in pool.map(run_chunk, chunks):
+            found.update(part)
+    return found
+
+
 def _utf8_env() -> dict[str, str]:
     """하위 프로세스(audit-kit·mypy)가 콘솔 코드페이지(cp949)가 아니라 utf-8 로 출력하게 한다 — 결과를 utf-8 로 읽기 때문."""
     return {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}

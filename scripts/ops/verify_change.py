@@ -472,6 +472,7 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
     """
     from audit_kit_gate import (  # type: ignore[import-not-found]  # scripts/ops 안의 형제 모듈
         _new_typed,
+        batch_raw_findings,
         find_audit_kit,
         finding_key,
         is_real_kit,
@@ -495,6 +496,12 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
         base_keys = mypy_keys_batch(py, [base_tree / rel for rel in py_changed if (base_tree / rel).exists()], base_tree)
         _log("mypy 일괄 검사 끝")
 
+    # audit-kit hook 은 호출마다 프로젝트 그래프를 새로 만들어 파일당 ~8초라서 변경 1000개면 90분을 넘겼다(PR #160) →
+    # 한 프로세스에서 여러 파일을 묶어 돌려(그래프 1회) 파일당 ~1초 이하로. 묶음이 못 낸 파일만 단독 호출로 다시 시도한다.
+    _log(f"audit-kit 묶음 검사 시작: 변경 {len(py_changed)}개 (head·base)")
+    head_batch = batch_raw_findings(kit, head_tree, py_changed)
+    base_batch = batch_raw_findings(kit, base_tree, [rel for rel in py_changed if (base_tree / rel).exists()])
+    _log(f"audit-kit 묶음 검사 끝: head {len(head_batch)}개·base {len(base_batch)}개 (나머지는 단독 재시도)")
     done = [0]
 
     def one(rel: str) -> list[str]:
@@ -509,11 +516,14 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
                 _log(f"audit-kit 파일 검사 진행 {done[0]}/{len(py_changed)}")
 
     def _one(rel: str) -> list[str]:
-        head = raw_findings(kit, head_tree / rel, head_tree)
+        head = head_batch[rel] if rel in head_batch else raw_findings(kit, head_tree / rel, head_tree)
         if head is None:
             return [f"{rel}: audit-kit 검사를 하지 못했습니다"]
         has_base = (base_tree / rel).exists()
-        base = raw_findings(kit, base_tree / rel, base_tree) if has_base else []
+        if not has_base:
+            base: list[str] | None = []
+        else:
+            base = base_batch[rel] if rel in base_batch else raw_findings(kit, base_tree / rel, base_tree)
         known = {finding_key(x) for x in (base or [])}
         out = [f"{rel}: {x}" for x in head if finding_key(x) not in known]
         if py is not None:  # mypy: 기준 트리의 같은 파일에 없던 타입 오류만
