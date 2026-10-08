@@ -15345,7 +15345,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_domain_room_allocation.py": {
+  "tests/quality_gates/test_domain_room_allocation.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -16265,7 +16265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_live_inputs_split.py": {
+  "tests/google/test_live_inputs_split.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17769,7 +17769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_session_guard.py": {
+  "tests/quality_gates/test_session_guard.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17785,7 +17785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_shared_warehouse_physical_skeleton.py": {
+  "tests/quality_gates/test_shared_warehouse_physical_skeleton.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -17793,7 +17793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/test_shared_warehouse_policy.py": {
+  "tests/quality_gates/test_shared_warehouse_policy.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
