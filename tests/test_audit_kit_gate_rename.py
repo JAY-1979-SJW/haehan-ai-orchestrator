@@ -242,12 +242,16 @@ _CONTENT_AWARE_KIT = textwrap.dedent(
     """
     import json, pathlib, sys
     payload = json.loads(sys.stdin.read())
-    text = pathlib.Path(payload["tool_input"]["file_path"]).read_text(encoding="utf-8")
+    fp = pathlib.Path(payload["tool_input"]["file_path"])
+    cwd = pathlib.Path(payload["cwd"])
+    text = fp.read_text(encoding="utf-8")
+    rel = fp.relative_to(cwd).as_posix()
     findings = []
     if "BAD_PATH_MARKER" in text:
-        findings.append("[STD-02] 14행: 하드코딩된 경로 'C:/Windows/' 가 있습니다")
+        # 실측 형식 재현: 메시지 안에 상대경로(파일명 포함)가 다시 나온다(F8-2 재발 원인).
+        findings.append(f"[표준 STD-02] {rel}:14 절대경로 하드코딩: 'C:/Windows/'")
     if "BAD_NEW_MARKER" in text:
-        findings.append("[STD-03] 20행: 새 문제")
+        findings.append(f"[표준 STD-03] {rel}:20 새 문제")
     if findings:
         sys.stderr.write("\\n".join(findings) + "\\n")
         sys.exit(2)

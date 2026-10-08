@@ -457,9 +457,12 @@ def _kit_hook_old_path_keys(kit: list[str], path: Path, root: Path, old_rel: str
         findings, failed = _kit_hook(kit, copy, root)
         if failed:
             return set()
-        # _kit_hook 이 붙이는 `{path.name}: ` 접두사를 임시 사본 이름(copy.name)이 아니라 옛 파일 이름으로
-        # 되돌려야 새 검사 쪽(`{path.name}: ...`)과 같은 기준으로 비교된다(흔한 경우: 디렉터리만 이동, 파일명은 그대로).
-        return {finding_key(f.replace(copy.name, old_name, 1)) for f in findings}
+        # _kit_hook 이 붙이는 `{path.name}: ` 접두사뿐 아니라 audit-kit 자신의 메시지 안에도 상대경로가
+        # 다시 나올 수 있어(실측: "[표준 STD-02] tools/gates/risk_classifier.py:14 ...") 임시 사본 이름
+        # (copy.name)을 옛 파일 이름으로 **전부** 되돌려야 한다 — 처음 1곳만 바꾸면(이전 결함) 두 번째
+        # 등장(메시지 내부)이 그대로 남아 새 검사 쪽 키와 달라져 하나도 안 걸렸다. 사본이 새 위치(path 와
+        # 같은 폴더)에 있어 디렉터리는 이미 새 경로와 같게 나온다 — 파일명만 맞추면 된다.
+        return {finding_key(f.replace(copy.name, old_name)) for f in findings}
     finally:
         copy.unlink(missing_ok=True)
 
