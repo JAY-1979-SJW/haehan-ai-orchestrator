@@ -29,32 +29,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 @pytest.fixture(autouse=True)
 def _isolated_storage(tmp_path, monkeypatch):
-    """각 테스트마다 독립된 storage 경로 사용 + auth/router 재동기화.
+    """각 테스트마다 독립된 storage 경로 사용.
 
     저장소 경로는 기존 모듈 객체의 속성을 monkeypatch 로 교체한다
     (reload 대신 속성 교체 — 동일 __globals__ 를 쓰는 함수가 즉시 반영).
 
-    auth / web_task_router 는 reload 한다. 다른 테스트가 auth 를 reload 해
-    `get_current_user` 함수 객체가 갱신되면, 이미 임포트된 web_task_router 의
-    라우트 의존성은 여전히 구(舊) `get_current_user` 를 참조하므로
-    `dependency_overrides` 가 적용되지 않는다. 두 모듈을 함께 reload 해
-    라우트와 테스트가 동일 `get_current_user` 를 가리키도록 한다.
+    auth(`ai_orchestrator.gates.auth`)는 reload 하지 않는다 — 어느 시험도 reload 하지 않으면
+    `get_current_user` 함수 객체가 세션 내내 안정적이라, 아래 `_make_client` 가 object-identity 기준
+    `dependency_overrides` 를 써도 이미 import 된 `web_task_router` 의 라우트 의존성과 항상 같은
+    객체를 가리킨다(2026-10-08 B11: reload 방식은 다른 시험까지 깨뜨려 제거함).
     """
-    import importlib
-
-    import ai_orchestrator.gates.auth as _auth
-
-    importlib.reload(_auth)
-    import ai_orchestrator.auth.user_auth_router as _uar
-
-    # _auth 재적재가 register_bearer_resolver 로 등록된 Bearer 검증기를 None 으로 되돌리므로,
-    # 등록을 다시 실행하는 user_auth_router 도 함께 재적재한다 — 안 하면 이후 세션의 모든
-    # Bearer JWT 가 401("토큰이 유효하지 않습니다")로 깨진다.
-    importlib.reload(_uar)
-    import ai_orchestrator.web_task.web_task_router as _wtr
-
-    importlib.reload(_wtr)
-
     import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.dev_reg.dev_reg_approval as _dra
     import ai_orchestrator.gates.approval as _ap

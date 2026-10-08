@@ -24,26 +24,13 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
-# ── 공통 픽스처 (test_web_task_registry.py 와 동일 패턴) ────────────────
+# ── 공통 픽스처 (test_web_task_registry.py 와 동일 패턴 — auth 는 reload 하지 않는다,
+# 2026-10-08 B11: 어느 시험도 gates.auth 를 reload 하지 않으면 get_current_user 가 세션 내내
+# 안정적이라 dependency_overrides 가 항상 같은 객체를 가리킨다) ────────────────
 
 
 @pytest.fixture(autouse=True)
 def _isolated_storage(tmp_path, monkeypatch):
-    import importlib
-
-    import ai_orchestrator.gates.auth as _auth
-
-    importlib.reload(_auth)
-    import ai_orchestrator.auth.user_auth_router as _uar
-
-    # _auth 재적재가 register_bearer_resolver 로 등록된 Bearer 검증기를 None 으로 되돌리므로,
-    # 등록을 다시 실행하는 user_auth_router 도 함께 재적재한다 — 안 하면 이후 세션의 모든
-    # Bearer JWT 가 401("토큰이 유효하지 않습니다")로 깨진다.
-    importlib.reload(_uar)
-    import ai_orchestrator.web_task.web_task_router as _wtr
-
-    importlib.reload(_wtr)
-
     import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.dev_reg.dev_reg_approval as _dra
     import ai_orchestrator.gates.approval as _ap

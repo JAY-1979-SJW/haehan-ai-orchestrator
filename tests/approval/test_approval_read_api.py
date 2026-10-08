@@ -62,22 +62,15 @@ def setup(tmp_path_factory):
         encoding="utf-8",
     )
 
-    os.environ["AUTH_ENABLED"] = "true"
-    os.environ["HTTP_USERS_PATH"] = str(users_path)
     os.environ["LOG_DIR"] = str(storage_dir)
 
+    from tests.conftest import apply_basic_auth_users
+
+    mp = pytest.MonkeyPatch()
+    apply_basic_auth_users(mp, users_path)
     import ai_orchestrator.core.config as _config
 
     importlib.reload(_config)
-    import ai_orchestrator.gates.auth as _auth
-
-    importlib.reload(_auth)
-    import ai_orchestrator.auth.user_auth_router as _uar
-
-    # _auth 재적재가 register_bearer_resolver 로 등록된 Bearer 검증기를 None 으로 되돌리므로,
-    # 등록을 다시 실행하는 user_auth_router 도 함께 재적재한다 — 안 하면 이후 세션의 모든
-    # Bearer JWT 가 401("토큰이 유효하지 않습니다")로 깨진다.
-    importlib.reload(_uar)
     import ai_orchestrator.gates.approval as _ap
 
     importlib.reload(_ap)
@@ -169,12 +162,9 @@ def setup(tmp_path_factory):
 
     yield client
 
-    os.environ["AUTH_ENABLED"] = "false"
-    os.environ.pop("HTTP_USERS_PATH", None)
+    mp.undo()
     os.environ.pop("LOG_DIR", None)
     importlib.reload(_config)
-    importlib.reload(_auth)
-    importlib.reload(_uar)
     _dra.clear()
 
 

@@ -42,22 +42,15 @@ def app_client(tmp_path_factory):
     )
 
     logdir = tmp_path_factory.mktemp("storage")
-    os.environ["AUTH_ENABLED"] = "true"
-    os.environ["HTTP_USERS_PATH"] = str(users_path)
     os.environ["LOG_DIR"] = str(logdir)
 
+    from tests.conftest import apply_basic_auth_users
+
+    mp = pytest.MonkeyPatch()
+    apply_basic_auth_users(mp, users_path)
     from ai_orchestrator.core import config as _config
 
     importlib.reload(_config)
-    from ai_orchestrator.gates import auth as _auth
-
-    importlib.reload(_auth)
-    from ai_orchestrator.auth import user_auth_router as _uar
-
-    # _auth 재적재가 register_bearer_resolver 로 등록된 Bearer 검증기(_bearer_resolver)를
-    # None 으로 되돌리므로, 등록을 다시 실행하는 user_auth_router 도 함께 재적재한다.
-    # 안 하면 이후 세션에서 모든 Bearer JWT 가 401("토큰이 유효하지 않습니다")로 깨진다.
-    importlib.reload(_uar)
     from ai_orchestrator.core import execution_limits as _el
 
     importlib.reload(_el)
@@ -86,13 +79,10 @@ def app_client(tmp_path_factory):
 
     yield TestClient(_srv.app, raise_server_exceptions=True)
 
-    os.environ["AUTH_ENABLED"] = "false"
-    os.environ.pop("HTTP_USERS_PATH", None)
+    mp.undo()
     os.environ.pop("LOG_DIR", None)
     _ap.clear_rate_store()
     importlib.reload(_config)
-    importlib.reload(_auth)
-    importlib.reload(_uar)
     importlib.reload(_el)
     importlib.reload(_ex)
     importlib.reload(_ap)
