@@ -308,21 +308,22 @@ def _measure_skeleton_and_cycles(tree: Path, m: dict, committed: dict | None) ->
     return sorted(set(skel)), cycles
 
 
-def _measure_affected_test_results(tree: Path, tests: list[str]) -> tuple[list[str], list[str]]:
+def _measure_affected_test_results(tree: Path, tests: list[str]) -> tuple[list[str], list[str], dict[str, str]]:
     """영향 테스트 — CHUNK 파일씩 묶어 한 프로세스로(속도), 묶음이 시간 상한을 넘으면 그 묶음만 파일별로 재실행(멈춤 차단)."""
     present = [t for t in tests if (tree / t).exists()]
     fails, timeouts = [], []
+    reasons: dict[str, str] = {}
     for i in range(0, len(present), CHUNK):
         chunk = present[i : i + CHUNK]
         try:
-            fails += _pytest(tree, chunk, TEST_TIMEOUT * len(chunk) // 2 + TEST_TIMEOUT)
+            fails += _pytest(tree, chunk, TEST_TIMEOUT * len(chunk) // 2 + TEST_TIMEOUT, reasons)
         except subprocess.TimeoutExpired:
             for t in chunk:
                 try:
-                    fails += _pytest(tree, [t], TEST_TIMEOUT)
+                    fails += _pytest(tree, [t], TEST_TIMEOUT, reasons)
                 except subprocess.TimeoutExpired:
                     timeouts.append(t)
-    return sorted(set(fails)), timeouts
+    return sorted(set(fails)), timeouts, reasons
 
 
 def measure(tree: Path, tests: list[str]) -> dict:
@@ -343,6 +344,7 @@ def measure(tree: Path, tests: list[str]) -> dict:
     _log(f"[{name}] 영향 시험 {len(tests)}개 실행")
     r["test_failures"], r["test_timeouts"] = _measure_affected_test_results(tree, tests)
     _log(f"[{name}] 측정 끝 (시험 실패 {len(r['test_failures'])}건, 시간 초과 {len(r['test_timeouts'])}건)")
+    r["test_failures"], r["test_timeouts"], r["test_failure_reasons"] = _measure_affected_test_results(tree, tests)
     return r
 
 
@@ -351,8 +353,21 @@ def _is_pytest_id(token: str) -> bool:
     return "::" in token or token.endswith(".py")
 
 
-def _pytest(tree: Path, files: list[str], timeout: int) -> list[str]:
-    """테스트 파일 묶음 실행 → 실패 id 목록. 수집 오류가 나도 나머지는 계속 돈다."""
+def _failure_reason(line: str, test_id: str) -> str:
+    """'FAILED path::test - AssertionError: ...' 요약 줄에서 id 뒤 사유 텍스트만 뽑는다.
+    ' - '가 없으면(긴 id 로 pytest 가 사유를 못 붙인 줄 등) 빈 문자열 — 호출 쪽이 그냥 id만 쓴다."""
+    rest = line.split(test_id, 1)[1].lstrip() if test_id in line else ""
+    return rest[2:].strip() if rest.startswith("- ") else ""
+
+
+def _pytest(tree: Path, files: list[str], timeout: int, reasons: dict[str, str] | None = None) -> list[str]:
+    """테스트 파일 묶음 실행 → 실패 id 목록. 수집 오류가 나도 나머지는 계속 돈다.
+
+    reasons 를 주면 실패 id별 pytest 요약 줄의 사유(짧게 잘릴 수 있음)를 채워 넣는다 — 로컬에서
+    재현되지 않는 CI 전용 실패가 나왔을 때, 보고서만 보고도 마지막 assert/예외 줄을 바로 알 수
+    있게 한다(2026-10-08, gabia_router_clean 재현 실패 조사 중 보고서가 id 만 남겨 원인 추적이
+    막혔던 것의 재발 방지).
+    """
     p = run(
         [PY, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rfE", "--continue-on-collection-errors", *_pytest_extra_args(), *files],
         tree,
@@ -360,11 +375,19 @@ def _pytest(tree: Path, files: list[str], timeout: int) -> list[str]:
     )
     # pytest 요약 줄("FAILED path::test", "ERROR path.py")만 센다. 실패한 시험의 캡처 로그
     # ("ERROR    모듈:파일.py:줄 메시지")도 같은 접두어라 그대로 세면 로그 줄이 가짜 실패 id 로 잡힌다.
-    out = [
-        ln.split()[1]
-        for ln in p.stdout.splitlines()
-        if ln.startswith(("FAILED ", "ERROR ")) and len(ln.split()) > 1 and _is_pytest_id(ln.split()[1])
-    ]
+    out = []
+    for ln in p.stdout.splitlines():
+        if not ln.startswith(("FAILED ", "ERROR ")):
+            continue
+        parts = ln.split()
+        if len(parts) <= 1 or not _is_pytest_id(parts[1]):
+            continue
+        test_id = parts[1]
+        out.append(test_id)
+        if reasons is not None:
+            reason = _failure_reason(ln, test_id)
+            if reason:
+                reasons[test_id] = reason
     if p.returncode not in (0, 1, 5) and not out:
         out.append(f"{files[0]}..(+{len(files) - 1})::<rc={p.returncode}>")
     return out
@@ -441,6 +464,12 @@ def _build_verify_report(
         return _diff_key(key, before, after, after_n, moved, receiving)
 
     new_timeouts = [f"TIMEOUT {t}" for t in after["test_timeouts"] if t not in before["test_timeouts"]]
+    # 새로 생긴 시험 실패 id 뒤에 pytest 요약 줄의 사유를 붙인다 — 사유가 없는 id(긴 id 로 pytest 가
+    # 못 붙였거나 rc 로만 잡힌 합성 id)는 그냥 id만 남아 안전하다.
+    after_reasons = after.get("test_failure_reasons", {})
+    new_test_failures = [
+        f"{tid} — {after_reasons[tid]}" if tid in after_reasons else tid for tid in new("test_failures")
+    ]
     if a.expect_routes:  # 기준서가 약속한 라우트 수로 판정(의도된 추가·삭제)
         ok_routes = str(after["routes"]) == str(a.expect_routes)
         route_diff = [] if ok_routes else [f"라우트 수 {after['routes']} ≠ 기준서 약속 {a.expect_routes}"]
@@ -454,7 +483,7 @@ def _build_verify_report(
             f"영향 테스트 실패({len(tests)}파일)",
             len(before["test_failures"]),
             len(after["test_failures"]),
-            new("test_failures") + new_timeouts,
+            new_test_failures + new_timeouts,
         ),
         ("층간 위반", len(before["violations"]), len(after["violations"]), new("violations")),
         ("모듈 순환", len(before["cycles"]), len(after["cycles"]), new("cycles")),

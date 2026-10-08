@@ -24248,6 +24248,14 @@
    "reason": "로컬 에이전트 패키지",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_verify_change_fail_reason.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
