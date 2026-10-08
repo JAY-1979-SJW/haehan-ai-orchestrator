@@ -151,6 +151,51 @@ def test_update_baseline_only_shrinks(repo):
     assert gate.main(["--update-baseline", "--root", str(repo)]) == 1  # 늘리기는 거부
 
 
+def test_sync_baseline_requires_reason(repo, capsys):
+    rc = gate.main(["--sync-baseline", "--root", str(repo)])
+    assert rc == 2
+    assert "--reason" in capsys.readouterr().err
+
+
+def test_sync_baseline_rejects_file_not_in_verify_ref(repo, capsys):
+    """A-1(CI #164) 재발 방지: 이번 브랜치가 새로 만든 leak 은 --sync-baseline 으로
+    절대 기준선에 섞여 들어가면 안 된다(판정 완화 금지) — verify-in-ref 에 없으면 거부."""
+    _w(repo, "scripts/ig_brandnew_leak.py")  # 커밋도 안 한 새 leak
+    _git(repo, "add", "-A")
+    rc = gate.main([
+        "--sync-baseline", "--root", str(repo), "--reason", "테스트",
+        "--verify-in-ref", "HEAD",  # HEAD 에는 없음(아직 커밋 전)
+    ])
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "scripts/ig_brandnew_leak.py" in err
+    # 거부됐으니 기준선은 바뀌지 않아야 한다
+    assert json.loads((repo / gate.BASELINE).read_text(encoding="utf-8"))["files"] == ["scripts/ig_legacy.py"]
+
+
+def test_sync_baseline_grows_when_rule_change_adds_preexisting_leak(repo):
+    """configs/tool_home.json 에 새 도구/규칙이 생겨 기존(커밋된) 파일이 새로 leak 이 되면,
+    그 파일이 과거 커밋(HEAD)에도 있었다는 전제로 --sync-baseline 이 기준선을 늘려야 한다."""
+    _w(repo, "scripts/kakao_existing.py")  # 아직 아무 도구에도 안 걸리는 평범한 파일
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add existing file before rule change")
+
+    cfg = json.loads((repo / gate.CONFIG).read_text(encoding="utf-8"))
+    cfg["tools"].append({"name": "kakao", "keyword": "kakao", "homes": ["scripts/kakao/"]})
+    (repo / gate.CONFIG).write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add kakao tool rule — scripts/kakao_existing.py 가 새로 leak")
+
+    rc = gate.main([
+        "--sync-baseline", "--root", str(repo), "--reason", "kakao 규칙 추가로 재분류",
+        "--verify-in-ref", "HEAD",
+    ])
+    assert rc == 0
+    files = set(json.loads((repo / gate.BASELINE).read_text(encoding="utf-8"))["files"])
+    assert "scripts/kakao_existing.py" in files
+    assert "scripts/ig_legacy.py" in files  # 기존 기준선 유지
+
+
 def test_real_repo_check_all_matches_committed_baseline():
     """실제 저장소: 지금 집 밖 파일은 모두 기준선 안(새 이탈 0) — CI 의 --check-all 과 같은 판정."""
     assert gate.main(["--check-all", "--root", str(REAL_ROOT)]) == 0

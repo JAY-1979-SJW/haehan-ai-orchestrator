@@ -8,6 +8,12 @@
     python scripts/ops/tool_home_gate.py --check-all       # CI: 추적 파일 전체 — 기준선에 없는 집 밖 파일이 있으면 실패
     python scripts/ops/tool_home_gate.py --update-baseline # 기준선 줄이기(없어졌거나 집으로 옮긴 항목만 제거). 늘리기는 불가
     python scripts/ops/tool_home_gate.py --init-baseline   # 기준선 파일이 없을 때 현재 상태로 최초 생성
+    python scripts/ops/tool_home_gate.py --sync-baseline --reason "..."
+                                                            # configs/tool_home.json 규칙 변경(예: before_exempt
+                                                            # 추가)으로 "이미 master 에 있던" 파일이 새로 leak 판정이
+                                                            # 됐을 때만 기준선에 추가(각 파일이 --verify-in-ref 에도
+                                                            # 있어야 함 — 이번 브랜치가 새로 만든 leak 은 거부). 판정을
+                                                            # 완화하지 않는다: classify() 규칙은 그대로, 기록만 최신화.
     python scripts/ops/tool_home_gate.py --classify <경로...>
 
 판정:
@@ -81,6 +87,14 @@ def load_baseline(root: Path = ROOT) -> set[str]:
     if not p.is_file():
         return set()
     return set(json.loads(p.read_text(encoding="utf-8")).get("files", []))
+
+
+def _exists_in_ref(root: Path, ref: str, path: str) -> bool:
+    r = subprocess.run(
+        ["git", "cat-file", "-e", f"{ref}:{path}"], cwd=str(root),
+        capture_output=True, encoding="utf-8", errors="replace", check=False,
+    )
+    return r.returncode == 0
 
 
 def _write_baseline(root: Path, files: list[str], note: str) -> None:
@@ -169,6 +183,14 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912 - CLI 모
     ap.add_argument("--check-all", action="store_true")
     ap.add_argument("--update-baseline", action="store_true")
     ap.add_argument("--init-baseline", action="store_true")
+    ap.add_argument("--sync-baseline", action="store_true",
+                     help="configs/tool_home.json 규칙 변경(예: before_exempt 추가)으로 기존 파일이 "
+                          "새로 leak 판정이 된 경우만 기준선에 추가(줄이기도 같이 함). --reason 필수, "
+                          "판정 완화가 아니라 '이미 master 에 있던 파일' 임을 --verify-in-ref 로 검증.")
+    ap.add_argument("--reason", default=None)
+    ap.add_argument("--verify-in-ref", default="origin/master",
+                     help="--sync-baseline 전용: 새로 추가되는 각 파일이 이 ref 에도 이미 있어야 한다"
+                          "(이번 브랜치가 새로 만든 leak 은 절대 섞이지 않게).")
     ap.add_argument("--classify", action="store_true")
     ap.add_argument("--root", type=Path, default=ROOT)
     a = ap.parse_args(argv)
@@ -199,6 +221,28 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912 - CLI 모
             return 1
         _write_baseline(root, kept, f"하향 갱신: {len(baseline)} → {len(kept)}")
         print(f"기준선 {len(baseline)} → {len(kept)}")
+        return 0
+    if a.sync_baseline:
+        if not a.reason:
+            print("[tool_home_gate] --sync-baseline 은 --reason 이 필수(왜 기준선이 느는지 기록)", file=sys.stderr)
+            return 2
+        leak_set = set(current_leaks(root, cfg))
+        added = leak_set - baseline
+        removed = baseline - leak_set
+        if added:
+            not_in_ref = sorted(f for f in added if not _exists_in_ref(root, a.verify_in_ref, f))
+            if not_in_ref:
+                print(
+                    f"[tool_home_gate] --sync-baseline 거부: {len(not_in_ref)}개가 {a.verify_in_ref} 에 없음"
+                    " — 이번 브랜치가 새로 만든 leak 일 수 있다(판정 완화 금지):",
+                    file=sys.stderr,
+                )
+                for f in not_in_ref[:20]:
+                    print("  " + f, file=sys.stderr)
+                return 1
+        kept = sorted(leak_set)
+        _write_baseline(root, kept, f"규칙 변경 동기화({a.reason}): +{len(added)} -{len(removed)} = {len(kept)}")
+        print(f"[tool_home_gate] 기준선 동기화: {len(baseline)} → {len(kept)} (+{len(added)} -{len(removed)})")
         return 0
     if a.check_all:
         leaks = current_leaks(root, cfg)
