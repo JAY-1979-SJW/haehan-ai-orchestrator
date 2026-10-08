@@ -1058,3 +1058,17 @@ git checkout pre-openai-removal -- <경로>
 - `scripts/ops/codebase_layer_audit.py` — `issue_key`
 - `scripts/session_tracker.py` — `clear_state`, `all_states`
 - `scripts/web_connector.py` — `shutdown_browser_session`(탭·브라우저 전체 종료 — 로그인 세션 보존 정책과 반대)
+
+## 2026-10-08 추가 삭제 — tests-split(B12) 중 발견한 미사용 archive 스크립트
+
+근거: `scripts/archive/one_off/validate_site_policy_config.py` — 저장소 전체(코드·설정·CI·활성 운영 문서)에서
+정의 외 참조 0(삭제 직전 재확인: import 0, configs/registry 외 참조 0, scripts/ops 게이트·감사 스크립트
+참조 0, CI 참조 0, 활성 문서 참조 0 — docs/reports·docs/specs 의 역사적 언급만 있음, data 참조 0). 자기
+시험(`tests/test_validate_site_policy_config_20260509.py`)만 호출하고 있어 시험도 같이 지운다.
+(참고: 같은 B12 조사에서 함께 archive 로 분류됐던 `scripts/archive/misc/chrome_ui_monitor.py` 는 실제로
+`scripts/browser/cdp/cdp_daemon.py` 가 서브프로세스로 띄우고 재시작시키는 **살아있는 코드**로 확인돼
+삭제하지 않았다 — stage/no-cdp-autostart(a2ad1162) 병합 후 재확인 예정.)
+복원: `git show <삭제 커밋>^:<경로>` (삭제 직전 내용).
+
+- `scripts/archive/one_off/validate_site_policy_config.py` — 사이트 정책 설정 검증 one-off 스크립트
+- `tests/test_validate_site_policy_config_20260509.py` — 위 스크립트만 시험하던 파일

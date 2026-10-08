@@ -7433,14 +7433,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/archive/one_off/validate_site_policy_config.py": {
-   "layer": "L12",
-   "role": "archive",
-   "domain": "common",
-   "reason": "문서·보관 경로",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/archive/shadowed_modules/naver_blog_seo_stub.py": {
    "layer": "L12",
    "role": "archive",
@@ -18354,14 +18346,6 @@
    "source": "rule"
   },
   "tests/test_user_present_ui_api_default.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_validate_site_policy_config_20260509.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
