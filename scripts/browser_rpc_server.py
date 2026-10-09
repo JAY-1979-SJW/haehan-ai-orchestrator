@@ -1,5 +1,5 @@
-# haehan-shim: scripts.browser.cdp.browser_rpc_server
-# 호환 shim: 실제 모듈은 scripts.browser.cdp.browser_rpc_server 로 이동했다 (scripts/browser/cdp/browser_rpc_server.py).
+# haehan-shim: scripts.browser.browser_rpc_server
+# 호환 shim: 실제 모듈은 scripts.browser.browser_rpc_server 로 이동했다 (scripts/browser/browser_rpc_server.py).
 # 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
 # 생성: scripts/ops/make_shim.py — 계약 테스트: tests/test_shim_contract.py
 import importlib as _il
@@ -14,7 +14,7 @@ if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모�
     if _root not in _sys.path:
         _sys.path.insert(0, _root)
 
-    _runpy.run_module("scripts.browser.cdp.browser_rpc_server", run_name="__main__")
+    _runpy.run_module("scripts.browser.browser_rpc_server", run_name="__main__")
     raise SystemExit
 
 
@@ -24,4 +24,4 @@ def _install(real, g, mods):
     mods[g["__name__"]] = real
 
 
-_install(_il.import_module("scripts.browser.cdp.browser_rpc_server"), globals(), _sys.modules)
+_install(_il.import_module("scripts.browser.browser_rpc_server"), globals(), _sys.modules)

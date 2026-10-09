@@ -167,7 +167,7 @@ def test_report_contains_counts_and_problem_total():
 
 def test_registered_specs_load():
     """등록된 사이트 명세가 정상 로드되고 필수 필드를 갖는지."""
-    from scripts.ops.selector_health import load_specs
+    from tools.selector_health import load_specs
 
     specs = load_specs()
     assert "naver_blog" in specs
@@ -181,7 +181,7 @@ def test_registered_specs_load():
 @pytest.mark.parametrize("name", ["TAG_INPUT"])
 def test_tag_input_requires_publish_panel(name):
     """2026-08-14 사고 재발 방지: 태그 입력창은 발행 패널 안에만 있다."""
-    from scripts.ops.selector_health import load_specs
+    from tools.selector_health import load_specs
 
     c = next(c for c in load_specs()["naver_blog"].checks if c.name == name)
     assert c.requires == "publish_panel"

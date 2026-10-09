@@ -3321,14 +3321,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/audit_logger.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "ai_orchestrator/auth/__init__.py": {
    "layer": "L4",
    "role": "generic",
@@ -16721,14 +16713,6 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/site_registry_sites.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/sitecustomize.py": {
    "layer": "L4",
    "role": "generic",
@@ -19898,14 +19882,6 @@
    "source": "rule"
   },
   "tests/hiworks/test_split_hiworks_moved.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "hiworks",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/hiworks/test_split_hiworks_paths.py": {
    "layer": "L11",
    "role": "test",
    "domain": "hiworks",

@@ -181,12 +181,21 @@ def moved_location_deps(base: str, head: str | None) -> list[str]:
         new_src = run(["git", "show", f"{head}:{new}"], ROOT).stdout if head else (ROOT / new).read_text("utf-8")
         for i, line in enumerate(new_src.splitlines(), 1):
             s = line.strip()
-            if s.startswith("#") or not any(k in s for k in LOCATION_DEP):
+            if s.startswith("#"):
                 continue
+            # 결함(2026-10-10, PR165 verify FAIL — 이동으로 깊이가 바뀐 테스트 파일의 docstring
+            # 이 과거에 고친 순환/층간위반을 "from .x import y" 같은 실제 문장 모양 그대로 설명
+            # 하고 있어서, 옛 "문자열에 from . 가 있으면" 식 부분일치 검사가 그 설명을 진짜
+            # import 문으로 오판했다(browser_approval_errors.py·test_backend_router_server_
+            # cycle_break_20260516.py 의 역사 설명 docstring 이 매번 "새 위치의존 미조정"으로
+            # 잡힘). 실제 import 문은 항상 줄 맨 앞이 from ./import . 로 시작하므로 그 모양만
+            # 본다(문장 중간·주석·docstring 안의 같은 글자는 더는 안 잡힌다).
+            is_rel_import = s.startswith("from .") or s.startswith("import .")
             # "__file__" 단독(.parent/.parents 체인 없음)은 자기 경로를 그대로 재실행/참조하는
-            # 용도라 이동 깊이와 무관 — 상대 import("from .")만 깊이에 의존하므로 그것만 본다
-            # (실측: browser_rpc_server.py·cdp_daemon.py 의 자기 재실행 줄이 깊이 변화마다 오탐).
-            if "__file__" in s and ".parent" not in s and "from ." not in s and "import ." not in s:
+            # 용도라 이동 깊이와 무관 — .parent 체인이 있는 것만 본다(실측: browser_rpc_server.py·
+            # cdp_daemon.py 의 자기 재실행 줄이 깊이 변화마다 오탐).
+            has_file_dep = "__file__" in s and ".parent" in s
+            if not (is_rel_import or has_file_dep):
                 continue
             if line in old_lines and not _same_relative_target(s, old, new, base, head, moved):
                 out.append(f"{new}:{i}: {s[:100]}")

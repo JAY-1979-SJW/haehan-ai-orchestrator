@@ -13,7 +13,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 # 온디맨드 컨트롤러 3개(T4 C11 에서 scripts/local_agent/ → local_agent/) — 금지 패턴 검사 대상은 그대로다
-_CONTROLLER_FILES = [pathlib.Path("local_agent/connection") / name for name in ("controller.py", "process_guard.py", "status_store.py")]
+_CONTROLLER_FILES = [pathlib.Path("core/agent_runtime/connection") / name for name in ("controller.py", "process_guard.py", "status_store.py")]
 
 # ── fixture: 임시 data/local_agent 디렉터리 ────────────────────────────
 
