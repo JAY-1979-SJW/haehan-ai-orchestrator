@@ -7,7 +7,7 @@
 
 ## 1단계 — 삭제 완료 (비공개 도우미 17개)
 - `core/agent_runtime/browser/bridge/browser_websocket_handshake.py`: `_get_hostname_hash`(함수,L0)
-- `local_agent/tools/kras_connector.py`: `_http_error_detail`(함수,L0)
+- `core/agent_runtime/tools/kras_connector.py`: `_http_error_detail`(함수,L0)
 - `scripts/cdp_client.py`: `_load_daemon_state`(함수,L0)
 - `scripts/browser/cdp/cdp_daemon.py`: `_clear_session_restore_artifacts`(함수,L0)
 - `scripts/eum/auth.py`: `_prepare_login_page`(함수,L0)

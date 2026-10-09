@@ -1190,7 +1190,7 @@ def action_scan_file_tree(params: dict) -> ActionResult:
     요약한다. 반환 data 에는 absolute_path 가 포함되지 않으므로 서버 전송이
     가능하다. 본 액션은 어떤 경우에도 파일 삭제/이동/이름변경을 하지 않는다.
     """
-    from local_agent.tools import file_scanner
+    from core.agent_runtime.tools import file_scanner
 
     if not isinstance(params, dict):
         params = {}
@@ -1590,7 +1590,7 @@ def action_kras_form_create_session(params: dict) -> ActionResult:
       project_id  (str|int)   — 미지정 시 KRAS_PROJECT_ID 환경변수 사용
       site_id     (str|int)   — 선택
     """
-    from local_agent.tools import kras_connector
+    from core.agent_runtime.tools import kras_connector
 
     form_type = str(params.get("form_type", "")).strip()
     if not form_type:
@@ -1625,7 +1625,7 @@ def action_kras_form_get_session(params: dict) -> ActionResult:
     params:
       session_id  (str, 필수)
     """
-    from local_agent.tools import kras_connector
+    from core.agent_runtime.tools import kras_connector
 
     session_id = str(params.get("session_id", "")).strip()
     if not session_id:
@@ -1644,7 +1644,7 @@ def action_kras_form_get_session(params: dict) -> ActionResult:
 
 def action_kras_form_list_forms(_params: dict) -> ActionResult:
     """KRAS 사용 가능한 서식 목록 조회."""
-    from local_agent.tools import kras_connector
+    from core.agent_runtime.tools import kras_connector
 
     try:
         forms = kras_connector.list_forms()

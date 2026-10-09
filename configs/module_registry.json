@@ -6769,7 +6769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/tools/file_scanner.py": {
+  "core/agent_runtime/tools/file_scanner.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6817,7 +6817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/tools/kras_connector.py": {
+  "core/agent_runtime/tools/kras_connector.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -24233,7 +24233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/tools/__init__.py": {
+  "core/agent_runtime/tools/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
