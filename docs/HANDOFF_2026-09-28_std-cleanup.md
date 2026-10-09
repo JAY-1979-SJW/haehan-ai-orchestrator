@@ -134,11 +134,11 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
      `scripts/ops/code_map/modules.py:main`(38) · `scripts/ops/repo_gates/codebase_layer_audit.py:classify_path`(35) ·
      `local_agent_redaction.py:_strip_result_data`(32) ·
      `scripts/ops/audits/google/audit_google_automation_baseline_contract.py:audit`(32) ·
-     `scripts/ops/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py:run_audit`(32) ·
-     `scripts/ops/audits/app/audit_site_sso_subdomain_runtime_baseline.py:audit`(33) ·
+     `tools/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py:run_audit`(32) ·
+     `tools/audits/app/audit_site_sso_subdomain_runtime_baseline.py:audit`(33) ·
      `scripts/naver/mail/collection/inbox_collector.py:collect_inbox`(34) ·
      `browser/agent.py:_cli`(30) · `scripts/explorer/site_crawler.py:crawl_site`(31) ·
-     `scripts/ops/audits/backend/audit_backend_operation_final_closeout.py:run_audit`(30).
+     `tools/audits/backend/audit_backend_operation_final_closeout.py:run_audit`(30).
      대부분 CLI `main()`의 긴 if/elif 분기라 구조적으로는 이해되지만, `cdp_client.py`(134)와
      `fullmap.py:extend`(44)는 CLI 분기가 아니라 실질적 복잡도라 우선순위가 높아 보임(미확인 —
      실제 리팩터링은 하지 않음, 다음 세션 후보).

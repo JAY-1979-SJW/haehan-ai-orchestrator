@@ -28,7 +28,7 @@
 - 분배 관련 시험 132개 통과(`tests/test_agent_{parallel_p1,dispatch_policy,dispatch_paths,dispatch_service,dispatch_router,dispatch_races}.py` 등). 영향 시험 1,689개 중 실패 113개는 **기존 실패**(기준 커밋과 동일, 새 실패 0).
 - 실제 Claude Code 종단 시험 통과(동시 2개, 46초, 약 $0.12). 제한 모드에서 Bash·MCP·Write 차단 / Read 정상을 실제로 확인.
 - 독립 리뷰어 3명 적대적 검증 → 치명 1·높음 2 수정 완료. **미수정 잔여는 아래 창 D·E.**
-- 라우트 수 기준값 `EXPECTED_RUNTIME_ROUTES = 380`(`scripts/ops/audits/backend/audit_backend_runtime_contract.py`). 이전 369 는 HEAD 실측 375 보다 6개 뒤처져 있었음.
+- 라우트 수 기준값 `EXPECTED_RUNTIME_ROUTES = 380`(`tools/audits/backend/audit_backend_runtime_contract.py`). 이전 369 는 HEAD 실측 375 보다 6개 뒤처져 있었음.
 
 ### 반드시 기억할 교훈
 1. `--allowedTools` ≠ 제한. 읽기 전용 보장은 `restricted=True`. 프로젝트 설정이 `bypassPermissions` 라서 허용 목록 밖 도구도 실행된다.

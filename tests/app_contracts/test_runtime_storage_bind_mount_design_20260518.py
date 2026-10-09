@@ -8,8 +8,9 @@ ASSISTANT_BACKEND_RUNTIME_STORAGE_BIND_MOUNT_DESIGN_01
 docker-compose.yml 수정 / 컨테이너 재시작 / 서버 반영 전면 금지.
 """
 import importlib.util
-import pytest
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -26,7 +27,7 @@ def _load_module(name, rel_path):
 def audit_mod():
     return _load_module(
         "audit_bind_mount_design",
-        "scripts/ops/audits/backend/audit_runtime_storage_bind_mount_design.py",
+        "tools/audits/backend/audit_runtime_storage_bind_mount_design.py",
     )
 
 

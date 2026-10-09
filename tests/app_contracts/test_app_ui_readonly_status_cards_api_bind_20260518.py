@@ -170,7 +170,7 @@ def test_no_conflict_with_plan():
 
 
 def test_backend_smoke_still_passes():
-    from scripts.ops.audits.app.smoke_app_api_readonly_endpoints import run_smoke
+    from tools.audits.app.smoke_app_api_readonly_endpoints import run_smoke
 
     report = run_smoke()
     assert report.verdict != "APP_API_READONLY_ENDPOINTS_BROWSER_SMOKE_BLOCKED"

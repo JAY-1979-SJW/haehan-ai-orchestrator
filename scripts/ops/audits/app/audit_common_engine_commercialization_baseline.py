@@ -1,103 +1,27 @@
-"""Read-only audit for the common engine commercialization baseline."""
-from __future__ import annotations
+# haehan-shim: tools.audits.app.audit_common_engine_commercialization_baseline
+# 호환 shim: 실제 모듈은 tools.audits.app.audit_common_engine_commercialization_baseline 로 이동했다 (tools/audits/app/audit_common_engine_commercialization_baseline.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/devflow/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-import sys
-from pathlib import Path
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
+    from pathlib import Path as _Path
 
-ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    _root = str(_Path(__file__).resolve().parents[4])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
-BASELINE = ROOT / "docs" / "baseline" / "modules" / "COMMON_ENGINE_COMMERCIALIZATION_BASELINE.md"
-APP_BASELINE = ROOT / "docs" / "baseline" / "APP_BASELINE.md"
-MODULE_BASELINE = ROOT / "docs" / "baseline" / "MODULE_BASELINE.md"
-REVIEW = ROOT / "docs" / "reports" / "commercialization_common_engine_review_20260525.md"
-
-REQUIRED_BASELINE_PHRASES = (
-    "Status: LOCKED",
-    "Baseline ID: HAEHAN-COMMON-ENGINE-COMMERCIALIZATION-BASELINE-01",
-    "The app is the control surface.",
-    "commercial product",
-    "common engine contract",
-    "connection and recovery hardening",
-    "local_agent_connection_recovery",
-    "site/tool-specific module baseline",
-    "app control surface",
-    "app UI first",
-    "stale token detection",
-    "WebSocket reconnect and backoff policy",
-    "task dispatch health check",
-    "normalized task/result contract",
-    "no-final-submit mode",
-    "Approval API failure",
-    "Evidence must not contain raw secrets",
-    "python scripts/ops/quality/module_quality_gate.py --module common_engine_commercialization",
-)
-
-REQUIRED_APP_BASELINE_PHRASES = (
-    "common_engine_commercialization",
-    "docs/baseline/modules/COMMON_ENGINE_COMMERCIALIZATION_BASELINE.md",
-)
-
-REQUIRED_MODULE_BASELINE_PHRASES = (
-    "### common_engine_commercialization",
-    "COMMON_ENGINE_COMMERCIALIZATION_BASELINE.md",
-    "app control surface",
-)
-
-REQUIRED_REVIEW_PHRASES = (
-    "COMMON_ENGINE_COMMERCIALIZATION_BASELINE_01",
-    "The app should be treated as the control surface",
-)
+    _runpy.run_module("tools.audits.app.audit_common_engine_commercialization_baseline", run_name="__main__")
+    raise SystemExit
 
 
-def _read(path: Path) -> str:
-    return path.read_text(encoding="utf-8", errors="replace")
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-def audit() -> tuple[bool, list[str]]:
-    failures: list[str] = []
-    for path in (BASELINE, APP_BASELINE, MODULE_BASELINE, REVIEW):
-        if not path.exists():
-            failures.append(f"{path.relative_to(ROOT)} missing")
-    if failures:
-        return False, failures
-
-    baseline_text = _read(BASELINE)
-    app_text = _read(APP_BASELINE)
-    module_text = _read(MODULE_BASELINE)
-    review_text = _read(REVIEW)
-
-    missing = [phrase for phrase in REQUIRED_BASELINE_PHRASES if phrase not in baseline_text]
-    if missing:
-        failures.append("commercialization baseline missing phrase(s): " + ", ".join(missing))
-
-    missing = [phrase for phrase in REQUIRED_APP_BASELINE_PHRASES if phrase not in app_text]
-    if missing:
-        failures.append("app baseline missing phrase(s): " + ", ".join(missing))
-
-    missing = [phrase for phrase in REQUIRED_MODULE_BASELINE_PHRASES if phrase not in module_text]
-    if missing:
-        failures.append("module baseline missing phrase(s): " + ", ".join(missing))
-
-    missing = [phrase for phrase in REQUIRED_REVIEW_PHRASES if phrase not in review_text]
-    if missing:
-        failures.append("review note missing phrase(s): " + ", ".join(missing))
-
-    return not failures, failures or [
-        "COMMON_ENGINE_COMMERCIALIZATION_BASELINE exists and is locked",
-        "APP_BASELINE references common_engine_commercialization",
-        "MODULE_BASELINE defines common_engine_commercialization",
-        "commercialization review points to the locked baseline work item",
-    ]
-
-
-def main() -> int:
-    from scripts.common.audit_cli import report_findings
-
-    ok, findings = audit()
-    return report_findings(ok, findings, "COMMON_ENGINE_COMMERCIALIZATION_BASELINE")
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+_install(_il.import_module("tools.audits.app.audit_common_engine_commercialization_baseline"), globals(), _sys.modules)

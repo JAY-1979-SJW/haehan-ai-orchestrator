@@ -227,14 +227,14 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tests/test_root_legacy_scripts_audit.py",
         "tools/audits/agent/audit_common_tool_runtime.py",
         "tools/audits/agent/audit_common_tool_runtime_baseline_contract.py",
-        "scripts/ops/audits/app/audit_common_engine_commercialization_baseline.py",
+        "tools/audits/app/audit_common_engine_commercialization_baseline.py",
         "tools/audits/agent/audit_local_agent_connection_recovery_baseline.py",
         "tools/audits/agent/audit_desktop_auth_runtime_baseline_contract.py",
         "tools/audits/agent/audit_local_agent_e2e_flow_contract.py",
         "tools/audits/app/audit_app_baseline_contract.py",
-        "scripts/ops/audits/app/audit_standard_workflow_contract.py",
-        "scripts/ops/audits/app/audit_module_baseline_contract.py",
-        "scripts/ops/audits/backend/audit_backend_core_baseline_contract.py",
+        "tools/audits/app/audit_standard_workflow_contract.py",
+        "tools/audits/app/audit_module_baseline_contract.py",
+        "tools/audits/backend/audit_backend_core_baseline_contract.py",
         "tools/audits/agent/audit_local_agent_e2e_baseline_contract.py",
         "tools/audits/app/audit_approval_flow_baseline_contract.py",
         "tools/audits/agent/audit_playwright_ai_baseline_contract.py",
@@ -281,7 +281,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
 
 def check_module_boundary_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/app/audit_module_boundaries.py"],
+        [PY, "tools/audits/app/audit_module_boundaries.py"],
         timeout=120,
     )
     if not ok:

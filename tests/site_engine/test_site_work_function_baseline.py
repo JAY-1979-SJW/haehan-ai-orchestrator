@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.ops.audits.app.audit_site_work_function_baseline import audit
 from scripts.site_engine.command_router import is_service_cmd
+from tools.audits.app.audit_site_work_function_baseline import audit
 
 
 def test_site_work_function_baseline_audit_passes() -> None:

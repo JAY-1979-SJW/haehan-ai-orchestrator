@@ -272,7 +272,7 @@ Before claiming the AI agent app structure is ready:
 npm run typecheck
 npm run build
 python tools/audits/app/audit_app_structure_contract.py
-python scripts/ops/audits/app/audit_site_work_function_baseline.py
+python tools/audits/app/audit_site_work_function_baseline.py
 python scripts/ops/quality/required_quality_gate.py
 ```
 

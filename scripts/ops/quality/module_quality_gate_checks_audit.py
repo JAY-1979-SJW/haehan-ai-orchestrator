@@ -24,7 +24,7 @@ def check_site_registry_baseline() -> tuple[bool, str]:
 
 def check_site_sso_subdomain_runtime_baseline() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/app/audit_site_sso_subdomain_runtime_baseline.py"],
+        [PY, "tools/audits/app/audit_site_sso_subdomain_runtime_baseline.py"],
         timeout=120,
     )
     if not ok:
@@ -34,7 +34,7 @@ def check_site_sso_subdomain_runtime_baseline() -> tuple[bool, str]:
 
 def check_site_work_function_baseline() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/app/audit_site_work_function_baseline.py"],
+        [PY, "tools/audits/app/audit_site_work_function_baseline.py"],
         timeout=120,
     )
     if not ok:
@@ -154,7 +154,7 @@ def check_common_tool_runtime_baseline_contract() -> tuple[bool, str]:
 
 def check_common_engine_commercialization_baseline() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/app/audit_common_engine_commercialization_baseline.py"],
+        [PY, "tools/audits/app/audit_common_engine_commercialization_baseline.py"],
         timeout=120,
     )
     if not ok:
@@ -194,7 +194,7 @@ def check_app_baseline_contract() -> tuple[bool, str]:
 
 def check_standard_workflow_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/app/audit_standard_workflow_contract.py"],
+        [PY, "tools/audits/app/audit_standard_workflow_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -204,7 +204,7 @@ def check_standard_workflow_contract() -> tuple[bool, str]:
 
 def check_module_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/app/audit_module_baseline_contract.py"],
+        [PY, "tools/audits/app/audit_module_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -214,7 +214,7 @@ def check_module_baseline_contract() -> tuple[bool, str]:
 
 def check_backend_runtime_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/backend/audit_backend_runtime_contract.py"],
+        [PY, "tools/audits/backend/audit_backend_runtime_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -224,7 +224,7 @@ def check_backend_runtime_contract() -> tuple[bool, str]:
 
 def check_backend_core_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/backend/audit_backend_core_baseline_contract.py"],
+        [PY, "tools/audits/backend/audit_backend_core_baseline_contract.py"],
         timeout=120,
     )
     if not ok:

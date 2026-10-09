@@ -109,7 +109,7 @@ def run_audit() -> None:
 
     # backend smoke 여전히 PASS
     try:
-        from scripts.ops.audits.app.smoke_app_api_readonly_endpoints import run_smoke
+        from tools.audits.app.smoke_app_api_readonly_endpoints import run_smoke
 
         report = run_smoke()
         _add(

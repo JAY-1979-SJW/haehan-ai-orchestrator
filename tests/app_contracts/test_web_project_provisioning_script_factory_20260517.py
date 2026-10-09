@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 PROVISIONING_SCRIPT = ROOT / "scripts" / "ops" / "deploy" / "create_web_project_provisioning_plan.py"
-AUDIT_SCRIPT = ROOT / "scripts" / "ops" / "audits" / "backend" / "audit_web_project_provisioning_factory.py"
+AUDIT_SCRIPT = ROOT / "tools" / "audits" / "backend" / "audit_web_project_provisioning_factory.py"
 
 # 스크립트가 한글(em dash 포함)을 print 한다 — Windows 콘솔 기본 코드페이지(cp949)로는
 # 인코딩 못 하는 문자가 있어 UnicodeEncodeError 로 죽는다. 자식 프로세스 stdio를 utf-8로 강제.
@@ -488,7 +488,7 @@ def test_compatible_with_frontdoor_checklist():
 
     spec = importlib.util.spec_from_file_location(
         "audit_autowork_frontdoor_operation",
-        ROOT / "scripts" / "ops" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py",
+        ROOT / "tools" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py",
     )
     fd_mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(fd_mod)

@@ -30,7 +30,7 @@ def _load_module(name, rel_path):
 def audit_mod():
     return _load_module(
         "audit_medium_gate_preflight",
-        "scripts/ops/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py",
+        "tools/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py",
     )
 
 
@@ -468,7 +468,7 @@ def test_60_next_phase_dry_run_implementation(gate_status):
 
 
 def test_61_no_http_import_in_audit_script():
-    content = (REPO_ROOT / "scripts/ops/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py").read_text(
+    content = (REPO_ROOT / "tools/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py").read_text(
         encoding="utf-8", errors="ignore"
     )
     try:

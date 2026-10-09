@@ -1,4 +1,4 @@
-from scripts.ops.audits.backend import audit_legacy_app_runtime_cleanup as audit
+from tools.audits.backend import audit_legacy_app_runtime_cleanup as audit
 
 
 def test_legacy_app_runtime_cleanup_passes_current_tree():

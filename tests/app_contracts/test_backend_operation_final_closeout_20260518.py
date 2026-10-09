@@ -8,8 +8,9 @@ Phase 1 준공 기준선 검증 전용.
 router.py 수정 / docker-compose 수정 / 서버 반영 / 컨테이너 재시작 전면 금지.
 """
 import importlib.util
-import pytest
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -26,7 +27,7 @@ def _load_module(name, rel_path):
 def audit_mod():
     return _load_module(
         "audit_closeout",
-        "scripts/ops/audits/backend/audit_backend_operation_final_closeout.py",
+        "tools/audits/backend/audit_backend_operation_final_closeout.py",
     )
 
 

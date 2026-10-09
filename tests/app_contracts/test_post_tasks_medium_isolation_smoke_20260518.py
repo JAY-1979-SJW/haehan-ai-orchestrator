@@ -32,7 +32,7 @@ def _load_module(name, rel_path):
 def audit_mod():
     return _load_module(
         "audit_isolation_smoke",
-        "scripts/ops/audits/backend/audit_post_tasks_medium_isolation_smoke.py",
+        "tools/audits/backend/audit_post_tasks_medium_isolation_smoke.py",
     )
 
 
@@ -484,7 +484,7 @@ def test_38_next_phase_requires_approval(next_phase):
 
 
 def test_39_no_http_import_in_audit_script():
-    content = (REPO_ROOT / "scripts/ops/audits/backend/audit_post_tasks_medium_isolation_smoke.py").read_text(
+    content = (REPO_ROOT / "tools/audits/backend/audit_post_tasks_medium_isolation_smoke.py").read_text(
         encoding="utf-8", errors="ignore"
     )
     try:

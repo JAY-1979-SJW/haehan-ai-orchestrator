@@ -156,7 +156,7 @@ Baseline and gate work may modify:
 ```text
 docs/baseline/modules/BACKEND_CORE_BASELINE.md
 docs/baseline/MODULE_BASELINE.md
-scripts/ops/audits/backend/audit_backend_core_baseline_contract.py
+tools/audits/backend/audit_backend_core_baseline_contract.py
 scripts/ops/quality/module_quality_gate.py
 scripts/ops/quality/required_quality_gate.py
 tests/test_backend_core_baseline_contract.py
@@ -169,14 +169,14 @@ tests/test_required_quality_gate.py
 Baseline verification:
 
 ```text
-python scripts/ops/audits/backend/audit_backend_core_baseline_contract.py
+python tools/audits/backend/audit_backend_core_baseline_contract.py
 python -m pytest tests/test_backend_core_baseline_contract.py -q
 ```
 
 Runtime/backend verification:
 
 ```text
-python scripts/ops/audits/backend/audit_backend_runtime_contract.py
+python tools/audits/backend/audit_backend_runtime_contract.py
 python scripts/ops/quality/module_quality_gate.py --module backend_core
 python scripts/ops/quality/module_quality_gate.py --module repo_guard
 python scripts/ops/quality/required_quality_gate.py

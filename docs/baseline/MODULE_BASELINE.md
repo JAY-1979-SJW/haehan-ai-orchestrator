@@ -146,7 +146,7 @@ docs/baseline/modules/COMMON_ENGINE_COMMERCIALIZATION_BASELINE.md
 - State changes: none during the baseline audit; runtime task state remains
   owned by backend_core and local_agent_e2e.
 - Required verification:
-  `python scripts/ops/audits/app/audit_common_engine_commercialization_baseline.py`,
+  `python tools/audits/app/audit_common_engine_commercialization_baseline.py`,
   `python -m pytest tests/test_common_engine_commercialization_baseline.py -q`,
   and `python scripts/ops/quality/module_quality_gate.py --module common_engine_commercialization`.
 - Known WARN: Gmail-specific remote execution, reconnect/backoff implementation,

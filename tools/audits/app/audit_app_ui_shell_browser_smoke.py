@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import scripts.ops.audits.app.smoke_app_ui_shell_browser as smoke_mod
+import tools.audits.app.smoke_app_ui_shell_browser as smoke_mod
 
 REPO_ROOT = next(
     p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file()

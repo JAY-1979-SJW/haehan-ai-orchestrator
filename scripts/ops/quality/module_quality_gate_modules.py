@@ -189,7 +189,7 @@ MODULES: tuple[GateModule, ...] = (
                     "ai_orchestrator/server/server_egress_policy.py",
                     "ai_orchestrator/server/execution_location_guard.py",
                     "ai_orchestrator/server/external_url_blocker.py",
-                    "scripts/ops/audits/backend/audit_backend_runtime_contract.py",
+                    "tools/audits/backend/audit_backend_runtime_contract.py",
                 ),
             ),
             GateStep("backend_runtime_contract", check="backend_runtime_contract"),

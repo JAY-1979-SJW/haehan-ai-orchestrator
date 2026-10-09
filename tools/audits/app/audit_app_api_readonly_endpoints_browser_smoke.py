@@ -11,7 +11,7 @@ ROOT = next(
 )  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 sys.path.insert(0, str(ROOT))
 
-SMOKE_SCRIPT = ROOT / "scripts" / "ops" / "audits" / "app" / "smoke_app_api_readonly_endpoints.py"
+SMOKE_SCRIPT = ROOT / "tools" / "audits" / "app" / "smoke_app_api_readonly_endpoints.py"
 ROUTER_FILE = ROOT / "ai_orchestrator" / "routers" / "app_status_router.py"
 COMPOSE_FILE = ROOT / "docker-compose.yml"
 
@@ -32,7 +32,7 @@ def run_audit() -> None:
 
     # 2–6. smoke 실행 및 결과 검증
     try:
-        from scripts.ops.audits.app.smoke_app_api_readonly_endpoints import ENDPOINTS, run_smoke
+        from tools.audits.app.smoke_app_api_readonly_endpoints import ENDPOINTS, run_smoke
 
         report = run_smoke()
 

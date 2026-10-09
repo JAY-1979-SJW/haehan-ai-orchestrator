@@ -303,12 +303,12 @@ def test_facility_notification_center():
 # ── 8. 감사 스크립트 ─────────────────────────────────────────────────────────
 
 def test_audit_script_importable():
-    import scripts.ops.audits.app.audit_domain_room_allocation as m
+    import tools.audits.app.audit_domain_room_allocation as m
     assert hasattr(m, "run_audit")
 
 
 def test_audit_script_runs_and_passes():
-    from scripts.ops.audits.app.audit_domain_room_allocation import run_audit
+    from tools.audits.app.audit_domain_room_allocation import run_audit
     report = run_audit()
     summary = report.summary()
     assert summary["failed"] == 0, f"Room allocation audit 실패: {summary['issues']}"

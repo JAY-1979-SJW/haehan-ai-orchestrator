@@ -28,7 +28,7 @@ def _load_module(name, rel_path):
 def audit_mod():
     return _load_module(
         "audit_dry_run_impl",
-        "scripts/ops/audits/backend/audit_post_tasks_dry_run_flag_implementation.py",
+        "tools/audits/backend/audit_post_tasks_dry_run_flag_implementation.py",
     )
 
 
@@ -420,7 +420,7 @@ def test_28_next_phase_requires_representative_approval(next_phase):
 
 
 def test_29_no_http_import_in_audit_script():
-    content = (REPO_ROOT / "scripts/ops/audits/backend/audit_post_tasks_dry_run_flag_implementation.py").read_text(
+    content = (REPO_ROOT / "tools/audits/backend/audit_post_tasks_dry_run_flag_implementation.py").read_text(
         encoding="utf-8", errors="ignore"
     )
     try:

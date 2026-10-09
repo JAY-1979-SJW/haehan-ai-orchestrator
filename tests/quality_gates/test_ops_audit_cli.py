@@ -74,7 +74,7 @@ _CHECKLIST_RESULT = {
 def test_run_checklist_cli_text_and_backend_premium_main(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    from scripts.ops.audits.backend import audit_backend_premium_policy_layer as premium
+    from tools.audits.backend import audit_backend_premium_policy_layer as premium
 
     monkeypatch.setattr(sys, "argv", ["x"])
     monkeypatch.setattr(premium, "run_audit", lambda: _CHECKLIST_RESULT)
