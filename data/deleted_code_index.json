@@ -1,0 +1,459 @@
+{
+  "entries": [
+    {
+      "path": "ai_orchestrator/external_work_registry.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 3건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "ai_orchestrator/models.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 4건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "ai_orchestrator/persistence/registration_code_store.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 5건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "ai_orchestrator/persistence/user_db.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 4건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "ai_orchestrator/persistence/work_record_store.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 3건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "ai_orchestrator/planner.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 2건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "ai_orchestrator/services/web_task_registry.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 3건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "ai_orchestrator/telegram_notifier.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 4건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "ai_orchestrator/web_task_templates.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 3건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/browser_paths.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 4건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/browser_task_session.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 2건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/critical_logger.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 4건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/gates/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/gates/secret_action_gate.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/gates/work_mode_gate.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/audits/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/audits/agent/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/audits/agent/audit_local_agent_ip_allowlist_policy.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/audits/agent/audit_local_agent_user_field_test.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/audits/agent/audit_local_desktop_agent_connection.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/audits/app/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/audits/backend/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/audits/backend/audit_backend_operation_stabilization.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/audits/backend/audit_backend_premium_integrated_runner.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/audits/backend/audit_legacy_app_runtime_cleanup.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/audits/google/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/code_map/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/code_map/agent_brief.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/code_map/layer_count.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/code_map/ref_seeds.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/code_map/scan.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/deploy/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/deploy/create_web_project_provisioning_plan.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/deploy/deploy_diagnose.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/devflow/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/devflow/merge_step_check.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/devflow/move_preflight.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/hooks/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/hooks/agent_usage.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/hooks/guard_force_cdp.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/hooks/hook_check_a4.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/hooks/session_handoff.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/hooks/worklog_realtime.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/office/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/office/check_excel_live.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/office/create_quote_template.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/pc_inventory.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/pc_inventory_server.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/repo_gates/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/repo_gates/audit_cdp_tab_lifecycle_gate.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/runtime/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/runtime/app_realtime_check.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/runtime/log_watcher.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/runtime/verify_runtime_drift.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/runtime/watch_log.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/selector_health/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/selector_health/sites/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/smoke/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/smoke/agent_dispatch_e2e.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/smoke/smoke_local_desktop_agent_live_connection.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/smoke/smoke_public_local_agent_ws_from_user_ip.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(단순 재전달, 호출처 없음)",
+      "evidence": "__main__ 가드만 있고 schtasks·문서 어디서도 호출처 못 찾음 — 재전달 shim 이라 삭제해도 새 경로로 그대로 동작, 호출처만 있으면 그걸 고치면 됨(이번엔 호출처 자체가 없음)",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/ops/verify/__init__.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 1건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "scripts/security.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 2건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    },
+    {
+      "path": "tools/gates/dev_reg_approval.py",
+      "deleted_at": "2026-10-09T16:50:33",
+      "reason": "삭제 가능(재고 제외)",
+      "evidence": "재고/이력 파일에서만 2건 — 실제 코드/시험 참조 없음",
+      "source_audit": "C:/work/_coordination/backup/shim_audit_v2_20261009.json"
+    }
+  ]
+}
