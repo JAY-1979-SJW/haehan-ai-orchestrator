@@ -300,25 +300,27 @@ _CLICKED_TARGET_ALLOWED_KEYS: frozenset[str] = frozenset(
 )
 
 
-def _strip_capabilities(value: object) -> "dict | None":
-    """capabilities nested allowlist: boolean 값만 저장.
-
-    - dict가 아니면 None 반환
-    - 허용 key(browser_supported/office_supported/cad_supported)만 유지
-    - 각 값이 bool일 때만 저장
-    - bool이 아닌 값은 제거
-    - 빈 dict면 None 반환
-    """
+def _strip_bool_allowlist(value: object, allowed_keys: frozenset[str]) -> "dict | None":
+    """공통 패턴(G12 중복정리, 2026-10-09): dict가 아니면 None, 허용 key만 유지, 값이
+    bool 일 때만 저장(아니면 그 key 는 버림), 결과가 빈 dict면 None. _strip_capabilities·
+    _strip_browser·_strip_cleanup·_strip_lifecycle 4개가 허용 key 목록만 다르고 로직은
+    동일해서(구조동일 중복, dup_gate G12) 공통화했다 — 동작은 그대로, 각 함수는 자기 허용
+    목록으로 이 함수를 부르는 1줄 래퍼."""
     if not isinstance(value, dict):
         return None
     out: dict = {}
     for k, v in value.items():
-        k_low = k.lower()
-        if k_low not in _CAPABILITIES_ALLOWED_KEYS:
+        if k.lower() not in allowed_keys:
             continue
         if isinstance(v, bool):
             out[k] = v
     return out if out else None
+
+
+def _strip_capabilities(value: object) -> "dict | None":
+    """capabilities nested allowlist: boolean 값만 저장(허용 key: browser_supported/
+    office_supported/cad_supported)."""
+    return _strip_bool_allowlist(value, _CAPABILITIES_ALLOWED_KEYS)
 
 
 def _strip_apps(value: object) -> "list | None":
@@ -426,24 +428,9 @@ def _strip_target(value: object) -> "dict | None":
 
 
 def _strip_browser(value: object) -> "dict | None":
-    """browser.open_url_controlled browser nested allowlist.
-
-    - dict가 아니면 None 반환
-    - 허용 key(isolated_context/used_existing_profile/opened/closed)만 유지
-    - 각 값은 bool만 저장
-    - bool이 아닌 값은 제거
-    - 빈 dict면 None 반환
-    """
-    if not isinstance(value, dict):
-        return None
-    out: dict = {}
-    for k, v in value.items():
-        k_low = k.lower()
-        if k_low not in _BROWSER_ALLOWED_KEYS:
-            continue
-        if isinstance(v, bool):
-            out[k] = v
-    return out if out else None
+    """browser.open_url_controlled browser nested allowlist(허용 key: isolated_context/
+    used_existing_profile/opened/closed, boolean 값만 저장)."""
+    return _strip_bool_allowlist(value, _BROWSER_ALLOWED_KEYS)
 
 
 def _strip_click_target(value: object) -> "dict | None":
@@ -524,43 +511,16 @@ def _strip_navigation(value: object) -> "dict | None":
 
 
 def _strip_cleanup(value: object) -> "dict | None":
-    """browser.open_click_close_controlled cleanup nested allowlist.
-
-    - dict가 아니면 None 반환
-    - 허용 key(context_closed/browser_closed/temp_files_deleted)만 유지
-    - 모든 value는 bool만 저장
-    - 빈 dict면 None 반환
-    """
-    if not isinstance(value, dict):
-        return None
-    out: dict = {}
-    for k, v in value.items():
-        k_low = k.lower()
-        if k_low not in _CLEANUP_ALLOWED_KEYS:
-            continue
-        if isinstance(v, bool):
-            out[k] = v
-    return out if out else None
+    """browser.open_click_close_controlled cleanup nested allowlist(허용 key: context_closed/
+    browser_closed/temp_files_deleted, boolean 값만 저장)."""
+    return _strip_bool_allowlist(value, _CLEANUP_ALLOWED_KEYS)
 
 
 def _strip_lifecycle(value: object) -> "dict | None":
     """browser.open_type_close_controlled lifecycle nested allowlist.
 
-    - dict가 아니면 None 반환
-    - 허용 key(opened/typed/closed)만 유지
-    - 모든 value는 bool만 저장
-    - 빈 dict면 None 반환
-    """
-    if not isinstance(value, dict):
-        return None
-    out: dict = {}
-    for k, v in value.items():
-        k_low = k.lower()
-        if k_low not in _LIFECYCLE_ALLOWED_KEYS:
-            continue
-        if isinstance(v, bool):
-            out[k] = v
-    return out if out else None
+    허용 key(opened/typed/closed)만 유지, boolean 값만 저장."""
+    return _strip_bool_allowlist(value, _LIFECYCLE_ALLOWED_KEYS)
 
 
 def _strip_inspection_mode(v: object) -> object | None:

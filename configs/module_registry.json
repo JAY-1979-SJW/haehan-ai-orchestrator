@@ -26104,6 +26104,14 @@
    "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/naver_search/test_naver_search_router_run_endpoints.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_search",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

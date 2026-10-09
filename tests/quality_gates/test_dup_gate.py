@@ -34,12 +34,12 @@ def {name}(x, y):
 @pytest.fixture
 def repo(tmp_path, monkeypatch):
     """dup_gate.py를 격리된 임시 git 저장소에 복사해 실행 — 실제 저장소 상태에 의존하지 않는다."""
-    (tmp_path / "scripts" / "ops" / "repo_gates").mkdir(parents=True)
+    (tmp_path / "tools" / "repo_gates").mkdir(parents=True)
     (tmp_path / "configs").mkdir()
     (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")  # 저장소 루트 표식 — 게이트가 pyproject.toml 이 있는 상위 폴더를 루트로 찾는다
-    tmp_path / "tools" / "repo_gates" / "dup_gate.py".write_bytes(DUP_GATE.read_bytes())
-    tmp_path / "tools" / "repo_gates" / "_dup_structure_hash.py".write_bytes(
-        ROOT / "tools" / "repo_gates" / "_dup_structure_hash.py".read_bytes()
+    (tmp_path / "tools" / "repo_gates" / "dup_gate.py").write_bytes(DUP_GATE.read_bytes())
+    (tmp_path / "tools" / "repo_gates" / "_dup_structure_hash.py").write_bytes(
+        (ROOT / "tools" / "repo_gates" / "_dup_structure_hash.py").read_bytes()
     )
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     subprocess.run(["git", "config", "user.email", "t@t.local"], cwd=tmp_path, check=True)

@@ -109,18 +109,16 @@ def api_search_status(
     return {**status.to_dict(), "duration_ms": duration_ms}
 
 
-@naver_search_router.post("/blog-search/run")
-def api_run_blog_search(
-    query: str,
-    max_pages: int = 1,
-    user: dict = Depends(require_role("admin", "owner")),
-) -> dict:
-    """블로그 검색 즉시 실행 — dry_run=False, DB 적재."""
+def _run_search_job(event: str, job_fn, query: str, max_pages: int, user: dict) -> dict:
+    """공통화(G12 중복정리, 2026-10-09): api_run_blog_search·api_run_shopping_search 가
+    event 이름과 실행 job 함수만 다르고 나머지(실행·로그·응답 모양)는 똑같던 구조동일
+    중복(dup_gate G12) — 동작은 그대로, 각 라우트는 자기 event/job 으로 이 함수를 부르는
+    1줄 래퍼."""
     t0 = time.monotonic()
-    outcome = run_naver_blog_search_job(query=query, max_pages=max_pages)
+    outcome = job_fn(query=query, max_pages=max_pages)
     duration_ms = int((time.monotonic() - t0) * 1000)
     log_event(
-        "NAVER_BLOG_SEARCH_RUN",
+        event,
         task_id="-",
         actor=user["actor"],
         role=user["role"],
@@ -134,6 +132,16 @@ def api_run_blog_search(
         "db_status": outcome.db_status,
         "duration_ms": duration_ms,
     }
+
+
+@naver_search_router.post("/blog-search/run")
+def api_run_blog_search(
+    query: str,
+    max_pages: int = 1,
+    user: dict = Depends(require_role("admin", "owner")),
+) -> dict:
+    """블로그 검색 즉시 실행 — dry_run=False, DB 적재."""
+    return _run_search_job("NAVER_BLOG_SEARCH_RUN", run_naver_blog_search_job, query, max_pages, user)
 
 
 @naver_search_router.post("/shopping-search/run")
@@ -143,24 +151,7 @@ def api_run_shopping_search(
     user: dict = Depends(require_role("admin", "owner")),
 ) -> dict:
     """쇼핑 검색 즉시 실행 — dry_run=False, DB 적재."""
-    t0 = time.monotonic()
-    outcome = run_naver_shopping_search_job(query=query, max_pages=max_pages)
-    duration_ms = int((time.monotonic() - t0) * 1000)
-    log_event(
-        "NAVER_SHOPPING_SEARCH_RUN",
-        task_id="-",
-        actor=user["actor"],
-        role=user["role"],
-        decision=outcome.status,
-        note=f"query={query} inserted={outcome.inserted_count} duration_ms={duration_ms}",
-    )
-    return {
-        "status": outcome.status,
-        "query": query,
-        "collected": outcome.inserted_count,
-        "db_status": outcome.db_status,
-        "duration_ms": duration_ms,
-    }
+    return _run_search_job("NAVER_SHOPPING_SEARCH_RUN", run_naver_shopping_search_job, query, max_pages, user)
 
 
 @naver_search_router.get("/shopping-search/history")
