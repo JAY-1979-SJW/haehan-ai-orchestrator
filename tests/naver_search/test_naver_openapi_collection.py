@@ -6,7 +6,7 @@ import logging
 
 import pytest
 
-from ai_orchestrator.connectors import (
+from ai_orchestrator.connectors.naver_search import (
     naver_public_page_reader,
 )
 from scripts.naver.shopping import naver_blog_collectors
