@@ -8,7 +8,7 @@ import pytest
 from ai_orchestrator.agent_hub.registry import facade as reg
 from ai_orchestrator.auth import registration_codes as rc
 from local_agent.connection import connection_diagnostics as cd
-from scripts.ops import audit_local_desktop_agent_connection as audit
+from scripts.ops.audits.agent import audit_local_desktop_agent_connection as audit
 
 
 @pytest.fixture(autouse=True)
