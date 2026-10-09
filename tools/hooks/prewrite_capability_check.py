@@ -22,7 +22,7 @@ ROOT = next(
 )  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 sys.path.insert(0, str(ROOT))
 
-from scripts.ops.write_gates import duplicate_impl_gate, naver_blog_safety_gate, sitemap_gate  # noqa: E402
+from tools.write_gates import duplicate_impl_gate, naver_blog_safety_gate, sitemap_gate  # noqa: E402
 
 # 등록된 게이트 — 순서대로 실행, 첫 차단 사유가 나오면 즉시 중단
 _GATES = [

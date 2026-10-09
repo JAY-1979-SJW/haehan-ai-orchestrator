@@ -13257,7 +13257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/write_gates/__init__.py": {
+  "tools/write_gates/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13265,7 +13265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/write_gates/duplicate_impl_gate.py": {
+  "tools/write_gates/duplicate_impl_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13273,7 +13273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/write_gates/naver_blog_safety_gate.py": {
+  "tools/write_gates/naver_blog_safety_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_blog",
@@ -13281,7 +13281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/write_gates/sitemap_gate.py": {
+  "tools/write_gates/sitemap_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",

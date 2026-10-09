@@ -1,8 +1,8 @@
-"""scripts/ops/write_gates/naver_blog_safety_gate.py 단위 테스트 (모듈 직접 호출)."""
+"""tools/write_gates/naver_blog_safety_gate.py 단위 테스트 (모듈 직접 호출)."""
 
 from __future__ import annotations
 
-from scripts.ops.write_gates import naver_blog_safety_gate as gate
+from tools.write_gates import naver_blog_safety_gate as gate
 
 
 def test_is_reviewed_blog_path_relative():
