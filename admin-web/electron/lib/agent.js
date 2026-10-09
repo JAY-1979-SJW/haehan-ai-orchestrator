@@ -83,7 +83,7 @@ function startAgent(licenseKey) {
 
 // 2026-09-29 추가: 앱 내 "AI 상담"(run_claude_agent, MCP)이 실제 동작하려면
 // core/agent_runtime/agent.py(--auto-connect, /api/v1/local-agents/ws 대상)가 상시 연결돼
-// 있어야 한다. 이건 위 agentProc(scripts/local_agent.py, 스마트스토어 전용 구
+// 있어야 한다. 이건 위 agentProc(core/agent_runtime/runtime/local_agent.py, 스마트스토어 전용 구
 // 에이전트, /api/v1/smartstore/agent/ws 대상)와는 완전히 별개 프로세스·별개 서버
 // 엔드포인트다 — 사용자가 매번 터미널에서 수동으로 등록·기동해야 했던 걸 자동화한다.
 // --auto-connect: 미등록이면 등록코드 자동 발급+등록(AUTH_ENABLED=False 로컬 개발

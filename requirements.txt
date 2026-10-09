@@ -46,7 +46,7 @@ psycopg2-binary>=2.9.0
 beautifulsoup4>=4.12.0
 python-docx>=1.1.0
 matplotlib>=3.8.0
-mcp>=1.28.0,<2.0.0  # ai_orchestrator/mcp_server.py가 v1 저수준 Server 데코레이터 패턴(@app.list_tools() 등) 사용.
+mcp>=1.28.0,<2.0.0  # ai_orchestrator/server/mcp_server.py가 v1 저수준 Server 데코레이터 패턴(@app.list_tools() 등) 사용.
                     # mcp 2.0(2026-07-28 스펙 대응 전면 재작성)이 이 데코레이터를 constructor on_* 파라미터로
                     # 교체해 호환 안 됨 — 공식 마이그레이션 가이드가 명시한 "mcp>=1,<2" 상한 그대로 적용.
                     # (https://py.sdk.modelcontextprotocol.io/migration/, 2026-09-28 WebFetch 확인)

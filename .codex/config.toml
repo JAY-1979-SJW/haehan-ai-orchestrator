@@ -2,7 +2,7 @@
 command = "python"
 args = [
     "-m",
-    "ai_orchestrator.mcp_server",
+    "ai_orchestrator.server.mcp_server",
 ]
 
 [mcp_servers.pc-inventory]

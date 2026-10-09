@@ -8,11 +8,11 @@ from zoneinfo import ZoneInfoNotFoundError
 
 import pytest
 
-from ai_orchestrator import mcp_server
 from ai_orchestrator.connectors.naver_mail import bulk_policy as pol
-from ai_orchestrator.connectors.naver_mail import draft_policy as draft_policy
-from ai_orchestrator.connectors.naver_mail import bulk_store as store
 from ai_orchestrator.connectors.naver_mail import bulk_service as service
+from ai_orchestrator.connectors.naver_mail import bulk_store as store
+from ai_orchestrator.connectors.naver_mail import draft_policy as draft_policy
+from ai_orchestrator.server import mcp_server
 from ai_orchestrator.services import scheduled_job_actions as actions
 
 

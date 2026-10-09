@@ -83,7 +83,7 @@
 | `ai_orchestrator/agent_hub/registry/task_queue.py` / `local_agent_registry_task_lifecycle.py` | 작업 큐 상태전이(`queued→delivered→running→completed/failed`), 이미 구현·테스트됨 | 그대로 재사용 — 버튼 트리거의 큐로 사용 |
 | **`core/agent_runtime/agent.py` + `local_agent/actions.py`**(드라이런 대비 변경 — 아래 §5.1 참고) | device_token 인증 + 포맬한 액션 레지스트리로 이미 `/api/v1/local-agents/ws`에 접속하는 상시 클라이언트 | **신규 스크립트 대신 이걸 그대로 재사용.** `run_claude_agent` 액션 1개만 추가 |
 | `POST /api/v1/local-agents/{agent_id}/tasks`(기존, 신규 아님 — 드라이런에서는 신규로 오판) | 특정 에이전트에 작업 적재 | 그대로 재사용 — `action: "run_claude_agent"`로 호출 |
-| `ai_orchestrator/mcp_server.py`의 `list_api_endpoints`/`call_api` | 앱 API 전체를 MCP 도구로 범용 노출하는 기존 패턴 | 패턴 재사용 — `snapshot_page`/`act_on_page`/`navigate_page` 3종 추가 |
+| `ai_orchestrator/server/mcp_server.py`의 `list_api_endpoints`/`call_api` | 앱 API 전체를 MCP 도구로 범용 노출하는 기존 패턴 | 패턴 재사용 — `snapshot_page`/`act_on_page`/`navigate_page` 3종 추가 |
 | `gates/approval.py` + `services/web_task_approval_service.py` | 쓰기 작업(발행/발송/삭제 등) 승인 플로우 | 그대로 유지 — 무인 파이프라인이어도 승인 없이 우회 금지 |
 | Playwright(`page.goto`/`page.keyboard`/`page.mouse`/`page.screenshot`) | 이미 사이트 모듈 20개 이상이 쓰는 브라우저 제어 기반 | 그대로 재사용(웹사이트 대상). Electron webview 대상은 §5.4의 raw CDP 어댑터가 같은 인터페이스를 흉내 냄 |
 | `tools/hooks/capability_check.py` | "이 도메인에 기존 구현이 있는가" 확인(CLAUDE.md 필수 절차) | 그대로 재사용 — 기존 사이트 모듈/범용 계층 분기점으로 그대로 씀 |
@@ -112,7 +112,7 @@
           [--allowedTools "mcp__haehan-orchestrator__snapshot_page,..."] -- "<prompt>"]
         │ Claude Code가 MCP 클라이언트로 haehan-orchestrator에 접속
         ▼
-[ai_orchestrator/mcp_server.py]
+[ai_orchestrator/server/mcp_server.py]
         ├─ 기존 도구 / list_api_endpoints / call_api
         └─ snapshot_page / act_on_page / navigate_page (target: "website" | "app")
                 │                                              │
@@ -190,7 +190,7 @@
 - 단위 테스트: `tests/test_local_agent_browser_universal_actions.py`(10개, FakeCDPSession 등으로
   필터링/클릭 좌표 계산/에러 케이스까지 커버).
 
-### 5.3 MCP 신규 도구 3종 (`ai_orchestrator/mcp_server.py`)
+### 5.3 MCP 신규 도구 3종 (`ai_orchestrator/server/mcp_server.py`)
 
 `snapshot_page` / `act_on_page` / `navigate_page` — `list_api_endpoints`/`call_api` 바로 옆에 추가.
 
@@ -319,7 +319,7 @@
      Playwright 인스턴스를 정리 안 해 전용 브라우저 스레드가 영구 오염되는 버그 — 별도 커밋으로
      이미 수정(defect_index #91).
    - **남은 것**: `python -m core.agent_runtime.agent --run`을 사람이 별도로 기동해둬야 하며(Electron이
-     자동 스폰하는 건 별개의 구 스마트스토어 에이전트, `scripts/local_agent.py`), FastAPI 서버가
+     자동 스폰하는 건 별개의 구 스마트스토어 에이전트, `core/agent_runtime/runtime/local_agent.py`), FastAPI 서버가
      재시작되면 인메모리 레지스트리가 초기화돼 재등록(`--register-with-code`)이 필요함 — 상시
      자동 기동·영속화는 다음 세션 후보로 남김(§10에 신규 항목 4로 추가).
 4. ~~로컬 에이전트(`core/agent_runtime/agent.py --run`)를 Electron 앱이 자동 스폰하지 않음~~

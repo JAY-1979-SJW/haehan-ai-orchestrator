@@ -3,7 +3,7 @@
 작성: 2026-09-30 · 관련 이슈: #45 · 상태: 사용자 "다 처리" 지시(2026-09-30)로 진행
 
 ## 1. 문제 (실측)
-`ai_orchestrator/mcp_server.py` 에 도구 호출마다 `sync_playwright()` + `connect_over_cdp("http://127.0.0.1:9222")` 로
+`ai_orchestrator/server/mcp_server.py` 에 도구 호출마다 `sync_playwright()` + `connect_over_cdp("http://127.0.0.1:9222")` 로
 **새 연결을 맺는 지점이 6곳**(`_cdp_collect`, `_open_seller_center`, `_list_cafe_boards`, `_add_cafe_board`,
 `_auto_register_product`, `_edit_product`) 있다. `CLAUDE.md` 가 금지한 패턴이다. 2026-09-30 `list_cafe_boards` 가
 300초 멈췄고(`running_timeout`), 같은 조건에서 브라우저가 오염되면 새 연결의 핸드셰이크(`retrieving websocket`)가
@@ -17,7 +17,7 @@
 ## 3. 변경
 | 파일 | 변경 |
 |---|---|
-| `ai_orchestrator/mcp_server.py` | 공용 헬퍼 `_cdp_context()` 추가(= `_get_universal_page` 와 같은 캐시 사용, context 반환). 6곳의 독자 연결을 이 헬퍼로 교체 |
+| `ai_orchestrator/server/mcp_server.py` | 공용 헬퍼 `_cdp_context()` 추가(= `_get_universal_page` 와 같은 캐시 사용, context 반환). 6곳의 독자 연결을 이 헬퍼로 교체 |
 | `tests/test_mcp_shared_cdp.py` (신규) | 소스 검사로 "도구 함수에 `sync_playwright()`/`connect_over_cdp` 직접 호출이 없다" 고정, 헬퍼 동작은 가짜 playwright 로 검증 |
 
 - 탭 선택: 도구별로 필요한 탭을 명시한다. 셀러센터 이동/수집은 **새 탭**(`context.new_page()`) 을 열어 쓰고 끝나면 닫는다(사용자 탭 미침범).

@@ -8,7 +8,7 @@
     dist/local-agent/local-agent.exe
 
 2026-10-07 복구(W2): 2026-09-23 b13d1216에서 삭제됐다가 전체 복구. 진입점
-scripts/local_agent.py와 hidden_imports의 smartstore 경로는 그대로 유효해
+core/agent_runtime/runtime/local_agent.py와 hidden_imports의 smartstore 경로는 그대로 유효해
 변경 없음(정적 점검으로 확인, 실제 빌드는 CI 첫 실행에서 확인).
 """
 

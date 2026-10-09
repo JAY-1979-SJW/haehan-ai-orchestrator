@@ -13,7 +13,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator import mcp_server
+from ai_orchestrator.server import mcp_server
 from ai_orchestrator.vendor_directory import vendor_directory as vd
 from ai_orchestrator.vendor_directory import vendor_directory_service as service
 from ai_orchestrator.vendor_directory.vendor_directory_router import vendor_directory_router

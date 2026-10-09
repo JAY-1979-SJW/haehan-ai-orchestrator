@@ -1,6 +1,6 @@
 """스마트스토어 이미지 업로드 — GPT 채팅 루프(/chat)는 삭제됨.
 
-AI(자연어 명령→도구 호출)는 이제 Claude Code 가 MCP(`ai_orchestrator/mcp_server.py`,
+AI(자연어 명령→도구 호출)는 이제 Claude Code 가 MCP(`ai_orchestrator/server/mcp_server.py`,
 `list_api_endpoints`/`call_api`)로 앱 API를 직접 호출해 수행한다.
 이 파일은 채팅과 무관한 이미지 업로드 엔드포인트만 유지한다(상세설명 생성 등에서 사용).
 """

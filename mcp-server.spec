@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller spec for haehan-ai MCP server (Claude Desktop 연동용, 경량).
 
-ai_orchestrator/mcp_server.py 는 로컬 FastAPI(127.0.0.1:8401)를 HTTP로 호출하는
+ai_orchestrator/server/mcp_server.py 는 로컬 FastAPI(127.0.0.1:8401)를 HTTP로 호출하는
 얇은 프록시라 haehan-server.spec(전체 백엔드, torch/cv2 등 포함)과 달리 가볍게 빌드된다.
 스마트스토어/카페 CDP 수집(playwright)과 로컬 에이전트 브라우저 연동이 실제 의존성.
 

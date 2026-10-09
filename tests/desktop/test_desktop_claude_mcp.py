@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 import requests
 
-from ai_orchestrator import mcp_server
+from ai_orchestrator.server import mcp_server
 
 ROOT = Path(__file__).resolve().parents[2]
 ELECTRON = ROOT / "admin-web" / "electron"

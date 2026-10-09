@@ -11,7 +11,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator import mcp_server
+from ai_orchestrator.server import mcp_server
 from ai_orchestrator.site_work import site_onboarding_service as svc
 from ai_orchestrator.site_work import site_registry as sr
 from ai_orchestrator.site_work import site_registry_store as reg_store

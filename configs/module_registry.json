@@ -4929,7 +4929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/mcp_server.py": {
+  "ai_orchestrator/server/mcp_server.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -4937,7 +4937,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/mcp_tool_names.py": {
+  "ai_orchestrator/contracts/mcp_tool_names.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -9321,7 +9321,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/local_agent.py": {
+  "core/agent_runtime/runtime/local_agent.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",

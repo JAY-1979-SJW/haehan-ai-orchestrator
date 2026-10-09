@@ -3,7 +3,7 @@
 원칙(아키텍처 경계):
   • 앱 런타임(ai_orchestrator·scripts/naver·community)은 더 이상 유료 AI API를
     호출하지 않는다(``ai_orchestrator.llm.app_llm.APP_LLM_PROVIDER == "none"``).
-  • 판단·글쓰기·에이전트 작업은 Claude Code 가 MCP(``ai_orchestrator/mcp_server.py``)로
+  • 판단·글쓰기·에이전트 작업은 Claude Code 가 MCP(``ai_orchestrator/server/mcp_server.py``)로
     앱에 붙어서 수행한다 — 이 경로는 앱 런타임 프로세스 밖이므로 경계 대상이 아니다.
   • Claude(Anthropic) 직접 호출은 '경계 허용목록'에서만 — provider 명시 opt-in, 레거시 데드모듈.
 

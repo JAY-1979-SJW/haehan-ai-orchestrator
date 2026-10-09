@@ -9,8 +9,8 @@ import importlib.util
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
-_spec = importlib.util.spec_from_file_location("la_mod", _ROOT / "scripts" / "local_agent.py")
-assert _spec is not None and _spec.loader is not None, "모듈 spec 로드 실패: scripts/local_agent.py"
+_spec = importlib.util.spec_from_file_location("la_mod", _ROOT / "core" / "agent_runtime" / "runtime" / "local_agent.py")
+assert _spec is not None and _spec.loader is not None, "모듈 spec 로드 실패: core/agent_runtime/runtime/local_agent.py"
 la = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(la)
 

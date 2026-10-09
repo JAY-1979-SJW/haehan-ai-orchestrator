@@ -9,7 +9,7 @@
 |---|---|---|
 | AI 창 | `components/chat/UniversalChat.tsx` (`domain`, `agentHint`) | 대화 UI. 화면에는 사용자가 쓴 글만 보이고, 에이전트에게는 앞에 `agentHint`(화면별 지침)를 붙여 보낸다 |
 | 에이전트 | `POST /api/v1/ai-agent/run` → 로컬 에이전트가 **`claude -p`(사용자의 Claude)** 를 실행 | 외부 유료 AI API 를 쓰지 않는다(승인 대상 아님). 실행당 예산 상한 `max_budget_usd` |
-| 허용 API | `ai_orchestrator/mcp_server.py` 의 `API_REGISTRY` + MCP `call_api` | 등록된 endpoint 만 호출 가능(허용목록). 하나팩스는 `hanafax.draft`·`hanafax.authorizations` 만 |
+| 허용 API | `ai_orchestrator/server/mcp_server.py` 의 `API_REGISTRY` + MCP `call_api` | 등록된 endpoint 만 호출 가능(허용목록). 하나팩스는 `hanafax.draft`·`hanafax.authorizations` 만 |
 | 승인 카드 | 답변 끝의 `[[fax-approve:<id>]]` → `FaxApprovalCard` | **승인·발송은 사람이 버튼으로만**, AI 는 승인·발송 API 를 쓸 수 없다(테스트가 허용목록을 고정) |
 
 ## 2. 메일에서 하는 일 (AI 창에 이렇게 시킨다)
@@ -52,7 +52,7 @@
 | L2 정책 | `ai_orchestrator/gates/mail_draft_policy.py` | **신규** — 순수 판정: 한도·수신자 수·첨부 경로 안전·상태 전이 허용 여부 |
 | L6 워크플로 | `ai_orchestrator/workflows/naver_mailbox_flow.py` | **수정(추가만)** — 초안 생성/조회/보내기/취소/지침 |
 | L8 API | `ai_orchestrator/routers/naver_mailbox_router.py` | **수정(추가만)** — `/new`, `/drafts`(POST·GET), `/drafts/{id}`(GET), `/drafts/{id}/send`, `/drafts/{id}/cancel`, `/instructions`(GET·PUT) |
-| 허용 API | `ai_orchestrator/mcp_server.py` `API_REGISTRY` | **수정(추가만)** — `mailbox.folders / list / read / new / draft / drafts` 6개 |
+| 허용 API | `ai_orchestrator/server/mcp_server.py` `API_REGISTRY` | **수정(추가만)** — `mailbox.folders / list / read / new / draft / drafts` 6개 |
 | L9 화면 | `admin-web/src/app/mailbox/components/MailAiPanel.tsx`, `MailDraftCard.tsx`, `lib/draftApi.ts` | **신규** |
 | L9 화면 | `admin-web/src/components/chat/UniversalChat.tsx` | **수정(추가만)** — `[[mail-draft:<id>]]` 표시를 카드로 (하나팩스 표시와 나란히) |
 | L9 화면 | `admin-web/src/app/mailbox/components/MailboxApp.tsx` | **수정** — AI 창 토글·열린 메일 컨텍스트·초안 목록 항목 |

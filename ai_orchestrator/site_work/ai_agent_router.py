@@ -17,10 +17,11 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from .. import mcp_tool_names as _tool_names
+from ai_orchestrator.contracts import mcp_tool_names as _tool_names
+from tools.gates.auth import require_role
+
 from ..agent_hub.registry import facade as _reg
 from ..contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
-from tools.gates.auth import require_role
 from ..tasks import chat_sessions as _chat_store
 
 ai_agent_router = APIRouter(prefix="/ai-agent", tags=["ai-agent"])

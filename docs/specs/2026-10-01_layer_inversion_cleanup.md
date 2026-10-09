@@ -15,7 +15,7 @@
    - `DuplicateApprovalError` 를 작은 L1 모듈로 분리하고 원래 모듈에서 재노출(L7 저장소가 L2 검증기를 import 하던 것).
    - `LocalAgent.to_safe(stats=None)`: 모델(L1)이 레지스트리를 import 하던 방향을 뒤집어 레지스트리가 통계를 계산해 넘긴다.
    - blog CLI(L6)가 라우터(L8)에서 가져오던 Unsplash 이미지 헬퍼를 `scripts/naver/blog/unsplash_images.py` 로 이동(라우터는 옛 이름으로 재노출).
-3. **#114: 코드맵 해석기 수정 → 5→3**: `reach.Resolver` 가 `from local_agent import X` 를 루트 `local_agent/` 패키지가 아니라 `scripts/local_agent.py` 로 잘못 해석하던 가짜 간선을 제거. `from X import Y` 에서 Y 가 서브모듈로 존재하는 가장 가까운 위치를 우선. 측정 도구를 바꾸는 일이라 **변경 전후 import_edges 를 비교**해 의도한 변경만 일어났는지 확인했다(제거 13건 = 의도 11 + 서브모듈이 루트 패키지에만 있는 테스트 2).
+3. **#114: 코드맵 해석기 수정 → 5→3**: `reach.Resolver` 가 `from local_agent import X` 를 루트 `local_agent/` 패키지가 아니라 `core/agent_runtime/runtime/local_agent.py` 로 잘못 해석하던 가짜 간선을 제거. `from X import Y` 에서 Y 가 서브모듈로 존재하는 가장 가까운 위치를 우선. 측정 도구를 바꾸는 일이라 **변경 전후 import_edges 를 비교**해 의도한 변경만 일어났는지 확인했다(제거 13건 = 의도 11 + 서브모듈이 루트 패키지에만 있는 테스트 2).
 4. **#113: 사이트 등록표 분리 → 3→0**: `scripts/site_registry.py` 를 코어(L4: `SiteSpec`·조회·등록·지연 로더)로 줄이고, 사이트별 로그인 래퍼·7개 항목은 `scripts/site_registry_sites.py`(L5)로 글자 그대로 이동. 호출처 코드 변경 없음.
 
 ## 3. 시행착오 (재발 방지)

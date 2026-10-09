@@ -72,7 +72,7 @@ AI 허용 API 목록(`mcp_server.API_REGISTRY`)에 예약 작업 조회가 없�
 ### 현상
 구글 허브 화면은 "캘린더: 오늘 일정" 등 읽기 버튼을 보여 주지만, AI 는 "앱에서 읽을 방법이 없다"고 답했다. AI 허용 API 목록(`mcp_server.API_REGISTRY`)에 해당 항목이 없었다. (하나팩스 화면의 "자동 발송 전체 정지" 상태도 같은 불일치였으나 아래 정정 참고.)
 
-### 변경 (`ai_orchestrator/mcp_server.py`)
+### 변경 (`ai_orchestrator/server/mcp_server.py`)
 - 읽기 전용 6개 추가: `google.calendar_today`·`calendar_week`·`drive_recent`·`docs_recent`·`sheets_recent`(OAuth API 기본), `google.youtube_studio_status`.
 - 제외: `google/tools/gcp/status`(사용자 Chrome 에 탭을 여는 CDP 방식), `calendar/create-event`(쓰기).
 - 가드: 구글 5개는 `source` 쿼리 인자를 줄 수 없다(`forbid_query`). `source=cdp` 는 사용자 브라우저를 여는 방식이라 설명으로만 말리지 않고 `_api_call` 이 요청을 보내기 전에 거부한다. 항목 형식은 `dict[str, str]` 을 유지(쉼표 구분 문자열).

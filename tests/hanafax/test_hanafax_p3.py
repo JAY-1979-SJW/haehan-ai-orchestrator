@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import pytest
 
+from ai_orchestrator.connectors.hanafax import authorization_service as service
+from ai_orchestrator.connectors.hanafax import authorization_store as store
 from ai_orchestrator.connectors.hanafax import auto_sender as adapter
 from ai_orchestrator.contracts.action_risk_policy import GRADE_AUTO_ALLOWED, classify_action
-from ai_orchestrator.connectors.hanafax import authorization_store as store
-from ai_orchestrator.connectors.hanafax import authorization_service as service
 from ai_orchestrator.services import scheduled_job_actions as actions
 
 RECIPIENTS = [{"fax": "02-111-2222", "name": "가나다"}, {"fax": "031-333-4444", "name": "라마바"}]
@@ -254,7 +254,7 @@ def test_run_now_runs_in_background_and_reports(doc, sent):
 
 def test_ai_registry_exposes_draft_only_not_approve_or_run():
     """AI(MCP call_api)는 승인 대기 초안만 만들 수 있다 — 승인·발송·정지·수신거부 경로는 허용목록에 없어야 한다."""
-    from ai_orchestrator.mcp_server import API_REGISTRY
+    from ai_orchestrator.server.mcp_server import API_REGISTRY
 
     fax = {k: v for k, v in API_REGISTRY.items() if "/hanafax/" in v["path"]}
     assert set(fax) == {"hanafax.draft", "hanafax.authorizations", "hanafax.address_groups", "hanafax.address_group_sync", "hanafax.address_group_sync_status"}
