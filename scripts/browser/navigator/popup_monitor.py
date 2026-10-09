@@ -34,7 +34,7 @@ from contextlib import closing, suppress
 from typing import Any
 
 from scripts.browser.popup.popup_classifier import Action, Category, Decision, Severity, classify, is_auto_handleable
-from scripts.browser.popup.popup_watcher import POPUP_MARKERS, build_watcher_js
+from scripts.browser.navigator.popup_watcher import POPUP_MARKERS, build_watcher_js
 from scripts.common.app_paths import repo_root
 from scripts.common.logger import get_logger
 

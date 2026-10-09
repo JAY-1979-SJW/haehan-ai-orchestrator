@@ -6,7 +6,6 @@
 
 from pathlib import Path
 
-from scripts.ops import install_git_hooks as ih
 from tools.hooks import install_git_hooks as ih
 from tools.quality import module_quality_gate_checks_repo as checks
 
