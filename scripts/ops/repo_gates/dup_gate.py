@@ -132,8 +132,19 @@ def load_baseline_hashes() -> set[str]:
     return set(data.get("hashes", {}).keys())
 
 
+def _read_files_from(path: str) -> list[str]:
+    """`--files-from PATH`(한 줄에 파일 1개, `-` 면 표준입력) — 명령줄 인자 길이 한도(WinError 206/
+    'Argument list too long')를 넘는 대량 변경 목록을 파일로 넘길 때 쓴다(PR #165, 변경 2567개)."""
+    text = sys.stdin.read() if path == "-" else Path(path).read_text(encoding="utf-8")
+    return [ln.strip() for ln in text.splitlines() if ln.strip()]
+
+
 def _normalize_targets(args: argparse.Namespace) -> list[str]:
-    targets = staged_py_files() if args.staged else args.files
+    files_from = getattr(args, "files_from", None)
+    if files_from:
+        targets = _read_files_from(files_from)
+    else:
+        targets = staged_py_files() if args.staged else args.files
     targets = [PurePosixPath(t.replace("\\", "/")).as_posix() for t in targets]
     return [t for t in targets if not is_exempt(t)]
 
@@ -225,6 +236,7 @@ def main(argv: list[str] | None = None) -> int:
     p_check.add_argument("files", nargs="*")
     p_check.add_argument("--staged", action="store_true")
     p_check.add_argument("--all", action="store_true", help="저장소 전체를 기준선과 비교(CI)")
+    p_check.add_argument("--files-from", help="대상 파일 목록(한 줄에 하나) 경로, '-' 면 표준입력 — 명령줄 인자 한도 회피용")
     p_check.set_defaults(func=cmd_check)
 
     args = ap.parse_args(argv)

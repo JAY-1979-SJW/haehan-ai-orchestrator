@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-DUP_GATE = ROOT / "scripts" / "ops" / "dup_gate.py"
+DUP_GATE = ROOT / "scripts" / "ops" / "repo_gates" / "dup_gate.py"
 
 _COPY_PASTE_FUNC = """
 def {name}(limit):
@@ -96,6 +96,36 @@ def test_new_copy_is_blocked(repo):
 
     _write(repo, "pkg_b/two.py", _UNIQUE_FUNC.format(name="only_copy_dup"))
     result = _run_gate(repo, "check", "pkg_b/two.py")
+    assert result.returncode == 1, result.stdout
+    assert "구조 동일 중복" in result.stdout
+
+
+def test_files_from_reads_target_list_from_file(repo, tmp_path):
+    """PR #165(변경 2567개, 'Argument list too long') 대응 — 명령줄 인자 대신 파일로 대상 목록을 받는다."""
+    _write(repo, "pkg_a/one.py", _UNIQUE_FUNC.format(name="only_copy"))
+    _git_add_all(repo)
+    _run_gate(repo, "build-baseline")  # 기준선엔 중복이 하나도 없음(1곳뿐)
+
+    _write(repo, "pkg_b/two.py", _UNIQUE_FUNC.format(name="only_copy_dup"))
+    list_file = tmp_path / "changed.txt"
+    list_file.write_text("pkg_b/two.py\n", encoding="utf-8")
+
+    result = _run_gate(repo, "check", "--files-from", str(list_file))
+    assert result.returncode == 1, result.stdout
+    assert "구조 동일 중복" in result.stdout
+
+
+def test_files_from_dash_reads_target_list_from_stdin(repo):
+    """`--files-from -` 는 표준입력에서 목록을 읽는다(ci.yml 과 달리 파일 없이도 쓸 수 있는지 확인)."""
+    _write(repo, "pkg_a/one.py", _UNIQUE_FUNC.format(name="only_copy"))
+    _git_add_all(repo)
+    _run_gate(repo, "build-baseline")
+    _write(repo, "pkg_b/two.py", _UNIQUE_FUNC.format(name="only_copy_dup"))
+
+    result = subprocess.run(
+        [sys.executable, "scripts/ops/repo_gates/dup_gate.py", "check", "--files-from", "-"],
+        cwd=repo, input="pkg_b/two.py\n", capture_output=True, text=True, encoding="utf-8",
+    )
     assert result.returncode == 1, result.stdout
     assert "구조 동일 중복" in result.stdout
 

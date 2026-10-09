@@ -268,7 +268,9 @@ jobs:
           fi
           mapfile -t changed < <(git diff --name-only --diff-filter=ACM "$base" HEAD -- '*.py')
           if [ "${#changed[@]}" -gt 0 ]; then
-            python scripts/ops/repo_gates/dup_gate.py check "${changed[@]}"
+            changed_file="$RUNNER_TEMP/g12_changed_py.txt"
+            printf '%s\n' "${changed[@]}" > "$changed_file"
+            python scripts/ops/repo_gates/dup_gate.py check --files-from "$changed_file"
           else
             echo "변경된 .py 없음 — G12 건너뜀"
           fi
