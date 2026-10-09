@@ -28,24 +28,14 @@ _ROOT = repo_root()
 if str(_ROOT) not in _sys.path:
     _sys.path.insert(0, str(_ROOT))
 
-try:
-    from tools.quality.module_quality_gate_exports import *  # noqa: F403
-    from tools.quality.module_quality_gate_exports import (
-        _is_secret_scan_excluded,
-        _run_check_command,
-        _source_contains,
-    )
-    from tools.quality.module_quality_gate_runner import CHECKS, main, print_module_list, run_step
-    from tools.quality.module_quality_gate_modules import MODULES, iter_selected_steps, module_names, selected_modules
-except ImportError:
-    from tools.quality.module_quality_gate_exports import *  # noqa: F403
-    from tools.quality.module_quality_gate_exports import (  # noqa: F401
-        _is_secret_scan_excluded,
-        _run_check_command,
-        _source_contains,
-    )
-    from tools.quality.module_quality_gate_runner import CHECKS, main, print_module_list, run_step  # noqa: F401
-    from tools.quality.module_quality_gate_modules import MODULES, iter_selected_steps, module_names, selected_modules  # noqa: F401
+from tools.quality.module_quality_gate_exports import *  # noqa: F401,F403
+from tools.quality.module_quality_gate_exports import (  # noqa: F401
+    _is_secret_scan_excluded,
+    _run_check_command,
+    _source_contains,
+)
+from tools.quality.module_quality_gate_runner import CHECKS, main, print_module_list, run_step  # noqa: F401
+from tools.quality.module_quality_gate_modules import MODULES, iter_selected_steps, module_names, selected_modules  # noqa: F401
 
 # py alias — tests access gate.py
 py = PY  # noqa: F405
