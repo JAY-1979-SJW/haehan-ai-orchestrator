@@ -11,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))  # 루트 패키지(local_agent 등) 해석용
 from local_agent.connection.network_bypass import direct_child_env, urlopen_for_server
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"

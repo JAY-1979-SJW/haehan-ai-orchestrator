@@ -416,7 +416,7 @@ def test_renamed_file_with_old_and_new_defect_reports_only_new(repo, monkeypatch
 
 
 def test_renamed_file_check_files_batched_drops_old_defect_too(repo, monkeypatch):
-    """check_files(커밋 단계 일괄 실행) 에서도 같은 결과 — _kit_hook_old_path_keys 가 동시 실행된다."""
+    """check_files(커밋 단계 일괄 실행) 에서도 같은 결과 — _kit_hook_against_head 가 old_rel 을 내부에서 처리한다."""
     monkeypatch.setattr(gate, "mypy_python", lambda _kit: None)
     (repo / "old" / "mod.py").write_text("BAD_PATH_MARKER = 1\n", encoding="utf-8")
     _git(repo, "add", "-A")
@@ -430,12 +430,4 @@ def test_renamed_file_check_files_batched_drops_old_defect_too(repo, monkeypatch
     items = [(path, "old/mod.py")]
     batched = gate.check_files(kit, items, repo)
     assert batched == [(path, [], "")]
-    assert not list(repo.rglob("_auditkit_base_*"))  # 비교용 사본은 남기지 않는다
-
-
-def test_kit_hook_old_path_keys_empty_when_old_rel_not_in_head(repo):
-    """옛 경로가 HEAD 에 없으면(예: 조작 실수) 빈 집합 — 비교 기준 없음, 전부 신규 취급(안전한 기본값)."""
-    kit = _content_aware_kit(repo)
-    path = repo / "new_only.py"
-    path.write_text("x = 1\n", encoding="utf-8")
-    assert gate._kit_hook_old_path_keys(kit, path, repo, "never/existed.py") == set()
+    assert not list(repo.rglob("_hook_base_*"))  # 비교용 사본은 남기지 않는다

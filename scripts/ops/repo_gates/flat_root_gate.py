@@ -33,7 +33,7 @@ if str(_BOOT) not in sys.path:
     sys.path.insert(0, str(_BOOT))
 
 from scripts.common.app_paths import repo_root  # noqa: E402
-from scripts.ops.repo_gates.tool_home_gate import staged_added, tracked_files  # noqa: E402
+from scripts.ops.repo_gates.tool_home_gate import _exists_in_ref, staged_added, tracked_files  # noqa: E402
 
 ROOT = repo_root()
 CONFIG = "configs/flat_root_gate.json"
