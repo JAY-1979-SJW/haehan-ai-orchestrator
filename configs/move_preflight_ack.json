@@ -76,7 +76,7 @@
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/smoke/local_agent_public_external_readonly_live_smoke.py",
+   "file": "tools/smoke/local_agent_public_external_readonly_live_smoke.py",
    "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
    "date": "2026-10-07"
   },

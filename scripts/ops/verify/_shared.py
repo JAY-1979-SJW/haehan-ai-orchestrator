@@ -1,6 +1,6 @@
 """라이브 검증 스크립트들이 함께 쓰는 원격 임시 관리자 계정 조작·워커 코드(verify 패키지 안의 잎 모듈).
 
-원래 scripts/ops/smoke/live_approved_browser_instruction_smoke.py 에 있던 것을 옮겼다(동작 변경 없음).
+원래 tools/smoke/live_approved_browser_instruction_smoke.py 에 있던 것을 옮겼다(동작 변경 없음).
 verify 가 ops 를 import 하던 방향을 없애 scripts/verify <-> scripts/ops 순환을 끊는다(ops 가 이 모듈을 import 한다).
 """
 

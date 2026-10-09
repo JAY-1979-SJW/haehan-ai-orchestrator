@@ -9401,7 +9401,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke/run_playwright_smoke.py": {
+  "tools/smoke/run_playwright_smoke.py": {
    "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -9409,7 +9409,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/ops/smoke/run_security_install_discovery.py": {
+  "tools/smoke/run_security_install_discovery.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -9417,7 +9417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke/run_universal_ai_real_site_smoke.py": {
+  "tools/smoke/run_universal_ai_real_site_smoke.py": {
    "layer": "L6",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -11657,7 +11657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke/agent_dispatch_e2e.py": {
+  "tools/smoke/agent_dispatch_e2e.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12849,7 +12849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke/live_approved_browser_instruction_smoke.py": {
+  "tools/smoke/live_approved_browser_instruction_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12865,7 +12865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke/live_parallel_task_dispatch_smoke.py": {
+  "tools/smoke/live_parallel_task_dispatch_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13129,7 +13129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke/smoke_local_desktop_agent_live_connection.py": {
+  "tools/smoke/smoke_local_desktop_agent_live_connection.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13177,7 +13177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke/smoke_public_local_agent_ws_from_user_ip.py": {
+  "tools/smoke/smoke_public_local_agent_ws_from_user_ip.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -22209,7 +22209,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/ops/smoke/local_agent_public_external_readonly_live_smoke.py": {
+  "tools/smoke/local_agent_public_external_readonly_live_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -23609,7 +23609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/smoke/__init__.py": {
+  "tools/smoke/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
