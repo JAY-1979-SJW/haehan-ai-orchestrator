@@ -99,7 +99,7 @@ class TestRealBrowserAuditIntegration:
                 site_id="allowed_internal_mock_form",
                 url="https://internal.mock/form",
                 form_id="contact_form",
-                submit_button_id="submit_button_id",
+                submit_button_id="submit_btn",
                 intent="submit_contact_form",
                 fields=[
                     {"name": "sample_text_field", "value": sample_value},
@@ -179,7 +179,7 @@ class TestRealBrowserAuditIntegration:
                 action_id="browser.submit.controlled_click",
                 site_id="allowed_internal_mock_form",
                 form_id="contact_form",
-                submit_button_id="submit_button_id",
+                submit_button_id="submit_btn",
                 intent="submit_contact_form",
                 policy_verdict=policy_result.verdict,
                 risk_level="high",
@@ -250,7 +250,7 @@ class TestRealBrowserAuditIntegration:
                 action_id="browser.submit.controlled_click",
                 site_id="allowed_internal_mock_form",
                 form_id="contact_form",
-                submit_button_id="submit_button_id",
+                submit_button_id="submit_btn",
                 intent="submit_contact_form",
                 policy_verdict="ALLOW",
                 risk_level="high",
@@ -285,7 +285,7 @@ class TestRealBrowserAuditIntegration:
                 action_id="browser.submit.controlled_click",
                 site_id="allowed_internal_mock_form",
                 form_id="contact_form",
-                submit_button_id="submit_button_id",
+                submit_button_id="submit_btn",
                 intent="submit_contact_form",
                 policy_verdict="ALLOW",
                 risk_level="high",
@@ -334,7 +334,7 @@ class TestRealBrowserAuditIntegration:
                 action_id="browser.submit.controlled_click",
                 site_id="allowed_internal_mock_form",
                 form_id="contact_form",
-                submit_button_id="submit_button_id",
+                submit_button_id="submit_btn",
                 intent="submit_contact_form",
                 policy_verdict="ALLOW",
                 risk_level="high",
@@ -363,7 +363,7 @@ class TestRealBrowserAuditIntegration:
             assert audit_dict["action_id"] == "browser.submit.controlled_click"
             assert audit_dict["site_id"] == "allowed_internal_mock_form"
             assert audit_dict["form_id"] == "contact_form"
-            assert audit_dict["submit_button_id"] == "submit_button_id"
+            assert audit_dict["submit_button_id"] == "submit_btn"
             assert audit_dict["intent"] == "submit_contact_form"
             assert audit_dict["preview_hash"] == "c" * 64
             assert audit_dict["policy_verdict"] == "ALLOW"
@@ -427,7 +427,7 @@ class TestRealBrowserAuditIntegration:
                 action_id="browser.submit.controlled_click",
                 site_id="allowed_internal_mock_form",
                 form_id="contact_form",
-                submit_button_id="submit_button_id",
+                submit_button_id="submit_btn",
                 intent="submit_contact_form",
                 policy_verdict="ALLOW",
                 risk_level="high",
@@ -468,7 +468,7 @@ class TestRealBrowserAuditIntegration:
             action_id="browser.submit.controlled_click",
             site_id="allowed_internal_mock_form",
             form_id="contact_form",
-            submit_button_id="submit_button_id",
+            submit_button_id="submit_btn",
             intent="submit_contact_form",
             policy_verdict="ALLOW",
             risk_level="high",

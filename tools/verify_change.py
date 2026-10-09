@@ -230,10 +230,24 @@ def _same_relative_target(stmt: str, old: str, new: str, base: str, head: str | 
 
 
 def _checkout(ref: str, dest: Path) -> bool:
-    """ref 를 임시 worktree 로 꺼내고 현재의 측정 도구를 넣는다(같은 잣대로 재기 위함)."""
+    """ref 를 임시 worktree 로 꺼내고 현재의 측정 도구를 넣는다(같은 잣대로 재기 위함).
+
+    결함(2026-10-10, PR165 verify FAIL — "기준 트리 측정 예외: map.json 없음" 조사 중 발견):
+    scripts/ops/code_map/* 는 지금 전부 호환 shim(tools.code_map.* 로 재노출)이라 shim만
+    복사해 넣으면 import_module("tools.code_map.build") 가 base tree 에 없는 tools/code_map/
+    을 찾다 실패해 build.py 가 조용히 아무것도 안 하고 끝났다(map.json 이 끝내 안 생김).
+    실제 구현(tools/code_map/)도 같이 넣어야 shim 이 제대로 리다이렉트된다.
+    """
     if run(["git", "worktree", "add", "--detach", str(dest), ref], ROOT).returncode != 0:
         return False
     shutil.copytree(ROOT / "scripts/ops/code_map", dest / "scripts/ops/code_map", dirs_exist_ok=True)
+    shutil.copytree(ROOT / "tools/code_map", dest / "tools/code_map", dirs_exist_ok=True)
+    # tools/code_map/* 전부가 repo_root() 를 scripts.common.app_paths 에서 가져온다 — base tree
+    # 가 그 파일이 생기기 전 커밋이면 이것도 같이 넣어야 한다. ai_orchestrator.paths 는 base
+    # tree 에도 이미 있지만 더 오래된 버전일 수 있어(여기서는 atomic_write_bytes 등이 아직
+    # 없던 버전) 지금 app_paths.py 가 기대하는 API 와 안 맞을 수 있다 — 같이 최신으로 덮는다.
+    shutil.copytree(ROOT / "scripts/common", dest / "scripts/common", dirs_exist_ok=True)
+    shutil.copytree(ROOT / "ai_orchestrator/paths", dest / "ai_orchestrator/paths", dirs_exist_ok=True)
     return True
 
 

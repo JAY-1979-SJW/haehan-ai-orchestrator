@@ -156,9 +156,7 @@ def cmd_start(url: str = "") -> int:
         "--disable-session-crashed-bubble",
         "--hide-crash-restore-bubble",
         "--disable-features=InfoBars,SessionCrashedBubble",
-        *lifecycle.session_args(
-            CDP_BROWSER_POLICY
-        ),  # 이전 세션 복원(로그인 유지) — 옛 탭은 시작 직후 close_stale_tabs 가 정리한다
+        *lifecycle.session_args(CDP_BROWSER_POLICY),  # 이전 세션 복원(로그인 유지) — 옛 탭은 시작 직후 close_stale_tabs 가 정리한다
         "--window-position=100,50",
         "--window-size=1280,900",
     ]

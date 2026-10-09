@@ -172,7 +172,7 @@ class TestRealBrowserControlledClickSmoke:
             site_id="allowed_internal_mock_form",
             url="data:text/html;base64,...",  # Would be fixture data URL in real test
             form_id="contact_form",
-            submit_button_id="submit_button_id",
+            submit_button_id="submit_btn",
             intent="submit_contact_form",
             fields=[
                 {"name": "sample_text_field", "value": "REAL_BROWSER_CONTROLLED_CLICK_202605064"},
@@ -238,7 +238,7 @@ class TestRealBrowserControlledClickSmoke:
             site_id="allowed_internal_mock_form",
             url="https://internal.mock/form",
             form_id="contact_form",
-            submit_button_id="submit_button_id",
+            submit_button_id="submit_btn",
             intent="submit_contact_form",
             fields=[{"name": "email", "value": "smoke@internal.mock"}],
             hidden_fields=[{"name": "csrf_token", "value": "safe"}],
@@ -267,7 +267,7 @@ class TestRealBrowserControlledClickSmoke:
             site_id="allowed_internal_mock_form",
             url="https://internal.mock/form",
             form_id="contact_form",
-            submit_button_id="submit_button_id",
+            submit_button_id="submit_btn",
             intent="submit_contact_form",
             fields=[{"name": "email", "value": "smoke@internal.mock"}],
             hidden_fields=[{"name": "csrf_token", "value": "safe"}],
@@ -416,7 +416,7 @@ class TestRealBrowserControlledClickSmoke:
             site_id="allowed_internal_mock_form",
             url="https://internal.mock/form",
             form_id="contact_form",
-            submit_button_id="submit_button_id",
+            submit_button_id="submit_btn",
             intent="submit_contact_form",
             fields=[
                 {"name": "sample_text_field", "value": "REAL_BROWSER_CONTROLLED_CLICK_202605064"},
@@ -527,7 +527,7 @@ class TestRealBrowserControlledClickSmoke:
                 site_id="allowed_internal_mock_form",
                 url="https://internal.mock/form",
                 form_id="contact_form",
-                submit_button_id="submit_button_id",
+                submit_button_id="submit_btn",
                 intent="submit_contact_form",
                 fields=[
                     {"name": "sample_text_field", "value": "REAL_BROWSER_CONTROLLED_CLICK_202605064"},

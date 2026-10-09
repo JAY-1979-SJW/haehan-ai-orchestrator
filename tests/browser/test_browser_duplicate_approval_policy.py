@@ -276,7 +276,7 @@ class DuplicateApprovalErrorLocationTests(unittest.TestCase):
     def test_stores_do_not_import_the_verifier_module(self) -> None:
         import pathlib
 
-        root = pathlib.Path(__file__).resolve().parents[2] / "local_agent"
+        root = pathlib.Path(__file__).resolve().parents[2] / "core" / "agent_runtime" / "browser" / "approval"
         for name in ("browser_approval_db_store.py", "browser_approval_persistent_store.py"):
             text = (root / name).read_text(encoding="utf-8")
             self.assertNotIn("browser_approval_verifier", text, f"{name} 가 검증기를 import 한다")

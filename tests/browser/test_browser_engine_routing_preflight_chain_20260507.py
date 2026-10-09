@@ -36,7 +36,7 @@ from ai_orchestrator.browser_tool.routing.browser_engine_routing_preflight_chain
 
 FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "browser_engine_routing_preflight_chain_20260507.json"
 MODULE_PATH = (
-    Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "routing" / "browser_engine_routing_preflight_chain.py"
+    Path(__file__).parent.parent.parent / "ai_orchestrator" / "browser_tool" / "routing" / "browser_engine_routing_preflight_chain.py"
 )
 
 

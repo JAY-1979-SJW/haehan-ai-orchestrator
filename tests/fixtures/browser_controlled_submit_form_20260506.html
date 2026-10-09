@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal Controlled Submit Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="email"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        input[type="hidden"] {
+            display: none;
+        }
+        .button-group {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #sample_text_field {
+            color: #333;
+        }
+        #submit_button_id {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #submit_button_id:hover {
+            background-color: #45a049;
+        }
+        .reset-btn {
+            background-color: #999;
+            color: white;
+        }
+        .reset-btn:hover {
+            background-color: #777;
+        }
+        .form-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .form-status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .form-status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Controlled Submit Form</h1>
+        <p style="color: #666; font-size: 14px;">
+            This form is designed for smoke testing controlled internal submit flow.
+            Submit events are handled internally (no external navigation).
+        </p>
+
+        <form id="contact_form" method="POST" action="javascript:void(0);">
+            <div class="form-group">
+                <label for="sample_text_field">Sample Text Field:</label>
+                <input
+                    type="text"
+                    id="sample_text_field"
+                    name="sample_text_field"
+                    placeholder="Enter text (e.g., REAL_BROWSER_CONTROLLED_CLICK_202605064)"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="email_field">Email:</label>
+                <input
+                    type="email"
+                    id="email_field"
+                    name="email"
+                    placeholder="test@internal.mock"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="message_field">Message:</label>
+                <textarea
+                    id="message_field"
+                    name="message"
+                    placeholder="Optional message..."
+                ></textarea>
+            </div>
+
+            <!-- Hidden fields (NOT password/token/secret) -->
+            <input type="hidden" id="csrf_token" name="csrf_token" value="safe_smoke_csrf_token_20260506">
+            <input type="hidden" id="timestamp" name="timestamp" value="">
+            <input type="hidden" id="form_version" name="form_version" value="1.0">
+
+            <div class="button-group">
+                <button type="submit" id="submit_button_id" name="submit_button_id">Submit Form</button>
+                <button type="reset" class="reset-btn">Reset</button>
+            </div>
+        </form>
+
+        <div id="form_status" class="form-status"></div>
+
+        <div id="debug_info" style="margin-top: 30px; padding: 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; display: none;">
+            <h3 style="margin-top: 0;">Debug Info</h3>
+            <p><strong>Form Status:</strong> <span id="debug_status">idle</span></p>
+            <p><strong>Last Submit Time:</strong> <span id="debug_time">-</span></p>
+            <p><strong>Submit Count:</strong> <span id="debug_count">0</span></p>
+            <pre id="debug_payload" style="background-color: #fff; padding: 10px; border-radius: 4px; overflow-x: auto;"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Track form submission internally (no external navigation)
+        let submitCount = 0;
+        const submittedData = [];
+
+        document.getElementById('contact_form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Update timestamp
+            document.getElementById('timestamp').value = new Date().toISOString();
+
+            // Collect form data
+            const formData = new FormData(this);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+
+            // Track submission internally
+            submitCount++;
+            submittedData.push({
+                time: new Date().toISOString(),
+                count: submitCount,
+                data: data
+            });
+
+            // Show success message (internal handling only)
+            const statusDiv = document.getElementById('form_status');
+            statusDiv.className = 'form-status success';
+            statusDiv.textContent = `✓ Form submitted successfully (internal handling). Submission #${submitCount}`;
+
+            // Update debug info
+            document.getElementById('debug_info').style.display = 'block';
+            document.getElementById('debug_status').textContent = 'submitted (internal)';
+            document.getElementById('debug_time').textContent = new Date().toLocaleString();
+            document.getElementById('debug_count').textContent = submitCount;
+            document.getElementById('debug_payload').textContent = JSON.stringify(data, null, 2);
+
+            // Expose for testing
+            window.SMOKE_TEST_FORM_STATE = {
+                submitCount: submitCount,
+                lastSubmitData: data,
+                allSubmissions: submittedData,
+                currentUrl: window.location.href
+            };
+
+            console.log('Internal form submission recorded:', {
+                submitCount: submitCount,
+                data: data,
+                url: window.location.href
+            });
+        });
+
+        // Initialize SMOKE_TEST_FORM_STATE
+        window.SMOKE_TEST_FORM_STATE = {
+            submitCount: 0,
+            lastSubmitData: null,
+            allSubmissions: [],
+            currentUrl: window.location.href
+        };
+
+        // Log form initialization
+        console.log('Controlled submit form initialized for smoke testing');
+    </script>
+</body>
+</html>
