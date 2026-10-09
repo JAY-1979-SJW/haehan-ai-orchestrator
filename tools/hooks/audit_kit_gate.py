@@ -44,7 +44,7 @@ STOP_BUDGET_S = 90
 MAX_SHOWN = 30
 _NOISE = ("import-not-found", "import-untyped")  # audit-kit 가상환경에 프로젝트 의존성이 없어 생기는 잡음
 _EXE_NAMES = ("audit-kit.exe", "audit-kit")
-BATCH_SCRIPT = Path(__file__).resolve().parents[0] / "audit_kit_batch.py"  # scripts/ops/hooks/ 의 한 단계 위
+BATCH_SCRIPT = Path(__file__).resolve().parents[1] / "audit_kit_batch.py"  # tools/hooks/ 의 한 단계 위(tools/) — 이동 후 깊이 보정 누락 버그(2026-10-10, CI verify-static 90분 지연 조사 중 발견: parents[0]은 이 파일 자신의 폴더라 늘 실패해 배치스크립트를 못 찾고 파일별 단독 재시도로 느려짐)
 _MYPY_ARGS = ("--ignore-missing-imports", "--follow-imports=silent", "--no-error-summary", "--no-color-output")
 # `경로:줄:칸: error: 문장` — 경로는 드라이브 콜론(C:)을 포함할 수 있어 가장 짧게 잡고, 줄·칸은 없을 수도 있다
 _MYPY_ERROR_LINE = re.compile(r"^(?P<path>.+?)(?::\d+){0,2}: error: (?P<msg>.*)$")
