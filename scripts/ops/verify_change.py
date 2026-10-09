@@ -342,9 +342,8 @@ def measure(tree: Path, tests: list[str]) -> dict:
     r["violations"] = _measure_violations(tree, m)
     r["skeleton"], r["cycles"] = _measure_skeleton_and_cycles(tree, m, committed)
     _log(f"[{name}] 영향 시험 {len(tests)}개 실행")
-    r["test_failures"], r["test_timeouts"] = _measure_affected_test_results(tree, tests)
-    _log(f"[{name}] 측정 끝 (시험 실패 {len(r['test_failures'])}건, 시간 초과 {len(r['test_timeouts'])}건)")
     r["test_failures"], r["test_timeouts"], r["test_failure_reasons"] = _measure_affected_test_results(tree, tests)
+    _log(f"[{name}] 측정 끝 (시험 실패 {len(r['test_failures'])}건, 시간 초과 {len(r['test_timeouts'])}건)")
     return r
 
 
@@ -698,12 +697,13 @@ def _phase_tests(a: argparse.Namespace) -> int:
         head_tree = trees[1] if a.head else ROOT
         with ThreadPoolExecutor(2) as ex:
             fb, fa = ex.submit(_measure_affected_test_results, trees[0], mine), ex.submit(_measure_affected_test_results, head_tree, mine)
-            (b_fail, b_to), (a_fail, a_to) = fb.result(), fa.result()
+            (b_fail, b_to, b_reasons), (a_fail, a_to, a_reasons) = fb.result(), fa.result()
     finally:
         _cleanup_trees(tmp, trees)
     _log(f"[tests {index}/{count}] 끝: base 실패 {len(b_fail)}·head 실패 {len(a_fail)}")
     out = {"shard": index, "count": count, "tests": mine, "all_tests": all_tests,
-           "before": {"test_failures": b_fail, "test_timeouts": b_to}, "after": {"test_failures": a_fail, "test_timeouts": a_to}}
+           "before": {"test_failures": b_fail, "test_timeouts": b_to, "test_failure_reasons": b_reasons},
+           "after": {"test_failures": a_fail, "test_timeouts": a_to, "test_failure_reasons": a_reasons}}
     if a.json:
         Path(a.json).write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
     return 0
@@ -714,6 +714,7 @@ def _phase_report(a: argparse.Namespace) -> int:
     static = json.loads(Path(a.static_json).read_text(encoding="utf-8"))
     before, after = static["before"], static["after"]
     before["test_failures"], before["test_timeouts"], after["test_failures"], after["test_timeouts"] = [], [], [], []
+    before["test_failure_reasons"], after["test_failure_reasons"] = {}, {}
     seen_shards: set[int] = set()
     count = 0
     for path in a.test_json or []:
@@ -722,8 +723,10 @@ def _phase_report(a: argparse.Namespace) -> int:
         count = part["count"]
         before["test_failures"] += part["before"]["test_failures"]
         before["test_timeouts"] += part["before"]["test_timeouts"]
+        before["test_failure_reasons"].update(part["before"].get("test_failure_reasons", {}))
         after["test_failures"] += part["after"]["test_failures"]
         after["test_timeouts"] += part["after"]["test_timeouts"]
+        after["test_failure_reasons"].update(part["after"].get("test_failure_reasons", {}))
     if static["tests"] and seen_shards != set(range(1, count + 1)):  # 묶음이 하나라도 빠지면 시험이 조용히 건너뛰어진 것 → 실패로 드러낸다
         print(f"[verify] 시험 묶음이 모자란다: 받은 {sorted(seen_shards)} / 기대 1..{count}")
         return 1

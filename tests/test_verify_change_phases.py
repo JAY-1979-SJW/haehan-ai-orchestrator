@@ -107,12 +107,16 @@ def test_report_with_no_affected_tests_needs_no_shards(tmp_path):
 
 
 def test_phase_tests_runs_only_its_shard_on_both_trees(monkeypatch, tmp_path):
+    """_measure_affected_test_results 는 3값(실패·시간초과·사유)을 돌려준다 — 2값으로 풀면
+    ValueError(PR #165 서버 CI 결함, verify_change.py 701행)."""
     all_tests = [f"tests/test_{i}.py" for i in range(6)]
     ran: list[tuple[str, list[str]]] = []
 
     def fake_measure(tree, files):
         ran.append((tree.name, list(files)))
-        return ([f"{files[0]}::fail"] if tree.name == "head" and files else []), []
+        if tree.name == "head" and files:
+            return [f"{files[0]}::fail"], [], {f"{files[0]}::fail": "AssertionError: 기대값 불일치"}
+        return [], [], {}
 
     monkeypatch.setattr(vc, "changed_files", lambda base, head: ["pkg/mod.py"])
     monkeypatch.setattr(vc, "run", lambda cmd, cwd, timeout=0: None)
@@ -128,3 +132,29 @@ def test_phase_tests_runs_only_its_shard_on_both_trees(monkeypatch, tmp_path):
     saved = json.loads(out.read_text(encoding="utf-8"))
     assert saved["shard"] == 2 and saved["count"] == 3 and saved["tests"] == mine
     assert saved["after"]["test_failures"] == [f"{mine[0]}::fail"] and saved["before"]["test_failures"] == []
+    assert saved["after"]["test_failure_reasons"] == {f"{mine[0]}::fail": "AssertionError: 기대값 불일치"}
+    assert saved["before"]["test_failure_reasons"] == {}
+
+
+def test_phase_report_merges_test_failure_reasons_across_shards(tmp_path):
+    """새 시험: _phase_tests 가 shard JSON 에 넣은 test_failure_reasons 를 _phase_report 가 합쳐
+    after_reasons(469행, 사유 표시)로 쓸 수 있게 되는지 — PR #165 수정 확인용."""
+    tests = ["tests/test_a.py", "tests/test_b.py"]
+    shard1 = {
+        "shard": 1, "count": 2, "tests": [],
+        "before": {"test_failures": [], "test_timeouts": [], "test_failure_reasons": {}},
+        "after": {"test_failures": ["tests/test_a.py::x"], "test_timeouts": [],
+                   "test_failure_reasons": {"tests/test_a.py::x": "TypeError: boom"}},
+    }
+    shard2 = {
+        "shard": 2, "count": 2, "tests": [],
+        "before": {"test_failures": [], "test_timeouts": [], "test_failure_reasons": {}},
+        "after": {"test_failures": [], "test_timeouts": [], "test_failure_reasons": {}},
+    }
+    p1, p2 = tmp_path / "s1.json", tmp_path / "s2.json"
+    p1.write_text(json.dumps(shard1), encoding="utf-8")
+    p2.write_text(json.dumps(shard2), encoding="utf-8")
+    out = tmp_path / "result.json"
+    assert vc._phase_report(_args(_static(tmp_path, tests), [p1, p2], out)) == 1  # 새 실패 1건 — FAIL 이 맞다
+    saved = json.loads(out.read_text(encoding="utf-8"))
+    assert saved["after"]["test_failure_reasons"] == {"tests/test_a.py::x": "TypeError: boom"}
