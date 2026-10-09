@@ -14,8 +14,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 _AUTH_IMPORT_RE = re.compile(
-    r"^\s*(?:from\s+ai_orchestrator\.gates\s+import\s+auth(?:\s+as\s+(\w+))?"
-    r"|import\s+ai_orchestrator\.gates\.auth(?:\s+as\s+(\w+))?)",
+    r"^\s*(?:from\s+(?:ai_orchestrator|tools)\.gates\s+import\s+auth(?:\s+as\s+(\w+))?"
+    r"|import\s+(?:ai_orchestrator|tools)\.gates\.auth(?:\s+as\s+(\w+))?)",
     re.MULTILINE,
 )
 _RELOAD_RE = re.compile(r"importlib\.reload\(\s*(\w+)\s*\)")
@@ -26,7 +26,9 @@ _BASELINE = {"ai_orchestrator/tests/test_local_agent.py"}
 
 
 def _bound_names(text: str) -> set[str]:
-    names = {"tools.gates.auth", "auth"}
+    # gates_root_1 이동(3869fe5f) 이후 실제 경로는 tools.gates.auth — ai_orchestrator.gates.auth
+    # 는 더 이상 실체가 없다(2026-10-10, 가드가 새 경로를 못 잡던 결함 수정).
+    names = {"tools.gates.auth", "ai_orchestrator.gates.auth", "auth"}
     for m in _AUTH_IMPORT_RE.finditer(text):
         alias = m.group(1) or m.group(2)
         if alias:
