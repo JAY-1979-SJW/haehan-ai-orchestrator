@@ -12545,7 +12545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/office/check_a4.py": {
+  "tools/office/check_a4.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12553,7 +12553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/office/check_excel_live.py": {
+  "tools/office/check_excel_live.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12697,7 +12697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/office/create_quote_template.py": {
+  "tools/office/create_quote_template.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23561,7 +23561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/office/__init__.py": {
+  "tools/office/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23569,7 +23569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/office/inspect_excel.py": {
+  "tools/office/inspect_excel.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
