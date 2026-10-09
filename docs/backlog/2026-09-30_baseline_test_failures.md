@@ -10,7 +10,7 @@
 | 1 | HEAD 를 임시 폴더에 풀어(`git archive`) 전체 `tests`+`ai_orchestrator/tests` 실행(멈춤 결함 파일 `test_local_agent_installer_package.py` 제외) | 실패 1,128 + 오류 526 = **1,654건** (통과 9,789) |
 | 2 | 1의 실패가 있던 127개 파일만 **실제 작업 트리**에서 재실행 | 실패 349 + 오류 5~6 = **354건** ← 이 문서의 기준선 |
 - 스냅샷에는 `docs/`, `data/`, `admin-web/`이 없어서 "문서 없음"(105), "설계서 없음"(45), `FileNotFoundError` 등 **1,304건이 스냅샷의 산물**로 판명돼 제외했다.
-- **전체 실행에서만 나온 517건**(`ImportError: module ai_orchestrator.gates.auth/approval not in sys.modules`)은 파일 단위 재실행에서는 사라졌다 → 테스트 간 순서 의존 오염으로 추정(§3 P3-1). 원인은 아직 확인하지 않았다.
+- **전체 실행에서만 나온 517건**(`ImportError: module tools.gates.auth/approval not in sys.modules`)은 파일 단위 재실행에서는 사라졌다 → 테스트 간 순서 의존 오염으로 추정(§3 P3-1). 원인은 아직 확인하지 않았다.
 - 실제 트리 재실행에는 이번 세션의 미커밋 변경이 포함돼 있다. 로그인 판정·게이트 관련 새 테스트 46개는 모두 통과했고, 스냅샷과 실제 트리의 차이 7건은 아래로 설명된다: 스냅샷에 `admin-web`이 없어 `HomePage` 검사 2건이 안 보였음, `STORAGE_BOUNDARY` 4건은 스냅샷에서 다른 이유로 먼저 실패했음, 시크릿 스캔 1건은 **이 세션이 만든 스냅샷 캐시가 원인**이었고 캐시를 저장소 밖으로 옮겨 해소함.
 - 한계: 실행 시각 하나의 측정이다. 시간·네트워크·CDP 상태에 따라 달라지는 테스트(`cdp_playwright_smoke` 등)가 섞여 있을 수 있다.
 

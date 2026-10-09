@@ -28,11 +28,11 @@ from pydantic import BaseModel
 
 from ai_orchestrator.audit.audit_logger import log_event
 from ai_orchestrator.marketing.marketing_ops_settings import is_enabled, load_settings, save_settings
-from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.gates.send_approval import require_send_approval
 from ai_orchestrator.paths.runtime import data_dir
 from scripts.common.gate import CONFIRM_TEXTS
 from scripts.common.realtime_audit import emit_event
+from tools.gates.auth import require_role
+from tools.gates.send_approval import require_send_approval
 
 marketing_ops_router = APIRouter(prefix="/naver/marketing-ops", tags=["marketing-ops"])
 
@@ -249,11 +249,11 @@ def publish_blog(
     if not package:
         return {"ok": False, "error": "패키지를 찾을 수 없습니다"}
 
+    from scripts.browser.cdp.connection import get_page, run_on_browser_thread
     from scripts.naver.blog.marketing import TARGET_BLOG_ID
     from scripts.naver.blog.marketing.images import pick_3_images
     from scripts.naver.blog.marketing.publish import existing_unsplash_fallback, record_success
     from scripts.naver.blog.marketing.topics import load_cache
-    from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
     blog = package["blog"]
     all_images = existing_unsplash_fallback()
@@ -346,9 +346,9 @@ def refresh_neighbors(
     user: dict = Depends(require_role("admin", "owner")), _gate: None = Depends(_require_marketing_ops_enabled)
 ) -> dict[str, Any]:
     """CDP로 실제 이웃 목록을 다시 조회해 캐시 갱신 (107명 기준 약 10~20초 소요)."""
+    from scripts.browser.cdp.connection import get_page, run_on_browser_thread
     from scripts.naver.blog.community.neighbor_manager import BlogNeighborManager
     from scripts.naver.blog.marketing import TARGET_BLOG_ID
-    from scripts.browser.cdp.connection import get_page, run_on_browser_thread
 
     def _do() -> dict:
         page = get_page()

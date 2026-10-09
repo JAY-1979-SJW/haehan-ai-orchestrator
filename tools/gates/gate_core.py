@@ -16,7 +16,7 @@ APPROVE 작업을 자동 진행하려면 force=True 전달 또는
 CLAUDE.md 의 "사용자 승인 후 자동 진행" 정책 적용 시 호출자가 판단.
 
 사용법:
-    from ai_orchestrator.gates.gate_core import check, gated, GateBlocked
+    from tools.gates.gate_core import check, gated, GateBlocked
 
     # 수동 체크
     result = check("mail_send", risk="approve", to="vendor@x.com")
@@ -44,8 +44,8 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
-from ai_orchestrator.gates.gate_types import GateResult, GateVerdict, RiskLevel
 from ai_orchestrator.paths.runtime import data_dir
+from tools.gates.gate_types import GateResult, GateVerdict, RiskLevel
 
 # 로거 이름은 "scripts" 계층 아래에 둔다 — 핸들러는 "scripts" 루트 로거에 붙어 있어 기존 로그 출력·파일 기록이 그대로다.
 # (이 모듈은 scripts 를 import 하지 않는다. 이름 계층만 쓴다.)

@@ -71,7 +71,7 @@ def setup(tmp_path_factory):
     import ai_orchestrator.core.config as _config
 
     importlib.reload(_config)
-    import ai_orchestrator.gates.approval as _ap
+    import tools.gates.approval as _ap
 
     importlib.reload(_ap)
     _ap.clear_rate_store()

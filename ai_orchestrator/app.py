@@ -7,7 +7,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 
 from ai_orchestrator.audit.audit_logger import log_event, read_recent_logs  # noqa: E402, I001 — sys.stdout 재설정 뒤 import
 from ai_orchestrator.tasks.executor import execute  # noqa: E402 — sys.stdout 재설정 뒤 import
-from ai_orchestrator.gates.approval import (  # noqa: E402 — sys.stdout 재설정 뒤 import
+from tools.gates.approval import (  # noqa: E402 — sys.stdout 재설정 뒤 import
     approve_token,
     issue_token,
     validate_token,

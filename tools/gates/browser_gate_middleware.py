@@ -5,7 +5,7 @@ action_gate.classify_action()과 동일한 정책을 서버 레벨에서 검사�
 
 사용법
 ======
-    from ai_orchestrator.gates.browser_gate_middleware import BrowserGateMiddleware
+    from tools.gates.browser_gate_middleware import BrowserGateMiddleware
     app.add_middleware(BrowserGateMiddleware)
 
 동작 방식

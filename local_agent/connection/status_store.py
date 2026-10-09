@@ -21,7 +21,7 @@ _STATUS_DIR = repo_root() / "data" / "local_agent"
 _STATUS_FILE = _STATUS_DIR / "status.json"
 _LOCK_FILE = _STATUS_DIR / "agent.lock"
 
-# ai_orchestrator/gates/gate_core.py의 _opt_out_guard()와 같은 원자적 잠금 처리(T4 C2).
+# tools/gates/gate_core.py의 _opt_out_guard()와 같은 원자적 잠금 처리(T4 C2).
 _IS_WINDOWS = os.name == "nt"
 
 # 기록 금지 키 목록
@@ -105,7 +105,7 @@ def acquire_lock(task_id: str) -> bool:
 
     기존에는 exists() 확인 후 write_text()로 거는 check-then-set이라 두 프로세스가
     동시에 호출하면 둘 다 성공할 수 있었다(T4 R10) — os.open(O_CREAT|O_EXCL)로
-    원자적으로 바꾼다(ai_orchestrator/gates/gate_core.py의 _opt_out_guard()와 같은
+    원자적으로 바꾼다(tools/gates/gate_core.py의 _opt_out_guard()와 같은
     패턴). 재시도는 하지 않는다 — 기존처럼 한 번 시도해 실패하면 바로 False(동작 범위
     확장 안 함).
     """
@@ -117,7 +117,7 @@ def acquire_lock(task_id: str) -> bool:
     except PermissionError:
         # Windows: 다른 프로세스가 방금 unlink 한 잠금 파일은 '삭제 보류' 상태라 같은
         # 이름의 생성이 FileExistsError 가 아니라 PermissionError 로 실패한다 — 잠금 중과
-        # 같은 뜻으로 처리(ai_orchestrator/gates/gate_core.py와 동일 처리).
+        # 같은 뜻으로 처리(tools/gates/gate_core.py와 동일 처리).
         if _IS_WINDOWS:
             return False
         raise

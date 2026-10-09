@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 def _isolated_storage(tmp_path, monkeypatch):
     import importlib
 
-    import ai_orchestrator.gates.auth as _auth
+    import tools.gates.auth as _auth
 
     importlib.reload(_auth)
     # local_agent_router 분리 후: 서브라우터 leaf 들도 reload 해야 갱신된 auth 를
@@ -54,7 +54,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     import ai_orchestrator.agent_hub.registry.common as _reg_common
     import ai_orchestrator.agent_hub.registry.facade as _reg
     import ai_orchestrator.audit.audit_logger as _al
-    import ai_orchestrator.gates.approval as _ap
+    import tools.gates.approval as _ap
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
@@ -88,7 +88,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.agent_hub.router.root import local_agent_router
-    from ai_orchestrator.gates.auth import get_current_user
+    from tools.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")

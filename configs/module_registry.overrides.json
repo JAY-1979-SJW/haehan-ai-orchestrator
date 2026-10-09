@@ -60,7 +60,7 @@
   "role": "policy",
   "reason": "provider 등록/조회 레지스트리 — auth_policy_registry(L2)와 동급 정책 레지스트리, L4 오분류"
  },
- "ai_orchestrator/gates/__init__.py": {
+ "tools/gates/__init__.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "gates 패키지(정책·승인·인증 게이트)",
@@ -932,7 +932,7 @@
   "reason": "지도 구조 요약·지문·map_rev·diff·버전 고정 확인 규칙(순수 함수, 입출력 없음) — generic L4 오분류",
   "source": "manual"
  },
- "ai_orchestrator/gates/gate_types.py": {
+ "tools/gates/gate_types.py": {
   "layer": "L1",
   "role": "shared",
   "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/common/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",

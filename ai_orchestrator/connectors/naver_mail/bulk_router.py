@@ -26,8 +26,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi import Path as PathParam
 from pydantic import BaseModel, Field
 
-from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.connectors.naver_mail import bulk_service as service
+from tools.gates.auth import require_role
 
 naver_mail_bulk_router = APIRouter(prefix="/mail-bulk", tags=["mail-bulk"])
 _ADMIN = Depends(require_role("admin", "owner"))

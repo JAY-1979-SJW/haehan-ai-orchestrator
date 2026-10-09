@@ -218,7 +218,7 @@ def _py_refs(rel: str, text: str, t: _Target) -> list[dict]:  # noqa: C901, PLR0
         full_path = bool(t.path_re.search(v)) and (" " not in v.strip() or "/" in v or "\\" in v)
         # 디렉터리가 있는 문자열(v 에 "/"·"\\" 포함)은 그 디렉터리가 이 대상의 바로 위 폴더
         # (parent_dir)와 실제로 일치할 때만 "같은 파일"로 본다 — 파일명만 같고 폴더가 다르면
-        # (예: ai_orchestrator/browser_tool/policy.py ≠ ai_orchestrator/gates/policy.py) 이 대상의
+        # (예: ai_orchestrator/browser_tool/policy.py ≠ tools/gates/policy.py) 이 대상의
         # 참조가 아니다(대표님 지시: maps 전체경로 판정과 동일 원칙).
         has_dir_in_string = "/" in v or "\\" in v
         seg_match = v.endswith(f"/{t.parent_dir}/{t.stem}.py") or v.endswith(f"\\{t.parent_dir}\\{t.stem}.py")

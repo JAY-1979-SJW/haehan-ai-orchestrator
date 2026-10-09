@@ -52,7 +52,7 @@ class TestAuthOrganizationIdGap:
         """현재 auth는 {actor, role}만 반환 (organization_ids 없음)"""
         # Skip if import fails (env issue)
         try:
-            from ai_orchestrator.gates.auth import _DUMMY_USER
+            from tools.gates.auth import _DUMMY_USER
 
             # 현재 구조 확인
             assert "actor" in _DUMMY_USER
@@ -408,7 +408,7 @@ class TestGapDocumentation:
         """G1: User model에 user_id 필수"""
         # 현재 auth.py의 _DUMMY_USER는 actor만 가짐
         try:
-            from ai_orchestrator.gates.auth import _DUMMY_USER
+            from tools.gates.auth import _DUMMY_USER
 
             # Gap: user_id 없음
             assert "user_id" not in _DUMMY_USER, "Gap G1 documented: User model needs user_id field"

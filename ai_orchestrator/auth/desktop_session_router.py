@@ -18,14 +18,14 @@ import secrets
 from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel, field_validator
 
+from ai_orchestrator.auth import auth_audit, user_db
 from ai_orchestrator.auth.user_auth_router import (
     AuthResponse,
     UserResponse,
     _make_token,
 )
 from ai_orchestrator.contracts.display_name import validate_display_name
-from ai_orchestrator.gates.auth import desktop_owner_bootstrap_allowed
-from ai_orchestrator.auth import auth_audit, user_db
+from tools.gates.auth import desktop_owner_bootstrap_allowed
 
 desktop_session_router = APIRouter(prefix="/auth", tags=["desktop-session"])
 

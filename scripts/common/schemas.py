@@ -13,7 +13,7 @@ from enum import Enum
 from typing import Any, TypedDict
 
 # 게이트 결과 타입은 scripts 에 의존하지 않는 말단 모듈로 옮겼다(R2d-2 §4). 기존 import 경로는 재수출로 유지.
-from ai_orchestrator.gates.gate_types import GateResult, GateVerdict, RiskLevel  # noqa: F401
+from tools.gates.gate_types import GateResult, GateVerdict, RiskLevel  # noqa: F401
 
 # ── 공통 상수 ─────────────────────────────────────────────────────────
 

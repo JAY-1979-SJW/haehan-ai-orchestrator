@@ -152,9 +152,9 @@ def router_mod():
     mock_names = [
         "ai_orchestrator.llm.planner",
         "ai_orchestrator.tasks.executor",
-        "ai_orchestrator.gates.approval",
+        "tools.gates.approval",
         "ai_orchestrator.audit.audit_logger",
-        "ai_orchestrator.gates.auth",
+        "tools.gates.auth",
         "ai_orchestrator.notify.telegram_webhook",
         "ai_orchestrator.tasks.inbox",
         "ai_orchestrator.connectors.google.gmail_reader",
@@ -174,9 +174,9 @@ def router_mod():
     mocks = {
         "ai_orchestrator.llm.planner": MagicMock(),
         "ai_orchestrator.tasks.executor": MagicMock(),
-        "ai_orchestrator.gates.approval": MagicMock(),
+        "tools.gates.approval": MagicMock(),
         "ai_orchestrator.audit.audit_logger": MagicMock(),
-        "ai_orchestrator.gates.auth": MagicMock(),
+        "tools.gates.auth": MagicMock(),
         "ai_orchestrator.notify.telegram_webhook": MagicMock(),
         "ai_orchestrator.tasks.inbox": MagicMock(),
         "ai_orchestrator.connectors.google.gmail_reader": MagicMock(),

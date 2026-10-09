@@ -26,7 +26,7 @@ import sys
 from datetime import UTC, datetime, timedelta
 
 from ai_orchestrator.dev_reg import dev_reg_approval, dev_reg_audit_log
-from ai_orchestrator.gates.approval import revoke_token
+from tools.gates.approval import revoke_token
 
 # 출력에서 제거할 필드
 _BLOCKED_FIELDS = frozenset({"approval_token_hash", "screenshot_path", "token_id"})

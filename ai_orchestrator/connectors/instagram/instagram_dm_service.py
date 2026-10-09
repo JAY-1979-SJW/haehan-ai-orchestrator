@@ -14,11 +14,11 @@ import logging
 import os
 from typing import Any, Protocol
 
-from ai_orchestrator.gates.gate_core import is_opted_out
 from ai_orchestrator.connectors.instagram import instagram_dm_db as db
 from ai_orchestrator.connectors.instagram import instagram_dm_rule_engine as rule_engine
 from ai_orchestrator.connectors.instagram import instagram_dm_token_store as token_store
 from ai_orchestrator.connectors.instagram.instagram_graph_client import send_private_reply
+from tools.gates.gate_core import is_opted_out
 
 logger = logging.getLogger(__name__)
 

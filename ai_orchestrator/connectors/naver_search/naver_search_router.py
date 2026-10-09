@@ -12,12 +12,11 @@ import time
 
 from fastapi import APIRouter, Depends
 
-from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.paths import repo_root
-
 from ai_orchestrator.audit.audit_logger import log_event
+from ai_orchestrator.paths import repo_root
 from scripts.naver.shopping import naver_search_queries as q
 from scripts.naver.shopping.naver_search_jobs import run_naver_blog_search_job, run_naver_shopping_search_job
+from tools.gates.auth import require_role
 
 logger = logging.getLogger(__name__)
 

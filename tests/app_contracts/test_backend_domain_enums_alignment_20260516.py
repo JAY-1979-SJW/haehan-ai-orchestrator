@@ -171,7 +171,7 @@ def test_execution_location_guard_import():
 
 
 def test_approval_import():
-    from ai_orchestrator.gates.approval import issue_token
+    from tools.gates.approval import issue_token
 
     assert callable(issue_token)
 

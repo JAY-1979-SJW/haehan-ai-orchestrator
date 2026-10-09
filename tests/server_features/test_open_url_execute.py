@@ -47,7 +47,7 @@ def _make_test_client(user: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.agent_hub.router.root import local_agent_router
-    from ai_orchestrator.gates.auth import get_current_user
+    from tools.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -324,7 +324,7 @@ def test_open_url_execute_mark_approved_queued_and_pending():
 
 def test_open_url_execute_attach_and_validate_token():
     import ai_orchestrator.agent_hub.registry.facade as reg
-    from ai_orchestrator.gates.approval import approve_token, issue_token_for_dev_reg, validate_token
+    from tools.gates.approval import approve_token, issue_token_for_dev_reg, validate_token
 
     result = reg.register_agent(
         host="pc-test3",

@@ -9,7 +9,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import get_current_user
+from tools.gates.auth import get_current_user
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 

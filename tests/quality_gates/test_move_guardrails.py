@@ -90,7 +90,7 @@ def test_adjacent_filename_is_not_a_reference(repo):
 
 
 def test_full_path_string_to_a_different_same_name_file_is_not_a_reference(repo):
-    """2026-10-08 실제 회귀: ai_orchestrator/gates/policy.py 를 이동할 때 preflight 가
+    """2026-10-08 실제 회귀: tools/gates/policy.py 를 이동할 때 preflight 가
     ai_orchestrator/browser_tool/policy.py(완전히 다른 파일, 그냥 이름만 같음)를 가리키는
     전체 경로 문자열을 이동 대상 참조로 잘못 판정해 막았다. 문자열이 가리키는 폴더가 이동
     대상의 실제 부모 폴더와 다르면 참조가 아니어야 한다."""

@@ -29,7 +29,7 @@ hidden_imports = [
     "ai_orchestrator",
     "ai_orchestrator.server",
     "ai_orchestrator.routers.registry",
-    "ai_orchestrator.gates.auth",
+    "tools.gates.auth",
     "ai_orchestrator.auth.user_db",
     "ai_orchestrator.agent_hub.registry.facade",
     "ai_orchestrator.agent_hub.registry.common",

@@ -25,11 +25,11 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
-from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.server.action_task_api import (
     api_prepare_action,
     api_receive_evidence,
 )
+from tools.gates.auth import require_role
 
 logger = logging.getLogger(__name__)
 

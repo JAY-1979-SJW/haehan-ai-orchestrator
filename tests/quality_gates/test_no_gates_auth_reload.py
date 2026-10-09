@@ -1,4 +1,4 @@
-"""시험 코드가 `importlib.reload(ai_orchestrator.gates.auth)` 를 쓰지 않는지 고정한다.
+"""시험 코드가 `importlib.reload(tools.gates.auth)` 를 쓰지 않는지 고정한다.
 
 이유는 `tests/conftest.py` 의 `apply_basic_auth_users` 문서 참고 — reload 가 `get_current_user` 를
 새 객체로 만들어 이미 import 된 라우터의 `dependency_overrides` 를 무력화하고, `register_bearer_resolver`
@@ -26,7 +26,7 @@ _BASELINE = {"ai_orchestrator/tests/test_local_agent.py"}
 
 
 def _bound_names(text: str) -> set[str]:
-    names = {"ai_orchestrator.gates.auth", "auth"}
+    names = {"tools.gates.auth", "auth"}
     for m in _AUTH_IMPORT_RE.finditer(text):
         alias = m.group(1) or m.group(2)
         if alias:
@@ -50,7 +50,7 @@ def test_no_reload_of_gates_auth_module():
             if m.group(1) in bound:
                 bad.append(f"{rel}: importlib.reload({m.group(1)})")
     assert not bad, (
-        "시험 코드에 새로 생긴 importlib.reload(ai_orchestrator.gates.auth) 가 있으면 안 됩니다"
+        "시험 코드에 새로 생긴 importlib.reload(tools.gates.auth) 가 있으면 안 됩니다"
         "(tests/conftest.py 의 apply_basic_auth_users 를 쓰세요, 기존 부채는 _BASELINE 에 고정):\n" + "\n".join(bad)
     )
 

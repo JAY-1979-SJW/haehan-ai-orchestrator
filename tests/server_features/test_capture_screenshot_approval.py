@@ -33,7 +33,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     import ai_orchestrator.agent_hub.registry.common as _reg_common
     import ai_orchestrator.agent_hub.registry.facade as _reg
     import ai_orchestrator.audit.audit_logger as _al
-    import ai_orchestrator.gates.approval as _ap
+    import tools.gates.approval as _ap
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
@@ -93,7 +93,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.agent_hub.router.root import local_agent_router
-    from ai_orchestrator.gates.auth import get_current_user
+    from tools.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -423,7 +423,7 @@ def test_double_approve_is_idempotent(admin_user):
 
 
 def test_expired_token_rejects_task(admin_user, monkeypatch):
-    import ai_orchestrator.gates.approval as _ap
+    import tools.gates.approval as _ap
 
     client = _make_test_client(admin_user)
     agent_id, _ = _register(client)

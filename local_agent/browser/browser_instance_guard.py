@@ -401,7 +401,7 @@ def try_acquire_lock(paths: GuardPaths, owner_pid: int) -> bool:
     끼어들 수 있는 check-then-act 레이스가 있었다. 이 함수는 "죽은 잠금이면 치우고,
     O_CREAT|O_EXCL 로 새 잠금 파일을 원자적으로 만드는 데 성공한 경우에만 True"를
     돌려줘, 성공한 호출자만 Chrome을 띄우는 흐름으로 쓸 수 있게 한다
-    (ai_orchestrator/gates/gate_core.py의 _opt_out_guard()와 같은 원자적 생성 패턴).
+    (tools/gates/gate_core.py의 _opt_out_guard()와 같은 원자적 생성 패턴).
     기존 write_lock_file()/is_lock_active() 는 하위 호환을 위해 그대로 둔다.
     """
     if is_lock_active(paths):

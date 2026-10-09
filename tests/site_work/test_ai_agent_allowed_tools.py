@@ -46,8 +46,8 @@ def test_run_endpoint_passes_result_max_chars_to_queued_task(monkeypatch):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.site_work import ai_agent_router as router
+    from tools.gates.auth import get_current_user
 
     queued: list[dict] = []
     fake_reg = SimpleNamespace(

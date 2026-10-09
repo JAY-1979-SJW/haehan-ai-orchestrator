@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from ai_orchestrator.core import telegram_sender as _ts
 from ai_orchestrator.dev_reg import dev_reg_approval as _dra
 from ai_orchestrator.dev_reg.dev_reg_telegram import build_dev_reg_message
-from ai_orchestrator.gates.approval import issue_token_for_dev_reg
+from tools.gates.approval import issue_token_for_dev_reg
 
 logger = logging.getLogger(__name__)
 

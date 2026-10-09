@@ -3577,7 +3577,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/gates/__init__.py": {
+  "tools/gates/__init__.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -3585,7 +3585,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "ai_orchestrator/gates/approval.py": {
+  "tools/gates/approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -3593,7 +3593,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gates/auth.py": {
+  "tools/gates/auth.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -3601,7 +3601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gates/browser_gate_middleware.py": {
+  "tools/gates/browser_gate_middleware.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "browser",
@@ -3609,7 +3609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gates/policy.py": {
+  "tools/gates/policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -3617,7 +3617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gates/risk_classifier.py": {
+  "tools/gates/risk_classifier.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -19225,7 +19225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gates/send_approval.py": {
+  "tools/gates/send_approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -19265,7 +19265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gates/gate_core.py": {
+  "tools/gates/gate_core.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",
@@ -19273,7 +19273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "ai_orchestrator/gates/gate_types.py": {
+  "tools/gates/gate_types.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "common",
@@ -22657,7 +22657,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/gates/dev_reg_approval.py": {
+  "tools/gates/dev_reg_approval.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "common",

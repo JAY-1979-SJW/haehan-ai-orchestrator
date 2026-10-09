@@ -54,7 +54,7 @@ CALL_CHAIN = [
     {
         "step": 4,
         "call": "issue_token(req, risk) — ep.requires_approval and ep.allowed 조건 시",
-        "file": "ai_orchestrator/gates/approval.py",
+        "file": "tools/gates/approval.py",
         "line_approx": 149,
         "side_effects": [
             "approval_tokens.jsonl 신규 항목 append (파일 write)",
@@ -282,7 +282,7 @@ def _check_key_files() -> tuple[list, list]:
     required = [
         "ai_orchestrator/routers/registry.py",
         "ai_orchestrator/tasks/executor.py",
-        "ai_orchestrator/gates/approval.py",
+        "tools/gates/approval.py",
         "ai_orchestrator/llm/planner.py",
         "ai_orchestrator/core/execution_limits.py",
         # backend/compat/legacy_5050: faf799bd(2026-09-23 타앱 연결 2차 삭제)에서 이동 없이 삭제됨 -> 필수 목록에서 제외

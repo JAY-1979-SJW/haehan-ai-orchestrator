@@ -18,9 +18,9 @@ import sys
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.gates.send_approval import require_send_approval
 from ai_orchestrator.paths import repo_root
+from tools.gates.auth import require_role
+from tools.gates.send_approval import require_send_approval
 
 from ..session_status_router import session_status_router  # noqa: F401 (side-effect import for type hints)
 
@@ -187,7 +187,7 @@ def send_fax(body: SendRequest, _: dict = Depends(require_role("admin", "owner")
         raise HTTPException(status_code=400, detail="팩스 발송은 confirmed=true 승인이 필요합니다")
     from ai_orchestrator.connectors.hanafax import authorization_store as fax_store
     from ai_orchestrator.connectors.hanafax.send_policy import parse_number
-    from ai_orchestrator.gates.gate_core import CONFIRM_TEXTS
+    from tools.gates.gate_core import CONFIRM_TEXTS
 
     # 승인 문구(사용자가 직접 입력) → 번호 형식 → 수신거부 순으로 확인한다. 발송 전에 모두 끝낸다.
     require_send_approval("hanafax_send", send_confirm=body.send_confirm, expected=CONFIRM_TEXTS["hanafax_send"])

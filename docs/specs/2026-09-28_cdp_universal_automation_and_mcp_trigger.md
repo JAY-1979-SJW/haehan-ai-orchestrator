@@ -335,7 +335,7 @@
      수행하도록 재설계, 호출부도 락 블록 밖으로 이동.
    - **클라이언트 쪽 자동 등록**: `local_agent/agent.py`에 `--auto-connect` 플래그 추가 —
      미등록(keyring에 device_token 없음)이면 `POST /api/v1/local-agents/registration-codes`를
-     인증 없이 호출해(AUTH_ENABLED=False 로컬 개발 서버 전제, `ai_orchestrator/gates/auth.py`
+     인증 없이 호출해(AUTH_ENABLED=False 로컬 개발 서버 전제, `tools/gates/auth.py`
      `get_current_user` 확인) 코드를 자동 발급받고 `--register-with-code`로 등록, 이미
      등록돼 있으면 바로 `--run`과 동일하게 연결. 운영(AUTH_ENABLED=True) 서버에서는 자동
      발급이 401로 실패하고 안내 메시지만 출력 — 안전하게 수동 등록으로 폴백.

@@ -1043,7 +1043,7 @@ git checkout pre-openai-removal -- <경로>
 복원: `git show <삭제 커밋>^:<경로>` (삭제 직전 내용).
 
 - `ai_orchestrator/connectors/instagram_dm_db.py` — `set_legacy_ig_user_id`
-- `ai_orchestrator/gates/auth.py` — `get_tenant_context`(build_tenant_context 의 별칭)
+- `tools/gates/auth.py` — `get_tenant_context`(build_tenant_context 의 별칭)
 - `local_agent/runtime/delegated_permission_store.py` — `get_store_snapshot`
 - `local_agent/runtime/task_client.py` — `poll_loop`
 - `ai_orchestrator/openai_client.py` — `generate_plan_explanation`(호출되지 않는 유료 AI 호출 경로)

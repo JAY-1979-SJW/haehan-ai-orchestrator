@@ -474,7 +474,7 @@ def app_client(tmp_path_factory):
     from ai_orchestrator.tasks import executor as _ex
 
     importlib.reload(_ex)
-    from ai_orchestrator.gates import approval as _ap
+    from tools.gates import approval as _ap
 
     importlib.reload(_ap)
     _ap.clear_rate_store()
@@ -521,7 +521,7 @@ def _uniq(p):
 @pytest.fixture(autouse=True)
 def _reset_rate(app_client):
     """approve/reject 인메모리 rate limit 은 테스트 간 초기화."""
-    from ai_orchestrator.gates import approval as _ap
+    from tools.gates import approval as _ap
 
     _ap.clear_rate_store()
     yield

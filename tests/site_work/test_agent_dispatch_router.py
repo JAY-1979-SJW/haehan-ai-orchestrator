@@ -9,8 +9,8 @@ from fastapi.testclient import TestClient
 from ai_orchestrator.agent_dispatch import agent_dispatch_router as router_mod
 from ai_orchestrator.agent_dispatch import agent_dispatch_service as svc
 from ai_orchestrator.agent_dispatch import agent_dispatch_store as store
-from ai_orchestrator.gates.auth import get_current_user
 from tests.site_work.test_agent_dispatch_service import FakeReg, T, plan_json
+from tools.gates.auth import get_current_user
 
 
 def _as(role: str) -> TestClient:

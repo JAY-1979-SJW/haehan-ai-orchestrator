@@ -37,7 +37,7 @@ def _isolated(tmp_path, monkeypatch):
     import ai_orchestrator.core.config as _cfg
 
     importlib.reload(_cfg)
-    import ai_orchestrator.gates.approval as _ap
+    import tools.gates.approval as _ap
 
     importlib.reload(_ap)
     _ap.clear_rate_store()
@@ -82,7 +82,7 @@ def _create_pending(
     expires_in: float = 3600,
 ) -> Any:
     import ai_orchestrator.dev_reg.dev_reg_approval as dra
-    import ai_orchestrator.gates.approval as ap
+    import tools.gates.approval as ap
 
     # 음수 expires_in 은 이미 만료된 레코드를 만들기 위한 것.
     # TTL 은 최소 1분으로 발행하되, expires_at 은 지정된 과거 시각으로 덮어씀.

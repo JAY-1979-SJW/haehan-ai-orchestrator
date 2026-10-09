@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ai_orchestrator.audit.audit_logger import read_recent_logs
 from ai_orchestrator.core.models import RiskAssessment, TaskRequest
-from ai_orchestrator.gates.approval import (
+from tools.gates.approval import (
     RATE_LIMIT_MAX,
     approve_token,
     issue_token,

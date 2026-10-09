@@ -12,7 +12,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, UploadFile
 
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
 from ...audit.audit_logger import log_event
 from ._helpers import ROOT

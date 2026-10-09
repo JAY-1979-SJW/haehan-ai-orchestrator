@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.gates import gate_core as g
+from tools.gates import gate_core as g
 
 
 @pytest.fixture

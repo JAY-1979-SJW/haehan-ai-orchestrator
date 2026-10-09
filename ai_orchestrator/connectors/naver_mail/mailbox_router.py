@@ -37,9 +37,9 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, Upl
 from fastapi import Path as PathParam
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.connectors.naver_mail import drafts_workflow as drafts
 from ai_orchestrator.connectors.naver_mail import mailbox_flow as service
+from tools.gates.auth import require_role
 
 naver_mailbox_router = APIRouter(prefix="/naver-mailbox", tags=["naver-mailbox"])
 _ADMIN = Depends(require_role("admin", "owner"))

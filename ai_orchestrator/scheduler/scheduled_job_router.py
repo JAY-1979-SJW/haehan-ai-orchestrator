@@ -21,10 +21,10 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.scheduler import scheduled_job_store as store
 from ai_orchestrator.scheduler import scheduled_job_service as service
+from ai_orchestrator.scheduler import scheduled_job_store as store
 from ai_orchestrator.services import scheduled_job_actions as actions
+from tools.gates.auth import require_role
 
 scheduled_job_router = APIRouter(prefix="/scheduled-jobs", tags=["scheduled-jobs"])
 

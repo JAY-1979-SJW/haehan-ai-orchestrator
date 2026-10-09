@@ -12,15 +12,15 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.asgi import app
-from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.agent_hub.policy.user_approval_gate import (
     _REQUESTS,
     _TOKENS,
     approve_request,
 )
+from ai_orchestrator.asgi import app
 from ai_orchestrator.server.action_approval_audit_store import clear_store as clear_audit
 from ai_orchestrator.server.action_evidence_store import clear_store as clear_evidence
+from tools.gates.auth import get_current_user
 
 PREPARE_URL = "/api/v1/actions/prepare"
 

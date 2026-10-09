@@ -18,7 +18,7 @@ class TestAuthTenantContext:
 
     def test_build_tenant_context_adds_organization_ids(self):
         """build_tenant_context가 organization_ids 추가"""
-        from ai_orchestrator.gates.auth import build_tenant_context
+        from tools.gates.auth import build_tenant_context
 
         user = {"actor": "john", "role": "admin"}
         ctx = build_tenant_context(user)
@@ -29,7 +29,7 @@ class TestAuthTenantContext:
 
     def test_build_tenant_context_adds_active_organization_id(self):
         """build_tenant_context가 active_organization_id 추가"""
-        from ai_orchestrator.gates.auth import build_tenant_context
+        from tools.gates.auth import build_tenant_context
 
         user = {"actor": "john", "role": "admin"}
         ctx = build_tenant_context(user)
@@ -39,7 +39,7 @@ class TestAuthTenantContext:
 
     def test_build_tenant_context_maps_actor_to_actor_user_id(self):
         """build_tenant_context가 actor를 actor_user_id로 매핑"""
-        from ai_orchestrator.gates.auth import build_tenant_context
+        from tools.gates.auth import build_tenant_context
 
         user = {"actor": "john", "role": "admin"}
         ctx = build_tenant_context(user)
@@ -49,7 +49,7 @@ class TestAuthTenantContext:
 
     def test_build_tenant_context_preserves_existing_fields(self):
         """build_tenant_context가 기존 필드 유지"""
-        from ai_orchestrator.gates.auth import build_tenant_context
+        from tools.gates.auth import build_tenant_context
 
         user = {"actor": "john", "role": "admin"}
         ctx = build_tenant_context(user)
@@ -60,7 +60,7 @@ class TestAuthTenantContext:
 
     def test_require_active_organization_validates_context(self):
         """require_active_organization가 context 검증"""
-        from ai_orchestrator.gates.auth import require_active_organization
+        from tools.gates.auth import require_active_organization
 
         user = {"actor": "john", "role": "admin", "organization_ids": ["org-1"], "active_organization_id": "org-1"}
         org_id = require_active_organization(user)
@@ -69,7 +69,7 @@ class TestAuthTenantContext:
 
     def test_require_active_organization_rejects_missing_field(self):
         """active_organization_id 누락 시 migration bridge가 첫 org를 자동 설정한다 (TENANT-3 migration bridge)."""
-        from ai_orchestrator.gates.auth import require_active_organization
+        from tools.gates.auth import require_active_organization
 
         user = {"actor": "john", "role": "admin", "organization_ids": ["org-1"]}
 
@@ -79,7 +79,7 @@ class TestAuthTenantContext:
 
     def test_require_active_organization_rejects_mismatch(self):
         """active_organization_id not in organization_ids → ValueError"""
-        from ai_orchestrator.gates.auth import require_active_organization
+        from tools.gates.auth import require_active_organization
 
         user = {
             "actor": "john",
@@ -94,7 +94,7 @@ class TestAuthTenantContext:
 
     def test_require_membership_allows_known_org(self):
         """known organization membership allowed"""
-        from ai_orchestrator.gates.auth import require_membership
+        from tools.gates.auth import require_membership
 
         user = {
             "actor": "john",
@@ -111,7 +111,7 @@ class TestAuthTenantContext:
         """unknown organization membership rejected"""
         from fastapi import HTTPException
 
-        from ai_orchestrator.gates.auth import require_membership
+        from tools.gates.auth import require_membership
 
         user = {
             "actor": "john",
@@ -409,7 +409,7 @@ class TestBackwardCompatibility:
 
     def test_existing_auth_format_preserved(self):
         """기존 auth format {actor, role} 유지"""
-        from ai_orchestrator.gates.auth import build_tenant_context
+        from tools.gates.auth import build_tenant_context
 
         user = {"actor": "john", "role": "admin"}
         ctx = build_tenant_context(user)

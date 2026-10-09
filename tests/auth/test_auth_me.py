@@ -61,7 +61,7 @@ def _make_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.auth.auth_router import auth_router
-    from ai_orchestrator.gates.auth import get_current_user
+    from tools.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(auth_router, prefix="/api/v1")

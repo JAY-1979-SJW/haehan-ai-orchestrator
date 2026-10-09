@@ -26,7 +26,7 @@ from ai_orchestrator.browser_tool.approval.approval_record_store import (
 )
 from ai_orchestrator.core import config
 from ai_orchestrator.core.config import APPROVAL_RECORD_STORE_PATH
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
 logger = logging.getLogger(__name__)
 

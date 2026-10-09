@@ -216,7 +216,7 @@ def _verify_executor_whitelist() -> dict:
 
 
 def _verify_approval_expiry() -> dict:
-    content = (REPO_ROOT / "ai_orchestrator/gates/approval.py").read_text(encoding="utf-8", errors="ignore")
+    content = (REPO_ROOT / "tools/gates/approval.py").read_text(encoding="utf-8", errors="ignore")
     return {
         "expiry_check_exists": "_now() > expires" in content or "expires_at" in content,
         "expired_status_set": '"expired"' in content,

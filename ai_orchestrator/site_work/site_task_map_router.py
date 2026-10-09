@@ -25,10 +25,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi import Path as PathParam
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.site_work import site_task_map_explore_service as explore
 from ai_orchestrator.site_work import site_task_map_service as service
 from ai_orchestrator.site_work import site_task_spec_service as spec_service
+from tools.gates.auth import require_role
+
 # 실행기(브라우저)는 이 모듈이 아니라 조합 루트(routers/registry.py)가 연결한다 — site_work 는 scripts.explorer 를 모른다
 
 site_task_map_router = APIRouter(prefix="/site-map", tags=["site-map"])

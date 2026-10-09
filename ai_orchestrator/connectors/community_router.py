@@ -12,7 +12,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
 from ..audit.audit_logger import log_event
 
@@ -57,8 +57,8 @@ def extract(req: ExtractRequest, user: dict = Depends(require_role("admin", "own
         raise HTTPException(status_code=400, detail="http(s) URL 을 입력하세요")
     try:
         _ensure_path()
-        from scripts.community.universal_extractor import extract_posts
         from scripts.browser.cdp.connection import get_page, run_on_browser_thread
+        from scripts.community.universal_extractor import extract_posts
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         result = run_on_browser_thread(
@@ -144,8 +144,8 @@ def analyze(req: AnalyzeRequest, user: dict = Depends(require_role("admin", "own
     # url 이 있으면 먼저 추출
     if req.url:
         try:
-            from scripts.community.universal_extractor import extract_posts
             from scripts.browser.cdp.connection import get_page, run_on_browser_thread
+            from scripts.community.universal_extractor import extract_posts
 
             ex = run_on_browser_thread(
                 lambda: extract_posts(get_page(), req.url.strip(), max_posts=max(1, min(req.max_posts, 120))),

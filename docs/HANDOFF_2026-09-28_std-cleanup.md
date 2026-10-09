@@ -68,7 +68,7 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
 
 1. ~~**ABS-PATH-LITERAL 172건 재검토**~~ — **완료(2026-09-28 2차 세션)**. 173건 실측 결과:
    - 테스트 파일 104건 = 전부 가짜 픽스처(`C:\path\file.exe` 류) 확인, 문제 없음.
-   - 비-테스트 69건 중 **실제 버그 1건 발견·수정**: `ai_orchestrator/gates/risk_classifier.py:7`
+   - 비-테스트 69건 중 **실제 버그 1건 발견·수정**: `tools/gates/risk_classifier.py:7`
      민감 경로 목록에 `"C:/Users/skyjw/.ssh/"`가 사용자명 하드코딩돼 있어, 다른 계정/PC에서 실행하면
      SSH 디렉터리 보안 감지가 조용히 무력화되던 문제. `Path.home()` 기반 동적 계산으로 수정,
      `test_risk_classifier.py` 5개 통과·ruff·layer audit 확인. (미커밋 — 다음 세션에서 커밋 필요)

@@ -30,7 +30,7 @@
   "ai_orchestrator/connectors/naver_search_router.py",
   "ai_orchestrator/connectors/naver_search_utils.py",
   "ai_orchestrator/connectors/naver_shopping_collectors.py",
-  "ai_orchestrator/gates/dev_reg_approval.py",
+  "tools/gates/dev_reg_approval.py",
   "ai_orchestrator/persistence/agent_dispatch_store.py",
   "ai_orchestrator/persistence/gongmu_store.py",
   "ai_orchestrator/persistence/registration_code_store.py",

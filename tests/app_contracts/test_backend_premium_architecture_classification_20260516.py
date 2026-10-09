@@ -57,7 +57,7 @@ DOMAIN_CORE_MAP = {
     },
     "Approval": {
         "impl_files": [
-            "ai_orchestrator/gates/approval.py",
+            "tools/gates/approval.py",
             "ai_orchestrator/dev_reg/dev_reg_approval.py",
             "ai_orchestrator/web_task/web_task_approval_service.py",
         ],
@@ -840,7 +840,7 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/server/action_evidence_store.py",
     "ai_orchestrator/core/task_state.py",
     "ai_orchestrator/audit/audit_logger.py",
-    "ai_orchestrator/gates/approval.py",
+    "tools/gates/approval.py",
     "ai_orchestrator/dev_reg/dev_reg_approval.py",
     "ai_orchestrator/web_task/web_task_approval_service.py",
     "ai_orchestrator/web_task/web_task_registry.py",
@@ -859,7 +859,7 @@ CORE_MODULES_MUST_IMPORT = [
     "ai_orchestrator.server.execution_location_guard",
     "ai_orchestrator.server.task_queue_schema",
     "ai_orchestrator.core.task_state",
-    "ai_orchestrator.gates.approval",
+    "tools.gates.approval",
     "ai_orchestrator.dev_reg.dev_reg_approval",
     "ai_orchestrator.web_task.web_task_approval_service",
     "ai_orchestrator.web_task.web_task_registry",

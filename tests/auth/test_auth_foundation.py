@@ -15,7 +15,7 @@ from fastapi import HTTPException
 sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 from ai_orchestrator.core import config
-from ai_orchestrator.gates import auth
+from tools.gates import auth
 
 
 @pytest.fixture

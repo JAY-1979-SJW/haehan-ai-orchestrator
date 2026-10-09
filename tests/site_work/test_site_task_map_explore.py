@@ -8,14 +8,14 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.gates import auth as auth_module
-from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.site_work.site_task_map_router import site_task_map_router
 from ai_orchestrator.site_work import site_task_map as tm
 from ai_orchestrator.site_work import site_task_map_explore_service as svc
 from ai_orchestrator.site_work import site_task_map_request_store as rstore
 from ai_orchestrator.site_work import site_task_map_store as store
+from ai_orchestrator.site_work.site_task_map_router import site_task_map_router
 from scripts.explorer import task_mapper
+from tools.gates import auth as auth_module
+from tools.gates.auth import get_current_user
 
 URL = "https://www.example-kiscon.test/gongsi/ksc_dft.asp"
 OK_RESULT = {"pages": 3, "form_pages": 1, "tasks": 1, "aborted_reason": "", "snapshot_errors": 0}
