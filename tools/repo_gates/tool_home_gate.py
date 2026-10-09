@@ -126,8 +126,24 @@ def tracked_files(root: Path = ROOT) -> list[str]:
     return [f for f in r.stdout.split("\0") if f]
 
 
+def _is_shim_file(root: Path, rel: str) -> bool:
+    """`# haehan-shim:` 마커로 시작하는 1줄 경로-포워딩 호환 파일인가(scripts/ops/make_shim.py 가
+    만듦). shim 은 메커니즘상 항상 '이동 전 옛 경로(집 밖) → 실제 모듈'이 되므로 집 밖인 게
+    정상이다 — 도구 집 게이트 판정에서 제외한다(verify_change.py 의 같은 이름 헬퍼와 동일 패턴,
+    PR #165 분석에서 발견한 tool_home_baseline 54건 중 20건(37%)이 이 사유의 가짜 위반이었음)."""
+    try:
+        with (root / rel).open(encoding="utf-8", errors="replace") as f:
+            return f.readline().startswith("# haehan-shim:")
+    except OSError:
+        return False
+
+
 def current_leaks(root: Path, cfg: dict) -> list[str]:
-    return sorted(f for f in tracked_files(root) if (root / f).exists() and classify(f, cfg)[0] == "leak")
+    return sorted(
+        f
+        for f in tracked_files(root)
+        if (root / f).exists() and classify(f, cfg)[0] == "leak" and not _is_shim_file(root, f)
+    )
 
 
 def staged_added(root: Path = ROOT) -> list[tuple[str, str]]:
@@ -155,11 +171,13 @@ def staged_added(root: Path = ROOT) -> list[tuple[str, str]]:
     return out
 
 
-def violations(entries: list[tuple[str, str]], cfg: dict, baseline: set[str]) -> list[tuple[str, str, str]]:
+def violations(
+    entries: list[tuple[str, str]], cfg: dict, baseline: set[str], root: Path = ROOT
+) -> list[tuple[str, str, str]]:
     bad = []
     for st, path in entries:
         verdict, tool, _ = classify(path, cfg)
-        if verdict == "leak" and path not in baseline:
+        if verdict == "leak" and path not in baseline and not _is_shim_file(root, path):
             bad.append((st, path, tool or "?"))
     return bad
 
@@ -274,7 +292,7 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912 - CLI 모
         entries = staged_added(root)
         if not entries:
             return 0
-        bad = violations(entries, cfg, baseline)
+        bad = violations(entries, cfg, baseline, root)
         if bad:
             _report(bad, cfg)
             return 1
