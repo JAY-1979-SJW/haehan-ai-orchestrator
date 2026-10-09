@@ -16,7 +16,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPTS_OPS = ROOT / "scripts/ops"
+SCRIPTS_OPS = ROOT / "tools" / "audits" / "backend"
 
 AUDIT_SCRIPT_NAMES = [
     "audit_backend_premium_domain_core",

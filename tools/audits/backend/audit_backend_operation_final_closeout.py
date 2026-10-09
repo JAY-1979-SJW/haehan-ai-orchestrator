@@ -274,7 +274,7 @@ def _verify_docker_compose() -> dict:
 def _verify_external_site_registry() -> dict:
     # 실제 registry는 ai_orchestrator/external_sites/ 패키지에 위치
     registry_path = REPO_ROOT / "ai_orchestrator/external_sites"
-    audit_script = REPO_ROOT / "scripts/ops/audit_external_site_canonical_registry.py"
+    audit_script = REPO_ROOT / "tools/audits/app/audit_external_site_canonical_registry.py"
     test_file = REPO_ROOT / "tests/app_contracts/test_external_site_canonical_registry_20260517.py"
     return {
         "registry_dir_exists": registry_path.exists(),

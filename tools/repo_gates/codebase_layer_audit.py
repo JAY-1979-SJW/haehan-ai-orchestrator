@@ -734,10 +734,16 @@ _SESSION_SCAN_SKIP = {
 
 
 def _storage_boundary_skip(row: ClassifiedFile) -> bool:
-    """check_storage_boundary 의 앞쪽 continue 조건들(2026-09-29 STD-08: C901=12>10 분리)."""
+    """check_storage_boundary 의 앞쪽 continue 조건들(2026-09-29 STD-08: C901=12>10 분리).
+
+    tools/audits/ 는 2026-10-10 추가 — 감사 스크립트 자신이 탐지용 패턴 문자열로
+    "import sqlite3" 같은 금지어를 리스트에 담고 있어(실제 import 아님, 텍스트 매칭용
+    헬퍼), 단순 정규식 스캔이 이를 진짜 위반으로 오판했다(audit_standard_ui_package.py
+    이동 후 신규 위반으로 잡힘 — PR165 verify FAIL). 감사/게이트 스크립트는 애초에
+    L7 storage-boundary 규율 대상이 아니다(docs/·scripts/archive/ 와 같은 이유)."""
     if not row.path.endswith(".py"):
         return True
-    if any(row.path.startswith(p) for p in ("docs/", "scripts/archive/")):
+    if any(row.path.startswith(p) for p in ("docs/", "scripts/archive/", "tools/audits/")):
         return True
     return row.path in _SESSION_SCAN_SKIP
 
