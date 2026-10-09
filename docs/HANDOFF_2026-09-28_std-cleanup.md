@@ -131,7 +131,7 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
      `scripts/cdp_client.py:main`(**134**, 압도적 1위) · `tools/code_map/fullmap.py:extend`(44) ·
      `scripts/naver/blog/community/blog_explorer.py:main`(39) ·
      `scripts/naver/cafe/collection/cafe_explorer.py:main`(38) ·
-     `tools/code_map/modules.py:main`(38) · `scripts/ops/repo_gates/codebase_layer_audit.py:classify_path`(35) ·
+     `tools/code_map/modules.py:main`(38) · `tools/repo_gates/codebase_layer_audit.py:classify_path`(35) ·
      `local_agent_redaction.py:_strip_result_data`(32) ·
      `tools/audits/google/audit_google_automation_baseline_contract.py:audit`(32) ·
      `tools/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py:run_audit`(32) ·
@@ -174,7 +174,7 @@ HAEHAN_NO_BROWSER_LAUNCH=1 py -3.14 tools/code_map/query.py tests-for <파일>
 py -3.14 -m pytest <나온 테스트 파일들> -q
 
 # 게이트 3종 (커밋 전 필수)
-py -3.14 scripts/ops/repo_gates/codebase_layer_audit.py
+py -3.14 tools/repo_gates/codebase_layer_audit.py
 py -3.14 -m pytest tests/test_codebase_layer_audit.py -q
 py -3.14 tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 

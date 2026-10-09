@@ -238,7 +238,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
         "tools/audits/agent/audit_local_agent_e2e_baseline_contract.py",
         "tools/audits/app/audit_approval_flow_baseline_contract.py",
         "tools/audits/agent/audit_playwright_ai_baseline_contract.py",
-        "scripts/ops/repo_gates/audit_root_legacy_scripts.py",
+        "tools/repo_gates/audit_root_legacy_scripts.py",
         "tests/approval/test_approval_flow_baseline_contract.py",
         "tests/app_contracts/test_playwright_ai_baseline_contract.py",
         "tests/quality_gates/test_required_quality_gate.py",
@@ -291,7 +291,7 @@ def check_module_boundary_contract() -> tuple[bool, str]:
 
 def check_root_legacy_script_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/repo_gates/audit_root_legacy_scripts.py"],
+        [PY, "tools/repo_gates/audit_root_legacy_scripts.py"],
         timeout=120,
     )
     if not ok:

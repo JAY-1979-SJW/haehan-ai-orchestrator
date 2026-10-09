@@ -1,5 +1,5 @@
 """모듈 분리 게이트 테스트."""
-from scripts.ops.repo_gates.module_separation_gate import SEPARATED_MODULES, run_gate
+from tools.repo_gates.module_separation_gate import SEPARATED_MODULES, run_gate
 
 
 def test_current_tree_passes_gate():

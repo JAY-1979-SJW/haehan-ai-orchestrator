@@ -1,4 +1,4 @@
-from scripts.ops.repo_gates.validate_common_operations_index import _load_index, validate_index
+from tools.repo_gates.validate_common_operations_index import _load_index, validate_index
 
 
 def test_common_operations_index_is_valid() -> None:

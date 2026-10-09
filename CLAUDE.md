@@ -287,7 +287,7 @@ chmod/chown 자동 변경 금지
 
 작업 후 반드시 실행:
 ```bash
-python scripts/ops/repo_gates/codebase_layer_audit.py
+python tools/repo_gates/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
 python tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 ```

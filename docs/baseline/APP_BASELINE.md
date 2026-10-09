@@ -317,7 +317,7 @@ python tools/audits/agent/audit_common_tool_runtime.py
 python tools/audits/backend/audit_backend_runtime_contract.py
 python tools/audits/agent/audit_local_agent_e2e_flow_contract.py
 python tools/audits/app/audit_module_boundaries.py
-python scripts/ops/repo_gates/audit_root_legacy_scripts.py
+python tools/repo_gates/audit_root_legacy_scripts.py
 ```
 
 Any code change that affects server/local-agent/browser/approval behavior must

@@ -1,4 +1,4 @@
-"""G12 중복 게이트(scripts/ops/repo_gates/dup_gate.py) 시험 — 임시 git 저장소에서 격리 검증."""
+"""G12 중복 게이트(tools/repo_gates/dup_gate.py) 시험 — 임시 git 저장소에서 격리 검증."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-DUP_GATE = ROOT / "scripts" / "ops" / "repo_gates" / "dup_gate.py"
+DUP_GATE = ROOT / "tools" / "repo_gates" / "dup_gate.py"
 
 _COPY_PASTE_FUNC = """
 def {name}(limit):
@@ -37,9 +37,9 @@ def repo(tmp_path, monkeypatch):
     (tmp_path / "scripts" / "ops" / "repo_gates").mkdir(parents=True)
     (tmp_path / "configs").mkdir()
     (tmp_path / "pyproject.toml").write_text("", encoding="utf-8")  # 저장소 루트 표식 — 게이트가 pyproject.toml 이 있는 상위 폴더를 루트로 찾는다
-    (tmp_path / "scripts" / "ops" / "repo_gates" / "dup_gate.py").write_bytes(DUP_GATE.read_bytes())
-    (tmp_path / "scripts" / "ops" / "repo_gates" / "_dup_structure_hash.py").write_bytes(
-        (ROOT / "scripts" / "ops" / "repo_gates" / "_dup_structure_hash.py").read_bytes()
+    tmp_path / "tools" / "repo_gates" / "dup_gate.py".write_bytes(DUP_GATE.read_bytes())
+    tmp_path / "tools" / "repo_gates" / "_dup_structure_hash.py".write_bytes(
+        ROOT / "tools" / "repo_gates" / "_dup_structure_hash.py".read_bytes()
     )
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     subprocess.run(["git", "config", "user.email", "t@t.local"], cwd=tmp_path, check=True)
@@ -55,7 +55,7 @@ def _write(repo_path: Path, rel: str, content: str) -> None:
 
 def _run_gate(repo_path: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
-        [sys.executable, "scripts/ops/repo_gates/dup_gate.py", *args],
+        [sys.executable, "tools/repo_gates/dup_gate.py", *args],
         cwd=repo_path,
         capture_output=True,
         text=True,
@@ -123,7 +123,7 @@ def test_files_from_dash_reads_target_list_from_stdin(repo):
     _write(repo, "pkg_b/two.py", _UNIQUE_FUNC.format(name="only_copy_dup"))
 
     result = subprocess.run(
-        [sys.executable, "scripts/ops/repo_gates/dup_gate.py", "check", "--files-from", "-"],
+        [sys.executable, "tools/repo_gates/dup_gate.py", "check", "--files-from", "-"],
         cwd=repo, input="pkg_b/two.py\n", capture_output=True, text=True, encoding="utf-8",
     )
     assert result.returncode == 1, result.stdout

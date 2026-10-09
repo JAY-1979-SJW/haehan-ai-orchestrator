@@ -85,7 +85,7 @@
 - `scripts/naver/smartstore/navigation/cdp_popup_manager.py`: `quick_handle`(function,L603)
 - `scripts/naver/smartstore/product/ai_description_writer.py`: `build_trust_summary`(function,L117)
 - `scripts/naver/smartstore/product/detail_collector.py`: `list_cached_product_ids`(function,L86)
-- `scripts/ops/repo_gates/codebase_layer_audit.py`: `issue_key`(function,L1303)
+- `tools/repo_gates/codebase_layer_audit.py`: `issue_key`(function,L1303)
 - `scripts/browser/popup/popup_monitor.py`: `ChromeUIWatcher`(class,L366), `chrome_ui_status`(function,L463)
 - `scripts/browser/session/session_tracker.py`: `clear_state`(function,L32), `all_states`(function,L37)
 - `scripts/video/_cdp_tab.py`: `TabCDP`(class,L20), `close_tab`(function,L105)

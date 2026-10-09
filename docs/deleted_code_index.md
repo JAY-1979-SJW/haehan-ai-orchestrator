@@ -1055,7 +1055,7 @@ git checkout pre-openai-removal -- <경로>
 - `scripts/instagram/kotara_ctc_reel.py` — `render_thumbnail`, `render_all_frames`, `strip_audio`, `extract_check_frames`
 - `scripts/naver/mail/collection/folder_discovery.py` — `folders_to_dicts`
 - `scripts/naver/smartstore/product/detail_collector.py` — `list_cached_product_ids`
-- `scripts/ops/repo_gates/codebase_layer_audit.py` — `issue_key`
+- `tools/repo_gates/codebase_layer_audit.py` — `issue_key`
 - `scripts/session_tracker.py` — `clear_state`, `all_states`
 - `scripts/web_connector.py` — `shutdown_browser_session`(탭·브라우저 전체 종료 — 로그인 세션 보존 정책과 반대)
 

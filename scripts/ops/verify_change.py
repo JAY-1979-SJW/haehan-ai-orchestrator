@@ -62,7 +62,7 @@ def _pytest_extra_args() -> list[str]:
 # 위반 3건 때문에 CI FAIL — 로컬 pre-commit 훅은 이미 ruff_new_only_gate.py 로 같은
 # 문제를 정확히 처리하고 있어 그 로직을 재사용한다.
 sys.path.insert(0, str(ROOT))
-from scripts.ops.repo_gates.ruff_new_only_gate import changed_lines_between  # noqa: E402
+from tools.repo_gates.ruff_new_only_gate import changed_lines_between  # noqa: E402
 
 ENV = {
     **os.environ,

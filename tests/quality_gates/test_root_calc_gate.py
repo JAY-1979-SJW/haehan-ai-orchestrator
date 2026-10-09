@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops.repo_gates import root_calc_gate as gate
 from tools.devflow.make_shim import make_shim
+from tools.repo_gates import root_calc_gate as gate
 
 REAL_ROOT = Path(__file__).resolve().parents[2]
 CFG = gate.load_config(REAL_ROOT)
