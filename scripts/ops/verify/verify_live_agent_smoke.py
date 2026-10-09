@@ -51,7 +51,7 @@ class Report:
 
 
 def _load_credentials(server_url: str) -> tuple[str, str]:
-    from local_agent.common import desktop_config
+    from core.agent_runtime.common import desktop_config
     from local_agent.connection import token_store
 
     cfg = desktop_config.load_config()

@@ -32,11 +32,11 @@ def _websocket_close_code(exc: object) -> int | None:
 
 
 async def _probe(server_url: str, timeout: float) -> tuple[bool, str, str]:
+    from core.agent_runtime.common import (
+        desktop_config,  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
+    )
     from local_agent import (
         __version__,  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
-    )
-    from local_agent.common import (
-        desktop_config,  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
     )
     from local_agent.connection import (
         token_store,  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다

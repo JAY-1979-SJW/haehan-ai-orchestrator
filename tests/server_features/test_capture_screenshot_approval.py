@@ -505,7 +505,7 @@ def test_client_process_task_approved_capture_runs_action(monkeypatch, tmp_path)
 
 
 def test_action_capture_screenshot_returns_basename_only(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
+    import core.agent_runtime.common.config as _cfg
     import local_agent.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
@@ -540,7 +540,7 @@ def test_action_capture_screenshot_returns_basename_only(tmp_path, monkeypatch):
 
 def test_action_capture_screenshot_dependency_missing(tmp_path, monkeypatch):
     """Pillow / mss 둘 다 없으면 SCREENSHOT_DEPENDENCY_MISSING 으로 실패."""
-    import local_agent.common.config as _cfg
+    import core.agent_runtime.common.config as _cfg
     import local_agent.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
@@ -634,7 +634,7 @@ def test_h2_allowlist_includes_screenshot_keys():
 
 
 def test_h2_action_returns_safe_metadata_keys(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
+    import core.agent_runtime.common.config as _cfg
     import local_agent.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
@@ -674,7 +674,7 @@ def test_h2_action_returns_safe_metadata_keys(tmp_path, monkeypatch):
 
 
 def test_h2_action_data_no_full_path_or_raw_image(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
+    import core.agent_runtime.common.config as _cfg
     import local_agent.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
@@ -714,7 +714,7 @@ def test_h2_action_data_no_full_path_or_raw_image(tmp_path, monkeypatch):
 
 
 def test_h2_storage_ref_two_tier_when_no_agent_id(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
+    import core.agent_runtime.common.config as _cfg
     import local_agent.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
@@ -824,7 +824,7 @@ def test_h2_ws_client_injects_agent_id_and_approval_id():
 
 def test_h2_ws_roundtrip_persists_screenshot_result_data(tmp_path, monkeypatch):
     """승인 → WS dispatch → process_task → result_data 저장 전체 경로."""
-    import local_agent.common.config as _cfg
+    import core.agent_runtime.common.config as _cfg
     import local_agent.connection.actions as _actions
     from local_agent.connection.websocket_client import process_task
 

@@ -32,7 +32,7 @@ LAYER_OVERRIDES: dict[str, tuple[str, str]] = {
     "ai_orchestrator/contracts/local_task_protocol.py": ("L1", "task protocol DTO/contract"),
     "ai_orchestrator/safety_policy/secret_redaction.py": ("L1", "redaction helper (L1 per layer definition)"),
     "local_agent/runtime/result_sanitizer.py": ("L1", "result sanitizer/redaction helper"),
-    "local_agent/common/desktop_config.py": ("L1", "desktop config helper"),
+    "core/agent_runtime/common/desktop_config.py": ("L1", "desktop config helper"),
     "local_agent/connection/network_bypass.py": ("L3", "low-level network IO helper"),
 }
 

@@ -13,7 +13,7 @@ import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from local_agent.common.redaction import SENSITIVE_KEYS
+from core.agent_runtime.common.redaction import SENSITIVE_KEYS
 
 DEFAULT_CONFIG_PATH: Path = Path(
     os.getenv("HAEHAN_AGENT_DESKTOP_CONFIG", str(Path.home() / ".haehan_agent" / "config.json"))

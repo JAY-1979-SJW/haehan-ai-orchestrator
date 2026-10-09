@@ -42,7 +42,7 @@ def _mask_agent_id(agent_id: str) -> str:
 
 
 def _load_agent_id() -> str:
-    from local_agent.common import desktop_config
+    from core.agent_runtime.common import desktop_config
 
     return desktop_config.load_config().agent_id.strip()
 

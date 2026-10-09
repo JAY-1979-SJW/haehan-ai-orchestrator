@@ -6577,7 +6577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/common/audit.py": {
+  "core/agent_runtime/common/audit.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6745,7 +6745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/common/config.py": {
+  "core/agent_runtime/common/config.py": {
    "layer": "L1",
    "role": "shared",
    "domain": "local_agent",
@@ -6761,7 +6761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/common/desktop_config.py": {
+  "core/agent_runtime/common/desktop_config.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6849,7 +6849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/common/redaction.py": {
+  "core/agent_runtime/common/redaction.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -24137,7 +24137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/common/__init__.py": {
+  "core/agent_runtime/common/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

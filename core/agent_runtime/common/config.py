@@ -7,7 +7,14 @@ read-only 디렉터리만 화이트리스트.
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
+
+_BOOT = Path(__file__).resolve().parents[3]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
 
 
 def _discover_server_base_url() -> str:
@@ -25,7 +32,7 @@ def _discover_server_base_url() -> str:
     try:
         import json
 
-        discovery_path = Path(__file__).resolve().parents[2] / "data" / "runtime" / "server_info.json"
+        discovery_path = repo_root() / "data" / "runtime" / "server_info.json"
         if discovery_path.exists():
             info = json.loads(discovery_path.read_text(encoding="utf-8"))
             host, port = info.get("host"), info.get("port")

@@ -32,7 +32,7 @@ from typing import Any, Callable
 from urllib.parse import urlparse
 
 from core.agent_runtime.browser.web_reader import analyze_html_structure, validate_url_for_readonly_open
-from local_agent.common import audit as _audit
+from core.agent_runtime.common import audit as _audit
 from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed
 
 logger = logging.getLogger(__name__)

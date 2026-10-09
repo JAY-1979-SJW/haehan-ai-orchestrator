@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from local_agent.common import config
+from core.agent_runtime.common import config
 
 logger = logging.getLogger(__name__)
 

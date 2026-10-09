@@ -23,11 +23,11 @@ from pathlib import Path
 from urllib import error as _urlerr
 from urllib import request as _urlreq
 
+from core.agent_runtime.common import config
+from core.agent_runtime.common import desktop_config as _desk_cfg
+from core.agent_runtime.common.audit import log_local_event
+from core.agent_runtime.common.redaction import safe_summary as _safe_summary
 from local_agent import __version__
-from local_agent.common import config
-from local_agent.common import desktop_config as _desk_cfg
-from local_agent.common.audit import log_local_event
-from local_agent.common.redaction import safe_summary as _safe_summary
 from local_agent.connection import network_bypass as _network_bypass
 from local_agent.connection import token_store as _token_store
 from local_agent.connection.actions import execute_action

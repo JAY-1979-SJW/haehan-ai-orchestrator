@@ -229,7 +229,7 @@ def test_approve_with_token_id_succeeds_public_id_rejected():
 
 def test_result_data_approval_id_is_public_id_not_token_id(tmp_path, monkeypatch):
     reg.clear()
-    import local_agent.common.config as _cfg
+    import core.agent_runtime.common.config as _cfg
     import local_agent.connection.actions as _actions
     from local_agent.connection.websocket_client import process_task
 
