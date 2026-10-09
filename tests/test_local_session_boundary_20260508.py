@@ -2,7 +2,7 @@
 local_session_boundary 테스트
 """
 
-from local_agent.runtime.local_session_boundary import (
+from core.agent_runtime.runtime.local_session_boundary import (
     enforce_session_boundary,
     get_boundary_safe_defaults,
     is_safe_for_export,

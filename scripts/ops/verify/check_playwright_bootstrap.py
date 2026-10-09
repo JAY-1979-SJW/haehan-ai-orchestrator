@@ -16,7 +16,7 @@ _REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from local_agent.runtime.playwright.playwright_bootstrap import (  # noqa: E402
+from core.agent_runtime.runtime.playwright.playwright_bootstrap import (  # noqa: E402
     PLAYWRIGHT_BROWSER_MISSING,
     PLAYWRIGHT_PACKAGE_MISSING,
     PLAYWRIGHT_READY,

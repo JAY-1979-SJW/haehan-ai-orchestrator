@@ -77,7 +77,7 @@ COMMANDS: tuple[tuple[str, ...], ...] = (
         "scripts/youtube/oauth.py",
         "scripts/youtube/research.py",
         "scripts/youtube/router.py",
-        "local_agent/runtime/common_tool_runtime.py",
+        "core/agent_runtime/runtime/common_tool_runtime.py",
         "scripts/ops/quality/module_quality_gate.py",
         "tests/test_common_tool_runtime.py",
         "tests/app_contracts/test_common_tool_runtime_baseline_contract.py",

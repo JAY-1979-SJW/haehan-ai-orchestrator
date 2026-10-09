@@ -18,12 +18,12 @@ from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_USER_DELEGATED,
     GRADE_USER_DIRECT,
 )
-from local_agent.runtime.permission.approval_audit_log import (
+from core.agent_runtime.runtime.permission.approval_audit_log import (
     log_execution_blocked,
     log_execution_completed,
     log_execution_started,
 )
-from local_agent.runtime.permission.delegated_permission_gate import (
+from core.agent_runtime.runtime.permission.delegated_permission_gate import (
     GATE_PASS,
     evaluate_gate,
 )
@@ -222,7 +222,7 @@ def run_single_action(  # noqa: PLR0913 - 공개 시그니처 유지(키워드 �
     profile = get_site_profile(site_id)
     _domain = domain or (profile["domains"][0] if profile and profile.get("domains") else site_id)
 
-    from local_agent.runtime.permission.delegated_action_executor import (
+    from core.agent_runtime.runtime.permission.delegated_action_executor import (
         EXEC_ALLOWED,
         EXEC_BLOCKED,
         EXEC_NEED_PERMISSION,

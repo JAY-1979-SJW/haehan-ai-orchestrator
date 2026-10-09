@@ -12,7 +12,7 @@ from ai_orchestrator.contracts.local_task_protocol import (  # noqa: E402
     build_task,
     validate_task,
 )
-from local_agent.runtime.common_tool_runtime import (  # noqa: E402
+from core.agent_runtime.runtime.common_tool_runtime import (  # noqa: E402
     EXECUTION_LOCAL_AGENT,
     PHASE_BLOCKED,
     RISK_READ,

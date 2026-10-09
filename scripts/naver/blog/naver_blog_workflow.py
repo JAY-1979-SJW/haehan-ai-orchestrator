@@ -16,7 +16,7 @@ from typing import Any
 from ai_orchestrator.contracts.local_task_protocol import (
     build_task,
 )
-from local_agent.runtime.permission.delegated_action_executor import (
+from core.agent_runtime.runtime.permission.delegated_action_executor import (
     execute_delegated_action,
 )
 from scripts.naver.blog.naver_content_safe_result import (
@@ -198,6 +198,6 @@ def read_blog_post(
 
 def get_blog_workflow_grade(step: str) -> str:
     """블로그 workflow 단계의 실행 등급 반환."""
-    from local_agent.runtime.permission.content_workflow_policy import get_workflow_grade
+    from core.agent_runtime.runtime.permission.content_workflow_policy import get_workflow_grade
 
     return get_workflow_grade(step)

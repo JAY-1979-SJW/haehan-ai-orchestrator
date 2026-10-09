@@ -11,7 +11,7 @@ from ai_orchestrator.contracts.local_task_protocol import (
     build_task,
     validate_result,
 )
-from local_agent.runtime.playwright.playwright_runner import run_task
+from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
 # ── Playwright 미설치 환경에서는 STATUS_FAILED 반환 ───────────────────────────
 
@@ -70,7 +70,7 @@ def test_run_blocked_action():
 def test_wait_for_user_auth_shape():
     """wait_for_user_auth는 항상 WAITING_USER_AUTH 반환 (Playwright 불필요)."""
     # wait_for_user_auth는 브라우저 실행 없이 바로 반환
-    from local_agent.runtime.playwright.playwright_runner import _run_wait_for_user_auth
+    from core.agent_runtime.runtime.playwright.playwright_runner import _run_wait_for_user_auth
 
     t = build_task("wait_for_user_auth", "https://www.g2b.go.kr/login")
     r = _run_wait_for_user_auth(None, t)
@@ -81,7 +81,7 @@ def test_wait_for_user_auth_shape():
 
 
 def test_wait_for_user_auth_no_credentials():
-    from local_agent.runtime.playwright.playwright_runner import _run_wait_for_user_auth
+    from core.agent_runtime.runtime.playwright.playwright_runner import _run_wait_for_user_auth
 
     t = build_task("wait_for_user_auth", "https://www.g2b.go.kr/login")
     r = _run_wait_for_user_auth(None, t)

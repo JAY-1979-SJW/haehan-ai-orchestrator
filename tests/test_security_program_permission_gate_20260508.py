@@ -1,7 +1,7 @@
 """tests/test_security_program_permission_gate_20260508.py"""
 import pytest
 
-from local_agent.runtime.security_program.security_program_permission_gate import (
+from core.agent_runtime.runtime.security_program.security_program_permission_gate import (
     consume_permission,
     create_install_permission,
     revoke_permission,

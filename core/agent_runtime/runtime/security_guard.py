@@ -113,7 +113,7 @@ def sanitize_runtime_result(result: dict[str, Any]) -> dict[str, Any]:
     런타임 결과에서 민감 필드를 제거한다.
     result_sanitizer.sanitize_result와 동일한 역할 (guard 레이어에서도 호출 가능).
     """
-    from local_agent.runtime.result_sanitizer import sanitize_result
+    from core.agent_runtime.runtime.result_sanitizer import sanitize_result
     return sanitize_result(result)
 
 

@@ -10,19 +10,19 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from local_agent.runtime.permission.approval_audit_log import (
+from core.agent_runtime.runtime.permission.approval_audit_log import (
     log_execution_blocked,
     log_execution_completed,
     log_execution_started,
 )
-from local_agent.runtime.permission.content_publish_guard import validate_publish_request
-from local_agent.runtime.permission.delegated_permission_gate import (
+from core.agent_runtime.runtime.permission.content_publish_guard import validate_publish_request
+from core.agent_runtime.runtime.permission.delegated_permission_gate import (
     GATE_BLOCKED,
     GATE_NEED_PERMISSION,
     GATE_USER_DIRECT,
     evaluate_gate,
 )
-from local_agent.runtime.safe_write_result_sanitizer import (
+from core.agent_runtime.runtime.safe_write_result_sanitizer import (
     build_write_result,
     sanitize_write_result,
 )

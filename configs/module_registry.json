@@ -3729,7 +3729,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/permission/approval_audit_log.py": {
+  "core/agent_runtime/runtime/permission/approval_audit_log.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -3737,7 +3737,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/auth/auth_completion_detector.py": {
+  "core/agent_runtime/runtime/auth/auth_completion_detector.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3745,7 +3745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/auth/auth_wait_controller.py": {
+  "core/agent_runtime/runtime/auth/auth_wait_controller.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -3753,7 +3753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/auth/auto_resume_after_auth.py": {
+  "core/agent_runtime/runtime/auth/auto_resume_after_auth.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4201,7 +4201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/playwright/browser_foreground_adapter.py": {
+  "core/agent_runtime/runtime/playwright/browser_foreground_adapter.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4249,7 +4249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/common_tool_runtime.py": {
+  "core/agent_runtime/runtime/common_tool_runtime.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4257,7 +4257,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/permission/content_publish_guard.py": {
+  "core/agent_runtime/runtime/permission/content_publish_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4265,7 +4265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/permission/content_workflow_policy.py": {
+  "core/agent_runtime/runtime/permission/content_workflow_policy.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4273,7 +4273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/permission/delegated_action_executor.py": {
+  "core/agent_runtime/runtime/permission/delegated_action_executor.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4281,7 +4281,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/permission/delegated_permission_gate.py": {
+  "core/agent_runtime/runtime/permission/delegated_permission_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4289,7 +4289,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/permission/delegated_permission_policy.py": {
+  "core/agent_runtime/runtime/permission/delegated_permission_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4297,7 +4297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/permission/delegated_permission_store.py": {
+  "core/agent_runtime/runtime/permission/delegated_permission_store.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4305,7 +4305,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/download/download_policy.py": {
+  "core/agent_runtime/runtime/download/download_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4313,7 +4313,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/download/download_result_sanitizer.py": {
+  "core/agent_runtime/runtime/download/download_result_sanitizer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4321,7 +4321,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/download/download_upload_manifest.py": {
+  "core/agent_runtime/runtime/download/download_upload_manifest.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4337,7 +4337,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/security_program/installer_folder_presenter.py": {
+  "core/agent_runtime/runtime/security_program/installer_folder_presenter.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4353,7 +4353,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/security_program/local_security_installer_runner.py": {
+  "core/agent_runtime/runtime/security_program/local_security_installer_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4361,7 +4361,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/local_session_boundary.py": {
+  "core/agent_runtime/runtime/local_session_boundary.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4409,7 +4409,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/playwright/playwright_bootstrap.py": {
+  "core/agent_runtime/runtime/playwright/playwright_bootstrap.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4417,7 +4417,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/playwright/playwright_runner.py": {
+  "core/agent_runtime/runtime/playwright/playwright_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4433,7 +4433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/result_sanitizer.py": {
+  "core/agent_runtime/runtime/result_sanitizer.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4441,7 +4441,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/safe_write_result_sanitizer.py": {
+  "core/agent_runtime/runtime/safe_write_result_sanitizer.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4449,7 +4449,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/security_guard.py": {
+  "core/agent_runtime/runtime/security_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4457,7 +4457,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/security_program/security_installer_candidate_finder.py": {
+  "core/agent_runtime/runtime/security_program/security_installer_candidate_finder.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4465,7 +4465,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/security_program/security_installer_policy.py": {
+  "core/agent_runtime/runtime/security_program/security_installer_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4473,7 +4473,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/security_program/security_program_auto_resume.py": {
+  "core/agent_runtime/runtime/security_program/security_program_auto_resume.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4481,7 +4481,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/security_program/security_program_detector.py": {
+  "core/agent_runtime/runtime/security_program/security_program_detector.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4489,7 +4489,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/security_program/security_program_install_completion_detector.py": {
+  "core/agent_runtime/runtime/security_program/security_program_install_completion_detector.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4497,7 +4497,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/security_program/security_program_install_result_sanitizer.py": {
+  "core/agent_runtime/runtime/security_program/security_program_install_result_sanitizer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4505,7 +4505,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/security_program/security_program_permission_gate.py": {
+  "core/agent_runtime/runtime/security_program/security_program_permission_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4633,7 +4633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/security_program/user_assisted_installer.py": {
+  "core/agent_runtime/runtime/security_program/user_assisted_installer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4641,7 +4641,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/notify/user_attention_notifier.py": {
+  "core/agent_runtime/runtime/notify/user_attention_notifier.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4657,7 +4657,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/notify/user_notification_adapter.py": {
+  "core/agent_runtime/runtime/notify/user_notification_adapter.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -23233,7 +23233,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/__init__.py": {
+  "core/agent_runtime/runtime/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -24169,7 +24169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/auth/__init__.py": {
+  "core/agent_runtime/runtime/auth/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -24177,7 +24177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/download/__init__.py": {
+  "core/agent_runtime/runtime/download/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -24185,7 +24185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/notify/__init__.py": {
+  "core/agent_runtime/runtime/notify/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -24193,7 +24193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/permission/__init__.py": {
+  "core/agent_runtime/runtime/permission/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -24201,7 +24201,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/playwright/__init__.py": {
+  "core/agent_runtime/runtime/playwright/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -24209,7 +24209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/security_program/__init__.py": {
+  "core/agent_runtime/runtime/security_program/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

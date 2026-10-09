@@ -8,7 +8,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from local_agent.runtime.permission.delegated_permission_store import (
+from core.agent_runtime.runtime.permission.delegated_permission_store import (
     get_permission,
     grant_permission,
     revoke,

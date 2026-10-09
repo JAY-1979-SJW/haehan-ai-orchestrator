@@ -10,7 +10,7 @@ from __future__ import annotations
 import threading
 from typing import Any
 
-from local_agent.runtime.permission.delegated_permission_policy import (
+from core.agent_runtime.runtime.permission.delegated_permission_policy import (
     CHECK_ALLOWED,
     PERM_ACTIVE,
     build_permission,

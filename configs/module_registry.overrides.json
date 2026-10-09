@@ -111,12 +111,12 @@
   "role": "browser_engine",
   "reason": "agent.py(BrowserAgent, L4)를 구동해 사이트맵을 탐지 — 단순 외부 API 커넥터(L3) 아님, 브라우저 엔진 성격"
  },
- "local_agent/runtime/permission/delegated_permission_store.py": {
+ "core/agent_runtime/runtime/permission/delegated_permission_store.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "저장 전 delegated_permission_policy(L2)의 build/check/revoke를 직접 호출해 검증까지 수행 — 단순 L7 저장소 아님, 정책 집행 성격"
  },
- "local_agent/runtime/local_session_boundary.py": {
+ "core/agent_runtime/runtime/local_session_boundary.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "세션 경계 판정 — auto_resume_after_auth(L2)가 참조하는 정책 헬퍼, L6 script_cli(low) 오분류"
@@ -126,22 +126,22 @@
   "role": "workflow",
   "reason": "자연어 입력→universal_ai_site_agent/user_intent_parser(L6) 호출 오케스트레이션 — L4 browser_engine 오분류"
  },
- "local_agent/runtime/result_sanitizer.py": {
+ "core/agent_runtime/runtime/result_sanitizer.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "결과 sanitize(보안 redaction) — security_guard(L2)와 동급 보안 정책, L6 script_cli(low) 오분류"
  },
- "local_agent/runtime/safe_write_result_sanitizer.py": {
+ "core/agent_runtime/runtime/safe_write_result_sanitizer.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "안전 쓰기 결과 sanitize — result_sanitizer와 동급 보안 정책, L6 script_cli(low) 오분류"
  },
- "local_agent/runtime/security_program/security_program_auto_resume.py": {
+ "core/agent_runtime/runtime/security_program/security_program_auto_resume.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "보안 프로그램 설치/탐지 워크플로 오케스트레이션(local_security_installer_runner 등 L6 호출) — L4 generic(low) 오분류"
  },
- "local_agent/runtime/security_program/security_program_install_completion_detector.py": {
+ "core/agent_runtime/runtime/security_program/security_program_install_completion_detector.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "security_program_detector(L6)와 동급 설치 완료 감지 워크플로 — L4 generic(low) 오분류"

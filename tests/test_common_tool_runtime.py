@@ -1,7 +1,7 @@
 import pytest
 
 from ai_orchestrator.agent_hub.action_registry import requires_user_approval
-from local_agent.runtime.common_tool_runtime import (
+from core.agent_runtime.runtime.common_tool_runtime import (
     EXECUTION_LOCAL_AGENT,
     PHASE_BLOCKED,
     PHASE_COMPLETED,

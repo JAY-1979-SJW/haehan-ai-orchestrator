@@ -15,7 +15,7 @@ from ai_orchestrator.contracts.action_risk_policy import (
     is_delegatable,
     is_user_direct_required,
 )
-from local_agent.runtime.permission.delegated_permission_policy import (
+from core.agent_runtime.runtime.permission.delegated_permission_policy import (
     CHECK_ALLOWED,
     CHECK_BLOCKED,
     CHECK_EXHAUSTED,

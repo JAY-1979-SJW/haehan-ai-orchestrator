@@ -6,7 +6,7 @@ from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_COMPLETED,
     STATUS_USER_ACTION_REQUIRED,
 )
-from local_agent.runtime.auth.auto_resume_after_auth import (
+from core.agent_runtime.runtime.auth.auto_resume_after_auth import (
     can_auto_resume,
     classify_resume_eligibility,
     resume_after_auth,

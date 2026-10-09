@@ -42,13 +42,13 @@ from ai_orchestrator.contracts.local_task_protocol import (  # noqa: E402
     STATUS_WAITING_USER_AUTH,
     build_task,
 )
-from local_agent.runtime.download.download_upload_manifest import build_manifest  # noqa: E402
-from local_agent.runtime.local_session_boundary import enforce_session_boundary  # noqa: E402
-from local_agent.runtime.playwright.playwright_bootstrap import (  # noqa: E402
+from core.agent_runtime.runtime.download.download_upload_manifest import build_manifest  # noqa: E402
+from core.agent_runtime.runtime.local_session_boundary import enforce_session_boundary  # noqa: E402
+from core.agent_runtime.runtime.playwright.playwright_bootstrap import (  # noqa: E402
     PLAYWRIGHT_READY,
     check_playwright_status,
 )
-from local_agent.runtime.result_sanitizer import sanitize_result  # noqa: E402
+from core.agent_runtime.runtime.result_sanitizer import sanitize_result  # noqa: E402
 
 # ── 설정 ──────────────────────────────────────────────────────────────────────
 
@@ -104,7 +104,7 @@ def _check_dangerous_state(result: dict) -> str | None:
 
 
 def _run_e2e() -> dict:
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     report: dict = {
         "run_at": datetime.datetime.now(tz=datetime.UTC).isoformat(),

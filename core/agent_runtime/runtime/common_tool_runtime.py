@@ -10,7 +10,6 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-
 SCHEMA_VERSION = "common-tool-runtime/v1"
 
 TOOL_BROWSER = "browser"

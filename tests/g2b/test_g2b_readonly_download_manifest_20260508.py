@@ -3,8 +3,8 @@
 """
 
 from ai_orchestrator.agent_hub.policy.file_upload_policy import validate_upload_manifest
-from local_agent.runtime.download.download_policy import check_file
-from local_agent.runtime.download.download_upload_manifest import (
+from core.agent_runtime.runtime.download.download_policy import check_file
+from core.agent_runtime.runtime.download.download_upload_manifest import (
     build_manifest,
     is_safe_manifest,
 )

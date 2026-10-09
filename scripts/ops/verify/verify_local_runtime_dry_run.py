@@ -179,7 +179,7 @@ def check_server(report: Report, *, live_server: bool) -> None:
 
 
 def check_playwright(report: Report) -> None:
-    from local_agent.runtime.playwright.playwright_bootstrap import check_playwright_status
+    from core.agent_runtime.runtime.playwright.playwright_bootstrap import check_playwright_status
 
     status = check_playwright_status()
     state = status.get("status")

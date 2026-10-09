@@ -16,10 +16,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from local_agent.runtime.result_sanitizer import sanitize_result
-from local_agent.runtime.security_guard import (
-    validate_task_before_run,
-)
 from ai_orchestrator.contracts.local_task_protocol import (
     EXEC_MODE_LOCAL_PLAYWRIGHT,
     STATUS_BLOCKED,
@@ -31,6 +27,10 @@ from ai_orchestrator.server.local_agent_task_api import (
     get_pending_local_agent_task,
     mark_task_assigned,
     receive_local_agent_result,
+)
+from core.agent_runtime.runtime.result_sanitizer import sanitize_result
+from core.agent_runtime.runtime.security_guard import (
+    validate_task_before_run,
 )
 
 # ── polling 설정 ───────────────────────────────────────────────────────────────

@@ -8,12 +8,12 @@ from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_WAITING_USER_AUTH,
     build_result,
 )
-from local_agent.runtime.local_session_boundary import (
+from core.agent_runtime.runtime.local_session_boundary import (
     enforce_session_boundary,
     is_safe_for_export,
     validate_session_boundary,
 )
-from local_agent.runtime.result_sanitizer import (
+from core.agent_runtime.runtime.result_sanitizer import (
     sanitize_result,
     validate_sanitized_result,
 )

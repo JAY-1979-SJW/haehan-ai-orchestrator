@@ -6,18 +6,18 @@ user attention UI 통합 테스트
 
 from unittest.mock import patch
 
-from local_agent.runtime.auth.auth_wait_controller import (
+from core.agent_runtime.runtime.auth.auth_wait_controller import (
     AUTH_SIGNAL_CERT,
     AUTH_SIGNAL_LOGIN,
     AUTH_SIGNAL_OTP,
 )
-from local_agent.runtime.notify.user_attention_notifier import (
+from core.agent_runtime.runtime.notify.user_attention_notifier import (
     build_auth_attention_notice,
     get_notifier_status,
     notify_auth_required,
     request_browser_foreground,
 )
-from local_agent.runtime.playwright.browser_foreground_adapter import (
+from core.agent_runtime.runtime.playwright.browser_foreground_adapter import (
     HEADED_BROWSER_REQUIRED,
 )
 
@@ -86,7 +86,7 @@ class TestNotifyAuthRequired:
 
     def test_notification_failure_does_not_fail_status(self):
         with patch(
-            "local_agent.runtime.notify.user_notification_adapter._try_send_os_notification",
+            "core.agent_runtime.runtime.notify.user_notification_adapter._try_send_os_notification",
             side_effect=Exception("OS error"),
         ):
             result = notify_auth_required(AUTH_SIGNAL_LOGIN)
@@ -94,7 +94,7 @@ class TestNotifyAuthRequired:
 
     def test_foreground_failure_does_not_fail_status(self):
         with patch(
-            "local_agent.runtime.playwright.browser_foreground_adapter._try_bring_to_foreground",
+            "core.agent_runtime.runtime.playwright.browser_foreground_adapter._try_bring_to_foreground",
             side_effect=Exception("win32 error"),
         ):
             result = notify_auth_required(AUTH_SIGNAL_LOGIN)
@@ -164,25 +164,25 @@ class TestNotifierStatus:
 
 class TestSmoke:
     def test_auth_wait_controller_import_ok(self):
-        from local_agent.runtime.auth.auth_wait_controller import enter_auth_wait
+        from core.agent_runtime.runtime.auth.auth_wait_controller import enter_auth_wait
 
         result = enter_auth_wait("smoke-task", AUTH_SIGNAL_LOGIN)
         assert result["status"] in {"WAITING_USER_AUTH", "USER_ACTION_REQUIRED"}
 
     def test_auto_resume_import_ok(self):
-        from local_agent.runtime.auth.auto_resume_after_auth import can_auto_resume
+        from core.agent_runtime.runtime.auth.auto_resume_after_auth import can_auto_resume
 
         assert can_auto_resume("read_page") is True
         assert can_auto_resume("final_submit") is False
 
     def test_session_boundary_import_ok(self):
-        from local_agent.runtime.local_session_boundary import get_boundary_safe_defaults, is_safe_for_export
+        from core.agent_runtime.runtime.local_session_boundary import get_boundary_safe_defaults, is_safe_for_export
 
         result = get_boundary_safe_defaults()
         result["ok"] = True
         assert is_safe_for_export(result) is True
 
     def test_playwright_runner_imports_ok(self):
-        from local_agent.runtime.playwright import playwright_runner
+        from core.agent_runtime.runtime.playwright import playwright_runner
 
         assert hasattr(playwright_runner, "run_task")

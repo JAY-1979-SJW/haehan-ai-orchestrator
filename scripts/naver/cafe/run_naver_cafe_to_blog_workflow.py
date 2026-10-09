@@ -32,7 +32,7 @@ _REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]  # scripts/naver/cafe/ 
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from local_agent.runtime.playwright.playwright_bootstrap import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
+from core.agent_runtime.runtime.playwright.playwright_bootstrap import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
     PLAYWRIGHT_READY,
     check_playwright_status,
 )
@@ -76,7 +76,7 @@ def main() -> None:
         }
     else:
         try:
-            from local_agent.runtime.playwright.playwright_runner import run_task
+            from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
             report = run_cafe_to_blog_workflow(
                 cafe_url=CAFE_URL,
