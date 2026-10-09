@@ -179,13 +179,13 @@ python scripts\entry\cdp_cli.py login-watch 1 300
 배포 관련 변경 전 dry-run 기록:
 
 ```bash
-python scripts/ops/deploy/deploy_dry_run.py -- <dry-run command>
+python tools/deploy/deploy_dry_run.py -- <dry-run command>
 ```
 
 예:
 
 ```bash
-python scripts/ops/deploy/deploy_dry_run.py -- python -m pytest tests/test_quality_gate.py -q
+python tools/deploy/deploy_dry_run.py -- python -m pytest tests/test_quality_gate.py -q
 ```
 
 `docker/`, `Dockerfile`, `docker-compose.yml`, `ai_orchestrator.connectors.instagram/`, `ai_orchestrator.browser_tool.worker/`, `services/`, GitHub Actions workflow 변경은 성공한 dry-run 증적 없이는 게이트가 실패한다.

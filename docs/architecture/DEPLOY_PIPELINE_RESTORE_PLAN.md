@@ -83,7 +83,7 @@ curl -s https://haehan-ai.kr/orchestrator/api/v1/health
 - 값이 `unknown`이어도 컨테이너 healthcheck는 통과한다(200만 본다). 가시성 정보일 뿐 기동 조건이 아니다.
 
 ### 5-5. 자동 대조 (선택, 후속)
-`scripts/ops/deploy/deploy_diagnose.py`가 이미 `PROD/health`를 조회한다. 거기에 "응답의 `git_sha`가 `git ls-remote` 결과와 일치하는가"를 추가하면 §5-2~5-3이 한 명령이 된다(코드 변경이라 이번 범위에는 넣지 않았다). 1단계(B)를 택하면 워크플로 마지막 단계가 같은 대조를 수행해 불일치 시 실패 처리한다.
+`tools/deploy/deploy_diagnose.py`가 이미 `PROD/health`를 조회한다. 거기에 "응답의 `git_sha`가 `git ls-remote` 결과와 일치하는가"를 추가하면 §5-2~5-3이 한 명령이 된다(코드 변경이라 이번 범위에는 넣지 않았다). 1단계(B)를 택하면 워크플로 마지막 단계가 같은 대조를 수행해 불일치 시 실패 처리한다.
 
 ## 6. 서버 측 필요 작업 (전부 대표님 승인 대상 — 이번에 하나도 실행하지 않음)
 

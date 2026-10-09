@@ -7377,7 +7377,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/deploy/deploy_dry_run.py": {
+  "tools/deploy/deploy_dry_run.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -12705,7 +12705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/deploy/create_web_project_provisioning_plan.py": {
+  "tools/deploy/create_web_project_provisioning_plan.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12713,7 +12713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/deploy/deploy_diagnose.py": {
+  "tools/deploy/deploy_diagnose.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23585,7 +23585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/deploy/__init__.py": {
+  "tools/deploy/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
