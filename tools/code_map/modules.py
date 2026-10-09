@@ -98,6 +98,18 @@ def _layer_inversion_target(t: str, layer: dict[str, tuple], ls: str, allowed: d
     return lt if lt in CODE_LAYERS and bad else None
 
 
+def _is_shim_file(s: str) -> bool:
+    """`# haehan-shim:` 로 시작하는 1줄 경로-포워딩 호환 파일인가(scripts/ops/make_shim.py 가
+    만듦). shim 은 메커니즘상 항상 "낮은 층 shim → 실제(보통 더 높은 층) 모듈"을 가리켜 층
+    역전으로 잡힌다(PR #165 분석, 2026-10-09 — verify_change.py·tool_home_gate.py 의 같은
+    종류 판정에서 이미 제외함)."""
+    try:
+        with (ROOT / s).open(encoding="utf-8", errors="replace") as f:
+            return f.readline().startswith("# haehan-shim:")
+    except OSError:
+        return False
+
+
 def _find_layer_inversions(
     import_edges: dict, layer: dict[str, tuple], allowed: dict | None
 ) -> tuple[Counter, dict[str, list[str]]]:
@@ -108,6 +120,8 @@ def _find_layer_inversions(
         if s not in layer or PurePosixPath(s).suffix not in (".py", ".ts", ".tsx", ".js"):
             continue
         if PurePosixPath(s).name == "__init__.py":  # 패키지 재수출은 방향 검사 제외
+            continue
+        if _is_shim_file(s):
             continue
         ls = layer[s][0]
         if ls not in CODE_LAYERS:
@@ -277,8 +291,16 @@ def _cycle_edges(import_edges: dict) -> dict:
 
     층간 위반(_find_layer_inversions)과 같은 기준이다(2026-10-07 대표님 승인). 예전에는 all_edges(문자열 경로 언급 포함)로 재서
     '문자열로만 서로 언급하는' 쌍이 순환으로 잡혔고, 조상 __init__ 간선이 상위↔하위 폴더 순환을 만들었다.
+
+    2026-10-09: shim 파일(`# haehan-shim:`)에서 나가는 간선도 뺀다 — shim 은 메커니즘상 항상
+    "옛 폴더 shim → 실제 폴더"를 가리켜 가짜 순환을 만든다(_find_layer_inversions 와 같은 이유로
+    제외, verify_change.py·tool_home_gate.py 에서도 이미 같은 판정에 적용함).
     """
-    return {s: [t for t in ts if not _is_ancestor_init_edge(s, t)] for s, ts in import_edges.items()}
+    return {
+        s: [t for t in ts if not _is_ancestor_init_edge(s, t)]
+        for s, ts in import_edges.items()
+        if not _is_shim_file(s)
+    }
 
 
 def _cycle_pairs(import_edges: dict, mod: dict[str, str], nodes: dict) -> list[tuple[str, str]]:
