@@ -1,4 +1,8 @@
-"""도구 분리(smartstore 자동화) — 스마트스토어 자동화 5개 모듈을 도구 폴더로 옮긴 뒤에도 옛 경로·공개 이름·경로 값이 그대로인지 고정한다."""
+"""도구 분리(smartstore 자동화) — 스마트스토어 자동화 5개 모듈을 도구 폴더로 옮긴 뒤에도 공개 이름·경로 값이 그대로인지 고정한다.
+
+옛 경로(scripts.naver.automation.*) 재수출 shim 은 b7d96230(W9, 호출처 없음 확인)으로
+의도적으로 삭제됐다 — 그 shim 을 대상으로 하던 test_compat_reexports_still_work 도 함께 뺐다.
+"""
 
 from __future__ import annotations
 
@@ -8,12 +12,6 @@ from ai_orchestrator.paths import repo_root
 
 MODS = ("analytics_dashboard", "competitor_analysis", "csv_import", "inventory_monitor", "order_automation")
 NEW = "scripts.naver.smartstore.automation."
-
-
-def test_compat_reexports_still_work():
-    import scripts.naver.automation.csv_import as csv_old
-    csv_new = importlib.import_module(NEW + "csv_import")
-    assert csv_old.CSVImporter is csv_new.CSVImporter
 
 
 def test_root_constant_value_unchanged():

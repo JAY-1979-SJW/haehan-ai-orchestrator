@@ -31,5 +31,5 @@ def test_all_leaves_separated_and_facade():
 def test_root_is_thin():
     """live_inputs 루트는 ≤400 LOC (오케스트레이션+파사드)."""
     import pathlib
-    p = pathlib.Path(__file__).resolve().parents[2] / "scripts" / "google" / "live_inputs.py"
+    p = pathlib.Path(__file__).resolve().parents[2] / "scripts" / "google" / "common" / "live_inputs.py"
     assert sum(1 for _ in p.open(encoding="utf-8")) <= 400

@@ -29,13 +29,10 @@ MODULE_LEVEL = {"ai_orchestrator/routers/registry.py"}
 
 # 사이트 등록표에 (정적으로는) 닿지만 로그인·접속을 실제로 부르지 않는 실행 파일. 사유를 적어야 한다.
 _EUM_FORM = "cdp_client 의 eval_js·goto_url 만 쓴다(get_site·list_sites·open_site 를 부르지 않음) — 로그인은 eum.auth 가 직접 한다"
-_AUDIT = "라우터/계약을 정적·인메모리로 점검하는 읽기 전용 감사 — 로그인·사이트 접속을 부르지 않는다"
 EXEMPT: dict[str, str] = {
     "scripts/eum/registration.py": _EUM_FORM,
     "scripts/eum/deregistration.py": _EUM_FORM,
     "scripts/eum/form_analyzer.py": _EUM_FORM,
-    "tools/audits/google/audit_google_workspace_router_compatibility.py": _AUDIT,
-    "tools/audits/app/audit_site_work_function_baseline.py": _AUDIT,
 }
 
 SKIP_PREFIXES = ("scripts/archive/", "tests/", "ai_orchestrator/tests/", "scripts/ops/smoke/")
