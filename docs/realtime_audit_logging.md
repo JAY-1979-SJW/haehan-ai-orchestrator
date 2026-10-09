@@ -66,14 +66,14 @@ python scripts/common/realtime_audit.py tail
 
 ```bash
 python scripts/common/realtime_audit.py tail --text
-python scripts/ops/runtime/watch_log.py
+python tools/runtime/watch_log.py
 ```
 
 특정 파일 감시:
 
 ```bash
-python scripts/ops/runtime/watch_log.py data/logs/app.log
-python scripts/ops/runtime/watch_log.py data/logs/critical.log
+python tools/runtime/watch_log.py data/logs/app.log
+python tools/runtime/watch_log.py data/logs/critical.log
 ```
 
 ---
@@ -193,7 +193,7 @@ python tools/deploy/deploy_dry_run.py -- python -m pytest tests/test_quality_gat
 
 Updated: 2026-05-13
 
-Use `scripts/ops/runtime/app_realtime_check.py` for live app-level monitoring. It is
+Use `tools/runtime/app_realtime_check.py` for live app-level monitoring. It is
 read-only and records one `APP_REALTIME_CHECK` event per cycle.
 
 Checks:

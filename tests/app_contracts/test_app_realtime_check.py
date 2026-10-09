@@ -1,7 +1,7 @@
 from pathlib import Path
 from uuid import uuid4
 
-from scripts.ops.runtime import app_realtime_check as check
+from tools.runtime import app_realtime_check as check
 
 
 def _runtime_dir() -> Path:

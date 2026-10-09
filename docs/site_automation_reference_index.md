@@ -87,7 +87,7 @@ discover -> plan -> prepare -> submit -> verify -> log
 | 팝업/비정상 접근 | `scripts/browser/popup/popup_watcher.py`, `scripts/browser/popup/popup_classifier.py`, `scripts/<site>/access_handler.py` |
 | 작업 계획 | `scripts/<site>/work_plan.py` |
 | 실행 로그 | `scripts/<site>/run_log.py` |
-| 실시간 감사 | `scripts/common/realtime_audit.py`, `scripts/ops/runtime/watch_log.py` |
+| 실시간 감사 | `scripts/common/realtime_audit.py`, `tools/runtime/watch_log.py` |
 | 승인 게이트 | `scripts/common/gate.py`, `scripts/<site>/gates.py` |
 | 작업트리 분류 | `tools/devflow/worktree_change_index.py` |
 

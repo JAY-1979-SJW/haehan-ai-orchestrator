@@ -7057,7 +7057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/runtime/app_realtime_check.py": {
+  "tools/runtime/app_realtime_check.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "common",
@@ -12537,7 +12537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/runtime/cdp_click_watch.py": {
+  "tools/runtime/cdp_click_watch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12873,7 +12873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/runtime/log_watcher.py": {
+  "tools/runtime/log_watcher.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13097,7 +13097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/runtime/session_probe.py": {
+  "tools/runtime/session_probe.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13233,7 +13233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/runtime/verify_runtime_drift.py": {
+  "tools/runtime/verify_runtime_drift.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13569,7 +13569,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/runtime/watch_log.py": {
+  "tools/runtime/watch_log.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -23601,7 +23601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/runtime/__init__.py": {
+  "tools/runtime/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",

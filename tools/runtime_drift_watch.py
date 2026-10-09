@@ -23,7 +23,7 @@ from scripts.common.app_paths import repo_root  # noqa: E402
 ROOT = repo_root()
 sys.path.insert(0, str(ROOT))
 
-from scripts.ops.runtime import verify_runtime_drift  # noqa: E402
+from tools.runtime import verify_runtime_drift  # noqa: E402
 
 DEFAULT_LATEST = ROOT / "data" / "runtime" / "runtime_drift_latest.json"
 DEFAULT_HISTORY = ROOT / "data" / "runtime" / "runtime_drift_history.jsonl"

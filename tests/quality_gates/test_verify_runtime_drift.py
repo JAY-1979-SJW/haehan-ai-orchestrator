@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from scripts.ops.runtime import verify_runtime_drift as drift
+from tools.runtime import verify_runtime_drift as drift
 
 
 def _snapshot(*, head="a" * 40, status="", fingerprint="fp") -> dict:

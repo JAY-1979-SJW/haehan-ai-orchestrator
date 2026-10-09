@@ -19,7 +19,7 @@ REPO = Path(__file__).resolve().parents[2]
 # (모듈, 표현식, data 루트 아래 상대 경로) — 표현식은 모듈을 import 한 뒤 평가한다.
 ITEMS: list[tuple[str, str, tuple[str, ...]]] = [
     # 배치 1 — ai_orchestrator 가 이미 data_dir() 를 쓰는 짝(읽는 곳과 쓰는 곳 일치)
-    ("scripts.ops.runtime.session_probe", "OUTPUT_PATH", ("login_session_monitor_latest.json",)),
+    ("tools.runtime.session_probe", "OUTPUT_PATH", ("login_session_monitor_latest.json",)),
     ("scripts.naver.cafe.analysis.organizer", "_DATA_DIR", ("cafe",)),
     ("scripts.naver.cafe.collection.explorer", "_DATA_DIR", ("cafe",)),
     ("scripts.naver.blog.core.writer_pro", "DRAFT_DIR", ("blog_drafts",)),
@@ -129,7 +129,7 @@ def test_follow_data_root(tmp_path):
 @pytest.mark.parametrize(
     ("scripts_mod", "scripts_attr", "orch_mod", "orch_attr"),
     [
-        ("scripts.ops.runtime.session_probe", "OUTPUT_PATH", "ai_orchestrator.connectors.session_status_router", "DATA_PATH"),
+        ("tools.runtime.session_probe", "OUTPUT_PATH", "ai_orchestrator.connectors.session_status_router", "DATA_PATH"),
         (
             "scripts.naver.cafe.collection.explorer",
             "_DATA_DIR",
