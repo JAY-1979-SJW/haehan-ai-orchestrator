@@ -93,7 +93,7 @@ def test_compose_passes_build_args_with_unknown_default():
 
 
 def test_server_deploy_passes_sha_to_compose_build():
-    text = ROOT / "tools" / "server_deploy.py".read_text(encoding="utf-8")
+    text = (ROOT / "tools" / "server_deploy.py").read_text(encoding="utf-8")
     assert '"rev-parse", "HEAD"' in text
     assert 'env["GIT_SHA"]' in text
     assert "env=_build_env()" in text

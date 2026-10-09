@@ -373,6 +373,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      # CI 러너는 매번 새로 clone 해서 core.hooksPath 가 비어 있다 — module_quality_gate 의
+      # test_required_local_gate_wiring_passes_current_sources 가 `git config --get
+      # core.hooksPath` 를 직접 읽고 .githooks 를 기대하므로, 로컬 개발 환경과 똑같이 맞춰준다
+      # (2026-10-10, PR165 verify FAIL 조사 중 발견).
+      - name: Set core.hooksPath
+        run: git config core.hooksPath .githooks
+
       - name: Set up Python
         uses: actions/setup-python@v7
         with:

@@ -218,7 +218,7 @@ def test_12_gate_module_design_tests_pass_after_all_g2b_imports():
     import ai_orchestrator.connectors.g2b.g2b_public_notice_workflow  # noqa: F401 - 임포트 자체가 시험 대상(부작용/오염 검증)
 
     # gate_module_design 테스트 파일 소스 확인
-    test_file = _repo_root / "tests" / "test_browser_gate_module_design_20260506.py"
+    test_file = _repo_root / "tests" / "browser" / "test_browser_gate_module_design_20260506.py"
     source = test_file.read_text(encoding="utf-8")
     blocked = ["playwright", "browser_worker", "ai_orchestrator.browser_tool.worker", "dispatcher", "task_executor"]
     for mod in blocked:

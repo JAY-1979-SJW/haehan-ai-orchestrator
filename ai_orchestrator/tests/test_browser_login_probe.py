@@ -763,7 +763,7 @@ def test_smoke_script_not_auto_executed():
 
 def test_no_credentials_hardcoded():
     root = Path(__file__).resolve().parent.parent.parent
-    probe_src = root / "core" / "agent_runtime" / "browser" / "browser_login_probe.py".read_text(encoding="utf-8")
+    probe_src = (root / "core" / "agent_runtime" / "browser" / "browser_login_probe.py").read_text(encoding="utf-8")
     smoke_src = (root / "scripts" / "naver" / "smoke_naver_manual_login_probe.py").read_text(encoding="utf-8")
 
     forbidden_tokens = (
