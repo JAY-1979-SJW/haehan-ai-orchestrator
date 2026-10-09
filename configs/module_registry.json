@@ -4099,11 +4099,11 @@
   },
   "scripts/naver/agent_mixins/cafe_mixin_activity.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "naver_cafe",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: cafe_mixin.py(L4, confirmed)의 사유('CafeReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합')가 이 파일을 포함한 형제 믹스인 전부를 L4 로 지목 — SITE_MODULES 기본값(L5) 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/naver/agent_mixins/cafe_mixin_article.py": {
    "layer": "L4",
@@ -4115,35 +4115,35 @@
   },
   "scripts/naver/agent_mixins/cafe_mixin_common.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "naver_cafe",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: cafe_mixin_article.py(L4, 임시판정)가 부르는 공용 베이스 — cafe_mixin 믹스인 가족과 같은 L4(SITE_MODULES 기본값 L5 오분류)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/naver/agent_mixins/cafe_mixin_media.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "naver_cafe",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: cafe_mixin.py(L4, confirmed) 와 동일 사유 — 상동",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/naver/agent_mixins/cafe_mixin_member.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "naver_cafe",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: cafe_mixin.py(L4, confirmed) 와 동일 사유 — 상동",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/naver/agent_mixins/cafe_mixin_read.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "naver_cafe",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: cafe_mixin.py(L4, confirmed) 와 동일 사유 — 상동",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/browser/agent/calendar_mixin.py": {
    "layer": "L4",
@@ -4155,11 +4155,11 @@
   },
   "scripts/naver/agent_mixins/mail_mixin.py": {
    "layer": "L4",
-   "role": "browser_engine",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "PR #165 CI165: scripts/browser/agent/agent.py 가 다중상속으로 묶는 형제 믹스인(calendar_mixin·mybox_mixin·blog_mixin·cafe_mixin) 전부 L4(blog_mixin·cafe_mixin 은 이미 confirmed)인데 이 파일만 SITE_MODULES 기본값(L5)으로 빠짐 — 형제와 맞춤",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/browser/agent/mybox_mixin.py": {
    "layer": "L4",
@@ -4197,9 +4197,9 @@
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "PR #165 CI165: browser_allowlist_expansion_preflight.py·browser_policy_integration.py(둘 다 L2, policy)가 참조하는 정적 후보 레지스트리 — 설정/계약성 데이터라 L1, L10 기본값 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "local_agent/runtime/playwright/browser_foreground_adapter.py": {
    "layer": "L4",
@@ -4221,17 +4221,17 @@
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "PR #165 CI165: 상동 패키지의 사이트 레지스트리 — 상동 사유로 L1",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "local_agent/runtime/site_profile/browser_value_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "PR #165 CI165: 상동 패키지의 값 레지스트리 — 상동 사유로 L1",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/agent_hub/business_action_profiles.py": {
    "layer": "L1",
@@ -4251,11 +4251,11 @@
   },
   "local_agent/runtime/common_tool_runtime.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: scripts/google/cloud/local_browser.py·scripts/google/common/subdomain_logic.py·scripts/site_engine/sso_runtime.py(L4·L5)가 공통으로 쓰는 범용 도구 런타임 헬퍼 — L10 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/permission/content_publish_guard.py": {
    "layer": "L2",
@@ -4315,27 +4315,27 @@
   },
   "local_agent/runtime/download/download_result_sanitizer.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165(2차): download_upload_manifest.py(이번에 L4 로 정정) 가 부르는 형제 파일 — 같은 로컬 에이전트 패키지 L10 기본값 오분류, 같은 L4 로 맞춤",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/download/download_upload_manifest.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: scripts/g2b/run_readonly_local_e2e.py(L6)가 부르는 범용 다운로드/업로드 매니페스트 헬퍼 — L10 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/universal/generic_selector_discovery.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: scripts/explorer/page_analysis.py(L4)가 부르는 범용 셀렉터 탐색 헬퍼 — 이름 그대로 generic, L10 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/security_program/installer_folder_presenter.py": {
    "layer": "L4",
@@ -4411,11 +4411,11 @@
   },
   "local_agent/runtime/playwright/playwright_bootstrap.py": {
    "layer": "L4",
-   "role": "browser_engine",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "PR #165 CI165: run_readonly_local_e2e.py·run_naver_cafe_to_blog_workflow.py·run_playwright_smoke.py(전부 L6)가 공통으로 쓰는 playwright 부트스트랩 헬퍼 — L10 기본값 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "local_agent/runtime/playwright/playwright_runner.py": {
    "layer": "L6",
@@ -4459,11 +4459,11 @@
   },
   "local_agent/runtime/security_program/security_installer_candidate_finder.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: security_program_auto_resume.py(L6, confirmed)가 부르는 범용 설치 탐지 헬퍼 — local_agent/* 디렉터리 기본값(L10)으로 떨어졌을 뿐, 그 confirmed 사유에 'L4 generic(low) 오분류'로 이미 지목됨",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/security_program/security_installer_policy.py": {
    "layer": "L2",
@@ -4483,11 +4483,11 @@
   },
   "local_agent/runtime/security_program/security_program_detector.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: security_program_auto_resume.py·security_program_install_completion_detector.py(둘 다 L6, confirmed)가 부르는 범용 탐지 헬퍼 — 상동(L10 기본값 오분류)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/security_program/security_program_install_completion_detector.py": {
    "layer": "L6",
@@ -4499,11 +4499,11 @@
   },
   "local_agent/runtime/security_program/security_program_install_result_sanitizer.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: security_program_auto_resume.py(L6, confirmed)가 부르는 결과 정제 헬퍼 — 상동(L10 기본값 오분류)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/security_program/security_program_permission_gate.py": {
    "layer": "L2",
@@ -4515,11 +4515,11 @@
   },
   "local_agent/runtime/site_profile/selector_pack_registry.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: scripts/site_engine/create_site_profile.py(L4)가 부르는 범용 셀렉터팩 레지스트리 — L10 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/site_profile/site_capability_matrix.py": {
    "layer": "L2",
@@ -4539,11 +4539,11 @@
   },
   "local_agent/runtime/site_profile/site_type_classifier.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165(2차): universal_ai_site_agent.py(이번에 L4 로 정정) 가 부르는 형제 파일 — 상동",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/task_client.py": {
    "layer": "L4",
@@ -4579,35 +4579,35 @@
   },
   "local_agent/runtime/universal/universal_ai_site_agent.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: natural_language_task_api.py(L6, confirmed)가 부르는 범용 사이트 에이전트 헬퍼 — 그 confirmed 사유에 'L4 browser_engine 오분류'로 이미 지목됨",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/universal/universal_page_observer.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165(2차): universal_ai_site_agent.py(이번에 L4 로 정정) 가 부르는 형제 파일 — 상동",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/universal/universal_safe_result.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: natural_language_task_api·real_site_smoke_runner·universal_action_verifier·universal_workflow_runner(전부 L6)가 공통으로 쓰는 안전결과 래퍼 — L10 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/universal/universal_task_planner.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165(2차): universal_ai_site_agent.py(이번에 L4 로 정정) 가 부르는 형제 파일 — 상동",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/universal/universal_workflow_runner.py": {
    "layer": "L6",
@@ -4651,19 +4651,19 @@
   },
   "local_agent/runtime/universal/user_intent_parser.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: natural_language_task_api.py(L6, confirmed)가 부르는 의도 파싱 헬퍼 — 상동(L10 기본값 오분류)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/notify/user_notification_adapter.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: scripts/naver/mail/watch_new_mail.py(L5)가 부르는 범용 알림 어댑터 — L10 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "local_agent/runtime/universal/workflow_template_engine.py": {
    "layer": "L6",
@@ -4771,11 +4771,11 @@
   },
   "ai_orchestrator/agent_hub/registry/common.py": {
    "layer": "L4",
-   "role": "browser_engine",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "PR #165 CI165: '공용 기반 이름(common)' 휴리스틱이 L1 으로 잘못 당겼음(L1 은 자기 자신만 허용, policy(L2)·contracts(L4) 를 못 부름). 같은 폴더 형제(agent.py·cleanup.py·exports.py·task_cancel.py·task_lifecycle.py·task_queue.py)가 전부 L4(기본값)라 그 형제들과 맞춤 — L8 로 먼저 시도했다가 바로 그 형제들(L4)과 충돌해 정정함",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/agent_hub/registry/sanitize.py": {
    "layer": "L4",
@@ -5285,7 +5285,7 @@
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_cafe",
-   "reason": "sites/runner.py(L6)를 직접 호출해 수집을 실행 — 수동적 L4 어댑터 아님, 수집 워크플로 성격",
+   "reason": "PR #165 CI165: 형제 ai_orchestrator/sites/runner.py(L6, 업무 흐름)를 부르는 사이트 수집 워크플로 — classify.py 자신이 '근거 부족, 기본값'으로 표시한 low-confidence 판정, runner.py 와 같은 L6 로 맞춤",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -24282,6 +24282,14 @@
    "source": "rule"
   },
   "tests/test_verify_change_shim_violations.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_ci165_layer_overrides.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
