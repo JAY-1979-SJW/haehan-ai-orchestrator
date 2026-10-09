@@ -224,6 +224,7 @@ def router_mod():
         "ai_orchestrator.routers.ops_router",
     ]
     originals = {n: sys.modules.get(n) for n in mock_names}
+    original_registry = sys.modules.get("ai_orchestrator.routers.registry")
     mocks = {
         "ai_orchestrator.llm.planner": MagicMock(),
         "ai_orchestrator.tasks.executor": MagicMock(),
@@ -262,7 +263,13 @@ def router_mod():
             sys.modules.pop(mod_name, None)
         else:
             sys.modules[mod_name] = originals[mod_name]
-    sys.modules.pop("ai_orchestrator.routers.registry", None)
+    # 결함(2026-10-10, PR165 verify FAIL — 같은 사유: test_post_tasks_dry_run_flag_
+    # implementation_20260518.py 와 동일 패턴). 원래 sys.modules 에 있던 진짜 registry
+    # 모듈을 복원 — 무조건 pop 하면 뒤에 도는 다른 테스트의 importlib.reload() 가 깨진다.
+    if original_registry is None:
+        sys.modules.pop("ai_orchestrator.routers.registry", None)
+    else:
+        sys.modules["ai_orchestrator.routers.registry"] = original_registry
 
 
 def _make_body(action_type="write_file", task_id="t-smoke"):

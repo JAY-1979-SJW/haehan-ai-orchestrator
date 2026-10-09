@@ -385,6 +385,13 @@ jobs:
           python -m pip install -r requirements.txt -c constraints.txt
           python -m pip install -r requirements-dev.txt
 
+      # requirements.txt 에 playwright 패키지는 있지만 실제 브라우저 실행파일 다운로드 단계가
+      # 없어 tests/browser/* 의 real-browser smoke 시험이 매번 "Executable doesn't exist" 로
+      # 깨졌다(2026-10-10, PR165 verify FAIL 조사 중 발견 — 이 시험들은 PR 기간에 새로 추가돼
+      # new-only 제외 대상이 아니라 CI 환경 자체를 고쳐야 한다).
+      - name: Install Playwright browser (chromium)
+        run: python -m playwright install chromium
+
       - name: Verify change — tests ${{ matrix.shard }}/3
         run: >
           python tools/verify_change.py --phase tests --shard ${{ matrix.shard }}/3

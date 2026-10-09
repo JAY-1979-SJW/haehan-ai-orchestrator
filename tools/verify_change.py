@@ -594,11 +594,29 @@ def _build_verify_report(
     return ok, "\n".join(lines)
 
 
-def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: Path) -> tuple[list[str], str]:
+def _audit_kit_new_findings(
+    py_changed: list[str], base_tree: Path, head_tree: Path, moved: dict[str, str] | None = None
+) -> tuple[list[str], str]:
     """audit-kit 의 파일 단위 개발 기준서·순환 검사에서 "이번 변경이 새로 만든" 문제 (기준 트리 결과와의 차이).
 
     audit-kit 이 없는 PC·CI 에서는 검사를 생략하고 그 사실을 알린다(설치된 PC 에서는 필수: 새 문제가 있으면 FAIL).
+
+    결함(2026-10-10, PR165 verify FAIL — core/agent_runtime/browser/approval/browser_approval_
+    errors.py 의 설명 docstring이 매번 "신규" 로 잡히는 원인 조사 중 발견): moved(새경로→옛경로,
+    이동표)를 안 받아서 새 경로가 base tree 에 없으면(흔함 — 이 PR 기간에 옮겨진 파일) 무조건
+    "base 에 아무것도 없음(전부 신규)"으로 봤다. 다른 측정 항목(violations·cycles 등)은 전부
+    moved 를 받아 옛 경로로 base 와 대조하는데 audit-kit 경로만 빠져 있었다 — 같은 방식으로
+    옛 경로를 찾아 대조한다.
     """
+    moved = moved or {}
+
+    def _base_rel(rel: str) -> str | None:
+        if (base_tree / rel).exists():
+            return rel
+        old = moved.get(rel)
+        if old and (base_tree / old).exists():
+            return old
+        return None
     from scripts.ops.hooks.audit_kit_gate import (
         BATCH_SCRIPT,
         _new_typed,
@@ -620,6 +638,8 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
             else "",
         )
 
+    base_rels = {rel: _base_rel(rel) for rel in py_changed}
+
     # mypy 는 파일마다 따로 돌리면 전역 잠금 때문에 직렬이라 변경 파일 1065개(PR #160)에서 90분을 넘겼다 → 기준 폴더별 1회씩 일괄 실행한다
     # (head·base 각각). 파일별 결과(오류 문장 집합)는 같고, 신규 판정은 파일마다 같은 규칙(_new_typed)을 쓴다.
     py = mypy_python(kit)
@@ -628,9 +648,7 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
     if py is not None:
         _log(f"mypy 일괄 검사 시작: 변경 {len(py_changed)}개 (head·base)")
         head_keys = mypy_keys_batch(py, [head_tree / rel for rel in py_changed], head_tree)
-        base_keys = mypy_keys_batch(
-            py, [base_tree / rel for rel in py_changed if (base_tree / rel).exists()], base_tree
-        )
+        base_keys = mypy_keys_batch(py, [base_tree / r for r in base_rels.values() if r is not None], base_tree)
         _log("mypy 일괄 검사 끝")
 
     # audit-kit hook 은 호출마다 프로젝트 그래프를 새로 만들어 파일당 ~8초라서 변경 1000개면 90분을 넘겼다(PR #160) →
@@ -643,7 +661,7 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
         ]
     _log(f"audit-kit 묶음 검사 시작: 변경 {len(py_changed)}개 (head·base)")
     head_batch = batch_raw_findings(kit, head_tree, py_changed)
-    base_batch = batch_raw_findings(kit, base_tree, [rel for rel in py_changed if (base_tree / rel).exists()])
+    base_batch = batch_raw_findings(kit, base_tree, [r for r in base_rels.values() if r is not None])
     _log(f"audit-kit 묶음 검사 끝: head {len(head_batch)}개·base {len(base_batch)}개 (나머지는 단독 재시도)")
     done = [0]
 
@@ -662,16 +680,20 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
         head = head_batch[rel] if rel in head_batch else raw_findings(kit, head_tree / rel, head_tree)
         if head is None:
             return [f"{rel}: audit-kit 검사를 하지 못했습니다"]
-        has_base = (base_tree / rel).exists()
+        base_rel = base_rels.get(rel)
+        has_base = base_rel is not None
         if not has_base:
             base: list[str] | None = []
         else:
-            base = base_batch[rel] if rel in base_batch else raw_findings(kit, base_tree / rel, base_tree)
+            base = base_batch[base_rel] if base_rel in base_batch else raw_findings(kit, base_tree / base_rel, base_tree)
         known = {finding_key(x) for x in (base or [])}
         out = [f"{rel}: {x}" for x in head if finding_key(x) not in known]
-        if py is not None:  # mypy: 기준 트리의 같은 파일에 없던 타입 오류만
+        if py is not None:  # mypy: 기준 트리의 같은 파일(이동했으면 옛 경로)에 없던 타입 오류만
             typed, why = _new_typed(
-                head_tree / rel, head_keys.get(head_tree / rel), has_base, base_keys.get(base_tree / rel)
+                head_tree / rel,
+                head_keys.get(head_tree / rel),
+                has_base,
+                base_keys.get(base_tree / base_rel) if has_base else None,
             )
             out += [f"{rel}: {x}" for x in typed] + ([f"{rel}: {why}"] if why else [])
         return out
@@ -913,6 +935,7 @@ def main() -> int:
         return _phase_report(a)
     _log(f"시작: base={a.base} head={a.head or '작업트리'} (phase={a.phase})")
     changed = changed_files(a.base, a.head)
+    moved = renames(a.base, a.head)
     loc_deps = moved_location_deps(a.base, a.head)
     _log(f"변경 파일 {len(changed)}개 — 코드맵 빌드")
     run([PY, "scripts/ops/code_map/build.py"], ROOT)
@@ -937,7 +960,7 @@ def main() -> int:
                 measured = [] if a.phase == "static" else tests  # static: 시험은 다른 job(phase=tests)이 돌린다
                 fb, fa = ex.submit(measure, trees[0], measured), ex.submit(measure, head_tree, measured)
                 fk = ex.submit(
-                    _audit_kit_new_findings, py_changed, trees[0], head_tree
+                    _audit_kit_new_findings, py_changed, trees[0], head_tree, moved
                 )  # 시험(약 20분)과 겹쳐 돌려 직렬 대기를 없앤다
                 before, after, kit_errors, kit_note = _collect_static_results(fb, fa, fk)
             _log("기준·변경 후 측정 + audit-kit 끝")
@@ -958,7 +981,6 @@ def main() -> int:
         shutil.rmtree(tmp, ignore_errors=True)
     ruff_errors = _new_ruff_findings(ruff, head_tree, a.base, a.head)
 
-    moved = renames(a.base, a.head)
     # 순환은 모듈(폴더) 단위라 이동을 받은 폴더가 끼면 이름만 바뀐 것과 진짜 새 순환을 가를 수 없다
     # → 그런 순환은 '순환 수가 늘었을 때만' FAIL, 이동과 무관한 폴더끼리의 새 순환은 항상 FAIL
     receiving = {_mod_dir(n) for n in moved}

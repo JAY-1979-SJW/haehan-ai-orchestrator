@@ -52,7 +52,7 @@ def test_pytest_passes_the_extra_args_to_the_pytest_command(monkeypatch, tmp_pat
 
 def test_audit_kit_findings_run_mypy_in_batches_not_per_file(monkeypatch, tmp_path):
     """mypy 는 head·base 각각 일괄 1회(mypy_keys_batch)이고, 파일 수만큼 따로 돌리지 않는다."""
-    import audit_kit_gate as gate
+    from tools.hooks import audit_kit_gate as gate
 
     head, base = tmp_path / "head", tmp_path / "base"
     for tree in (head, base):

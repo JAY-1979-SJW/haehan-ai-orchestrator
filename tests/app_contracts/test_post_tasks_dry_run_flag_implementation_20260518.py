@@ -171,6 +171,7 @@ def router_mod():
         "ai_orchestrator.routers.ops_router",
     ]
     originals = {n: sys.modules.get(n) for n in mock_names}
+    original_registry = sys.modules.get("ai_orchestrator.routers.registry")
     mocks = {
         "ai_orchestrator.llm.planner": MagicMock(),
         "ai_orchestrator.tasks.executor": MagicMock(),
@@ -213,7 +214,16 @@ def router_mod():
                 sys.modules.pop(mod_name, None)
             else:
                 sys.modules[mod_name] = originals[mod_name]
-        sys.modules.pop("ai_orchestrator.routers.registry", None)
+        # 결함(2026-10-10, PR165 verify FAIL — importlib.reload() 가 다른 테스트에서
+        # "module ... not in sys.modules" 로 터지는 원인 조사 중 발견): 이 모듈은 임시로
+        # exec_module 한 별도 복사본일 뿐인데, 원래 sys.modules 에 진짜(정상 import 된)
+        # registry 모듈이 있었다면 그걸 무조건 pop 하면 안 되고 복원해야 한다 — 그래야
+        # 뒤에 도는 다른 테스트의 `import ai_orchestrator.routers.registry as x;
+        # importlib.reload(x)` 가 "sys.modules 에 없음" 으로 안 깨진다.
+        if original_registry is None:
+            sys.modules.pop("ai_orchestrator.routers.registry", None)
+        else:
+            sys.modules["ai_orchestrator.routers.registry"] = original_registry
 
 
 def test_17_dry_run_flag_value_true(router_mod):
