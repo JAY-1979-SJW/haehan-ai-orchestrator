@@ -57,14 +57,14 @@ class TestTenantContractFile:
 
     def test_tenant_contract_file_exists(self):
         """tenant_scope_contract.py 파일 존재"""
-        contract_file = Path("local_agent/policy/tenant_scope_contract.py")
+        contract_file = Path("core/agent_runtime/policy/tenant_scope_contract.py")
         assert contract_file.exists(), "tenant_scope_contract.py must exist"
 
     def test_contract_file_compiles(self):
         """contract file Python 컴파일 검사"""
         import py_compile
 
-        contract_file = Path("local_agent/policy/tenant_scope_contract.py")
+        contract_file = Path("core/agent_runtime/policy/tenant_scope_contract.py")
         try:
             py_compile.compile(str(contract_file), doraise=True)
         except py_compile.PyCompileError as e:
@@ -72,7 +72,7 @@ class TestTenantContractFile:
 
     def test_auth_tenant_context_defined(self):
         """AuthTenantContext 클래스 정의"""
-        from local_agent.policy.tenant_scope_contract import AuthTenantContext
+        from core.agent_runtime.policy.tenant_scope_contract import AuthTenantContext
 
         # Create instance
         ctx = AuthTenantContext(
@@ -87,7 +87,7 @@ class TestTenantContractFile:
 
     def test_auth_context_requires_user_id(self):
         """AuthTenantContext에 actor_user_id 필수 (G1)"""
-        from local_agent.policy.tenant_scope_contract import AuthTenantContext
+        from core.agent_runtime.policy.tenant_scope_contract import AuthTenantContext
 
         with pytest.raises(ValueError) as exc_info:
             AuthTenantContext(
@@ -99,7 +99,7 @@ class TestTenantContractFile:
 
     def test_auth_context_requires_organization_ids(self):
         """AuthTenantContext에 organization_ids 필수 (G4)"""
-        from local_agent.policy.tenant_scope_contract import AuthTenantContext
+        from core.agent_runtime.policy.tenant_scope_contract import AuthTenantContext
 
         with pytest.raises(ValueError) as exc_info:
             AuthTenantContext(
@@ -111,7 +111,7 @@ class TestTenantContractFile:
 
     def test_auth_context_requires_active_organization(self):
         """AuthTenantContext에 active_organization_id 필수"""
-        from local_agent.policy.tenant_scope_contract import AuthTenantContext
+        from core.agent_runtime.policy.tenant_scope_contract import AuthTenantContext
 
         with pytest.raises(ValueError) as exc_info:
             AuthTenantContext(
@@ -123,7 +123,7 @@ class TestTenantContractFile:
 
     def test_auth_context_active_org_must_be_in_list(self):
         """active_organization_id는 organization_ids에 포함되어야 함"""
-        from local_agent.policy.tenant_scope_contract import AuthTenantContext
+        from core.agent_runtime.policy.tenant_scope_contract import AuthTenantContext
 
         with pytest.raises(ValueError) as exc_info:
             AuthTenantContext(
@@ -135,7 +135,7 @@ class TestTenantContractFile:
 
     def test_auth_context_has_access_to_organization(self):
         """has_access_to_organization 메서드"""
-        from local_agent.policy.tenant_scope_contract import AuthTenantContext
+        from core.agent_runtime.policy.tenant_scope_contract import AuthTenantContext
 
         ctx = AuthTenantContext(
             actor_user_id="user-1",
@@ -149,7 +149,7 @@ class TestTenantContractFile:
 
     def test_auth_context_require_access_raises(self):
         """require_access_to_organization raises on unauthorized"""
-        from local_agent.policy.tenant_scope_contract import AuthTenantContext
+        from core.agent_runtime.policy.tenant_scope_contract import AuthTenantContext
 
         ctx = AuthTenantContext(
             actor_user_id="user-1",
@@ -166,7 +166,7 @@ class TestLocalAgentScope:
 
     def test_local_agent_requires_organization_id(self):
         """LocalAgentScope에 organization_id 필수 (G10)"""
-        from local_agent.policy.tenant_scope_contract import LocalAgentScope
+        from core.agent_runtime.policy.tenant_scope_contract import LocalAgentScope
 
         with pytest.raises(ValueError) as exc_info:
             LocalAgentScope(
@@ -177,7 +177,7 @@ class TestLocalAgentScope:
 
     def test_local_agent_rejects_raw_hostname(self):
         """LocalAgentScope는 raw hostname 거부"""
-        from local_agent.policy.tenant_scope_contract import LocalAgentScope
+        from core.agent_runtime.policy.tenant_scope_contract import LocalAgentScope
 
         with pytest.raises(ValueError) as exc_info:
             LocalAgentScope(
@@ -189,7 +189,7 @@ class TestLocalAgentScope:
 
     def test_local_agent_accepts_host_hash(self):
         """LocalAgentScope는 hostname hash 허용"""
-        from local_agent.policy.tenant_scope_contract import LocalAgentScope
+        from core.agent_runtime.policy.tenant_scope_contract import LocalAgentScope
 
         agent = LocalAgentScope(
             agent_id="agent-1",
@@ -201,7 +201,7 @@ class TestLocalAgentScope:
 
     def test_local_agent_safe_dict(self):
         """LocalAgentScope.safe_dict()"""
-        from local_agent.policy.tenant_scope_contract import LocalAgentScope
+        from core.agent_runtime.policy.tenant_scope_contract import LocalAgentScope
 
         agent = LocalAgentScope(
             agent_id="agent-1",
@@ -223,7 +223,7 @@ class TestBrowserTaskScope:
 
     def test_browser_task_requires_organization_id(self):
         """BrowserTaskScope에 organization_id 필수 (G5)"""
-        from local_agent.policy.tenant_scope_contract import BrowserTaskScope
+        from core.agent_runtime.policy.tenant_scope_contract import BrowserTaskScope
 
         with pytest.raises(ValueError) as exc_info:
             BrowserTaskScope(
@@ -235,7 +235,7 @@ class TestBrowserTaskScope:
 
     def test_browser_task_requires_requested_by_user_id(self):
         """BrowserTaskScope에 requested_by_user_id 필수"""
-        from local_agent.policy.tenant_scope_contract import BrowserTaskScope
+        from core.agent_runtime.policy.tenant_scope_contract import BrowserTaskScope
 
         with pytest.raises(ValueError) as exc_info:
             BrowserTaskScope(
@@ -251,7 +251,7 @@ class TestBrowserApprovalScope:
 
     def test_browser_approval_requires_organization_id(self):
         """BrowserApprovalScope에 organization_id 필수 (G6)"""
-        from local_agent.policy.tenant_scope_contract import BrowserApprovalScope
+        from core.agent_runtime.policy.tenant_scope_contract import BrowserApprovalScope
 
         with pytest.raises(ValueError) as exc_info:
             BrowserApprovalScope(
@@ -265,7 +265,7 @@ class TestBrowserApprovalScope:
 
     def test_browser_approval_requires_token_hash(self):
         """BrowserApprovalScope에 approval_token_hash 필수"""
-        from local_agent.policy.tenant_scope_contract import BrowserApprovalScope
+        from core.agent_runtime.policy.tenant_scope_contract import BrowserApprovalScope
 
         with pytest.raises(ValueError) as exc_info:
             BrowserApprovalScope(
@@ -279,7 +279,7 @@ class TestBrowserApprovalScope:
 
     def test_browser_approval_rejects_plaintext_token(self):
         """BrowserApprovalScope는 plaintext token 거부"""
-        from local_agent.policy.tenant_scope_contract import BrowserApprovalScope
+        from core.agent_runtime.policy.tenant_scope_contract import BrowserApprovalScope
 
         with pytest.raises(ValueError) as exc_info:
             BrowserApprovalScope(
@@ -297,7 +297,7 @@ class TestBrowserResultScope:
 
     def test_browser_result_requires_organization_id(self):
         """BrowserResultScope에 organization_id 필수 (G7)"""
-        from local_agent.policy.tenant_scope_contract import BrowserResultScope
+        from core.agent_runtime.policy.tenant_scope_contract import BrowserResultScope
 
         with pytest.raises(ValueError) as exc_info:
             BrowserResultScope(
@@ -309,7 +309,7 @@ class TestBrowserResultScope:
 
     def test_browser_result_requires_task_id(self):
         """BrowserResultScope에 task_id 필수"""
-        from local_agent.policy.tenant_scope_contract import BrowserResultScope
+        from core.agent_runtime.policy.tenant_scope_contract import BrowserResultScope
 
         with pytest.raises(ValueError) as exc_info:
             BrowserResultScope(
@@ -325,7 +325,7 @@ class TestBrowserAuditEventScope:
 
     def test_browser_audit_event_requires_org_for_browser_task(self):
         """BROWSER_* event는 organization_id 필수 (G8)"""
-        from local_agent.policy.tenant_scope_contract import BrowserAuditEventScope
+        from core.agent_runtime.policy.tenant_scope_contract import BrowserAuditEventScope
 
         with pytest.raises(ValueError) as exc_info:
             BrowserAuditEventScope(
@@ -338,7 +338,7 @@ class TestBrowserAuditEventScope:
 
     def test_system_audit_event_allows_null_org(self):
         """AGENT_* 등 시스템 event는 organization_id nullable"""
-        from local_agent.policy.tenant_scope_contract import BrowserAuditEventScope
+        from core.agent_runtime.policy.tenant_scope_contract import BrowserAuditEventScope
 
         # Should not raise
         event = BrowserAuditEventScope(
@@ -354,7 +354,7 @@ class TestScopeValidationRules:
 
     def test_task_approval_agent_same_org_rule(self):
         """RULE: task.org == approval.org == agent.org"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserApprovalScope,
             BrowserTaskScope,
             LocalAgentScope,
@@ -383,7 +383,7 @@ class TestScopeValidationRules:
 
     def test_task_approval_org_mismatch_rejected(self):
         """org mismatch: task.org != approval.org → ValueError"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserApprovalScope,
             BrowserTaskScope,
             LocalAgentScope,
@@ -413,7 +413,7 @@ class TestScopeValidationRules:
 
     def test_task_agent_org_mismatch_rejected(self):
         """org mismatch: task.org != agent.org → ValueError"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserApprovalScope,
             BrowserTaskScope,
             LocalAgentScope,
@@ -443,7 +443,7 @@ class TestScopeValidationRules:
 
     def test_result_task_same_org_rule(self):
         """RULE: result.org == task.org"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserResultScope,
             BrowserTaskScope,
             assert_result_task_same_org,
@@ -465,7 +465,7 @@ class TestScopeValidationRules:
 
     def test_result_task_org_mismatch_rejected(self):
         """result.org != task.org → ValueError"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserResultScope,
             BrowserTaskScope,
             assert_result_task_same_org,
@@ -492,7 +492,7 @@ class TestSafeTenantScopeDict:
 
     def test_safe_dict_removes_approval_token(self):
         """safe_dict가 approval_token 제거"""
-        from local_agent.policy.tenant_scope_contract import safe_tenant_scope_dict
+        from core.agent_runtime.policy.tenant_scope_contract import safe_tenant_scope_dict
 
         data = {
             "approval_token": "secret-token",
@@ -505,7 +505,7 @@ class TestSafeTenantScopeDict:
 
     def test_safe_dict_removes_password(self):
         """safe_dict가 password 제거"""
-        from local_agent.policy.tenant_scope_contract import safe_tenant_scope_dict
+        from core.agent_runtime.policy.tenant_scope_contract import safe_tenant_scope_dict
 
         data = {
             "password": "secret123",
@@ -524,7 +524,7 @@ class TestPermissionMatrix:
 
     def test_permission_matrix_defined(self):
         """PERMISSION_MATRIX 정의"""
-        from local_agent.policy.tenant_scope_contract import PERMISSION_MATRIX
+        from core.agent_runtime.policy.tenant_scope_contract import PERMISSION_MATRIX
 
         roles = ["owner", "admin", "manager", "operator", "viewer", "auditor", "local_agent"]
         for role in roles:
@@ -532,7 +532,7 @@ class TestPermissionMatrix:
 
     def test_permission_matrix_owner_full_access(self):
         """owner role은 full access"""
-        from local_agent.policy.tenant_scope_contract import PERMISSION_MATRIX
+        from core.agent_runtime.policy.tenant_scope_contract import PERMISSION_MATRIX
 
         owner_perms = PERMISSION_MATRIX["owner"]
         # owner는 대부분 True
@@ -545,7 +545,7 @@ class TestGapCoverage:
 
     def test_gap_g1_covered_by_auth_context_user_id(self):
         """G1: auth_context.actor_user_id"""
-        from local_agent.policy.tenant_scope_contract import AuthTenantContext
+        from core.agent_runtime.policy.tenant_scope_contract import AuthTenantContext
 
         ctx = AuthTenantContext(
             actor_user_id="user-1",
@@ -556,7 +556,7 @@ class TestGapCoverage:
 
     def test_gap_g4_covered_by_auth_context_org_ids(self):
         """G4: auth_context.organization_ids"""
-        from local_agent.policy.tenant_scope_contract import AuthTenantContext
+        from core.agent_runtime.policy.tenant_scope_contract import AuthTenantContext
 
         ctx = AuthTenantContext(
             actor_user_id="user-1",
@@ -567,7 +567,7 @@ class TestGapCoverage:
 
     def test_gap_g5_covered_by_browser_task_scope(self):
         """G5: BrowserTaskScope.organization_id"""
-        from local_agent.policy.tenant_scope_contract import BrowserTaskScope
+        from core.agent_runtime.policy.tenant_scope_contract import BrowserTaskScope
 
         task = BrowserTaskScope(
             task_id="task-1",
@@ -578,7 +578,7 @@ class TestGapCoverage:
 
     def test_gap_g10_covered_by_local_agent_scope(self):
         """G10: LocalAgentScope.organization_id"""
-        from local_agent.policy.tenant_scope_contract import LocalAgentScope
+        from core.agent_runtime.policy.tenant_scope_contract import LocalAgentScope
 
         agent = LocalAgentScope(
             agent_id="agent-1",

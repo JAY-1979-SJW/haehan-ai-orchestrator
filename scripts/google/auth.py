@@ -15,7 +15,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from local_agent.policy import site_entry_policy
+from core.agent_runtime.policy import site_entry_policy
 from scripts.auth.login_detector import detect_login_state, wait_for_login_generic
 from scripts.common.critical_logger import log_critical
 from scripts.common.logger import get_logger

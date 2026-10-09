@@ -244,7 +244,7 @@ class TestScopeValidationRules:
 
     def test_task_approval_agent_same_org_validates(self):
         """assert_task_approval_agent_same_org 함수 작동"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserApprovalScope,
             BrowserTaskScope,
             LocalAgentScope,
@@ -273,7 +273,7 @@ class TestScopeValidationRules:
 
     def test_task_approval_org_mismatch_rejected(self):
         """org mismatch → ValueError"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserApprovalScope,
             BrowserTaskScope,
             LocalAgentScope,
@@ -303,7 +303,7 @@ class TestScopeValidationRules:
 
     def test_result_task_scope_validates(self):
         """assert_result_task_same_org 함수 작동"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserResultScope,
             BrowserTaskScope,
             assert_result_task_same_org,
@@ -325,7 +325,7 @@ class TestScopeValidationRules:
 
     def test_result_task_org_mismatch_rejected(self):
         """result.org != task.org → ValueError"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserResultScope,
             BrowserTaskScope,
             assert_result_task_same_org,
@@ -352,7 +352,7 @@ class TestSecurityValidation:
 
     def test_safe_dict_removes_approval_token(self):
         """safe_dict에서 approval_token 제거"""
-        from local_agent.policy.tenant_scope_contract import safe_tenant_scope_dict
+        from core.agent_runtime.policy.tenant_scope_contract import safe_tenant_scope_dict
 
         data = {
             "approval_token": "secret-token",
@@ -366,7 +366,7 @@ class TestSecurityValidation:
 
     def test_safe_dict_removes_token_hash(self):
         """safe_dict에서 token_hash 제거"""
-        from local_agent.policy.tenant_scope_contract import safe_tenant_scope_dict
+        from core.agent_runtime.policy.tenant_scope_contract import safe_tenant_scope_dict
 
         data = {
             "token_hash": "sha256:abc123",

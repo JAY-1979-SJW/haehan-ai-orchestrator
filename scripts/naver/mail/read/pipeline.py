@@ -21,7 +21,7 @@ import time
 from dataclasses import asdict
 from pathlib import Path
 
-from local_agent.policy import site_entry_policy as sep
+from core.agent_runtime.policy import site_entry_policy as sep
 from scripts.naver.mail.read import body_reader, cdp, classify, entry, list_collector
 
 OUT_DIR = Path("data/inspection/naver_mail_pipeline")

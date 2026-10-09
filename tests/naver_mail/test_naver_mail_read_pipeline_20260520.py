@@ -187,12 +187,12 @@ def test_parse_list_payload_empty():
 
 
 def test_pipeline_forbids_direct_login_url():
-    from local_agent.policy import site_entry_policy as sep
+    from core.agent_runtime.policy import site_entry_policy as sep
     with pytest.raises(ValueError, match="FORBIDDEN_LOGIN_URL_DIRECT_ENTRY"):
         sep.assert_main_page_first("https://nid.naver.com/nidlogin.login", "naver")
 
 
 def test_pipeline_accepts_mail_main_url():
-    from local_agent.policy import site_entry_policy as sep
+    from core.agent_runtime.policy import site_entry_policy as sep
     # mail.naver.com 은 메인 페이지로 간주 (정책상 forbidden URL 아님)
     sep.assert_main_page_first("https://mail.naver.com/", "naver")

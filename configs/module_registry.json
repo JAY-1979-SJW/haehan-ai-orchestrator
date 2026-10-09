@@ -6809,7 +6809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/policy/internal_test_allowlist.py": {
+  "core/agent_runtime/policy/internal_test_allowlist.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -6873,7 +6873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/policy/site_compliance_gate.py": {
+  "core/agent_runtime/policy/site_compliance_gate.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -6881,7 +6881,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/policy/site_entry_policy.py": {
+  "core/agent_runtime/policy/site_entry_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -6897,7 +6897,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/policy/tenant_scope_contract.py": {
+  "core/agent_runtime/policy/tenant_scope_contract.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -24161,7 +24161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/policy/__init__.py": {
+  "core/agent_runtime/policy/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
