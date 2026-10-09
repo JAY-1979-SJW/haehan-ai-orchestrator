@@ -86,7 +86,7 @@
 | `ai_orchestrator/mcp_server.py`의 `list_api_endpoints`/`call_api` | 앱 API 전체를 MCP 도구로 범용 노출하는 기존 패턴 | 패턴 재사용 — `snapshot_page`/`act_on_page`/`navigate_page` 3종 추가 |
 | `gates/approval.py` + `services/web_task_approval_service.py` | 쓰기 작업(발행/발송/삭제 등) 승인 플로우 | 그대로 유지 — 무인 파이프라인이어도 승인 없이 우회 금지 |
 | Playwright(`page.goto`/`page.keyboard`/`page.mouse`/`page.screenshot`) | 이미 사이트 모듈 20개 이상이 쓰는 브라우저 제어 기반 | 그대로 재사용(웹사이트 대상). Electron webview 대상은 §5.4의 raw CDP 어댑터가 같은 인터페이스를 흉내 냄 |
-| `scripts/ops/hooks/capability_check.py` | "이 도메인에 기존 구현이 있는가" 확인(CLAUDE.md 필수 절차) | 그대로 재사용 — 기존 사이트 모듈/범용 계층 분기점으로 그대로 씀 |
+| `tools/hooks/capability_check.py` | "이 도메인에 기존 구현이 있는가" 확인(CLAUDE.md 필수 절차) | 그대로 재사용 — 기존 사이트 모듈/범용 계층 분기점으로 그대로 씀 |
 
 **명시적으로 확장하지 않은 것**: `scripts/cdp_helper.py`(및 `apps/marketing-standalone/connectors/cdp_helper.py`
 중복본) — raw-websocket 레거시 경로. 이 두 파일의 중복 자체(DUP-02 조사에서 발견)는 이 기준서와 별개의

@@ -7,8 +7,8 @@
 from pathlib import Path
 
 from scripts.ops import install_git_hooks as ih
-from scripts.ops.hooks import install_git_hooks as ih
 from scripts.ops.quality import module_quality_gate_checks_repo as checks
+from tools.hooks import install_git_hooks as ih
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_GATES = (

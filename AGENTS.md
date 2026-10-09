@@ -12,12 +12,12 @@
 사이트 자동화, 데이터 수집, CDP 조작, 스크래핑 코드를 **새로 작성하기 전에** 반드시 아래를 먼저 실행한다.
 
 ```bash
-python scripts/ops/hooks/capability_check.py <도메인>
+python tools/hooks/capability_check.py <도메인>
 # 예시
-python scripts/ops/hooks/capability_check.py cafe
-python scripts/ops/hooks/capability_check.py smartstore
-python scripts/ops/hooks/capability_check.py eum
-python scripts/ops/hooks/capability_check.py naver mail
+python tools/hooks/capability_check.py cafe
+python tools/hooks/capability_check.py smartstore
+python tools/hooks/capability_check.py eum
+python tools/hooks/capability_check.py naver mail
 ```
 
 출력에서 기존 구현(API 엔드포인트, Python 함수, CLI 커맨드)이 확인되면:

@@ -106,7 +106,7 @@
 - 이동 완료: `scripts/yt_upload/*`(6, B1 `b4908817`) → `scripts/youtube/upload/`, `scripts/smoke_youtube_manual_login_probe.py` → `scripts/youtube/`(split-youtube `2ce2345e`)
 - **정상(옮기지 않음)**: `scripts/google/youtube/*`(7)·`scripts/google/common/youtube_upload.py`·`ai_orchestrator/connectors/google/youtube.py` 는 Google 도메인의 'YouTube 하위 탭'이다. `scripts/google/module_contracts.py`(youtube_creator·youtube_studio 구현 모듈), `tab_registry.py`(owner_package), `scripts/google/youtube/__init__.py`(google 탭 facade가 google taxonomy 를 import), skeleton_gate 의 "google 은 youtube 도메인을 import 하지 않는다" 규칙·baseline, 시험 5곳(모듈 이름 단언)이 소유권을 이미 정했다. 옮기면 규칙을 어기거나 shim 으로 의존을 숨기게 된다.
 - **완성형 shim(추가 작업 없음)**: 평면 `connectors/youtube_router.py`·`routers/youtube_{oauth,research}_router.py` — 실구현은 이미 `connectors/youtube/` 패키지(스마트스토어와 같은 형태).
-- 제외: `scripts/common/youtube_search_cache.py`(⚠ G5 겹침, §6-1), `scripts/ops/hooks/guard_youtube_upload.py`(`.claude/settings.json` 훅), `apps/youtube-analyzer-standalone/*`(10, 독립앱 결정 1)
+- 제외: `scripts/common/youtube_search_cache.py`(⚠ G5 겹침, §6-1), `tools/hooks/guard_youtube_upload.py`(`.claude/settings.json` 훅), `apps/youtube-analyzer-standalone/*`(10, 독립앱 결정 1)
 
 **instagram (이탈 23)**: 평면 `connectors/instagram_*`(7) → `connectors/instagram/`(⚠ `instagram_dm_db.py`는 G5와 겹침), `scripts/instagram/ig_batch.py` → `scripts/instagram/ops/`, `apps/ig-comment-dm-bot/*`(14) → 독립앱(결정 1; `processed_store.py`는 G5에서 이미 B 분류).
 **smartstore (이탈 8)**: `scripts/naver/automation/smartstore/*`(6) → `scripts/naver/smartstore/automation/`(참조 있음, `__init__` 6), 평면 `smartstore_router.py`는 이미 4줄 shim(제거 대상), `scripts/ops/selector_health/sites/naver_smartstore.py`는 정상.

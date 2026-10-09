@@ -1,4 +1,4 @@
-"""audit-kit 게이트(scripts/ops/hooks/audit_kit_gate.py) — 가짜 audit-kit 으로 막힘/통과/미설치/기존 항목/잡음을 확인한다.
+"""audit-kit 게이트(tools/hooks/audit_kit_gate.py) — 가짜 audit-kit 으로 막힘/통과/미설치/기존 항목/잡음을 확인한다.
 
 진짜 audit-kit·git·네트워크를 쓰지 않는다. 가짜 audit-kit 은 `hook` 서브명령으로 불리면 미리 정한 stderr 를 내고 정해 둔 종료코드로 끝난다.
 """
@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops.hooks import audit_kit_gate as gate
+from tools.hooks import audit_kit_gate as gate
 
 
 @pytest.fixture
@@ -162,7 +162,7 @@ def test_post_edit_ignores_garbage_input():
 
 def test_stop_blocks_with_decision_json(fake_kit, py_file, monkeypatch, capsys):
     fake_kit(2, "[표준 STD-02] mod.py:1 절대경로 하드코딩\n")
-    from scripts.ops.hooks import post_edit_fast_gate as pef
+    from tools.hooks import post_edit_fast_gate as pef
 
     monkeypatch.setattr(pef, "load_session_edits", lambda _sid: [str(py_file)])
     monkeypatch.setattr(pef, "cleanup_old_session_edit_files", lambda: None)
@@ -173,7 +173,7 @@ def test_stop_blocks_with_decision_json(fake_kit, py_file, monkeypatch, capsys):
 
 def test_stop_passes_when_no_edits_or_loop_guard(fake_kit, py_file, monkeypatch, capsys):
     fake_kit(2, "[표준 STD-02] mod.py:1 x\n")
-    from scripts.ops.hooks import post_edit_fast_gate as pef
+    from tools.hooks import post_edit_fast_gate as pef
 
     monkeypatch.setattr(pef, "cleanup_old_session_edit_files", lambda: None)
     monkeypatch.setattr(pef, "load_session_edits", lambda _sid: [])
@@ -315,7 +315,7 @@ def test_verify_includes_mypy_diff_against_base(tmp_path, tree_aware_kit, monkey
     from scripts.ops import verify_change as vc
 
     # verify_change 는 scripts/ops 를 경로에 넣고 `audit_kit_gate` 를 최상위 이름으로 가져온다 — 그 모듈 객체를 패치해야 한다
-    akg = importlib.import_module("scripts.ops.hooks.audit_kit_gate")
+    akg = importlib.import_module("tools.hooks.audit_kit_gate")
     base, head = _two_trees(tmp_path)
     monkeypatch.setattr(akg, "mypy_python", lambda _kit: "py")
     calls = []
@@ -377,7 +377,7 @@ def test_verify_fails_when_real_kit_has_no_python_for_mypy(tmp_path, tree_aware_
 
     from scripts.ops import verify_change as vc
 
-    akg = importlib.import_module("scripts.ops.hooks.audit_kit_gate")
+    akg = importlib.import_module("tools.hooks.audit_kit_gate")
     base, head = _two_trees(tmp_path)
     monkeypatch.setattr(akg, "is_real_kit", lambda _kit: True)
     monkeypatch.setattr(akg, "mypy_python", lambda _kit: None)
@@ -403,7 +403,7 @@ def test_required_blocks_post_edit_when_kit_missing(py_file, monkeypatch, capsys
 
 
 def test_required_blocks_stop_when_kit_missing(py_file, monkeypatch, capsys):
-    from scripts.ops.hooks import post_edit_fast_gate as pef
+    from tools.hooks import post_edit_fast_gate as pef
 
     _missing_kit(py_file, monkeypatch)
     monkeypatch.setenv("AUDIT_KIT_REQUIRED", "1")

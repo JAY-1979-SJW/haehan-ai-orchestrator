@@ -1,44 +1,27 @@
-"""PreToolUse 훅: claude-in-chrome MCP 확장 도구 호출을 차단하고 CDP 방식을
-쓰도록 강제한다 (matcher: mcp__claude-in-chrome__.*).
+# haehan-shim: tools.hooks.guard_force_cdp
+# 호환 shim: 실제 모듈은 tools.hooks.guard_force_cdp 로 이동했다 (tools/hooks/guard_force_cdp.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: tools/devflow/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-사유: 이 프로젝트는 scripts/browser/cdp/cdp_force_start.py + scripts/browser/cdp/cdp_helper.py 로
-Chrome을 CDP(9222)로 직접 띄워 조작하는 방식이 표준이다(cdp-browser-automation
-스킬 참조). claude-in-chrome 확장은 이 환경에 설치/연결되어 있지 않아 매번
-연결 실패로 시간을 낭비하게 되므로, 아예 시도 자체를 차단하고 CDP 경로로
-유도한다.
-"""
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
+    from pathlib import Path as _Path
 
-from __future__ import annotations
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    _root = str(_Path(__file__).resolve().parents[3])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
-import json
-import sys
-
-
-def main() -> int:
-    try:
-        payload = json.load(sys.stdin)
-    except Exception:  # noqa: BLE001 - PreToolUse 훅 진입점 — stdin JSON 파싱 실패 시 exit(0)으로 통과시키는 의도된 fail-open, 실제 차단 판정은 파싱 성공 이후 로직에서 별도 수행.
-        return 0
-
-    tool_name = payload.get("tool_name", "")
-    if not tool_name.startswith("mcp__claude-in-chrome__"):
-        return 0
-
-    result = {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": (
-                "claude-in-chrome MCP 도구는 이 프로젝트에서 사용 금지 — 확장이 연결되어 있지 않다. "
-                "대신 scripts/browser/cdp/cdp_force_start.py 로 CDP(9222) 상태를 확인/시작하고 "
-                "scripts/browser/cdp/cdp_helper.py 의 CDP 클래스(또는 Playwright connect_over_cdp)로 조작할 것. "
-                "(cdp-browser-automation 스킬 참조)"
-            ),
-        }
-    }
-    print(json.dumps(result, ensure_ascii=False))
-    return 0
+    _runpy.run_module("tools.hooks.guard_force_cdp", run_name="__main__")
+    raise SystemExit
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
+
+
+_install(_il.import_module("tools.hooks.guard_force_cdp"), globals(), _sys.modules)

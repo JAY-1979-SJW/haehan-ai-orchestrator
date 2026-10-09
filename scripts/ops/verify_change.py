@@ -543,7 +543,7 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
 
     audit-kit 이 없는 PC·CI 에서는 검사를 생략하고 그 사실을 알린다(설치된 PC 에서는 필수: 새 문제가 있으면 FAIL).
     """
-    from scripts.ops.hooks.audit_kit_gate import (
+    from tools.hooks.audit_kit_gate import (
         BATCH_SCRIPT,
         _new_typed,
         batch_raw_findings,

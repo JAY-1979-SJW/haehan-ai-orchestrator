@@ -9,7 +9,7 @@ spec:
       - tools/code_map/query.py
       - scripts/ops/agent_brief.py
       - configs/agent_roles.json
-      - scripts/ops/hooks/agent_usage.py
+      - tools/hooks/agent_usage.py
 ```
 
 ## 문제 (2026-09-24 실측)

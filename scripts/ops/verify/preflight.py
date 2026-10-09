@@ -245,7 +245,7 @@ def check_git_hooks(env: Env) -> Check:
     code, out = env.run(["git", "-C", str(env.root), "config", "--get", "core.hooksPath"])
     if code == 0 and out.strip():
         return Check("git 훅", PASS, f"core.hooksPath={out.strip()}")
-    return Check("git 훅", WARN, "core.hooksPath 가 설정되지 않음 — python scripts/ops/hooks/install_git_hooks.py")
+    return Check("git 훅", WARN, "core.hooksPath 가 설정되지 않음 — python tools/hooks/install_git_hooks.py")
 
 
 def check_env_file(env: Env) -> Check:
@@ -259,7 +259,7 @@ def check_env_file(env: Env) -> Check:
 def check_optional_tools(env: Env) -> Check:
     found = []
     try:
-        from scripts.ops.hooks.audit_kit_gate import find_audit_kit
+        from tools.hooks.audit_kit_gate import find_audit_kit
 
         kit = find_audit_kit(env.root, env.environ)
     except Exception:  # noqa: BLE001 - 선택 도구 탐색 실패는 점검 전체를 막지 않는다

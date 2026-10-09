@@ -32,7 +32,7 @@ Claude가 신규 함수를 짤 때 (a) 이미 있는 유사 기능을 다시 짜
 | `.claude/agents/code-reviewer.md` | 신규 | 별도 컨텍스트 서브에이전트 정의 (Claude Code 표준 agent 파일 형식) |
 | `CLAUDE.md` | 수정 | 기존 "작업 원칙" 절 아래 문단 추가(신규 섹션 만들지 않음 — 기존 "기준서→드라이런→승인", "게이트 실행 의무"와 중복 방지) |
 
-기존 파일은 **수정하지 않는다**: `scripts/ops/hooks/duplicate_code_check.py`,
+기존 파일은 **수정하지 않는다**: `tools/hooks/duplicate_code_check.py`,
 `tools/code_map/query.py`, `scripts/ops/verify_change.py`, `.githooks/pre-commit.orig`,
 `configs/ruff.toml` — 그대로 재사용.
 
@@ -41,8 +41,8 @@ Claude가 신규 함수를 짤 때 (a) 이미 있는 유사 기능을 다시 짜
 더 일관적이므로, 신규 파일도 **`scripts/ops/`에 둔다** (`.claude/hooks/`가 아님 — 위 표는 최초
 초안이었고 조사 중 기존 관례를 재확인해 정정함). 최종 경로:
 
-- `scripts/ops/hooks/pre_edit_dup_check.py`
-- `scripts/ops/hooks/post_edit_fast_gate.py`
+- `tools/hooks/pre_edit_dup_check.py`
+- `tools/hooks/post_edit_fast_gate.py`
 
 ## 3. 각 훅 설계
 
@@ -87,7 +87,7 @@ Claude가 신규 함수를 짤 때 (a) 이미 있는 유사 기능을 다시 짜
 
 방법: 새 훅 항목을 추가하지 않고 `behavior_gate.py` 자체를 수정하는 대신(파일 보존 원칙),
 Stop 배열에 **새 항목을 하나 더 추가**한다(`hooks` 배열은 여러 개 등록 가능, 기존 동작 안 건드림):
-- `scripts/ops/hooks/stop_fast_verify.py` (신규, 위치는 `scripts/ops/` 관례 유지):
+- `tools/hooks/stop_fast_verify.py` (신규, 위치는 `scripts/ops/` 관례 유지):
   1. `git status --porcelain`으로 이번 세션에서 바뀐 파일 목록만 추출.
   2. `.py` 있으면 ruff(기준선 diff) + 매핑 테스트(§3.2와 동일 로직, 중복 호출 시 결과 캐시 재사용).
   3. `.ts`/`.tsx` 있으면 tsc 1회(있으면 캐시 재사용).
@@ -114,7 +114,7 @@ model: sonnet
 
 ## 점검 항목
 1. **중복 구현** — 이 변경이 추가한 함수/클래스가 저장소 다른 곳에 이미 있는 기능을
-   다시 짠 것인가. `scripts/ops/hooks/capability_check.py`, `scripts/ops/hooks/duplicate_code_check.py`
+   다시 짠 것인가. `tools/hooks/capability_check.py`, `tools/hooks/duplicate_code_check.py`
    결과를 참고해 확인한다.
 2. **테스트 존재/동작 검증** — 이 변경에 대응하는 테스트가 있는가. 없다면 "테스트 없음"으로
    명시한다. 있다면 실제로 실행해 통과하는지 확인한다(주장만 보지 않는다).
@@ -148,7 +148,7 @@ model: sonnet
 ## 코딩 컨벤션 및 완료 보고 기준 (2026-09-26 추가)
 
 ### 재사용 우선
-새 함수/유틸을 만들기 전 `scripts/ops/hooks/capability_check.py`, `scripts/ops/hooks/duplicate_code_check.py`,
+새 함수/유틸을 만들기 전 `tools/hooks/capability_check.py`, `tools/hooks/duplicate_code_check.py`,
 Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/import, 없을 때만 신규 작성.
 검증 안 된 추측성 코드 금지 — 불확실하면 Grep/Read로 실제 시그니처·동작을 확인한 뒤 작성한다.
 
@@ -175,7 +175,7 @@ Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/i
      { "matcher": "Write", "hooks": [ ...기존... ] },
 +    { "matcher": "Edit|Write",
 +      "hooks": [ { "type": "command",
-+        "command": "python \"...\\scripts\ops\hooks\pre_edit_dup_check.py\"",
++        "command": "python \"...\\tools\hooks\pre_edit_dup_check.py\"",
 +        "statusMessage": "중복 구현 가능성 검사 중..." } ] },
      { "matcher": "Bash|PowerShell", "hooks": [ ...기존 4개 그대로... ] },
      ...
@@ -184,14 +184,14 @@ Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/i
      { "matcher": "Write|Edit|NotebookEdit", "hooks": [ ...기존 log_code_change 그대로... ] },
 +    { "matcher": "Edit|Write",
 +      "hooks": [ { "type": "command",
-+        "command": "python \"...\\scripts\ops\hooks\post_edit_fast_gate.py\"",
++        "command": "python \"...\\tools\hooks\post_edit_fast_gate.py\"",
 +        "statusMessage": "빠른 게이트(ruff+영향테스트) 실행 중..." } ] },
      { "matcher": "Write", "hooks": [ ...기존 hook_check_a4 그대로... ] }
    ],
    "Stop": [
      { "hooks": [ ...기존 behavior_gate 그대로... ] },
 +    { "hooks": [ { "type": "command",
-+        "command": "python \"...\\scripts\ops\hooks\stop_fast_verify.py\"",
++        "command": "python \"...\\tools\hooks\stop_fast_verify.py\"",
 +        "statusMessage": "세션 변경분 최종 게이트 확인 중..." } ] }
    ]
 ```
@@ -265,7 +265,7 @@ python 스크립트만 import).
   `prewrite_capability_check.py`(PreToolUse Write), `log_code_change.py`, `hook_check_a4.py`
   (PostToolUse), `behavior_gate.py`(Stop), `install_git_hooks.py`(SessionStart).
 - `.claude/agents/` 디렉터리 없음 (신규 생성 필요, 삭제/충돌 없음).
-- `scripts/ops/hooks/duplicate_code_check.py` — 본문 해시 기반 사후 전체 스캔, PreToolUse 실시간
+- `tools/hooks/duplicate_code_check.py` — 본문 해시 기반 사후 전체 스캔, PreToolUse 실시간
   이름 매칭과 목적이 달라 별도 스크립트 필요하나 세션 종료 시 참고용으로 그대로 재사용 가능.
 - `scripts/ops/verify_change.py` — 9개 판정 항목 이미 구현(기준 커밋과 비교, 영향 테스트 포함).
   전체 검증은 이것을 그대로 쓰고 신규 로직 불필요.

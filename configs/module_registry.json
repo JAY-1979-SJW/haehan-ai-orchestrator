@@ -11665,7 +11665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/agent_usage.py": {
+  "tools/hooks/agent_usage.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11673,7 +11673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/ai_code_review_gate.py": {
+  "tools/hooks/ai_code_review_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12497,7 +12497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/behavior_gate.py": {
+  "tools/hooks/behavior_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12529,7 +12529,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/capability_check.py": {
+  "tools/hooks/capability_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12745,7 +12745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/duplicate_code_check.py": {
+  "tools/hooks/duplicate_code_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12793,7 +12793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/guard_cdp_new_tab.py": {
+  "tools/hooks/guard_cdp_new_tab.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12801,7 +12801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/guard_force_cdp.py": {
+  "tools/hooks/guard_force_cdp.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12809,7 +12809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/guard_openai_call.py": {
+  "tools/hooks/guard_openai_call.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12817,7 +12817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/guard_youtube_upload.py": {
+  "tools/hooks/guard_youtube_upload.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "youtube",
@@ -12825,7 +12825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/hook_check_a4.py": {
+  "tools/hooks/hook_check_a4.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12841,7 +12841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/install_git_hooks.py": {
+  "tools/hooks/install_git_hooks.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12945,7 +12945,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/post_edit_fast_gate.py": {
+  "tools/hooks/post_edit_fast_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12953,7 +12953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/pre_edit_dup_check.py": {
+  "tools/hooks/pre_edit_dup_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12969,7 +12969,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/prewrite_capability_check.py": {
+  "tools/hooks/prewrite_capability_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13081,7 +13081,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/session_guard.py": {
+  "tools/hooks/session_guard.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13089,7 +13089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/session_handoff.py": {
+  "tools/hooks/session_handoff.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13185,7 +13185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/stop_fast_verify.py": {
+  "tools/hooks/stop_fast_verify.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13209,7 +13209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/vendor_api_registry.py": {
+  "tools/hooks/vendor_api_registry.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13249,7 +13249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/worklog_realtime.py": {
+  "tools/hooks/worklog_realtime.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23545,7 +23545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/__init__.py": {
+  "tools/hooks/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23553,7 +23553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/hooks/audit_kit_gate.py": {
+  "tools/hooks/audit_kit_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
