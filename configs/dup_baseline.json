@@ -2,7 +2,7 @@
  "generated_by": "tools/repo_gates/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, tools/repo_gates/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 26,
+ "hash_count": 25,
  "hashes": {
   "2a680e0f94b41e4cb814b289c9104964760a160e": [
    "scripts/common/youtube_api_common.py:_write_report",
@@ -15,10 +15,6 @@
   "3a206e750dedc94764bb59afad4ef3ad988fab6d": [
    "scripts/google/vision_usage_gate.py:save_vision_monthly_free_gate",
    "scripts/youtube/browser_transcript.py:_write_report"
-  ],
-  "3b98604be243aa0b1973738181e9aa36acaded45": [
-   "core/agent_runtime/browser/site_mapper.py:_is_sensitive_name",
-   "core/agent_runtime/browser/web_reader.py:_is_sensitive_name"
   ],
   "3bd89a273c4d15fb3674b39da45fd8f10666602f": [
    "tools/audits/app/audit_app_api_contract_endpoints_prep.py:AuditReport.summary",

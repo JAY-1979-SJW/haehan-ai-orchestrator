@@ -21,6 +21,8 @@ from html.parser import HTMLParser
 from typing import Any, ClassVar
 from urllib.parse import urljoin, urlparse
 
+from core.agent_runtime.browser.site_mapper import _SENSITIVE_NAME_TOKENS, _is_sensitive_name
+
 # ─── 키워드 테이블 ─────────────────────────────────────────────────────────
 
 # 쓰기/상태 변경 동작을 의미하는 한국어 키워드.
@@ -80,32 +82,6 @@ _LINK_DANGER_TOKENS: tuple[str, ...] = (
     "로그아웃",
 )
 
-# 결과에 절대 저장하지 않는 attribute / meta name 키.
-_SENSITIVE_NAME_TOKENS: frozenset[str] = frozenset(
-    {
-        "password",
-        "passwd",
-        "pwd",
-        "cookie",
-        "set-cookie",
-        "authorization",
-        "auth",
-        "session",
-        "sessionid",
-        "session_id",
-        "token",
-        "access_token",
-        "refresh_token",
-        "id_token",
-        "csrf",
-        "xsrf",
-        "csrf_token",
-        "xsrf_token",
-        "bearer",
-        "api_key",
-        "apikey",
-    }
-)
 
 # value 를 읽지 않는 input type.
 _NO_VALUE_INPUT_TYPES: frozenset[str] = frozenset(
@@ -485,17 +461,6 @@ def _recommend_read_only_actions(
 def _collapse_ws(s: str) -> str:
     return _WS_RE.sub(" ", (s or "").strip())
 
-
-def _is_sensitive_name(name: str) -> bool:
-    if not name:
-        return False
-    lowered = name.strip().lower()
-    if lowered in _SENSITIVE_NAME_TOKENS:
-        return True
-    for token in _SENSITIVE_NAME_TOKENS:
-        if token in lowered:
-            return True
-    return False
 
 
 class _StructureParser(HTMLParser):

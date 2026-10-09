@@ -104,6 +104,7 @@ _SENSITIVE_NAME_TOKENS: frozenset[str] = frozenset(
         "cookie",
         "set-cookie",
         "authorization",
+        "auth",
         "bearer",
         "session",
         "sessionid",
