@@ -21,7 +21,7 @@ DEFAULT_OUTPUT = ROOT / "data" / "worktree_change_index_latest.json"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.code_map.layer_rules import classify_path  # noqa: E402
+from tools.code_map.layer_rules import classify_path  # noqa: E402
 
 SITE_IDS = {"eum", "hiworks", "naver", "google", "g2b", "kakao", "smartstore"}
 

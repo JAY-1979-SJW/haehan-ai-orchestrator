@@ -6,7 +6,7 @@
 동작:
 - .py: `git show HEAD:<file>` 기준선과 현재 파일을 각각 ruff check 해서 신규 오류(차집합)만
   차단(exit 2 + stderr). 기존 오류(결함 #30, 레거시 lint 오류 다수)는 무시한다.
-  이어서 `python -m scripts.ops.code_map.query tests-for <file>` 로 매핑 테스트를 찾아
+  이어서 `python -m tools.code_map.query tests-for <file>` 로 매핑 테스트를 찾아
   최대 3개까지 pytest 실행(live/e2e 이름은 제외 — 부작용 있는 외부 호출 방지).
   실패하면 HEAD 스냅샷(시스템 임시 폴더)에서 같은 테스트를 돌려, 같은 문구로 이미 실패하던 것은
   통과시키고 새로 실패한 것만 차단한다(2026-09-30 기준선 비교).
@@ -34,7 +34,7 @@ from pathlib import Path
 
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 RUFF_CFG = ROOT / "configs" / "ruff.toml"
-QUERY_MOD = "scripts.ops.code_map.query"
+QUERY_MOD = "tools.code_map.query"
 TSC_CACHE_FILE = ROOT / "data" / ".post_edit_gate_tsc_cache.json"
 TSC_CACHE_SECONDS = 5 * 60
 OVERALL_BUDGET_SECONDS = 20.0

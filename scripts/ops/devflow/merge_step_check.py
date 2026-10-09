@@ -85,10 +85,10 @@ def _as_count(v: Any) -> int:
 
 def measure_tree(tree: Path, runcheck: bool) -> dict[str, int]:
     """한 트리에서 코드맵을 새로 만들고 modules 의 crosscheck 수치를 읽는다(새 측정 — modules.py 가 정의)."""
-    _run(["scripts/ops/code_map/build.py"], tree)
+    _run(["tools/code_map/build.py"], tree)
     if runcheck:
-        _run(["scripts/ops/code_map/runcheck.py", "--levels", "R0"], tree)
-    _run(["scripts/ops/code_map/modules.py"], tree)
+        _run(["tools/code_map/runcheck.py", "--levels", "R0"], tree)
+    _run(["tools/code_map/modules.py"], tree)
     cc = json.loads((tree / "data/code_map/modules.json").read_text(encoding="utf-8"))["crosscheck"]
     return {
         "순환(실제 import)": _as_count(cc["module_cycles"]),
@@ -206,7 +206,7 @@ def impacted_section(base: str, base_tree: Path, workers: int, max_files: int) -
 
 
 def gate_results(tree: Path) -> dict[str, bool]:
-    res = {"registry_sync": _run(["scripts/ops/code_map/registry_sync.py", "--check"], tree).returncode == 0}
+    res = {"registry_sync": _run(["tools/code_map/registry_sync.py", "--check"], tree).returncode == 0}
     for name, cmd in GATES:
         res[name] = _run(cmd, tree).returncode == 0
     # G5: base 와의 diff 검사는 --base 가 필요해 main() 에서 따로 부른다

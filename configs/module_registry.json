@@ -1,5 +1,5 @@
 {
- "_doc": "분류 정본 — 코드 파일별 층·역할·도메인. scripts/ops/code_map/classify.py 가 생성, 사람 확정값은 module_registry.overrides.json 에. 교차 검증·게이트는 이 파일을 기준으로 한다.",
+ "_doc": "분류 정본 — 코드 파일별 층·역할·도메인. tools/code_map/classify.py 가 생성, 사람 확정값은 module_registry.overrides.json 에. 교차 검증·게이트는 이 파일을 기준으로 한다.",
  "layers": {
   "L1": "공용 계약·설정(스키마·모델·경로·상수·로깅)",
   "L2": "정책·게이트·보안",
@@ -12577,7 +12577,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/__init__.py": {
+  "tools/code_map/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12585,7 +12585,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/agent_brief.py": {
+  "tools/code_map/agent_brief.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12593,7 +12593,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/build.py": {
+  "tools/code_map/build.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12601,7 +12601,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/classify.py": {
+  "tools/code_map/classify.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12609,7 +12609,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/fullmap.py": {
+  "tools/code_map/fullmap.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12617,7 +12617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/layer_count.py": {
+  "tools/code_map/layer_count.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12625,7 +12625,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/modules.py": {
+  "tools/code_map/modules.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12633,7 +12633,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/query.py": {
+  "tools/code_map/query.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12641,7 +12641,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/reach.py": {
+  "tools/code_map/reach.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12649,7 +12649,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/registry_sync.py": {
+  "tools/code_map/registry_sync.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12657,7 +12657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/runcheck.py": {
+  "tools/code_map/runcheck.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12665,7 +12665,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/scan.py": {
+  "tools/code_map/scan.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12673,7 +12673,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/skeleton_gate.py": {
+  "tools/code_map/skeleton_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -20009,7 +20009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/layer_rules.py": {
+  "tools/code_map/layer_rules.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22489,7 +22489,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/proc_tree.py": {
+  "tools/code_map/proc_tree.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23497,7 +23497,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/code_map/ref_seeds.py": {
+  "tools/code_map/ref_seeds.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",

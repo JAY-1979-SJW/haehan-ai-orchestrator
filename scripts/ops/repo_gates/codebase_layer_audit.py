@@ -30,7 +30,7 @@ LAYER_DOC = ROOT / "docs" / "layer_classification.md"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.code_map.layer_rules import (  # noqa: E402,F401 — 규칙은 code_map/layer_rules.py 에 있고 여기서는 같은 이름으로 다시 내보낸다
+from tools.code_map.layer_rules import (  # noqa: E402,F401 — 규칙은 code_map/layer_rules.py 에 있고 여기서는 같은 이름으로 다시 내보낸다
     _FORBIDDEN_IMPORT_PAIRS,
     LAYER_OVERRIDES,
     SITE_MODULES,

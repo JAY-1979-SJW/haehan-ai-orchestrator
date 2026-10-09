@@ -6,7 +6,7 @@
       선언 골격 = codebase_layer_audit.classify_path(레이어) · _FORBIDDEN_IMPORT_PAIRS(금지 import)
       · configs/module_boundaries.json(모듈 경계) · CLAUDE.md 규칙(상위→하위 의존만 허용)
 출력: data/code_map/modules.json, data/code_map/modules.md
-사용: python scripts/ops/code_map/modules.py   (build.py·runcheck.py 이후)
+사용: python tools/code_map/modules.py   (build.py·runcheck.py 이후)
 읽기 전용.
 """
 
@@ -19,11 +19,17 @@ from collections import Counter, defaultdict
 from fnmatch import fnmatch
 from pathlib import Path, PurePosixPath
 
-ROOT = Path(__file__).resolve().parents[3]
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
+
+ROOT = repo_root()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.code_map.layer_rules import _FORBIDDEN_IMPORT_PAIRS, classify_path  # noqa: E402
+from tools.code_map.layer_rules import _FORBIDDEN_IMPORT_PAIRS, classify_path  # noqa: E402
 
 OUT_DIR = ROOT / "data" / "code_map"
 CODE_SUFFIX = (".py", ".ts", ".tsx", ".js")

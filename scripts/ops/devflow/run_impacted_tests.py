@@ -26,7 +26,7 @@ ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.code_map import query as _query  # noqa: E402
+from tools.code_map import query as _query  # noqa: E402
 
 
 def collect_tests(files: list[str], map_path: Path | None = None, root: Path = ROOT) -> list[str]:

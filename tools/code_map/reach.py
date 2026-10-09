@@ -18,7 +18,7 @@ import sys
 from collections import deque
 from pathlib import Path, PurePosixPath
 
-from scripts.ops.code_map import scan
+from tools.code_map import scan
 
 STDLIB = set(sys.stdlib_module_names)
 CLASSES = ("LIVE", "CLI", "TEST_ONLY", "MENTIONED", "UNREACHED")

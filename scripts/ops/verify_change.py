@@ -112,7 +112,7 @@ CODE_EXT = tuple(CFG.get("code_ext", [".py"]))  # 분류 정본에 있어야 하
 
 def run(cmd: list[str], cwd: Path, timeout: int = 900) -> subprocess.CompletedProcess:
     """명령 실행. 시간 초과면 자손(CDP 데몬·Chrome 등)까지 종료하고 TimeoutExpired — 파이프를 문 자손 때문에 영원히 멈추지 않는다."""
-    from code_map.proc_tree import run_tree_killed  # type: ignore[import-not-found]
+    from tools.code_map.proc_tree import run_tree_killed  # type: ignore[import-not-found]
 
     return run_tree_killed(cmd, cwd=cwd, timeout=timeout, env=ENV)
 
@@ -226,7 +226,7 @@ def _checkout(ref: str, dest: Path) -> bool:
     """ref 를 임시 worktree 로 꺼내고 현재의 측정 도구를 넣는다(같은 잣대로 재기 위함)."""
     if run(["git", "worktree", "add", "--detach", str(dest), ref], ROOT).returncode != 0:
         return False
-    shutil.copytree(ROOT / "scripts/ops/code_map", dest / "scripts/ops/code_map", dirs_exist_ok=True)
+    shutil.copytree(ROOT / "tools/code_map", dest / "tools/code_map", dirs_exist_ok=True)
     return True
 
 
@@ -237,13 +237,13 @@ def _measure_collect_errors(tree: Path) -> list[str]:
 
 def _measure_code_map_and_import_fail(tree: Path) -> tuple[dict, dict | None, list[str]]:
     """code_map 빌드 + classify + runcheck 실행 후 (map.json, 커밋된 정본, import_fail 목록)."""
-    run([PY, "scripts/ops/code_map/build.py"], tree)
+    run([PY, "tools/code_map/build.py"], tree)
     reg_p = tree / "configs/module_registry.json"
     # 커밋된 정본(골격) — classify.py 가 다시 쓰기 전 상태로 대조해야 '정본 갱신 누락'이 보인다
     committed = json.loads(reg_p.read_text(encoding="utf-8"))["files"] if reg_p.exists() else None
-    if (tree / "scripts/ops/code_map/classify.py").exists():
-        run([PY, "scripts/ops/code_map/classify.py"], tree)
-    run([PY, "scripts/ops/code_map/runcheck.py", "--levels", "R0"], tree, timeout=1800)
+    if (tree / "tools/code_map/classify.py").exists():
+        run([PY, "tools/code_map/classify.py"], tree)
+    run([PY, "tools/code_map/runcheck.py", "--levels", "R0"], tree, timeout=1800)
     led_p = tree / "data/code_map/run_ledger.json"
     led = json.loads(led_p.read_text(encoding="utf-8"))["nodes"] if led_p.exists() else {}
     m = json.loads((tree / "data/code_map/map.json").read_text(encoding="utf-8"))
@@ -298,8 +298,8 @@ def _measure_skeleton_and_cycles(tree: Path, m: dict, committed: dict | None) ->
         skel += [f"정본에만 있음(파일 없음): {p}" for p in committed if not (tree / p).exists()]
         skel += [f"정본 누락(분류 안 됨): {p}" for p in sorted(code - set(committed))]
     cycles: list[str] = []
-    if (tree / "scripts/ops/code_map/modules.py").exists():
-        run([PY, "scripts/ops/code_map/modules.py"], tree)
+    if (tree / "tools/code_map/modules.py").exists():
+        run([PY, "tools/code_map/modules.py"], tree)
         cc = json.loads((tree / "data/code_map/modules.json").read_text(encoding="utf-8"))["crosscheck"]
         cycles = [" <-> ".join(c) for c in cc["module_cycles"]]
         skel += [f"금지 import: {h['src']} -> {h['dst']}" for h in cc.get("forbidden_import_hits", [])]
@@ -430,7 +430,7 @@ def affected_tests(changed: list[str]) -> list[str]:
     출발점은 바뀐 파일 + 바뀐 비-.py(설정·정본 json 등)를 문자열로 읽는 .py 다 — 코드맵 간선은 .py import 만 따라가서, 설정만 바뀌면
     그 설정을 여는 도구(와 그 도구를 import 하는 시험)가 빠졌다(2026-10-08 configs/folder_registry.json ↔ test_folder_gate).
     """
-    from code_map.ref_seeds import seeds_for  # type: ignore[import-not-found]
+    from tools.code_map.ref_seeds import seeds_for  # type: ignore[import-not-found]
 
     m = json.loads((ROOT / "data/code_map/map.json").read_text(encoding="utf-8"))
     rev: dict[str, set[str]] = {}
@@ -724,7 +724,7 @@ def _phase_tests(a: argparse.Namespace) -> int:
     index, count = _parse_shard(a.shard)
     changed = changed_files(a.base, a.head)
     _log(f"[tests {index}/{count}] 변경 파일 {len(changed)}개 — 코드맵 빌드")
-    run([PY, "scripts/ops/code_map/build.py"], ROOT)
+    run([PY, "tools/code_map/build.py"], ROOT)
     all_tests = affected_tests(changed)
     mine = shard_slice(all_tests, index, count)
     _log(f"[tests {index}/{count}] 영향 시험 {len(all_tests)}개 중 이 묶음 {len(mine)}개")
@@ -816,7 +816,7 @@ def main() -> int:
     changed = changed_files(a.base, a.head)
     loc_deps = moved_location_deps(a.base, a.head)
     _log(f"변경 파일 {len(changed)}개 — 코드맵 빌드")
-    run([PY, "scripts/ops/code_map/build.py"], ROOT)
+    run([PY, "tools/code_map/build.py"], ROOT)
     tests = affected_tests(changed)
     _log(f"영향 시험 파일 {len(tests)}개")
     tmp = Path(tempfile.mkdtemp(prefix="verify_base_"))

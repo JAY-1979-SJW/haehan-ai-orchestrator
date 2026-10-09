@@ -6,7 +6,7 @@
 코드 파일(.py/.ts/.tsx/.js), 층 L1~L10, 판정 = classify_path 층번호 하위→상위(numeric).
 보조 지표(참고): 레지스트리 층 + allowed_deps 방향모델(modules.py 의 '역전'; 과거 커밋 메시지의 51 이 이것).
 출력: data/code_map/layer_baseline.json + stdout 한 줄. 읽기 전용.
-사용: python scripts/ops/code_map/layer_count.py
+사용: python tools/code_map/layer_count.py
 """
 
 from __future__ import annotations
@@ -16,11 +16,17 @@ import sys
 from collections import Counter
 from pathlib import Path, PurePosixPath
 
-ROOT = Path(__file__).resolve().parents[3]
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
+
+ROOT = repo_root()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.code_map.layer_rules import classify_path  # noqa: E402
+from tools.code_map.layer_rules import classify_path  # noqa: E402
 
 OUT_DIR = ROOT / "data" / "code_map"
 CODE_SUFFIX = (".py", ".ts", ".tsx", ".js")

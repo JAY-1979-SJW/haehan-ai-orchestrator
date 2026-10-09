@@ -10,11 +10,18 @@ from __future__ import annotations
 import ast
 import re
 import subprocess
+import sys
 import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
+
+ROOT = repo_root()
 
 # 런처 텍스트로 스캔하는 비파이썬 파일(여기서 참조된 파이썬 파일 = 진입점)
 LAUNCHER_EXTS = {

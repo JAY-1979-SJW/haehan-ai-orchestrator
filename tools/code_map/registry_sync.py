@@ -12,7 +12,7 @@
                - 이동(rename) → 값은 유지한 채 키만 이동 (git diff --cached -M 로 감지)
                기존 키 순서는 보존하고 새 키는 끝에 추가한다(JSON diff 최소화).
 
-사용: python scripts/ops/code_map/registry_sync.py [--check|--fix]
+사용: python tools/code_map/registry_sync.py [--check|--fix]
 읽기 전용 아님(--fix 는 configs/module_registry.json, configs/module_registry.overrides.json 을 수정).
 """
 
@@ -25,14 +25,20 @@ import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 
-ROOT = Path(__file__).resolve().parents[3]
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
+
+ROOT = repo_root()
 REGISTRY = ROOT / "configs" / "module_registry.json"
 OVERRIDES = ROOT / "configs" / "module_registry.overrides.json"
 
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.code_map.classify import CODE_SUFFIX, _domain, classify_one  # noqa: E402
+from tools.code_map.classify import CODE_SUFFIX, _domain, classify_one  # noqa: E402
 
 
 def tracked_code_files(root: Path = ROOT) -> set[str]:
@@ -145,7 +151,7 @@ def check(root: Path = ROOT) -> int:
         for f in stale[:40]:
             print("  x " + f)
     if not missing and not ghost:
-        print("fix: python scripts/ops/code_map/registry_sync.py --fix")
+        print("fix: python tools/code_map/registry_sync.py --fix")
         return 1
     if missing:
         print(f"MISSING in registry ({len(missing)}) — tracked but no registry entry:")
@@ -155,7 +161,7 @@ def check(root: Path = ROOT) -> int:
         print(f"GHOST in registry ({len(ghost)}) — registry entry but not tracked:")
         for f in sorted(ghost)[:80]:
             print("  - " + f)
-    print("fix: python scripts/ops/code_map/registry_sync.py --fix")
+    print("fix: python tools/code_map/registry_sync.py --fix")
     return 1
 
 

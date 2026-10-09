@@ -19,7 +19,7 @@ import re
 from collections import Counter, defaultdict, deque
 from pathlib import PurePosixPath
 
-from scripts.ops.code_map import scan
+from tools.code_map import scan
 
 TEXT_EXTS = {
     ".py",

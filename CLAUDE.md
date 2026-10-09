@@ -296,7 +296,7 @@ FORBIDDEN_IMPORT > 0 → STOP
 SECURITY_PATTERN > 0 → STOP  
 CIRCULAR_IMPORT > 0 → STOP  
 quality gate errors > 0 → STOP  
-지도↔골격 대조(`scripts/ops/code_map/skeleton_gate.py`, pre-commit 자동·차단) FAIL → 안내된 `registry_sync.py --fix` 로 정본 맞춘 뒤 재커밋. master 병합은 `python scripts/ops/merge_stage.py <branch>`(verify_change PASS 일 때만) — 설계 docs/specs/2026-09-24_skeleton_map_crosscheck_gate.md
+지도↔골격 대조(`tools/code_map/skeleton_gate.py`, pre-commit 자동·차단) FAIL → 안내된 `registry_sync.py --fix` 로 정본 맞춘 뒤 재커밋. master 병합은 `python scripts/ops/merge_stage.py <branch>`(verify_change PASS 일 때만) — 설계 docs/specs/2026-09-24_skeleton_map_crosscheck_gate.md
 
 ## 코딩 컨벤션 및 완료 보고 기준 (2026-09-26 추가)
 
@@ -379,7 +379,7 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
 - **Python 3.14 문법 `except A, B:`(괄호 없는 다중 예외)는 유효하다** (2026-10-05, 로컬 3.14 로 실행 확인).
   3.13 이하 기준 도구·검수가 이를 문법 오류로 오판할 수 있으니 오류로 단정하기 전에 실제 인터프리터로 확인한다.
 - **`configs/module_registry.json` 병합 충돌** (2026-10-05). master 쪽 내용을 취한 뒤(`git checkout --theirs`)
-  `python scripts/ops/code_map/registry_sync.py --fix` 로 내 새 파일만 다시 등록하고 `--check` 로 일치를
+  `python tools/code_map/registry_sync.py --fix` 로 내 새 파일만 다시 등록하고 `--check` 로 일치를
   확인한다. PR 브랜치는 푸시 직전에 `git merge origin/master` 로 최신을 병합한다.
 
 ### 코딩 컨벤션 (2026-09-26 실측 확인)
@@ -411,7 +411,7 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
 ### 테스트·빌드·린트 명령 (2026-09-26 실행 확인)
 
 - **린트 (파일 단위)**: `python -m ruff check --config configs/ruff.toml <파일경로>` — 새 편집으로 생긴 오류만 확인 (레거시 오류 다수 존재, 위 gotcha 참조)
-- **영향 테스트 조회 → 실행**: `HAEHAN_NO_BROWSER_LAUNCH=1 python scripts/ops/code_map/query.py tests-for <변경파일>` 로 관련 테스트 목록을 얻은 뒤 해당 테스트만 `pytest` 실행 (전체 pytest 금지, 위 gotcha 참조)
+- **영향 테스트 조회 → 실행**: `HAEHAN_NO_BROWSER_LAUNCH=1 python tools/code_map/query.py tests-for <변경파일>` 로 관련 테스트 목록을 얻은 뒤 해당 테스트만 `pytest` 실행 (전체 pytest 금지, 위 gotcha 참조)
 - **전체 변경 검증**: `python scripts/ops/verify_change.py --base <기준커밋> --head <대상커밋> [--expect-routes N]`
 - **게이트 3종**: 위 "게이트 실행 의무" 섹션 참조 (`codebase_layer_audit.py`, `test_codebase_layer_audit.py`, `quality_gate.py --staged --enforce --allow-existing-code-change`)
 - **프론트 타입체크**: `cd admin-web && npm run typecheck` (`tsc --noEmit -p tsconfig.app.json`) — 확인 완료(통과)

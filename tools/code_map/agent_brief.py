@@ -2,7 +2,7 @@
 # primary_trade: common
 """작업 브리프 생성 — 에이전트가 이 1개 파일만 읽고 시작하도록 대상·영향 테스트·금지 파일·검증 명령을 담는다.
 
-python -m scripts.ops.code_map.agent_brief <spec-id> --role implement --files a.py b.py [--map ..] [--out ..]
+python -m tools.code_map.agent_brief <spec-id> --role implement --files a.py b.py [--map ..] [--out ..]
 """
 
 from __future__ import annotations
@@ -10,11 +10,18 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from pathlib import Path
 
-from scripts.ops.code_map import query
+from tools.code_map import query
 
-ROOT = Path(__file__).resolve().parents[3]
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
+
+ROOT = repo_root()
 
 
 def wip_files() -> list[str]:

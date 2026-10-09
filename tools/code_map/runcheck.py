@@ -9,7 +9,7 @@
 발송·게시·결제·삭제·유료 AI·로그인 조작은 자동 실행하지 않는다.
 
 사용:
-    python scripts/ops/code_map/runcheck.py --levels R0,R1
+    python tools/code_map/runcheck.py --levels R0,R1
 출력: data/code_map/run_ledger.json (단계별로 병합 저장, git 미추적)
 """
 
@@ -28,12 +28,18 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 
-ROOT = Path(__file__).resolve().parents[3]
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
+
+ROOT = repo_root()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.code_map import scan  # noqa: E402
-from scripts.ops.code_map.proc_tree import run_tree_killed  # noqa: E402
+from tools.code_map import scan  # noqa: E402
+from tools.code_map.proc_tree import run_tree_killed  # noqa: E402
 
 MAP = ROOT / "data" / "code_map" / "map.json"
 LEDGER = ROOT / "data" / "code_map" / "run_ledger.json"

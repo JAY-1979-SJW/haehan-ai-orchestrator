@@ -3,8 +3,8 @@
 """코드맵 S1 빌드 — 파일 단위 import·문자열 참조 그래프와 도달성 분류.
 
 사용:
-    python scripts/ops/code_map/build.py                # data/code_map/map.json + summary.md
-    python scripts/ops/code_map/build.py --determinism  # 2회 빌드 결과(메타 제외) 비교
+    python tools/code_map/build.py                # data/code_map/map.json + summary.md
+    python tools/code_map/build.py --determinism  # 2회 빌드 결과(메타 제외) 비교
 읽기 전용(원본·DB 쓰기 없음). 출력은 data/code_map/ (git 미추적).
 """
 
@@ -20,11 +20,17 @@ from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
+
+ROOT = repo_root()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.code_map import fullmap, reach, scan  # noqa: E402
+from tools.code_map import fullmap, reach, scan  # noqa: E402
 
 OUT_DIR = ROOT / "data" / "code_map"
 

@@ -32,7 +32,7 @@ docs/specs/2026-09-24_skeleton_map_crosscheck_gate.md 참조.
 내부 오류(예상 못한 예외)가 나면: SKELETON_GATE_SKIP_REASON 이 있으면 그래도 우회(로그 남기고
 exit 0), 없으면 FAIL 로 취급해 exit 1(원인을 화면에 보여주되 raw traceback 은 덤프하지 않음).
 
-사용: python scripts/ops/code_map/skeleton_gate.py   (pre-commit 훅에서 호출, exit 0/1)
+사용: python tools/code_map/skeleton_gate.py   (pre-commit 훅에서 호출, exit 0/1)
 """
 
 from __future__ import annotations
@@ -45,20 +45,26 @@ import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 
-ROOT = Path(__file__).resolve().parents[3]
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
+
+ROOT = repo_root()
 
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.code_map.classify import CODE_SUFFIX  # noqa: E402
-from scripts.ops.code_map.registry_sync import (  # noqa: E402
+from tools.code_map.classify import CODE_SUFFIX  # noqa: E402
+from tools.code_map.layer_rules import _FORBIDDEN_IMPORT_PAIRS  # noqa: E402
+from tools.code_map.registry_sync import (  # noqa: E402
     diff_registry,
     tracked_code_files,
 )
-from scripts.ops.code_map.layer_rules import _FORBIDDEN_IMPORT_PAIRS  # noqa: E402
 
 FIX_HINT = (
-    "python scripts/ops/code_map/registry_sync.py --fix && "
+    "python tools/code_map/registry_sync.py --fix && "
     "git add configs/module_registry.json configs/module_registry.overrides.json"
 )
 

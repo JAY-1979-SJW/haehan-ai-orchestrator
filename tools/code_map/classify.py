@@ -7,7 +7,7 @@
 사람이 확정한 값은 configs/module_registry.overrides.json 에 적으면 재생성해도 유지된다.
 
 출력: configs/module_registry.json (git 추적 — 분류의 단일 출처)
-사용: python scripts/ops/code_map/classify.py   (build.py 이후)
+사용: python tools/code_map/classify.py   (build.py 이후)
 """
 
 from __future__ import annotations
@@ -19,7 +19,13 @@ import sys
 from collections import Counter
 from pathlib import Path, PurePosixPath
 
-ROOT = Path(__file__).resolve().parents[3]
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
+
+ROOT = repo_root()
 REGISTRY = ROOT / "configs" / "module_registry.json"
 OVERRIDES = ROOT / "configs" / "module_registry.overrides.json"
 CODE_SUFFIX = (".py", ".ts", ".tsx", ".js", ".mjs", ".cjs")
@@ -207,7 +213,7 @@ def main() -> int:
             entry["confidence"] = "high"
         reg[p] = entry
     out = {
-        "_doc": "분류 정본 — 코드 파일별 층·역할·도메인. scripts/ops/code_map/classify.py 가 생성, "
+        "_doc": "분류 정본 — 코드 파일별 층·역할·도메인. tools/code_map/classify.py 가 생성, "
         "사람 확정값은 module_registry.overrides.json 에. 교차 검증·게이트는 이 파일을 기준으로 한다.",
         "layers": LAYERS,
         "allowed_deps": ALLOWED,

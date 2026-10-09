@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops.code_map import modules, registry_sync
+from tools.code_map import modules, registry_sync
 
 
 def _git(root: Path, *args: str) -> str:

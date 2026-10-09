@@ -11,9 +11,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from tools.code_map.reach import Resolver
 
-from scripts.ops.code_map import modules, scan
-from scripts.ops.code_map.reach import Resolver
+from tools.code_map import modules, scan
 
 FILES = [
     "pkg/__init__.py",

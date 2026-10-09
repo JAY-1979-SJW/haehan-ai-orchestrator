@@ -33,7 +33,7 @@ Claude가 신규 함수를 짤 때 (a) 이미 있는 유사 기능을 다시 짜
 | `CLAUDE.md` | 수정 | 기존 "작업 원칙" 절 아래 문단 추가(신규 섹션 만들지 않음 — 기존 "기준서→드라이런→승인", "게이트 실행 의무"와 중복 방지) |
 
 기존 파일은 **수정하지 않는다**: `scripts/ops/hooks/duplicate_code_check.py`,
-`scripts/ops/code_map/query.py`, `scripts/ops/verify_change.py`, `.githooks/pre-commit.orig`,
+`tools/code_map/query.py`, `scripts/ops/verify_change.py`, `.githooks/pre-commit.orig`,
 `configs/ruff.toml` — 그대로 재사용.
 
 왜 `.claude/hooks/`인가 (기존 관례와 차이): 현재 저장소의 모든 훅 스크립트는 `scripts/ops/`에
@@ -73,7 +73,7 @@ Claude가 신규 함수를 짤 때 (a) 이미 있는 유사 기능을 다시 짜
   통과"였으나 결함 #30 때문에 기준선 방식으로 조정 — §5).
   - 신규 오류가 있으면 stderr에 오류 내용 출력 후 `exit 2` → Claude Code가 이 stderr를 컨텍스트로
     받아 스스로 고친다(공식 규약).
-- `.py` 추가: `python -m scripts.ops.code_map.query tests-for <file>`로 매핑되는 테스트만 선별,
+- `.py` 추가: `python -m tools.code_map.query tests-for <file>`로 매핑되는 테스트만 선별,
   최대 3개까지 `pytest -x -q <selected>` 실행(전체 스위트 21분+·행 걸림 결함을 피함). 매핑 테스트가
   0개면 스킵(전체 실행 강제하지 않음 — 전체는 커밋 훅/verify_change 담당).
 - `.ts`/`.tsx`: admin-web 내부 파일이면 `npm run typecheck`(=`tsc --noEmit -p tsconfig.app.json`)
@@ -269,7 +269,7 @@ python 스크립트만 import).
   이름 매칭과 목적이 달라 별도 스크립트 필요하나 세션 종료 시 참고용으로 그대로 재사용 가능.
 - `scripts/ops/verify_change.py` — 9개 판정 항목 이미 구현(기준 커밋과 비교, 영향 테스트 포함).
   전체 검증은 이것을 그대로 쓰고 신규 로직 불필요.
-- `scripts/ops/code_map/query.py tests-for` — 실측 0.368초, 파일→영향 테스트 매핑 이미 존재.
+- `tools/code_map/query.py tests-for` — 실측 0.368초, 파일→영향 테스트 매핑 이미 존재.
 - `.githooks/pre-commit.orig` — ruff check --fix + format을 `configs/ruff.toml`로 이미 실행 중
   (커밋 시점). 훅은 세션 중 더 빠른 피드백을 주는 보완재.
 - `admin-web/package.json` — `npm run lint`(next lint), `npm run typecheck`(tsc --noEmit -p

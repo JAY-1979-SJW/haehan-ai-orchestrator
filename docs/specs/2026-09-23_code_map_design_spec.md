@@ -117,7 +117,7 @@
   - CLI = `__main__` 파일에서만 도달. TEST_ONLY = 테스트에서만 도달.
   - 미도달 중 파일명(stem)이 코드·설정(docs/·data/ 제외, 자기 자신 제외)에 단어로 등장 = MENTIONED(수동 확인), 아니면 UNREACHED.
 - **드라이런 판단 기준**: 파싱 실패 ≤1 · import 해석 실패율 보고 · UNREACHED 표본 20건 수작업 검수 오탐 ≤10% · 2회 실행 결과(메타 제외) 동일.
-- **검증 명령**: `python scripts/ops/code_map/build.py` → `data/code_map/map.json`, `summary.md`; `--determinism` 2회 비교.
+- **검증 명령**: `python tools/code_map/build.py` → `data/code_map/map.json`, `summary.md`; `--determinism` 2회 비교.
 - **롤백**: 신규 파일 삭제만으로 원복(원본·DB 쓰기 없음).
 
 ## 7. 한계(정적 분석이 못 보는 것)

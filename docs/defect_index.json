@@ -369,7 +369,7 @@
       "category": 3,
       "title": "코드맵 import 해석이 상위 폴더를 모두 검색 루트로 봐 이름 충돌을 실패로 오판(예: scripts/youtube/uploader.py 의 google.oauth2 를 scripts/google 로 판정)",
       "where": [
-        "scripts/ops/code_map/reach.py"
+        "tools/code_map/reach.py"
       ],
       "evidence": "import 실패 106건 중 1건 확인 — 실패 집계 과대 가능 → 정리 후 import 실패 4건",
       "fix_note": "2026-09-29: resolve_import() 의 failed/external 판정부를 수정 — 저장소 루트(base='')에서는 최상위 세그먼트 단독 일치로 '내부인데 깨짐' 판정을 유지(이 프로젝트의 절대 import 관례가 항상 저장소 루트 기준이라 강한 근거)하되, 그 외 중간 경로(base != '', 예: 'scripts')에서는 최상위 세그먼트 단독 일치가 약한 근거이므로 최소 2단계까지 실제 존재해야 내부로 판정하도록 강화. Resolver를 직접 호출해 5개 시나리오로 검증: google.oauth2.credentials(외부, 이전엔 오판됐던 사례)→external 정상화, local_agent.nonexistent_module(저장소 루트 기준 진짜 깨진 내부 import)→failed 유지, local_agent.config(정상 내부)→internal 유지, os.path(stdlib)→external 유지, scripts.google.nonexistent(중간경로에서도 진짜 깨진 경우)→failed 유지. ruff 통과.",
@@ -628,12 +628,12 @@
       "no": 43,
       "id": "run.std08_fullmap_extend_complexity_fix",
       "category": 2,
-      "title": "STD-08 극단값 2위 scripts/ops/code_map/fullmap.py:extend()(C901=44) 리팩터",
+      "title": "STD-08 극단값 2위 tools/code_map/fullmap.py:extend()(C901=44) 리팩터",
       "where": [
-        "scripts/ops/code_map/fullmap.py"
+        "tools/code_map/fullmap.py"
       ],
       "evidence": "#42 에서 도입한 STD-08 검사의 극단값(30+) 목록 2위. extend() 하나가 그래프 빌드의 모든 단계(edges/import_edges 초기화, contains 구성, ts import+path_ref 스캔, 진입점(roots) 구성, bfs 를 위한 3개 nested def, 노드 분류, 폴더 대표분류)를 다 갖고 있었고 nested def(dir_children_noncode/is_doc/bfs) 내부 분기까지 ruff mccabe 가 합산해 44로 잡혔다.",
-      "fix_note": "2026-09-29: 각 단계를 모듈 레벨 함수로 분리(_build_contains/_scan_text_refs/_ref_scan_text/_build_roots/_is_doc/_dir_children_noncode/_bfs_live/_classify_node/_classify_nodes/_build_dir_nodes) — extend() 는 이제 그 함수들을 순서대로 호출만 한다. 로직 변경 없음(순수 추출). 검증: ruff check 0 errors(C901 등 STD-08 findings 0), py_compile 통과, 이 함수를 실제로 쓰는 scripts/ops/code_map/build.py 를 저장소 전체(2140+ 파일) 대상으로 리팩터 전/후 git stash 대조 실행 — 결과 map.json (3,158,522 bytes) 이 generated_at 타임스탬프 1줄만 다르고 나머지 전부(nodes/dirs/edges/import_edges/edge_kinds/roots/hash/class_counts) 완전히 동일함을 확인. layer audit 신규 FORBIDDEN_IMPORT/CIRCULAR_IMPORT/SECURITY_PATTERN 없음, quality_gate --staged 0 errors.",
+      "fix_note": "2026-09-29: 각 단계를 모듈 레벨 함수로 분리(_build_contains/_scan_text_refs/_ref_scan_text/_build_roots/_is_doc/_dir_children_noncode/_bfs_live/_classify_node/_classify_nodes/_build_dir_nodes) — extend() 는 이제 그 함수들을 순서대로 호출만 한다. 로직 변경 없음(순수 추출). 검증: ruff check 0 errors(C901 등 STD-08 findings 0), py_compile 통과, 이 함수를 실제로 쓰는 tools/code_map/build.py 를 저장소 전체(2140+ 파일) 대상으로 리팩터 전/후 git stash 대조 실행 — 결과 map.json (3,158,522 bytes) 이 generated_at 타임스탬프 1줄만 다르고 나머지 전부(nodes/dirs/edges/import_edges/edge_kinds/roots/hash/class_counts) 완전히 동일함을 확인. layer audit 신규 FORBIDDEN_IMPORT/CIRCULAR_IMPORT/SECURITY_PATTERN 없음, quality_gate --staged 0 errors.",
       "stage": "RUN",
       "status": "fixed"
     },
@@ -654,9 +654,9 @@
       "no": 45,
       "id": "run.std08_code_map_modules_complexity_fix",
       "category": 2,
-      "title": "STD-08 극단값 4위 scripts/ops/code_map/modules.py:main()(C901=38) 리팩터",
+      "title": "STD-08 극단값 4위 tools/code_map/modules.py:main()(C901=38) 리팩터",
       "where": [
-        "scripts/ops/code_map/modules.py"
+        "tools/code_map/modules.py"
       ],
       "evidence": "#42 STD-08 극단값 목록 4위. main() 이 원본 주석의 5단계(레이어 역전/금지import위반/레이어판정불가/모듈경계대조/실행교차) + 모듈 지도 집계 + 결과 조립 + 마크다운 렌더를 전부 한 함수에 갖고 있어 C901=38.",
       "fix_note": "2026-09-29: 각 단계를 함수로 분리(_load_map_data/_load_layer_and_module_maps/_find_layer_inversions(+_layer_inversion_target)/_count_legacy_inversions/_find_forbidden_import_hits/_crosscheck_declared_modules/_make_module_accumulator/_accumulate_module_file_stats/_accumulate_module_edges/_summarize_modules/_module_edges_and_cycles/_build_result/_render_markdown_report). 분리 직후 3개의 새 findings 발생 — _find_layer_inversions(C901=11, 안쪽 for 문 분리로 해소), _build_result(PLR0913=15, ctx dict 로 묶어 해소), _render_markdown_report(PLR0913=9, result[\"crosscheck\"] 안에 이미 있는 값을 재사용하도록 바꿔 해소) — 전부 추가 조치 완료. 로직 변경 없음(순수 추출). 검증: ruff 0 errors, 실제 실행(build.py 로 만든 map.json 대상)을 원본과 대조 — Counter 키 순서가 실행마다 다른 게 원본 코드 자체의 기존 비결정성(PYTHONHASHSEED 프로세스별 랜덤)임을 원본만 2번 재실행해 별도로 확인, 키 순서를 정규화(정렬)하고 나면 값 차이는 정확히 1건 — scripts/ops/code_map 모듈의 lines(2701→2799, 리팩터로 파일이 실제로 길어진 것과 정확히 일치, 기대된 변화) 뿐, 나머지 전부(레이어역전/금지import/모듈경계/실행교차/모듈지도/순환) 완전히 동일함을 확인. layer audit·quality_gate 신규 위반 없음.",
@@ -1526,7 +1526,7 @@
       "stage": "AUDIT",
       "status": "fixed",
       "priority": "low (구조 부채)",
-      "fix_note": "2026-10-01 코드맵 import 해석기(scripts/ops/code_map/reach.py Resolver.resolve_import)가 `from local_agent import X` 를 루트 local_agent/ 패키지가 아니라 같은 이름의 scripts/local_agent.py 로 해석하던 문제 수정: `from X import Y` 에서 Y 가 서브모듈로 존재하는 가장 가까운 base 를 우선(_resolve_by_submodule_names). 변경 전후 import_edges 비교로 의도한 11건+ai_orchestrator/tests 2건만 바뀜 확인. scripts/local_agent.py 는 사이트 도구 디스패처라 L6. 커밋 9f92f3fe, 테스트 tests/test_code_map_reach_resolver.py(8개)."
+      "fix_note": "2026-10-01 코드맵 import 해석기(tools/code_map/reach.py Resolver.resolve_import)가 `from local_agent import X` 를 루트 local_agent/ 패키지가 아니라 같은 이름의 scripts/local_agent.py 로 해석하던 문제 수정: `from X import Y` 에서 Y 가 서브모듈로 존재하는 가장 가까운 base 를 우선(_resolve_by_submodule_names). 변경 전후 import_edges 비교로 의도한 11건+ai_orchestrator/tests 2건만 바뀜 확인. scripts/local_agent.py 는 사이트 도구 디스패처라 L6. 커밋 9f92f3fe, 테스트 tests/test_code_map_reach_resolver.py(8개)."
     },
     {
       "no": 115,
@@ -1627,7 +1627,7 @@
       "category": 3,
       "title": "코드맵이 실행 문장이 없는 빈 __init__.py 를 부모 패키지 의존 간선으로 세어 가짜 폴더 순환이 늘어남",
       "where": [
-        "scripts/ops/code_map/reach.py:Resolver._parent_inits 사용부(_internal_hits)",
+        "tools/code_map/reach.py:Resolver._parent_inits 사용부(_internal_hits)",
         "ai_orchestrator/__init__.py(0바이트)"
       ],
       "evidence": "2026-10-07 PR #156 CI verify 가 순환 80→84 로 FAIL. 새 순환 4개(connectors/desktop*·instagram*·session*, persistence)는 모두 'from ai_orchestrator.paths.runtime import ...' 가 부모 ai_orchestrator/__init__.py(0바이트)로 가는 간선을 만들어 생겼다. 빈 패키지 init 은 import 해도 실행되는 것이 없다. 기준·head 를 같은 도구로 재면(verify_change._checkout 이 head 의 code_map 도구를 기준 트리에 복사) 기준 80→73, head 84→73 이고 순증 0.",

@@ -2,7 +2,7 @@
 # primary_trade: common
 """코드맵 질문형 조회 — map.json 을 통째로 읽지 않고 답만 짧게 출력.
 
-python -m scripts.ops.code_map.query who-imports <파일> | imports-of <파일> | class-of <파일>
+python -m tools.code_map.query who-imports <파일> | imports-of <파일> | class-of <파일>
     | impact <파일...> | tests-for <파일...>   [--map 경로] [--limit N]
 """
 
@@ -15,12 +15,18 @@ import sys
 from collections import deque
 from pathlib import Path
 
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
+
 
 def _default_map() -> Path:
     env = os.environ.get("HAEHAN_CODE_MAP")
     if env:
         return Path(env)
-    here = Path(__file__).resolve().parents[3] / "data" / "code_map" / "map.json"
+    here = repo_root() / "data" / "code_map" / "map.json"
     return here
 
 

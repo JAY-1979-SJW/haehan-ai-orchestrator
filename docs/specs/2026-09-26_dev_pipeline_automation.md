@@ -66,13 +66,13 @@
 |---|---|---|
 | `scripts/ops/verify_change.py` (439줄) | `--base/--head/--json`, 기준·대상 트리를 임시 `git worktree`(`verify_base_*`)로 꺼내 병렬 측정, 잔여 프로세스 정리(`kill_leftovers`). **락 없음** | 락 획득 1곳만 추가(§5.2). 나머지 그대로 |
 | `scripts/ops/merge_stage.py` (286줄) | 내부에서 verify_change 실행 → PASS 시 `merge --ff-only` + 태그 `verified/<name>`, base 체크아웃 확인·태그 중복·겹침 검사 | 그대로 사용. merge 락 + 자식 verify 에 토큰 전달만 추가 |
-| `scripts/ops/code_map/build.py` | `meta = {generated_at, commit(short HEAD), scan_root, digest}` — **작업트리 변경 반영 여부 없음** | 지문 필드 추가 |
-| `scripts/ops/code_map/layer_count.py` | map.json 을 **검증 없이** 읽음(R4 원인) | 신선도 확인 호출 1줄 |
-| `scripts/ops/code_map/query.py` | map.json 로드, 없으면 에러 | 신선도 확인 |
-| `scripts/ops/code_map/agent_brief.py` | `configs/agent_roles.json` 역할표로 브리프 생성(대상·영향 테스트·WIP 금지 파일·검증 명령) | 카드 → 브리프 변환의 본체 |
+| `tools/code_map/build.py` | `meta = {generated_at, commit(short HEAD), scan_root, digest}` — **작업트리 변경 반영 여부 없음** | 지문 필드 추가 |
+| `tools/code_map/layer_count.py` | map.json 을 **검증 없이** 읽음(R4 원인) | 신선도 확인 호출 1줄 |
+| `tools/code_map/query.py` | map.json 로드, 없으면 에러 | 신선도 확인 |
+| `tools/code_map/agent_brief.py` | `configs/agent_roles.json` 역할표로 브리프 생성(대상·영향 테스트·WIP 금지 파일·검증 명령) | 카드 → 브리프 변환의 본체 |
 | `configs/agent_roles.json` | implement/review=sonnet, compare=haiku, design=main, 도구호출 상한, handoff 경로 | 서브에이전트 `model`·`maxTurns` 의 정본 |
 | `scripts/ops/hooks/agent_usage.py` | 역할별 토큰·도구호출 jsonl 기록/집계 | SubagentStop 훅에서 자동 기록 |
-| `scripts/ops/code_map/registry_sync.py`, `skeleton_gate.py` | 정본 동기화 / pre-commit 대조 게이트 | 게이트 단계에서 호출 |
+| `tools/code_map/registry_sync.py`, `skeleton_gate.py` | 정본 동기화 / pre-commit 대조 게이트 | 게이트 단계에서 호출 |
 | `.claude/agents/code-reviewer.md` | tools Read/Grep/Glob/Bash, sonnet, 등급·출력 형식 고정 | 그대로 리뷰 단계에 사용 |
 | `.claude/settings.json` hooks | guard_openai_call·guard_cdp_new_tab·guard_instagram·guard_youtube(PreToolUse Bash/PS), pre_edit_dup_check / post_edit_fast_gate / stop_fast_verify(품질게이트 3종), behavior_gate | 유지. 신규 훅 2개 추가만 |
 | `.claude/settings.local.json` hooks | session_guard(UserPromptSubmit/SessionStart/Stop/PreCompact) | 유지 |

@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from scripts.ops.code_map.reach import Resolver
+from tools.code_map.reach import Resolver
 
 # 이 저장소의 실제 충돌 배치를 그대로 본뜬 파일 목록
 FILES = [

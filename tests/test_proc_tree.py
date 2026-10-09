@@ -8,7 +8,7 @@ import time
 
 import pytest
 
-from scripts.ops.code_map import proc_tree
+from tools.code_map import proc_tree
 
 # 부모는 자식 하나(파이프를 상속해 오래 사는 '데몬')를 띄우고 자신도 오래 잔다 → 일반 subprocess.run(timeout) 은 파이프 EOF 를 못 받아 멈춘다
 PARENT_WITH_PIPE_HOLDING_CHILD = (
