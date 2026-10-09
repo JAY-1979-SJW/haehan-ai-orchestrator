@@ -207,7 +207,7 @@ def test_regression_prev_ux_spec_unchanged():
 
 
 def test_regression_gui_state_unchanged():
-    from local_agent.gui import gui_state as gs
+    from core.agent_runtime.gui import gui_state as gs
     assert hasattr(gs, "GuiController")
 
 

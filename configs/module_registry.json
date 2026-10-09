@@ -6777,7 +6777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui/gui_chat_state.py": {
+  "core/agent_runtime/gui/gui_chat_state.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6785,7 +6785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui/gui_icons.py": {
+  "core/agent_runtime/gui/gui_icons.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6793,7 +6793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui/gui_log_buffer.py": {
+  "core/agent_runtime/gui/gui_log_buffer.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6801,7 +6801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui/gui_state.py": {
+  "core/agent_runtime/gui/gui_state.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -24153,7 +24153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/gui/__init__.py": {
+  "core/agent_runtime/gui/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
