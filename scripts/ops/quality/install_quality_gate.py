@@ -18,7 +18,7 @@ HOOK = ROOT / ".git" / "hooks" / "pre-commit"
 
 HOOK_BODY = """#!/bin/sh
 python scripts/ops/quality/quality_gate.py --staged --enforce
-python scripts/ops/audits/google/audit_google_home_login_gate.py
+python tools/audits/google/audit_google_home_login_gate.py
 """
 
 

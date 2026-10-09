@@ -133,7 +133,7 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
      `scripts/naver/cafe/collection/cafe_explorer.py:main`(38) ·
      `scripts/ops/code_map/modules.py:main`(38) · `scripts/ops/repo_gates/codebase_layer_audit.py:classify_path`(35) ·
      `local_agent_redaction.py:_strip_result_data`(32) ·
-     `scripts/ops/audits/google/audit_google_automation_baseline_contract.py:audit`(32) ·
+     `tools/audits/google/audit_google_automation_baseline_contract.py:audit`(32) ·
      `tools/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py:run_audit`(32) ·
      `tools/audits/app/audit_site_sso_subdomain_runtime_baseline.py:audit`(33) ·
      `scripts/naver/mail/collection/inbox_collector.py:collect_inbox`(34) ·

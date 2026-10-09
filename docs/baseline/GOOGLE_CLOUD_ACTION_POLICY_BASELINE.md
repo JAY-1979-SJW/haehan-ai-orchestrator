@@ -132,7 +132,7 @@ Concrete forbidden behavior includes:
 Minimum verification for Cloud action policy changes:
 
 ```text
-python scripts/ops/audits/google/audit_google_cloud_action_policy_baseline_contract.py
-python scripts/ops/audits/google/audit_google_cloud_router_compatibility.py
+python tools/audits/google/audit_google_cloud_action_policy_baseline_contract.py
+python tools/audits/google/audit_google_cloud_router_compatibility.py
 python scripts/ops/quality/module_quality_gate.py --module repo_guard
 ```

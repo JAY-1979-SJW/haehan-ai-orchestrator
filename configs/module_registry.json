@@ -12097,7 +12097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/google/audit_google_automation_baseline_contract.py": {
+  "tools/audits/google/audit_google_automation_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12105,7 +12105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/google/audit_google_cloud_action_policy_baseline_contract.py": {
+  "tools/audits/google/audit_google_cloud_action_policy_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12113,7 +12113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/google/audit_google_cloud_module_baseline_contract.py": {
+  "tools/audits/google/audit_google_cloud_module_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12121,7 +12121,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/google/audit_google_cloud_readonly_local_browser_dryrun.py": {
+  "tools/audits/google/audit_google_cloud_readonly_local_browser_dryrun.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12129,7 +12129,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/google/audit_google_cloud_router_compatibility.py": {
+  "tools/audits/google/audit_google_cloud_router_compatibility.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12137,7 +12137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/google/audit_google_domain_module_boundaries.py": {
+  "tools/audits/google/audit_google_domain_module_boundaries.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12153,7 +12153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/google/audit_google_home_login_gate.py": {
+  "tools/audits/google/audit_google_home_login_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12161,7 +12161,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/google/audit_google_live_input_representative.py": {
+  "tools/audits/google/audit_google_live_input_representative.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12169,7 +12169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/google/audit_google_prefill_maturity.py": {
+  "tools/audits/google/audit_google_prefill_maturity.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12177,7 +12177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/google/audit_google_workspace_module_baseline_contract.py": {
+  "tools/audits/google/audit_google_workspace_module_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",
@@ -12185,7 +12185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/google/audit_google_workspace_router_compatibility.py": {
+  "tools/audits/google/audit_google_workspace_router_compatibility.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "google",

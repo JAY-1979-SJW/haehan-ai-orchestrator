@@ -1,180 +1,27 @@
-"""Read-only audit for the locked Google Cloud module baseline."""
+# haehan-shim: tools.audits.google.audit_google_cloud_module_baseline_contract
+# 호환 shim: 실제 모듈은 tools.audits.google.audit_google_cloud_module_baseline_contract 로 이동했다 (tools/audits/google/audit_google_cloud_module_baseline_contract.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/devflow/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-from __future__ import annotations
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
+    from pathlib import Path as _Path
 
-import sys
-from pathlib import Path
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    _root = str(_Path(__file__).resolve().parents[4])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
-ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-BASELINE = ROOT / "docs" / "baseline" / "GOOGLE_CLOUD_MODULE_BASELINE.md"
-
-CLOUD_SURFACES = (
-    "cloud_console",
-    "maps_platform",
-    "cloud_apis_credentials",
-    "cloud_iam",
-    "cloud_billing",
-    "cloud_run",
-    "compute_engine",
-    "cloud_storage",
-    "bigquery",
-    "gke",
-    "cloud_sql",
-    "pubsub",
-    "secret_manager",
-    "cloud_logging",
-    "cloud_monitoring",
-)
-
-CLOUD_APPROVAL_ACTIONS = (
-    "maps_platform_change_key_or_quota",
-    "cloud_create_api_credential",
-    "cloud_iam_change_role",
-    "cloud_billing_budget_or_link",
-    "cloud_run_deploy_service",
-    "compute_engine_create_vm",
-    "cloud_storage_create_bucket",
-    "bigquery_run_query_or_export",
-    "gke_apply_change",
-    "cloud_sql_change_instance",
-    "pubsub_create_or_publish",
-    "secret_manager_create_update",
-    "cloud_logging_create_sink",
-    "cloud_monitoring_create_alert",
-)
-
-CLOUD_LIVE_INPUT_ACTIONS = (
-    "maps_platform_change_key_or_quota",
-    "cloud_create_api_credential",
-    "cloud_iam_change_role",
-    "cloud_billing_budget_or_link",
-    "cloud_run_deploy_service",
-    "compute_engine_create_vm",
-    "cloud_storage_create_bucket",
-    "bigquery_run_query_or_export",
-    "gke_apply_change",
-    "cloud_sql_change_instance",
-    "pubsub_create_or_publish",
-    "secret_manager_create_update",
-    "cloud_logging_create_sink",
-    "cloud_monitoring_create_alert",
-)
-
-REQUIRED_PHRASES = (
-    "Status: LOCKED",
-    "Baseline ID: GOOGLE-CLOUD-MODULE-BASELINE-01",
-    "Cloud surfaces: 15",
-    "Cloud actions: 29",
-    "Cloud read actions: 15",
-    "Cloud approval actions: 14",
-    "Cloud hosts: `console.cloud.google.com`",
-    "Cloud live input supported actions: 14",
-    "Cloud prepare/open-only approval actions: 0",
-    "`vertex_ai` also uses `console.cloud.google.com`, but it belongs to the `ai`",
-    "raw project id, service account, key material, billing account, secret value,",
-    "actual `gcloud` execution",
-    "actual Google Cloud API execution",
-    "browser final click automation",
-)
+    _runpy.run_module("tools.audits.google.audit_google_cloud_module_baseline_contract", run_name="__main__")
+    raise SystemExit
 
 
-def _missing(text: str, phrases: tuple[str, ...]) -> list[str]:
-    return [phrase for phrase in phrases if phrase not in text]
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-def _check_cloud_surfaces(cloud: dict) -> list[str]:
-    surfaces = tuple(surface["key"] for surface in cloud["surfaces"])
-    if surfaces != CLOUD_SURFACES:
-        return ["Cloud surfaces changed: " + ", ".join(surfaces)]
-    return []
-
-
-def _check_cloud_approval_actions(cloud: dict) -> list[str]:
-    approval_actions = tuple(action["key"] for action in cloud["actions"] if action["requires_approval"])
-    if approval_actions != CLOUD_APPROVAL_ACTIONS:
-        return ["Cloud approval actions changed: " + ", ".join(approval_actions)]
-    return []
-
-
-def _check_cloud_counts(cloud: dict) -> list[str]:
-    expected_counts = {
-        "surface_count": 15,
-        "action_count": 29,
-        "read_action_count": 15,
-        "approval_action_count": 14,
-    }
-    return [
-        f"Cloud count mismatch {key}: expected {expected}, got {cloud.get(key)}"
-        for key, expected in expected_counts.items()
-        if cloud.get(key) != expected
-    ]
-
-
-def _check_cloud_hosts(cloud: dict, summary: dict) -> list[str]:
-    failures = []
-    if cloud.get("hosts") != ["console.cloud.google.com"]:
-        failures.append(f"Cloud hosts changed: {cloud.get('hosts')!r}")
-    if summary["host_warnings"]:
-        failures.append(f"Google host warnings must stay zero, got {len(summary['host_warnings'])}")
-    return failures
-
-
-def _check_cloud_live_input(cloud: dict) -> list[str]:
-    from scripts.google.common.live_inputs import build_live_input_coverage
-
-    failures = []
-    live_supported = {item["action_key"] for item in build_live_input_coverage()["supported"]}
-    cloud_live = tuple(action["key"] for action in cloud["actions"] if action["key"] in live_supported)
-    if cloud_live != CLOUD_LIVE_INPUT_ACTIONS:
-        failures.append("Cloud live-input-supported actions changed: " + ", ".join(cloud_live))
-    if set(CLOUD_APPROVAL_ACTIONS) - set(cloud_live):
-        failures.append("Cloud prepare/open-only approval action count must be 0")
-    return failures
-
-
-def audit() -> tuple[bool, list[str]]:
-    # 2026-09-29 STD-08(복잡도) 리팩터: cloud tab 관련 독립 체크들을 _check_*() 함수로 분리
-    # (순서·조건·문자열 그대로) — #48 과 같은 계열.
-    failures: list[str] = []
-    if not BASELINE.exists():
-        return False, ["docs/baseline/GOOGLE_CLOUD_MODULE_BASELINE.md missing"]
-
-    text = BASELINE.read_text(encoding="utf-8", errors="replace")
-    missing = _missing(text, REQUIRED_PHRASES)
-    if missing:
-        failures.append("Google Cloud baseline missing phrase(s): " + ", ".join(missing))
-
-    from scripts.google.common.tab_registry import build_google_tab_summary
-
-    summary = build_google_tab_summary()
-    cloud = next((tab for tab in summary["tabs"] if tab["key"] == "cloud"), None)
-    if cloud is None:
-        failures.append("Google cloud tab missing")
-        return False, failures
-
-    failures.extend(_check_cloud_surfaces(cloud))
-    failures.extend(_check_cloud_approval_actions(cloud))
-    failures.extend(_check_cloud_counts(cloud))
-    failures.extend(_check_cloud_hosts(cloud, summary))
-    failures.extend(_check_cloud_live_input(cloud))
-
-    return not failures, failures or [
-        "GOOGLE_CLOUD_MODULE_BASELINE exists and is locked",
-        "Cloud owns 15 surfaces and 29 actions",
-        "Cloud approval and live-input boundaries are preserved",
-        "Cloud host boundary is console.cloud.google.com",
-    ]
-
-
-def main() -> int:
-    from scripts.common.audit_cli import report_findings
-
-    ok, findings = audit()
-    return report_findings(ok, findings, "GOOGLE_CLOUD_MODULE_BASELINE_CONTRACT")
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+_install(_il.import_module("tools.audits.google.audit_google_cloud_module_baseline_contract"), globals(), _sys.modules)

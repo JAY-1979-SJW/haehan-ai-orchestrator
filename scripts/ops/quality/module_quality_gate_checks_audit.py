@@ -44,7 +44,7 @@ def check_site_work_function_baseline() -> tuple[bool, str]:
 
 def check_google_automation_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/google/audit_google_automation_baseline_contract.py"],
+        [PY, "tools/audits/google/audit_google_automation_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -54,7 +54,7 @@ def check_google_automation_baseline_contract() -> tuple[bool, str]:
 
 def check_google_workspace_module_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/google/audit_google_workspace_module_baseline_contract.py"],
+        [PY, "tools/audits/google/audit_google_workspace_module_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -74,7 +74,7 @@ def check_google_gmail_function_contract() -> tuple[bool, str]:
 
 def check_google_workspace_router_compatibility() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/google/audit_google_workspace_router_compatibility.py"],
+        [PY, "tools/audits/google/audit_google_workspace_router_compatibility.py"],
         timeout=120,
     )
     if not ok:
@@ -84,7 +84,7 @@ def check_google_workspace_router_compatibility() -> tuple[bool, str]:
 
 def check_google_cloud_module_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/google/audit_google_cloud_module_baseline_contract.py"],
+        [PY, "tools/audits/google/audit_google_cloud_module_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -94,7 +94,7 @@ def check_google_cloud_module_baseline_contract() -> tuple[bool, str]:
 
 def check_google_cloud_router_compatibility() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/google/audit_google_cloud_router_compatibility.py"],
+        [PY, "tools/audits/google/audit_google_cloud_router_compatibility.py"],
         timeout=120,
     )
     if not ok:
@@ -104,7 +104,7 @@ def check_google_cloud_router_compatibility() -> tuple[bool, str]:
 
 def check_google_cloud_action_policy_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/google/audit_google_cloud_action_policy_baseline_contract.py"],
+        [PY, "tools/audits/google/audit_google_cloud_action_policy_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -114,7 +114,7 @@ def check_google_cloud_action_policy_baseline_contract() -> tuple[bool, str]:
 
 def check_google_cloud_readonly_local_browser_dryrun() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/google/audit_google_cloud_readonly_local_browser_dryrun.py"],
+        [PY, "tools/audits/google/audit_google_cloud_readonly_local_browser_dryrun.py"],
         timeout=120,
     )
     if not ok:
@@ -124,7 +124,7 @@ def check_google_cloud_readonly_local_browser_dryrun() -> tuple[bool, str]:
 
 def check_google_domain_module_boundaries() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/google/audit_google_domain_module_boundaries.py"],
+        [PY, "tools/audits/google/audit_google_domain_module_boundaries.py"],
         timeout=120,
     )
     if not ok:
