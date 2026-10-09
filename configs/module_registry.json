@@ -9329,7 +9329,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/ops/verify/check_playwright_bootstrap.py": {
+  "tools/verify/check_playwright_bootstrap.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12721,7 +12721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify/dry_run_approved_browser_instruction_api.py": {
+  "tools/verify/dry_run_approved_browser_instruction_api.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -12729,7 +12729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify/dry_run_local_agent_cdp_attach.py": {
+  "tools/verify/dry_run_local_agent_cdp_attach.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12737,7 +12737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify/dry_run_manual_local_agent_browser_smoke.py": {
+  "tools/verify/dry_run_manual_local_agent_browser_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12961,7 +12961,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify/preflight.py": {
+  "tools/verify/preflight.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22217,7 +22217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify/_shared.py": {
+  "tools/verify/_shared.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22225,7 +22225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify/verify_agent_ws_auth.py": {
+  "tools/verify/verify_agent_ws_auth.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22233,7 +22233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify/verify_live_agent_smoke.py": {
+  "tools/verify/verify_live_agent_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22241,7 +22241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify/verify_live_browser_readonly_dispatch.py": {
+  "tools/verify/verify_live_browser_readonly_dispatch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -22249,7 +22249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify/verify_live_task_dispatch.py": {
+  "tools/verify/verify_live_task_dispatch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22257,7 +22257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify/verify_local_runtime_dry_run.py": {
+  "tools/verify/verify_local_runtime_dry_run.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23617,7 +23617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify/__init__.py": {
+  "tools/verify/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",

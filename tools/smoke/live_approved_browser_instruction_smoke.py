@@ -34,7 +34,7 @@ from core.agent_runtime.connection.network_bypass import (  # noqa: E402
 )
 
 DEFAULT_SERVER = "https://haehan-ai.kr/orchestrator"
-from scripts.ops.verify._shared import (  # noqa: E402, F401  (verify 공유 모듈에서 재노출)
+from tools.verify._shared import (  # noqa: E402, F401  (verify 공유 모듈에서 재노출)
     REMOTE_HOST,
     REMOTE_USER_SCRIPT,
     WORKER_CODE,

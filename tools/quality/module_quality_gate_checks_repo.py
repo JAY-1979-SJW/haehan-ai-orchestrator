@@ -58,7 +58,7 @@ def check_forbidden_command_matrix() -> tuple[bool, str]:
 
 def check_local_agent_browser_runtime_rules() -> tuple[bool, str]:
     doc = ROOT / "docs" / "architecture" / "local_agent_browser_runtime_operating_rules_20260523.md"
-    dry_run = ROOT / "scripts" / "ops" / "verify" / "dry_run_local_agent_cdp_attach.py"
+    dry_run = ROOT / "tools" / "verify" / "dry_run_local_agent_cdp_attach.py"
     tests = ROOT / "tests" / "test_local_agent_browser_runtime_operating_rules.py"
     monitor = ROOT / "scripts" / "archive" / "misc" / "chrome_ui_monitor.py"
     cdp_client = ROOT / "scripts" / "browser" / "cdp_client.py"
@@ -206,7 +206,7 @@ def check_required_local_gate_wiring() -> tuple[bool, str]:
 
     required_rendered = "\n".join(required_gate_mod.command_text(command) for command in required_gate_mod.COMMANDS)
     required_needles = (
-        "scripts/ops/verify/dry_run_local_agent_cdp_attach.py",
+        "tools/verify/dry_run_local_agent_cdp_attach.py",
         "tests/test_local_agent_browser_runtime_operating_rules.py",
         "tests/test_local_agent_cdp_attach.py",
         "tests/test_dry_run_local_agent_cdp_attach.py",

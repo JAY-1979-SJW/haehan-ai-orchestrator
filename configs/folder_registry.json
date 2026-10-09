@@ -1,6 +1,6 @@
 {
  "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
- "count": 407,
+ "count": 408,
  "folders": [
   {
    "path": ".",
@@ -3258,6 +3258,14 @@
    "status": "approved",
    "approved_at": "2026-10-09",
    "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 scripts/ops/smoke 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "tools/verify",
+   "purpose": "tools/verify — 폴더 이름 이동으로 옛 폴더 scripts/ops/verify 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 scripts/ops/verify 승인 이전) — move_run.py 자동 등록"
   }
  ]
 }

@@ -81,27 +81,27 @@
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/verify/verify_agent_ws_auth.py",
+   "file": "tools/verify/verify_agent_ws_auth.py",
    "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/verify/verify_live_agent_smoke.py",
+   "file": "tools/verify/verify_live_agent_smoke.py",
    "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/verify/verify_live_browser_readonly_dispatch.py",
+   "file": "tools/verify/verify_live_browser_readonly_dispatch.py",
    "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/verify/verify_live_task_dispatch.py",
+   "file": "tools/verify/verify_live_task_dispatch.py",
    "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/verify/verify_local_runtime_dry_run.py",
+   "file": "tools/verify/verify_local_runtime_dry_run.py",
    "reason": "verify/smoke → ops/ 이동(대표님 승인) — 옛 경로 직접 실행 호출처는 module_quality_gate·감사 스크립트뿐이고 모두 새 경로로 수정",
    "date": "2026-10-07"
   },

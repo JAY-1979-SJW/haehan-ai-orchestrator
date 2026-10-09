@@ -158,7 +158,7 @@ python -m pytest tests/test_playwright_ai_baseline_contract.py -q
 Runtime/browser verification:
 
 ```text
-python scripts/ops/verify/dry_run_local_agent_cdp_attach.py
+python tools/verify/dry_run_local_agent_cdp_attach.py
 python tools/quality/module_quality_gate.py --module repo_guard
 python tools/quality/required_quality_gate.py
 ```

@@ -80,7 +80,7 @@ def _cmd_blog_scrape(args: list[str]) -> None:
 def _cmd_check() -> None:
     gate_check("goto")
     print("[로컬에이전트] Playwright 환경 점검")
-    from scripts.ops.verify.check_playwright_bootstrap import main
+    from tools.verify.check_playwright_bootstrap import main
 
     main()
 

@@ -17,8 +17,8 @@ COMMON_ENGINE = ROOT / "docs" / "baseline" / "modules" / "COMMON_ENGINE_COMMERCI
 MODULE_BASELINE = ROOT / "docs" / "baseline" / "MODULE_BASELINE.md"
 CONNECTION_DIAGNOSTICS = ROOT / "core" / "agent_runtime" / "connection" / "connection_diagnostics.py"
 WEBSOCKET_CLIENT = ROOT / "core" / "agent_runtime" / "connection" / "websocket_client.py"
-WS_AUTH_PROBE = ROOT / "scripts" / "ops" / "verify" / "verify_agent_ws_auth.py"
-LIVE_DISPATCH = ROOT / "scripts" / "ops" / "verify" / "verify_live_task_dispatch.py"
+WS_AUTH_PROBE = ROOT / "tools" / "verify" / "verify_agent_ws_auth.py"
+LIVE_DISPATCH = ROOT / "tools" / "verify" / "verify_live_task_dispatch.py"
 
 REQUIRED_BASELINE_PHRASES = (
     "Status: LOCKED",

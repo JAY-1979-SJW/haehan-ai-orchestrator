@@ -85,9 +85,9 @@ MODULES: tuple[GateModule, ...] = (
                     "tools/quality/py_compile_no_cache.py",
                     "tools/audits/agent/audit_local_agent_connection_recovery_baseline.py",
                     "tests/test_local_agent_connection_recovery_baseline.py",
-                    "scripts/ops/verify/verify_agent_ws_auth.py",
-                    "scripts/ops/verify/verify_live_agent_smoke.py",
-                    "scripts/ops/verify/verify_live_task_dispatch.py",
+                    "tools/verify/verify_agent_ws_auth.py",
+                    "tools/verify/verify_live_agent_smoke.py",
+                    "tools/verify/verify_live_task_dispatch.py",
                 ),
             ),
             GateStep(
@@ -117,19 +117,19 @@ MODULES: tuple[GateModule, ...] = (
                     PY,
                     "tools/quality/py_compile_no_cache.py",
                     "local_agent/desktop_launcher.py",
-                    "scripts/ops/verify/verify_agent_ws_auth.py",
-                    "scripts/ops/verify/verify_local_runtime_dry_run.py",
+                    "tools/verify/verify_agent_ws_auth.py",
+                    "tools/verify/verify_local_runtime_dry_run.py",
                 ),
             ),
             GateStep(
                 "desktop_runtime_static",
-                (PY, "scripts/ops/verify/verify_local_runtime_dry_run.py"),
+                (PY, "tools/verify/verify_local_runtime_dry_run.py"),
             ),
             GateStep(
                 "agent_ws_auth_live",
                 (
                     PY,
-                    "scripts/ops/verify/verify_agent_ws_auth.py",
+                    "tools/verify/verify_agent_ws_auth.py",
                     "--server",
                     "https://haehan-ai.kr/orchestrator",
                     "--timeout",
@@ -139,7 +139,7 @@ MODULES: tuple[GateModule, ...] = (
             ),
             GateStep(
                 "desktop_runtime_live",
-                (PY, "scripts/ops/verify/verify_local_runtime_dry_run.py", "--live-server"),
+                (PY, "tools/verify/verify_local_runtime_dry_run.py", "--live-server"),
                 live=True,
             ),
         ),
@@ -153,15 +153,15 @@ MODULES: tuple[GateModule, ...] = (
                 (
                     PY,
                     "tools/quality/py_compile_no_cache.py",
-                    "scripts/ops/verify/verify_live_agent_smoke.py",
-                    "scripts/ops/verify/verify_live_task_dispatch.py",
+                    "tools/verify/verify_live_agent_smoke.py",
+                    "tools/verify/verify_live_task_dispatch.py",
                 ),
             ),
             GateStep(
                 "live_agent_smoke",
                 (
                     PY,
-                    "scripts/ops/verify/verify_live_agent_smoke.py",
+                    "tools/verify/verify_live_agent_smoke.py",
                     "--server",
                     "https://haehan-ai.kr/orchestrator",
                     "--timeout",
@@ -173,7 +173,7 @@ MODULES: tuple[GateModule, ...] = (
                 "live_task_dispatch",
                 (
                     PY,
-                    "scripts/ops/verify/verify_live_task_dispatch.py",
+                    "tools/verify/verify_live_task_dispatch.py",
                     "--server",
                     "https://haehan-ai.kr/orchestrator",
                     "--timeout",
