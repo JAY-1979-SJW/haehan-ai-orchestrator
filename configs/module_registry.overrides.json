@@ -221,7 +221,7 @@
   "role": "generic",
   "reason": "registration_codes.py(L4)를 실제 top-level import — 순수 L1 pydantic 계약 아님. local_agent_router.py 언급은 docstring 텍스트뿐(실제 import 아님, false-positive 텍스트스캔 edge 였음 — 문구 수정으로 제거)"
  },
- "ai_orchestrator/mcp_server.py": {
+ "ai_orchestrator/server/mcp_server.py": {
   "layer": "L8",
   "role": "api",
   "reason": "MCP 도구 서버 진입점 — 여러 사이트 모듈/워크플로(L5,L6)를 호출하는 API 계층, L4 오분류"
@@ -785,7 +785,7 @@
   "role": "contract",
   "reason": "저장소(L7)·검증기가 함께 쓰는 공용 예외 클래스만 정의(로직 없음) — 'approval' 이름 규칙이 L2 policy 로 오분류. L7 저장소가 import 하려면 L1 이어야 함"
  },
- "scripts/local_agent.py": {
+ "core/agent_runtime/runtime/local_agent.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "서버 WebSocket 으로 CDP 명령을 받아 사이트 도구(ProductFormRunner·CdpPopupManager 등)를 호출하는 로컬 에이전트 디스패처 — L4 browser_engine 이 아니라 사이트 모듈을 조합하는 흐름. 코드맵이 `from local_agent import …` 를 이 파일로 잘못 해석하던 가짜 간선은 reach.py 해석기 수정으로 제거(결함 #114)"

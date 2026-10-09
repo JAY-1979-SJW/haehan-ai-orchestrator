@@ -890,7 +890,7 @@ git 없이 보려면: `C:\work\_backup\haehan-ai-orchestrator_deleted_20260923.z
 # 2026-09-24 추가 — OpenAI(GPT) 호출 코드 완전 삭제
 
 기준서: `docs/specs/2026-09-24_openai_removal_claude_mcp.md`. 정리 직전 태그: `pre-openai-removal`.
-사유: 앱 런타임 유료 AI API 호출 0, AI(판단·글쓰기·에이전트)는 Claude Code가 MCP(`ai_orchestrator/mcp_server.py`)로 앱에 붙어 수행.
+사유: 앱 런타임 유료 AI API 호출 0, AI(판단·글쓰기·에이전트)는 Claude Code가 MCP(`ai_orchestrator/server/mcp_server.py`)로 앱에 붙어 수행.
 
 ## 복원 방법
 
@@ -964,7 +964,7 @@ git checkout pre-openai-removal -- <경로>
 - `ai_orchestrator/connectors/smartstore/chat.py` — 전체 재작성, /images/upload만 유지
 - `ai_orchestrator/connectors/smartstore/description.py` — /description/ai-generate·/gpt-generate GPT 호출 제거(스텁 응답)
 - `ai_orchestrator/connectors/gabia_router.py` — gabia/chat.py include 제거
-- `ai_orchestrator/mcp_server.py` — generate_description 도구에서 model=gpt 제거, builder 전용화
+- `ai_orchestrator/server/mcp_server.py` — generate_description 도구에서 model=gpt 제거, builder 전용화
 - `ai_orchestrator/openai_client.py` — OpenAI 호출 분기 제거, 항상 MOCK 폴백 반환
 - `ai_orchestrator/app_llm.py` — APP_LLM_PROVIDER="none", APP_LLM_MODEL/QUALITY_MODEL 상수 제거
 - `ai_orchestrator/config.py` — OPENAI_API_KEY 설정 제거

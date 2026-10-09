@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 # mcp 패키지 버전이 환경마다 달라 mcp_server 를 import 하지 않고 소스의 API_REGISTRY 만 읽는다.
-_SRC = Path("ai_orchestrator/mcp_server.py").read_text(encoding="utf-8")
+_SRC = Path("ai_orchestrator/server/mcp_server.py").read_text(encoding="utf-8")
 
 
 def _entry(key: str) -> str:

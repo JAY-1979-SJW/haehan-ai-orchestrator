@@ -6,7 +6,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator import mcp_server
+from ai_orchestrator.server import mcp_server
 from ai_orchestrator.site_work import site_task_map as tm
 from ai_orchestrator.site_work import site_task_map_service as service
 from ai_orchestrator.site_work import site_task_map_store as store

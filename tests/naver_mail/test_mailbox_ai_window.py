@@ -19,7 +19,7 @@ from ai_orchestrator.connectors.naver_mail import draft_store as store
 from ai_orchestrator.connectors.naver_mail import drafts_workflow as drafts
 from ai_orchestrator.connectors.naver_mail.mailbox_flow import ServiceError
 from ai_orchestrator.connectors.naver_mail.mailbox_router import naver_mailbox_router
-from ai_orchestrator.mcp_server import API_REGISTRY
+from ai_orchestrator.server.mcp_server import API_REGISTRY
 from scripts.naver.mail.imap import sender
 from tools.gates.auth import get_current_user
 

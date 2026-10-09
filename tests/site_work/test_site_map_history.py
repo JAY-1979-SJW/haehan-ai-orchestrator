@@ -12,7 +12,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator import mcp_server
+from ai_orchestrator.server import mcp_server
 from ai_orchestrator.site_work import site_map_history as hist
 from ai_orchestrator.site_work import site_map_history_store as history_store
 from ai_orchestrator.site_work import site_task_map as tm

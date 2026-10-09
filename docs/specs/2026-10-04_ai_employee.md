@@ -6,7 +6,7 @@
 ## 1. 조사 결과 (2026-10-04, 코드·공식 문서 확인)
 | 사실 | 근거 | 의미 |
 |---|---|---|
-| 앱의 AI 는 `claude -p --allowedTools <앱 MCP 도구>` 로 돈다. 허용 도구에 **WebSearch·WebFetch 없음** | `ai_orchestrator/mcp_tool_names.py`, `routers/ai_agent_router.py` | AI 가 공식 문서를 **스스로 웹에서 찾아 읽을 수 없다** |
+| 앱의 AI 는 `claude -p --allowedTools <앱 MCP 도구>` 로 돈다. 허용 도구에 **WebSearch·WebFetch 없음** | `ai_orchestrator/contracts/mcp_tool_names.py`, `routers/ai_agent_router.py` | AI 가 공식 문서를 **스스로 웹에서 찾아 읽을 수 없다** |
 | `UniversalChat` 은 `domain` 을 받지만 **쓰지 않는다**(지침은 창이 보내는 `agentHint` 가 전부) | `components/chat/UniversalChat.tsx` | 메인 "AI 작업 콘솔"·전역 "AI 어시스턴트"에는 지도·공식 API 를 쓰라는 지침이 **없다**(공무 창에만 연결됨) |
 | 벤더 공식 API 목록(`configs/vendor_apis.json`)은 개발자용 CLI 로만 조회, **AI 가 못 읽는다** | `tools/hooks/vendor_api_registry.py` | AI 가 "공식 API 가 있는데 화면을 긁으려는" 실수를 못 막는다 |
 | 국가법령정보 Open API 는 무료·키(OC)만 있으면 법령·판례·행정규칙 조회 가능 | open.law.go.kr 안내(웹 확인) | 공무의 법령 근거 확인은 **공식 API 가 정답**. 아직 앱에 구현 없음(`capability_check law`) |

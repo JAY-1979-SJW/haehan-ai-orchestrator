@@ -12,7 +12,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator import mcp_server
+from ai_orchestrator.server import mcp_server
 from ai_orchestrator.site_work import site_onboarding_service as onboarding
 from ai_orchestrator.site_work import site_preflight as sp
 from ai_orchestrator.site_work import site_preflight_service as svc

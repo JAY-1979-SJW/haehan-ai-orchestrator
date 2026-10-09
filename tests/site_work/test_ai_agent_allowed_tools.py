@@ -6,7 +6,7 @@ import asyncio
 
 import pytest
 
-from ai_orchestrator import mcp_tool_names as names
+from ai_orchestrator.contracts import mcp_tool_names as names
 from ai_orchestrator.site_work.ai_agent_router import _DEFAULT_ALLOWED_TOOLS
 
 
@@ -23,7 +23,7 @@ def test_no_duplicate_names_across_groups():
 def test_registered_mcp_tools_match_shared_names():
     # mcp 패키지 버전이 맞지 않는 환경(서버는 py -3.14)에서는 import 자체가 안 되므로 건너뛴다.
     try:
-        from ai_orchestrator import mcp_server
+        from ai_orchestrator.server import mcp_server
 
         registered = {t.name for t in asyncio.run(mcp_server.list_tools())}
     except (ImportError, AttributeError) as exc:

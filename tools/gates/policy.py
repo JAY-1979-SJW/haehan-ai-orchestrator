@@ -3,8 +3,13 @@ from pathlib import Path
 import yaml
 
 from ai_orchestrator.core.models import ExecutionPlan, RiskAssessment, TaskRequest
+from scripts.common.app_paths import repo_root
 
-DEFAULT_POLICY_PATH = Path(__file__).resolve().parents[1] / "policies" / "default_policy.yaml"
+# 결함(2026-10-09, PR165 CI 조사 중 발견 — tools/gates/policy.py 가 한 폴더 더 깊이 있던
+# 시절 계산(parents[1])이 move 이후에도 안 바뀌어 tools/policies/ 라는 없는 경로를 가리켰다.
+# 정본은 저장소 루트 policies/(allowed_paths·blocked_paths 전체가 있는 97줄짜리) — 이동뒤
+# 더 안전하게 repo_root() 로 고정.
+DEFAULT_POLICY_PATH = repo_root() / "policies" / "default_policy.yaml"
 
 
 def load_policy(path: Path = DEFAULT_POLICY_PATH) -> dict:

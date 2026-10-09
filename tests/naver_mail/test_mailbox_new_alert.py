@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 
-from ai_orchestrator import mcp_server
 from ai_orchestrator.connectors.naver_mail import new_policy as pol
+from ai_orchestrator.server import mcp_server
 from scripts.naver.mail.imap import imap_mailbox as mailbox
 
 

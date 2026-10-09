@@ -78,8 +78,9 @@ def repo(tmp_path):
         "ai_orchestrator/__init__.py",
         "ai_orchestrator/server/__init__.py",
         "ai_orchestrator/server/desktop_entry.py",
-        "ai_orchestrator/mcp_server.py",
-        "scripts/local_agent.py",
+        "ai_orchestrator/server/mcp_server.py",
+        "core/agent_runtime/runtime/local_agent.py",
+        "scripts/local_agent.py",  # electron extraResources 는 지금도 이 옛경로(호환 shim)를 패키징 대상으로 씀
         "scripts/naver/smartstore/__init__.py",
         "logging_utils.py",
         "configs/app.json",
@@ -89,8 +90,8 @@ def repo(tmp_path):
         _w(tmp_path, rel)
     hidden = ["ai_orchestrator.server", "scripts.naver.smartstore", "logging_utils", "fastapi"]
     _w(tmp_path, "haehan-server.spec", _spec("ai_orchestrator/server/desktop_entry.py", "haehan-server", hidden))
-    _w(tmp_path, "local-agent.spec", _spec("scripts/local_agent.py", "local-agent", ["playwright"]))
-    _w(tmp_path, "mcp-server.spec", _spec("ai_orchestrator/mcp_server.py", "haehan-mcp", ["mcp.server"]))
+    _w(tmp_path, "local-agent.spec", _spec("core/agent_runtime/runtime/local_agent.py", "local-agent", ["playwright"]))
+    _w(tmp_path, "mcp-server.spec", _spec("ai_orchestrator/server/mcp_server.py", "haehan-mcp", ["mcp.server"]))
     _w(tmp_path, gate.PACKAGE_JSON, _package_json())
     _w(tmp_path, "admin-web/electron/main.js", JS_OK)
     _w(tmp_path, gate.WORKFLOW, WORKFLOW)
@@ -122,7 +123,7 @@ def test_missing_entry_file_fails(repo):
 
 def test_third_party_hiddenimport_ignored(repo):
     hidden = ["totally_unknown_lib.sub", "uvicorn.loops.auto", "fastapi"]
-    _w(repo, "local-agent.spec", _spec("scripts/local_agent.py", "local-agent", hidden))
+    _w(repo, "local-agent.spec", _spec("core/agent_runtime/runtime/local_agent.py", "local-agent", hidden))
     findings = gate.check_all(repo)
     assert not any("totally_unknown_lib" in f.ref for f in findings)
     assert [f for f in findings if f.status == "FAIL"] == []
@@ -150,11 +151,12 @@ def test_dist_resource_without_spec_fails_and_next_output_skipped(repo):
 
 
 def test_missing_extra_resources_source_fails(repo):
+    (repo / "core" / "agent_runtime" / "runtime" / "local_agent.py").unlink()
     (repo / "scripts" / "local_agent.py").unlink()
     _git(repo, "add", "-A")
     refs = {f.ref for f in _fails(repo)}
     assert "extraResources ../../scripts → scripts filter local_agent.py" in refs
-    assert "entry scripts/local_agent.py" in refs
+    assert "entry core/agent_runtime/runtime/local_agent.py" in refs
 
 
 def test_workflow_missing_spec_fails(repo):
@@ -166,7 +168,7 @@ def test_untracked_file_does_not_count(repo):
     """존재 판정은 git 추적 기준 — 로컬에만 있는 파일로 통과했다가 CI 에서 깨지는 일 방지."""
     hidden = ["ai_orchestrator.local_only"]
     _w(repo, "ai_orchestrator/local_only.py")  # add 하지 않음
-    _w(repo, "local-agent.spec", _spec("scripts/local_agent.py", "local-agent", hidden))
+    _w(repo, "local-agent.spec", _spec("core/agent_runtime/runtime/local_agent.py", "local-agent", hidden))
     assert [f.ref for f in _fails(repo)] == ["hiddenimport ai_orchestrator.local_only"]
 
 
@@ -193,7 +195,7 @@ def test_needs_check_staged_filter(repo):
     assert gate.needs_check(["admin-web/electron/lib/agent.js"], repo)
     assert gate.needs_check([".github/workflows/ci.yml"], repo)
     assert gate.needs_check(["ai_orchestrator/server/__init__.py"], repo)  # spec hiddenimport 에 이름이 있다
-    assert gate.needs_check(["scripts/local_agent.py"], repo)  # spec 진입 파일 이름
+    assert gate.needs_check(["core/agent_runtime/runtime/local_agent.py"], repo)  # spec 진입 파일 이름
     assert not gate.needs_check(["ai_orchestrator/other.py", "docs/a.md"], repo)
 
 

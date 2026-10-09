@@ -114,7 +114,7 @@ class Resolver:
     ) -> tuple[list[str], str] | None:
         """`from X import Y` 에서 Y 가 서브모듈로 실제 존재하는 가장 가까운 base 를 우선한다.
 
-        같은 이름이 여러 곳에 있을 때(루트 local_agent/ 패키지와 scripts/local_agent.py 모듈) "가까운 폴더의 첫 일치"만 보면
+        같은 이름이 여러 곳에 있을 때(루트 local_agent/ 패키지와 core/agent_runtime/runtime/local_agent.py 모듈) "가까운 폴더의 첫 일치"만 보면
         이름이 겹치는 엉뚱한 파일로 해석된다(결함 #114: 가짜 층간 위반). Y 가 어느 위치의 서브모듈이면 그 위치가 진짜 대상이다.
         서브모듈 이름이 없는 import(클래스·함수·`import X`)는 여기서 처리하지 않고 기존 순서를 그대로 쓴다.
         """

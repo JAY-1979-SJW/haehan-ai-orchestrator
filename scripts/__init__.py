@@ -14,6 +14,6 @@
     scripts.eum        — 건설공제회 단말기 관리
     scripts.naver.smartstore — 스마트스토어
     scripts.g2b        — 나라장터 G2B
-    scripts.local_agent — 정부/민원 로컬 에이전트
+    core.agent_runtime.runtime.local_agent — 정부/민원 로컬 에이전트
     scripts.explorer   — 사이트 탐색
 """

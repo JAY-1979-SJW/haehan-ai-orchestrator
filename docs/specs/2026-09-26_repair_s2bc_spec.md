@@ -51,7 +51,7 @@ C 를 라벨로 푸는 게 정당한가: C3(selectors)·C5(gabia_login_watch)·C
 2. local_agent_models → registry (C2, 코드 주입)
 3. validators → workflow_runner (C1, TYPE_CHECKING)
 4. site_access(L4) → site_registry(L5) — 결정 필요(아래 D1)
-5. scripts/local_agent.py(L4) → smartstore form_runner(L6) — 결정 필요(D2)
+5. core/agent_runtime/runtime/local_agent.py(L4) → smartstore form_runner(L6) — 결정 필요(D2)
 
 삭제 후보(**삭제하지 않음, 목록만**): scripts/_tmp_full_html.py, _tmp_html_consts2.py, _tmp_master.py, scripts/temp_oauth_revoke.py(s2a 에서 L6 선언됨), 참고: scripts/execution_gate.py(in 0·out 0, 사용처 없음 — 사용 여부 별도 확인).
 
@@ -78,6 +78,6 @@ C 를 라벨로 푸는 게 정당한가: C3(selectors)·C5(gabia_login_watch)·C
 
 ## 사용자 결정 필요
 - D1: site_access(L4)→site_registry(L5). 선택: (a) site_access 를 L5 로(in: L4 site_crawler 1 신규) (b) site_registry 의 auth 호출을 지연 주입으로 바꿔 L1 유지(코드) — 추천 (a)+site_crawler L5.
-- D2: scripts/local_agent.py(L4)→form_runner(L6) (스마트스토어 로컬 에이전트 진입점). 선택: local_agent.py 를 L6(in: L4 login_session 1·L5 다수 신규 위반 가능) vs form_runner 호출을 주입. 별도 조사 필요 → 이번 범위 밖 권장.
+- D2: core/agent_runtime/runtime/local_agent.py(L4)→form_runner(L6) (스마트스토어 로컬 에이전트 진입점). 선택: local_agent.py 를 L6(in: L4 login_session 1·L5 다수 신규 위반 가능) vs form_runner 호출을 주입. 별도 조사 필요 → 이번 범위 밖 권장.
 - D3: C5 를 gabia_login_watch L4 라벨(추천) vs cdp_client L5 vs 분기 삭제.
 - D4: _tmp_* 3개·temp_oauth_revoke 삭제 승인(`[allow-delete]`, 태그·백업 후).

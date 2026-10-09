@@ -4,7 +4,7 @@
 "클로드를 mcp로 연결해서 open ai 삭제해"
 - 앱 안에서 GPT 를 부르는 모든 경로를 없앤다. 앱 런타임의 유료 AI API 호출 = 0.
 - AI(판단·글쓰기·에이전트)는 **Claude Code 가 MCP 로 앱에 붙어서** 한다.
-  앱은 도구·데이터만 제공: `ai_orchestrator/mcp_server.py`(`.mcp.json` 의 `haehan-orchestrator`) — 전용 도구 + `list_api_endpoints`/`call_api`(앱 API 전체).
+  앱은 도구·데이터만 제공: `ai_orchestrator/server/mcp_server.py`(`.mcp.json` 의 `haehan-orchestrator`) — 전용 도구 + `list_api_endpoints`/`call_api`(앱 API 전체).
 - 앱 경계 원칙(`app_llm.py`/`tests/test_app_llm_boundary.py`: 앱 런타임에서 Anthropic 호출 금지)은 그대로 — Claude 는 앱 밖(MCP 클라이언트)에서만.
 
 ## 범위

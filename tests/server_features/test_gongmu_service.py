@@ -9,11 +9,11 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator import mcp_server
 from ai_orchestrator.connectors.naver_mail import draft_policy as draft_policy
 from ai_orchestrator.gongmu import gongmu_service as service
 from ai_orchestrator.gongmu import gongmu_store as store
 from ai_orchestrator.gongmu.gongmu_router import gongmu_router
+from ai_orchestrator.server import mcp_server
 from ai_orchestrator.services import scheduled_job_actions as actions
 from tools.gates import auth as auth_module
 from tools.gates.auth import get_current_user
