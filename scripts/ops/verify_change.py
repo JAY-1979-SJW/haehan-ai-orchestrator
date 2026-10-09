@@ -347,6 +347,38 @@ def measure(tree: Path, tests: list[str]) -> dict:
     return r
 
 
+_EMPTY_MEASURE: dict = {
+    "collect_errors": [], "import_fail": [], "routes": "-", "violations": [], "skeleton": [], "cycles": [],
+    "test_failures": [], "test_timeouts": [], "test_failure_reasons": {},
+}
+
+
+def _collect_static_results(fb, fa, fk) -> tuple[dict, dict, list[str], str]:
+    """측정 future 3개(기준·변경 후 measure(), audit-kit)의 결과를 모은다 — 하나가 예외를 던져도
+    프로세스를 죽이지 않고 그 측정의 오류로 기록해 나머지 결과·보고가 끝까지 나오게 한다
+    ("추가 5", 2026-10-09: 5차 CI 에서 audit-kit 의 ModuleNotFoundError 가 verify_change 전체를
+    중단시켜 뒤 단계(ruff·보고)결과가 통째로 가려졌다). kit_errors 가 비어있지 않으면 기존처럼
+    FAIL 이 유지된다 — "예외로 중단"을 "정상 실패 보고"로 바꾸는 것일 뿐 완화가 아니다."""
+    kit_errors: list[str] = []
+    try:
+        before = fb.result()
+    except Exception as exc:  # noqa: BLE001 - 측정 자체의 예외도 결과로 기록(kit_errors)하고 계속한다
+        before = dict(_EMPTY_MEASURE)
+        kit_errors.append(f"기준 트리 측정 예외: {type(exc).__name__}: {exc}")
+    try:
+        after = fa.result()
+    except Exception as exc:  # noqa: BLE001
+        after = dict(_EMPTY_MEASURE)
+        kit_errors.append(f"변경 트리 측정 예외: {type(exc).__name__}: {exc}")
+    kit_note = ""
+    try:
+        fk_errors, kit_note = fk.result()
+        kit_errors += fk_errors
+    except Exception as exc:  # noqa: BLE001
+        kit_errors.append(f"audit-kit 측정 예외: {type(exc).__name__}: {exc}")
+    return before, after, kit_errors, kit_note
+
+
 def _is_pytest_id(token: str) -> bool:
     """pytest 요약 줄의 id 인가 — 'path::test' 이거나 수집 오류의 'path.py'. 로그 줄의 '모듈:파일.py:줄'은 아니다."""
     return "::" in token or token.endswith(".py")
@@ -798,8 +830,7 @@ def main() -> int:
                 measured = [] if a.phase == "static" else tests  # static: 시험은 다른 job(phase=tests)이 돌린다
                 fb, fa = ex.submit(measure, trees[0], measured), ex.submit(measure, head_tree, measured)
                 fk = ex.submit(_audit_kit_new_findings, py_changed, trees[0], head_tree)  # 시험(약 20분)과 겹쳐 돌려 직렬 대기를 없앤다
-                before, after = fb.result(), fa.result()
-                kit_errors, kit_note = fk.result()
+                before, after, kit_errors, kit_note = _collect_static_results(fb, fa, fk)
             _log("기준·변경 후 측정 + audit-kit 끝")
         finally:
             if reg_bytes is not None:

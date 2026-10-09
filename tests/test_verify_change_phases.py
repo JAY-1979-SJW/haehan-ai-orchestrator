@@ -158,3 +158,70 @@ def test_phase_report_merges_test_failure_reasons_across_shards(tmp_path):
     assert vc._phase_report(_args(_static(tmp_path, tests), [p1, p2], out)) == 1  # 새 실패 1건 — FAIL 이 맞다
     saved = json.loads(out.read_text(encoding="utf-8"))
     assert saved["after"]["test_failure_reasons"] == {"tests/test_a.py::x": "TypeError: boom"}
+
+
+# ── _collect_static_results: 측정 future 가 예외를 던져도 중단 대신 오류로 기록(추가 5, 2026-10-09) ──
+
+
+class _FakeFuture:
+    def __init__(self, value=None, exc: Exception | None = None):
+        self._value, self._exc = value, exc
+
+    def result(self):
+        if self._exc is not None:
+            raise self._exc
+        return self._value
+
+
+def test_collect_static_results_passes_through_when_nothing_raises():
+    before, after = {"collect_errors": []}, {"collect_errors": []}
+    b, a, kit_errors, kit_note = vc._collect_static_results(
+        _FakeFuture(before), _FakeFuture(after), _FakeFuture((["기존 kit 오류"], "참고 메모"))
+    )
+    assert b is before and a is after
+    assert kit_errors == ["기존 kit 오류"]
+    assert kit_note == "참고 메모"
+
+
+def test_collect_static_results_records_audit_kit_exception_instead_of_crashing():
+    """5차 CI 재현: audit-kit future 가 ModuleNotFoundError 를 던져도 verify_change 가 죽지 않고
+    before/after 는 정상, kit_errors 에 오류가 담겨 판정은 FAIL 로 유지될 자료가 남는다."""
+    before, after = {"collect_errors": []}, {"collect_errors": []}
+    b, a, kit_errors, kit_note = vc._collect_static_results(
+        _FakeFuture(before), _FakeFuture(after),
+        _FakeFuture(exc=ModuleNotFoundError("No module named '_proc'")),
+    )
+    assert b is before and a is after
+    assert len(kit_errors) == 1 and "ModuleNotFoundError" in kit_errors[0] and "_proc" in kit_errors[0]
+    assert kit_note == ""
+
+
+def test_collect_static_results_records_base_and_head_measure_exceptions_too():
+    """base·head 측정(measure()) 자체가 예외를 던지는 경우도 같은 방식 — 안전한 빈 측정값으로
+    채워 뒤 단계(_build_verify_report)가 KeyError 없이 돌 수 있게 하고, kit_errors 로 FAIL 유지."""
+    b, a, kit_errors, kit_note = vc._collect_static_results(
+        _FakeFuture(exc=RuntimeError("base 측정 깨짐")),
+        _FakeFuture(exc=RuntimeError("head 측정 깨짐")),
+        _FakeFuture(([], "")),
+    )
+    assert b == vc._EMPTY_MEASURE and a == vc._EMPTY_MEASURE
+    assert len(kit_errors) == 2
+    assert any("기준 트리" in e for e in kit_errors) and any("변경 트리" in e for e in kit_errors)
+    assert kit_note == ""
+
+
+def test_build_verify_report_fails_when_kit_errors_present_even_with_empty_measures():
+    """_collect_static_results 가 만든 안전한 빈 측정값 + kit_errors 로도 _build_verify_report 가
+    KeyError 없이 돌고 FAIL 로 판정하는지 — 실제 main() 경로와 같은 모양으로 확인."""
+    before, after, kit_errors, kit_note = vc._collect_static_results(
+        _FakeFuture(exc=RuntimeError("boom")), _FakeFuture(dict(vc._EMPTY_MEASURE)), _FakeFuture(([], ""))
+    )
+    assert kit_note == ""
+    measurements = {
+        "before": before, "after": after, "ruff_errors": [], "kit_errors": kit_errors,
+        "loc_deps": [], "moved": {}, "receiving": set(),
+    }
+    args = argparse.Namespace(base="b", head="h", expect_routes=None)
+    ok, report = vc._build_verify_report(args, ["pkg/mod.py"], [], measurements)
+    assert ok is False
+    assert "FAIL" in report
