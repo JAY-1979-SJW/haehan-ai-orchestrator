@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from ai_orchestrator.gongmu.gongmu_service import _read_rows
 from ai_orchestrator.connectors.naver_mail import bulk_policy as policy
 from ai_orchestrator.connectors.naver_mail import draft_policy as draft_policy
 from ai_orchestrator.paths import repo_root
@@ -66,25 +67,6 @@ def _clean_recipients(raw: Any) -> list[dict[str, str]]:
 
 # ── 주소록 파일(엑셀·CSV) 가져오기 ────────────────────────────────────────────────
 
-
-def _read_rows(path: Path) -> list[list[str]]:
-    suffix = path.suffix.lower()
-    if suffix in (".xlsx", ".xlsm"):
-        import openpyxl
-
-        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
-        try:  # 읽기 전용 통합 문서는 지연 로딩이라 반드시 닫는다(공식 문서)
-            return [["" if c is None else str(c) for c in row] for row in wb.active.iter_rows(values_only=True)]
-        finally:
-            wb.close()
-    if suffix in (".csv", ".txt"):
-        for enc in ("utf-8-sig", "cp949"):
-            try:
-                with path.open(encoding=enc, newline="") as f:
-                    return [list(r) for r in csv.reader(f)]
-            except UnicodeDecodeError:
-                continue
-    raise ValueError("엑셀(.xlsx) 또는 CSV 파일만 가져올 수 있습니다")
 
 
 def _find_col(header: list[str], keys: tuple[str, ...]) -> int | None:

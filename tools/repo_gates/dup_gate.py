@@ -129,7 +129,7 @@ def load_baseline_hashes() -> set[str]:
         return set()
     try:
         data = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
-    except OSError, ValueError:
+    except (OSError, ValueError):
         return set()
     return set(data.get("hashes", {}).keys())
 

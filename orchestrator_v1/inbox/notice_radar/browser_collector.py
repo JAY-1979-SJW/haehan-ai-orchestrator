@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
+from .collector import _find_near_date
 from .models import AttachmentResult, NoticeCandidate
 
 ATTACHMENT_EXTENSIONS = {".pdf", ".hwp", ".hwpx", ".xlsx", ".xlsm", ".zip", ".docx"}
@@ -317,20 +318,6 @@ def _html_to_text(html: str) -> str:
     html = re.sub(r"<style[\s\S]*?</style>", " ", html, flags=re.I)
     text = re.sub(r"<[^>]+>", " ", html)
     return re.sub(r"\s+", " ", text).strip()[:300_000]
-
-
-def _find_near_date(text: str, markers: list[str]) -> str | None:
-    date_re = re.compile(r"(20\d{2})[.\-/년 ]\s*(\d{1,2})[.\-/월 ]\s*(\d{1,2})")
-    candidates: list[tuple[int, str]] = []
-    for match in date_re.finditer(text):
-        window = text[max(0, match.start() - 80) : min(len(text), match.end() + 80)]
-        score = sum(1 for marker in markers if marker in window)
-        y, m, d = match.groups()
-        candidates.append((score, f"{int(y):04d}-{int(m):02d}-{int(d):02d}"))
-    if not candidates:
-        return None
-    candidates.sort(key=lambda item: (item[0], item[1]), reverse=True)
-    return candidates[0][1]
 
 
 def _filename_from_headers(url: str, headers: dict, idx: int) -> str:

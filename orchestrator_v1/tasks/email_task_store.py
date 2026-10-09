@@ -9,6 +9,8 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+from orchestrator_v1.tasks.candidate_store import _load_all
+
 _BASE_DIR = str(Path(__file__).resolve().parents[2])
 _EMAIL_TASKS_PATH = Path(_BASE_DIR) / "storage" / "email_tasks.jsonl"
 
@@ -17,20 +19,6 @@ def _tasks_path() -> str | Path:
     return _EMAIL_TASKS_PATH
 
 
-def _load_all(path: str | Path) -> list[dict]:
-    p = Path(path)
-    if not p.exists():
-        return []
-    items = []
-    with p.open(encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                try:
-                    items.append(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
-    return items
 
 
 def save_email_task(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
