@@ -139,8 +139,8 @@ Baseline and gate work may modify:
 docs/baseline/modules/PLAYWRIGHT_AI_BASELINE.md
 docs/baseline/MODULE_BASELINE.md
 tools/audits/agent/audit_playwright_ai_baseline_contract.py
-scripts/ops/quality/module_quality_gate.py
-scripts/ops/quality/required_quality_gate.py
+tools/quality/module_quality_gate.py
+tools/quality/required_quality_gate.py
 tests/test_playwright_ai_baseline_contract.py
 tests/test_module_quality_gate.py
 tests/test_required_quality_gate.py
@@ -159,8 +159,8 @@ Runtime/browser verification:
 
 ```text
 python scripts/ops/verify/dry_run_local_agent_cdp_attach.py
-python scripts/ops/quality/module_quality_gate.py --module repo_guard
-python scripts/ops/quality/required_quality_gate.py
+python tools/quality/module_quality_gate.py --module repo_guard
+python tools/quality/required_quality_gate.py
 ```
 
 Live browser verification is separate and requires explicit approval.

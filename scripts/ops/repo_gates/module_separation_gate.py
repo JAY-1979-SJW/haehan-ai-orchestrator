@@ -114,7 +114,7 @@ SEPARATED_MODULES: list[dict] = [
     },
     {
         "name": "module_quality_gate",
-        "root": "scripts/ops/quality/module_quality_gate.py",
+        "root": "tools/quality/module_quality_gate.py",
         "max_root_loc": 45,
         "leaf_glob": "scripts/ops/quality/module_quality_gate_*.py",
         "shared_leaves": {"common", "modules", "checks_repo", "checks_audit", "checks_web"},

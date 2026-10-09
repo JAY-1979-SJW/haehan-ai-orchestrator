@@ -8,9 +8,9 @@
       "layer": "L2",
       "paths": [
         ".githooks/",
-        "scripts/ops/quality/required_quality_gate.py",
-        "scripts/ops/quality/module_quality_gate.py",
-        "scripts/ops/quality/install_git_hooks.py",
+        "tools/quality/required_quality_gate.py",
+        "tools/quality/module_quality_gate.py",
+        "tools/quality/install_git_hooks.py",
         "tests/quality_gates/test_required_quality_gate.py",
         "tests/quality_gates/test_module_quality_gate.py"
       ],

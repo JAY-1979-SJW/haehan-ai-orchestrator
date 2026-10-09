@@ -16,7 +16,7 @@
 ## Phase A — 기초 공사 체크리스트 ✅ 완료
 
 - [x] `scripts/ops/repo_gates/codebase_layer_audit.py` 존재 및 실행 가능
-- [x] `scripts/ops/quality/quality_gate.py` 존재 및 실행 가능
+- [x] `tools/quality/quality_gate.py` 존재 및 실행 가능
 - [x] `docs/architecture/governance_gate_matrix.md` 존재
 - [x] `docs/architecture/layer_policy.md` 존재
 - [x] `docs/architecture/storage_audit_evidence_model.md` 존재

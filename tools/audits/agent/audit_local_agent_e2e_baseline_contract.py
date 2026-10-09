@@ -40,7 +40,7 @@ REQUIRED_LOCAL_AGENT_PHRASES = (
     "accept unauthenticated WebSocket tasks",
     "python tools/audits/agent/audit_local_agent_e2e_flow_contract.py",
     "python scripts/ops/smoke/live_parallel_task_dispatch_smoke.py --temp-admin --count 5 --concurrency 5 --timeout 90",
-    "python scripts/ops/quality/module_quality_gate.py --module local_agent_e2e",
+    "python tools/quality/module_quality_gate.py --module local_agent_e2e",
 )
 
 REQUIRED_MODULE_BASELINE_PHRASES = (

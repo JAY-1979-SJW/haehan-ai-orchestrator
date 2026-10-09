@@ -6,37 +6,37 @@
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/quality/install_git_hooks.py",
+   "file": "tools/quality/install_git_hooks.py",
    "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/quality/install_quality_gate.py",
+   "file": "tools/quality/install_quality_gate.py",
    "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/quality/log_code_change.py",
+   "file": "tools/quality/log_code_change.py",
    "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/quality/module_quality_gate.py",
+   "file": "tools/quality/module_quality_gate.py",
    "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/quality/py_compile_no_cache.py",
+   "file": "tools/quality/py_compile_no_cache.py",
    "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/quality/quality_gate.py",
+   "file": "tools/quality/quality_gate.py",
    "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
    "date": "2026-10-07"
   },
   {
-   "file": "scripts/ops/quality/required_quality_gate.py",
+   "file": "tools/quality/required_quality_gate.py",
    "reason": "S2-B ops/quality 이동 — 명시 참조(훅·설정·문서·시험)는 새 경로로 수정 완료, 옛 경로 직접 실행 호출처 없음",
    "date": "2026-10-07"
   },

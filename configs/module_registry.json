@@ -22097,7 +22097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/install_git_hooks.py": {
+  "tools/quality/install_git_hooks.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22105,7 +22105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/install_quality_gate.py": {
+  "tools/quality/install_quality_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22113,7 +22113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/log_code_change.py": {
+  "tools/quality/log_code_change.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22121,15 +22121,15 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/module_quality_gate.py": {
+  "tools/quality/module_quality_gate.py": {
    "layer": "L6",
    "role": "policy",
    "domain": "common",
-   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/ops/quality/module_quality_gate_runner.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 tools/quality/module_quality_gate_runner.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/ops/quality/module_quality_gate_checks_audit.py": {
+  "tools/quality/module_quality_gate_checks_audit.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22137,7 +22137,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/module_quality_gate_checks_repo.py": {
+  "tools/quality/module_quality_gate_checks_repo.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22145,7 +22145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/module_quality_gate_checks_web.py": {
+  "tools/quality/module_quality_gate_checks_web.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22153,7 +22153,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/module_quality_gate_common.py": {
+  "tools/quality/module_quality_gate_common.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22161,7 +22161,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/ops/quality/module_quality_gate_exports.py": {
+  "tools/quality/module_quality_gate_exports.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22169,7 +22169,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/module_quality_gate_modules.py": {
+  "tools/quality/module_quality_gate_modules.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22177,7 +22177,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/module_quality_gate_runner.py": {
+  "tools/quality/module_quality_gate_runner.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22185,7 +22185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/py_compile_no_cache.py": {
+  "tools/quality/py_compile_no_cache.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22193,7 +22193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/quality_gate.py": {
+  "tools/quality/quality_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22201,7 +22201,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "scripts/ops/quality/required_quality_gate.py": {
+  "tools/quality/required_quality_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",

@@ -14,7 +14,7 @@
 - `scripts/eum/shared/layout_openpyxl.py`: `_make_border`(함수,L0), `_pt_to_px`(함수,L0)
 - `scripts/google/precision_report.py`: `_host_from_surface`(함수,L0)
 - `scripts/mk_catalog/detail_page_template.py`: `_rounded_photo`(함수,L0)
-- `scripts/ops/quality/module_quality_gate_checks_web.py`: `_npm_audit_command`(함수,L0)
+- `tools/quality/module_quality_gate_checks_web.py`: `_npm_audit_command`(함수,L0)
 - `scripts/naver/blog/seo/assets.py`: `_click_next_blog_index`(함수,L0)
 - `scripts/naver/browser_gate.py`: `_norm_path`(함수,L0)
 - `scripts/ops/export_cafe_keywords_excel.py`: `_cell`(함수,L0)

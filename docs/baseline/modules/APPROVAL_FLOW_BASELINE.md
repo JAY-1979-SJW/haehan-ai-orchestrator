@@ -147,8 +147,8 @@ Baseline and gate work may modify:
 docs/baseline/modules/APPROVAL_FLOW_BASELINE.md
 docs/baseline/MODULE_BASELINE.md
 tools/audits/app/audit_approval_flow_baseline_contract.py
-scripts/ops/quality/module_quality_gate.py
-scripts/ops/quality/required_quality_gate.py
+tools/quality/module_quality_gate.py
+tools/quality/required_quality_gate.py
 tests/test_approval_flow_baseline_contract.py
 tests/test_module_quality_gate.py
 tests/test_required_quality_gate.py
@@ -166,9 +166,9 @@ python -m pytest tests/test_approval_flow_baseline_contract.py -q
 Runtime/backend verification:
 
 ```text
-python scripts/ops/quality/module_quality_gate.py --module backend_core
-python scripts/ops/quality/module_quality_gate.py --module repo_guard
-python scripts/ops/quality/required_quality_gate.py
+python tools/quality/module_quality_gate.py --module backend_core
+python tools/quality/module_quality_gate.py --module repo_guard
+python tools/quality/required_quality_gate.py
 ```
 
 ## 11. Known WARN

@@ -24,7 +24,7 @@
 | LOCAL_AGENT_REQUIRED_ACTION | P1 | ⚠️ 문서만 | docs/architecture/ | 로컬 에이전트 전용 작업 분류 |
 | SERVER_BROWSER_GUARD | P1 | ✅ 구현됨 (보강) | scripts/ops/repo_gates/codebase_layer_audit.py + execution_gate.py + gates.py | 서버 사이드 로그인 브라우저 차단 |
 | DB_WRITE_GUARD | P2 | ⚠️ 문서만 | docs/architecture/ | 운영 DB write 승인 없이 차단 |
-| DESTRUCTIVE_OP_GUARD | P2 | ✅ 구현됨 (quality_gate.py) | scripts/ops/quality/quality_gate.py | 파괴적 SQL/명령 차단 |
+| DESTRUCTIVE_OP_GUARD | P2 | ✅ 구현됨 (quality_gate.py) | tools/quality/quality_gate.py | 파괴적 SQL/명령 차단 |
 | ARCHITECTURE_DOC_EXISTS | P2 | 신규 추가 | tests/test_app_foundation_governance.py | 필수 문서 존재 여부 |
 | PERMISSION_MODEL_EXISTS | P2 | 신규 추가 | tests/test_app_foundation_governance.py | 권한 모델 문서 존재 여부 |
 | WORKFLOW_STATE_EXISTS | P2 | 신규 추가 | tests/test_app_foundation_governance.py | 상태 모델 문서 존재 여부 |
@@ -90,7 +90,7 @@ DESTRUCTIVE_OP_GUARD     — rm -rf, DROP TABLE 등 파괴적 명령 감지
 - 테스트: `tests/test_gabia_site_engine.py::test_gate_login_blocked` 등
 
 ### DESTRUCTIVE_OP_GUARD (P2 — quality_gate.py로 구현됨)
-- 위치: `scripts/ops/quality/quality_gate.py`
+- 위치: `tools/quality/quality_gate.py`
 - 감지: DROP, TRUNCATE, DELETE FROM 등
 
 ---

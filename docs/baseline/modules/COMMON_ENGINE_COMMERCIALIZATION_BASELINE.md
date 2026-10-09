@@ -206,21 +206,21 @@ python -m pytest tests/test_common_engine_commercialization_baseline.py -q
 Required local gate:
 
 ```text
-python scripts/ops/quality/required_quality_gate.py
-python scripts/ops/quality/module_quality_gate.py --module repo_guard
+python tools/quality/required_quality_gate.py
+python tools/quality/module_quality_gate.py --module repo_guard
 ```
 
 Commercialization gate:
 
 ```text
-python scripts/ops/quality/module_quality_gate.py --module common_engine_commercialization
+python tools/quality/module_quality_gate.py --module common_engine_commercialization
 ```
 
 Live readiness is separate and must be explicitly approved:
 
 ```text
-python scripts/ops/quality/module_quality_gate.py --module live_agent --include-live
-python scripts/ops/quality/module_quality_gate.py --module release_runtime --include-live
+python tools/quality/module_quality_gate.py --module live_agent --include-live
+python tools/quality/module_quality_gate.py --module release_runtime --include-live
 ```
 
 ## 11. Known WARN

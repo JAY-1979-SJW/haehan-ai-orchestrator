@@ -54,7 +54,7 @@ Global prohibitions:
   and root legacy script inventory.
 - Input: repository files, git status, configured gate command lists.
 - Output: PASS/FAIL guardrail result and safe diagnostic messages.
-- Allowed paths: `scripts/ops/quality/module_quality_gate.py`, `scripts/ops/quality/required_quality_gate.py`,
+- Allowed paths: `tools/quality/module_quality_gate.py`, `tools/quality/required_quality_gate.py`,
   `.githooks/`, `docs/baseline/`, `docs/architecture/`, `tests/test_*gate*.py`,
   and read-only audit scripts under `scripts/ops/`.
 - Forbidden behavior: build, deploy, Docker, installer, push, dependency install,
@@ -63,8 +63,8 @@ Global prohibitions:
   files from entering commits.
 - State changes: none during audits except normal test/cache files outside git
   scope.
-- Required verification: `python scripts/ops/quality/module_quality_gate.py --module repo_guard`
-  and `python scripts/ops/quality/required_quality_gate.py`.
+- Required verification: `python tools/quality/module_quality_gate.py --module repo_guard`
+  and `python tools/quality/required_quality_gate.py`.
 - Known WARN: does not replace live runtime verification.
 
 ### backend_core
@@ -92,7 +92,7 @@ docs/baseline/modules/BACKEND_CORE_BASELINE.md
 - State changes: task lifecycle, approval status, audit events, and persisted
   server state only through approved services.
 - Required verification: backend contract audit, backend auth/security tests,
-  and `python scripts/ops/quality/module_quality_gate.py --module backend_core`.
+  and `python tools/quality/module_quality_gate.py --module backend_core`.
 - Known WARN: full live server integration remains a separately approved stage.
 
 ### common_tool_runtime
@@ -148,7 +148,7 @@ docs/baseline/modules/COMMON_ENGINE_COMMERCIALIZATION_BASELINE.md
 - Required verification:
   `python tools/audits/app/audit_common_engine_commercialization_baseline.py`,
   `python -m pytest tests/test_common_engine_commercialization_baseline.py -q`,
-  and `python scripts/ops/quality/module_quality_gate.py --module common_engine_commercialization`.
+  and `python tools/quality/module_quality_gate.py --module common_engine_commercialization`.
 - Known WARN: Gmail-specific remote execution, reconnect/backoff implementation,
   and domain-specific commercial baselines still require follow-up work.
 
@@ -175,7 +175,7 @@ docs/baseline/modules/LOCAL_AGENT_E2E_BASELINE.md
 - State changes: `queued -> delivered -> running -> completed | failed` and
   approved `waiting_approval -> queued` transitions.
 - Required verification: `python tools/audits/agent/audit_local_agent_e2e_flow_contract.py`
-  and `python scripts/ops/quality/module_quality_gate.py --module local_agent_e2e`.
+  and `python tools/quality/module_quality_gate.py --module local_agent_e2e`.
 - Known WARN: disconnect/retry recovery requires a future module-specific
   recovery baseline.
 
@@ -209,7 +209,7 @@ docs/baseline/modules/LOCAL_AGENT_CONNECTION_RECOVERY_BASELINE.md
 - Required verification:
   `python tools/audits/agent/audit_local_agent_connection_recovery_baseline.py`,
   `python -m pytest tests/test_local_agent_connection_recovery_baseline.py -q`,
-  and `python scripts/ops/quality/module_quality_gate.py --module local_agent_connection_recovery`.
+  and `python tools/quality/module_quality_gate.py --module local_agent_connection_recovery`.
 - Known WARN: live checks depend on current server and local credential, and
   Gmail-specific remote execution is separate.
 

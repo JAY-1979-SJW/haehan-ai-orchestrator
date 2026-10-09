@@ -380,8 +380,8 @@ gate when the change affects shared contracts.
 syntax: python -m py_compile targeted files
 unit: python -m pytest targeted tests -q
 contract: module-specific audit script
-module gate: python scripts/ops/quality/module_quality_gate.py --module <module>
-required gate: python scripts/ops/quality/required_quality_gate.py
+module gate: python tools/quality/module_quality_gate.py --module <module>
+required gate: python tools/quality/required_quality_gate.py
 live smoke: only when explicitly approved
 ```
 

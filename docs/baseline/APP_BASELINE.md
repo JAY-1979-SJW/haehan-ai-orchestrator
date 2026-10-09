@@ -75,7 +75,7 @@ This flow is enforced by:
 
 ```text
 python tools/audits/agent/audit_local_agent_e2e_flow_contract.py
-python scripts/ops/quality/module_quality_gate.py --module local_agent_e2e
+python tools/quality/module_quality_gate.py --module local_agent_e2e
 ```
 
 ## 3. Execution Boundaries
@@ -299,15 +299,15 @@ docs/baseline/APP_DEVELOPMENT_STANDARD.md
 The required local gate is:
 
 ```text
-python scripts/ops/quality/required_quality_gate.py
+python tools/quality/required_quality_gate.py
 ```
 
 Required module gates include:
 
 ```text
-python scripts/ops/quality/module_quality_gate.py --module repo_guard
-python scripts/ops/quality/module_quality_gate.py --module backend_core
-python scripts/ops/quality/module_quality_gate.py --module local_agent_e2e
+python tools/quality/module_quality_gate.py --module repo_guard
+python tools/quality/module_quality_gate.py --module backend_core
+python tools/quality/module_quality_gate.py --module local_agent_e2e
 ```
 
 Required audits include:

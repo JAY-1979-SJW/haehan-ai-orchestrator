@@ -124,7 +124,7 @@ python scripts/entry/cdp_cli.py eum work registration P-001 D-001 Seoul --prepar
 
 ## 6. 초기 품질 게이트
 
-저장소 변경 품질은 `scripts/ops/quality/quality_gate.py`가 검사한다.
+저장소 변경 품질은 `tools/quality/quality_gate.py`가 검사한다.
 
 검사 항목:
 
@@ -138,14 +138,14 @@ python scripts/entry/cdp_cli.py eum work registration P-001 D-001 Seoul --prepar
 실행:
 
 ```bash
-python scripts/ops/quality/quality_gate.py
-python scripts/ops/quality/quality_gate.py --staged --enforce
+python tools/quality/quality_gate.py
+python tools/quality/quality_gate.py --staged --enforce
 ```
 
 로컬 pre-commit 훅 설치:
 
 ```bash
-python scripts/ops/quality/install_quality_gate.py
+python tools/quality/install_quality_gate.py
 ```
 
 훅은 staged 변경만 검사하므로 기존 작업트리의 미정리 파일 때문에 커밋 전 검사가 불필요하게 깨지지 않는다.

@@ -31,7 +31,7 @@ REQUIRED_BASELINE_PHRASES = (
     "initial backoff: 1 second",
     "maximum backoff: 60 seconds",
     "jitter: up to 10 percent",
-    "python scripts/ops/quality/module_quality_gate.py --module local_agent_connection_recovery",
+    "python tools/quality/module_quality_gate.py --module local_agent_connection_recovery",
 )
 
 REQUIRED_DIAGNOSTIC_PHRASES = (

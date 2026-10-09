@@ -169,7 +169,7 @@ Minimum verification for Cloud changes:
 ```text
 python tools/audits/google/audit_google_cloud_module_baseline_contract.py
 python tools/audits/google/audit_google_automation_baseline_contract.py
-python scripts/ops/quality/module_quality_gate.py --module repo_guard
+python tools/quality/module_quality_gate.py --module repo_guard
 ```
 
 ## 8. Known WARN

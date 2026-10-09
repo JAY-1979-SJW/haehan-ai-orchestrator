@@ -13,7 +13,7 @@ ROOT = next(
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.ops.quality.quality_gate import record_deploy_dry_run  # noqa: E402 - sys.path 부트스트랩 뒤 import
+from tools.quality.quality_gate import record_deploy_dry_run  # noqa: E402 - sys.path 부트스트랩 뒤 import
 
 
 def main() -> int:

@@ -6,10 +6,10 @@ deploy, push, start Docker, or run external browser/service automation.
 
 ## Official Static Gates
 
-- `python -m scripts.ops.quality.module_quality_gate --module all`
+- `python -m tools.quality.module_quality_gate --module all`
   - Runs static module checks only unless `--include-live` is explicitly passed.
   - Blocks build/deploy/push/Docker commands from the gate matrix.
-- `python -m scripts.ops.quality.module_quality_gate --module release_preflight`
+- `python -m tools.quality.module_quality_gate --module release_preflight`
   - Runs admin-web typecheck/lint, production dependency audit, and
     active-source secret scan.
   - Development-only tool audit findings are tracked separately and do not

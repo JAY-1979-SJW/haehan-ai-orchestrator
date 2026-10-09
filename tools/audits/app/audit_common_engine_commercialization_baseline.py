@@ -34,7 +34,7 @@ REQUIRED_BASELINE_PHRASES = (
     "no-final-submit mode",
     "Approval API failure",
     "Evidence must not contain raw secrets",
-    "python scripts/ops/quality/module_quality_gate.py --module common_engine_commercialization",
+    "python tools/quality/module_quality_gate.py --module common_engine_commercialization",
 )
 
 REQUIRED_APP_BASELINE_PHRASES = (
