@@ -14,9 +14,12 @@ import pytest
 from tools.hooks import audit_kit_gate as gate
 
 FAKE_HOOK = """
+import os
 import sys
+import uuid
 from pathlib import Path
-BUILDS = Path(__file__).parent / "builds.log"
+BUILDS_DIR = Path(__file__).parent / "builds"
+BUILDS_DIR.mkdir(exist_ok=True)
 
 class Graph:
     def __init__(self):
@@ -26,7 +29,10 @@ class Graph:
         return []
 
 def build_project_graph(cfg):
-    BUILDS.open("a", encoding="utf-8").write("build\\n")
+    # 프로세스마다 자기 이름의 마커 파일을 만든다 — 공유 파일에 여러 프로세스가 동시에
+    # append 하면(Windows, 바이러스 백신 간섭 등) 쓰기가 가끔 사라지는 레이스가 있었다(CI run
+    # 38001279922, 로컬 20회 중 2회 재현).
+    (BUILDS_DIR / f"build-{os.getpid()}-{uuid.uuid4().hex}").write_text("build", encoding="utf-8")
     return Graph()
 
 class Cfg:
@@ -41,7 +47,7 @@ def check_file(path):
     return []
 """
 
-SCRIPT = Path(gate.__file__).resolve().parents[1] / "audit_kit_batch.py"  # scripts/ops/hooks/ 의 한 단계 위(scripts/ops/)
+SCRIPT = Path(gate.__file__).resolve().parents[1] / "audit_kit_batch.py"  # tools/hooks/ 의 한 단계 위(tools/)
 
 
 @pytest.fixture()
@@ -58,14 +64,14 @@ def fake_audit_kit(tmp_path, monkeypatch):
     tree.mkdir()
     for name in ("a.py", "b.py", "c.py", "bad.py", "boom.py"):
         (tree / name).write_text("x = 1" + chr(10), encoding="utf-8")
-    return tree, pkg / "builds.log"
+    return tree, pkg / "builds"
 
 
 def test_batch_builds_the_graph_once_per_process_not_once_per_file(fake_audit_kit):
     tree, builds = fake_audit_kit
     found = gate.batch_raw_findings(["audit-kit"], tree, ["a.py", "b.py", "c.py"], workers=1)
     assert set(found) == {"a.py", "b.py", "c.py"} and all(v == [] for v in found.values())
-    assert builds.read_text(encoding="utf-8").count("build") == 1  # 파일 3개인데 그래프는 1번
+    assert len(list(builds.iterdir())) == 1  # 파일 3개인데 그래프는 1번
 
 
 def test_batch_filters_lines_like_raw_findings_and_skips_failed_files(fake_audit_kit):
@@ -80,7 +86,7 @@ def test_batch_splits_files_across_processes(fake_audit_kit):
     tree, builds = fake_audit_kit
     found = gate.batch_raw_findings(["audit-kit"], tree, ["a.py", "b.py", "c.py", "bad.py"], workers=2)
     assert set(found) == {"a.py", "b.py", "c.py", "bad.py"}
-    assert builds.read_text(encoding="utf-8").count("build") == 2  # 프로세스 2개 = 그래프 2번
+    assert len(list(builds.iterdir())) == 2  # 프로세스 2개 = 그래프 2번
 
 
 def test_batch_returns_empty_for_a_fake_kit_or_no_files(monkeypatch, tmp_path):
