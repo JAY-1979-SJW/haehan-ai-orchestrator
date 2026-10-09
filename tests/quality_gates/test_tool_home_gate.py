@@ -102,6 +102,23 @@ def test_modifying_baseline_file_passes(repo):
     assert _staged(repo) == 0
 
 
+def test_staged_shim_outside_home_passes(repo):
+    """새 shim(# haehan-shim:) 파일은 집 밖이어도 통과한다 — shim 은 메커니즘상 항상
+    '옛 경로(집 밖) -> 실제 모듈'이라 집 밖이 정상이다."""
+    _w(repo, "scripts/ig_old_shim.py", "# haehan-shim: scripts.instagram.ig_old_shim\nimport sys\n")
+    _git(repo, "add", "-A")
+    assert _staged(repo) == 0
+
+
+def test_existing_shim_excluded_from_leaks_and_baseline(repo):
+    """shim 은 current_leaks()/기준선 집계에서도 빠진다 — --update-baseline 으로 줄어든다."""
+    _w(repo, "scripts/ig_old_shim.py", "# haehan-shim: scripts.instagram.ig_old_shim\nimport sys\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add shim")
+    cfg = gate.load_config(repo)
+    assert "scripts/ig_old_shim.py" not in gate.current_leaks(repo, cfg)
+
+
 def test_rename_into_home_passes_and_out_of_home_blocked(repo):
     _git(repo, "mv", "scripts/ig_legacy.py", "scripts/instagram/ig_legacy.py")
     assert _staged(repo) == 0

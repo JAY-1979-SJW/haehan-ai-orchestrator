@@ -127,10 +127,10 @@ def tracked_files(root: Path = ROOT) -> list[str]:
 
 
 def _is_shim_file(root: Path, rel: str) -> bool:
-    """`# haehan-shim:` 로 시작하는 1줄 경로-포워딩 호환 파일인가(scripts/ops/make_shim.py 가
-    만듦). shim 은 옛 경로에 그대로 남아 실제 모듈을 가리키는 메커니즘이라 "도구 집 밖에 새로
-    생긴 파일"로 보면 안 된다(PR #165 분석, 2026-10-09 — verify_change.py 의 층간 위반 판정에서
-    같은 이유로 이미 제외함)."""
+    """`# haehan-shim:` 마커로 시작하는 1줄 경로-포워딩 호환 파일인가(scripts/ops/make_shim.py 가
+    만듦). shim 은 메커니즘상 항상 '이동 전 옛 경로(집 밖) → 실제 모듈'이 되므로 집 밖인 게
+    정상이다 — 도구 집 게이트 판정에서 제외한다(verify_change.py 의 같은 이름 헬퍼와 동일 패턴,
+    PR #165 분석에서 발견한 tool_home_baseline 54건 중 20건(37%)이 이 사유의 가짜 위반이었음)."""
     try:
         with (root / rel).open(encoding="utf-8", errors="replace") as f:
             return f.readline().startswith("# haehan-shim:")
