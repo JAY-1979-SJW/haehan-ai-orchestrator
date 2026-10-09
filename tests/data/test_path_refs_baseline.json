@@ -1,0 +1,10 @@
+[
+ "tests/test_google_ads_signup.py",
+ "tests/test_google_domain_readiness_audit.py",
+ "tests/test_google_home_login_gate.py",
+ "tests/test_google_secret_action_gate.py",
+ "tests/test_google_tab_registry.py",
+ "tests/test_google_vision_usage_gate.py",
+ "tests/test_google_work_mode_gate.py",
+ "tests/test_google_workspace_basic.py"
+]
