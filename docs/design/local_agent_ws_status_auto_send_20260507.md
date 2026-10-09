@@ -81,7 +81,7 @@ state_store.list_user_present_tasks()
 ## 10. 구현 범위
 
 ### 신규 파일
-- `local_agent/user_present/user_present_status_sender.py`
+- `core/agent_runtime/user_present/user_present_status_sender.py`
 
 ### 수정 파일
 - `core/agent_runtime/connection/websocket_client.py` — heartbeat loop에 `run_user_present_status_send_once()` 연결

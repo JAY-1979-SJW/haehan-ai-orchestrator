@@ -22,7 +22,7 @@ try:
 except ImportError:
     _FASTAPI_AVAILABLE = False
 
-from local_agent.user_present.user_present_state_store import (
+from core.agent_runtime.user_present.user_present_state_store import (
     _CONFIRMABLE_STATES,
     STATE_BLOCKED,
     STATE_CANCELLED,

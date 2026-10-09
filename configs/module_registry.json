@@ -6913,7 +6913,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/user_present/user_present_state_store.py": {
+  "core/agent_runtime/user_present/user_present_state_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -6921,7 +6921,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/user_present/user_present_status_sender.py": {
+  "core/agent_runtime/user_present/user_present_status_sender.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6929,7 +6929,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/user_present/user_present_ui_server.py": {
+  "core/agent_runtime/user_present/user_present_ui_server.py": {
    "layer": "L8",
    "role": "api",
    "domain": "local_agent",
@@ -6937,7 +6937,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/user_present/user_present_ws_adapter.py": {
+  "core/agent_runtime/user_present/user_present_ws_adapter.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -24241,7 +24241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/user_present/__init__.py": {
+  "core/agent_runtime/user_present/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

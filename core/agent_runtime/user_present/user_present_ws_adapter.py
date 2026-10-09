@@ -25,7 +25,7 @@ from ai_orchestrator.contracts.user_present_ws_contract import (
     sanitize_user_present_ws_payload,
     validate_user_present_ws_task_message,
 )
-from local_agent.user_present.user_present_state_store import (
+from core.agent_runtime.user_present.user_present_state_store import (
     _CANCELLABLE_STATES,
     _CONFIRMABLE_STATES,
     STATE_BLOCKED,

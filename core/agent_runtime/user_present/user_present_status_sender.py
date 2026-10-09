@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from local_agent.user_present.user_present_state_store import (
+from core.agent_runtime.user_present.user_present_state_store import (
     STATE_BLOCKED,
     STATE_CANCELLED,
     STATE_FAILED,
@@ -26,7 +26,7 @@ from local_agent.user_present.user_present_state_store import (
     UserPresentStateStore,
     default_store,
 )
-from local_agent.user_present.user_present_ws_adapter import build_ws_status_event_from_local_task
+from core.agent_runtime.user_present.user_present_ws_adapter import build_ws_status_event_from_local_task
 
 logger = logging.getLogger(__name__)
 

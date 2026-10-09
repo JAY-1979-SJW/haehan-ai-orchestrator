@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from local_agent.user_present.user_present_state_store import (
+from core.agent_runtime.user_present.user_present_state_store import (
     STATE_APPROVAL_REQUIRED,
     STATE_CANCELLED,
     STATE_USER_CONFIRMED,
