@@ -1,4 +1,4 @@
-from scripts.ops.audits.agent import audit_desktop_auth_runtime_baseline_contract as audit
+from tools.audits.agent import audit_desktop_auth_runtime_baseline_contract as audit
 
 
 def test_desktop_auth_runtime_baseline_contract_passes():

@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 CONNECTION_INVENTORY = ROOT / "docs" / "inventory" / "CONNECTION_INVENTORY.md"
 APP_BASELINE = ROOT / "docs" / "baseline" / "APP_BASELINE.md"
@@ -47,6 +46,6 @@ def test_connection_inventory_lists_required_lock_verification():
     text = CONNECTION_INVENTORY.read_text(encoding="utf-8")
 
     assert "python scripts/ops/audits/app/audit_standard_workflow_contract.py" in text
-    assert "python scripts/ops/audits/agent/audit_local_agent_e2e_baseline_contract.py" in text
-    assert "python scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py" in text
+    assert "python tools/audits/agent/audit_local_agent_e2e_baseline_contract.py" in text
+    assert "python tools/audits/agent/audit_local_agent_e2e_flow_contract.py" in text
     assert "python -m pytest tests/test_connection_inventory_lock.py -q" in text

@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from uuid import uuid4
 
-from scripts.ops.audits.app.audit_ai_work_session_gate import audit
+from tools.audits.app.audit_ai_work_session_gate import audit
 
 ROOT = Path(__file__).resolve().parents[2]
 SESSION = ROOT / "scripts" / "common" / "ai_work_session.py"

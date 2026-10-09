@@ -18,7 +18,7 @@ def test_app_status_router_import():
 
 
 def test_audit_script_import():
-    import scripts.ops.audits.app.audit_app_api_readonly_endpoints_implementation  # noqa
+    import tools.audits.app.audit_app_api_readonly_endpoints_implementation  # noqa
 
 
 # ── 공정 상수 ─────────────────────────────────────────────────────────────────
@@ -361,7 +361,7 @@ def test_deployment_status_no_server_action():
 
 
 def test_audit_verdict():
-    from scripts.ops.audits.app.audit_app_api_readonly_endpoints_implementation import print_report, run_audit
+    from tools.audits.app.audit_app_api_readonly_endpoints_implementation import print_report, run_audit
 
     run_audit()
     verdict = print_report()

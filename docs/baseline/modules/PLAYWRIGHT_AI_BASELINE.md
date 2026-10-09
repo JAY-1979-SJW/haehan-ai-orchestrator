@@ -138,7 +138,7 @@ Baseline and gate work may modify:
 ```text
 docs/baseline/modules/PLAYWRIGHT_AI_BASELINE.md
 docs/baseline/MODULE_BASELINE.md
-scripts/ops/audits/agent/audit_playwright_ai_baseline_contract.py
+tools/audits/agent/audit_playwright_ai_baseline_contract.py
 scripts/ops/quality/module_quality_gate.py
 scripts/ops/quality/required_quality_gate.py
 tests/test_playwright_ai_baseline_contract.py
@@ -151,7 +151,7 @@ tests/test_required_quality_gate.py
 Baseline verification:
 
 ```text
-python scripts/ops/audits/agent/audit_playwright_ai_baseline_contract.py
+python tools/audits/agent/audit_playwright_ai_baseline_contract.py
 python -m pytest tests/test_playwright_ai_baseline_contract.py -q
 ```
 

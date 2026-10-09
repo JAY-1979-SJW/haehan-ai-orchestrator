@@ -83,7 +83,7 @@ MODULES: tuple[GateModule, ...] = (
                 (
                     PY,
                     "scripts/ops/quality/py_compile_no_cache.py",
-                    "scripts/ops/audits/agent/audit_local_agent_connection_recovery_baseline.py",
+                    "tools/audits/agent/audit_local_agent_connection_recovery_baseline.py",
                     "tests/test_local_agent_connection_recovery_baseline.py",
                     "scripts/ops/verify/verify_agent_ws_auth.py",
                     "scripts/ops/verify/verify_live_agent_smoke.py",
@@ -230,13 +230,13 @@ MODULES: tuple[GateModule, ...] = (
                 (
                     PY,
                     "scripts/ops/quality/py_compile_no_cache.py",
-                    "scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py",
+                    "tools/audits/agent/audit_local_agent_e2e_flow_contract.py",
                     "tests/test_local_agent_e2e_flow_contract.py",
                 ),
             ),
             GateStep(
                 "local_agent_e2e_contract",
-                (PY, "scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py"),
+                (PY, "tools/audits/agent/audit_local_agent_e2e_flow_contract.py"),
             ),
             GateStep(
                 "local_agent_e2e_pytest",

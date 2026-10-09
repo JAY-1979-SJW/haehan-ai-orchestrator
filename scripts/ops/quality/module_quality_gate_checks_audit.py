@@ -134,7 +134,7 @@ def check_google_domain_module_boundaries() -> tuple[bool, str]:
 
 def check_common_tool_runtime_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/agent/audit_common_tool_runtime.py"],
+        [PY, "tools/audits/agent/audit_common_tool_runtime.py"],
         timeout=120,
     )
     if not ok:
@@ -144,7 +144,7 @@ def check_common_tool_runtime_contract() -> tuple[bool, str]:
 
 def check_common_tool_runtime_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/agent/audit_common_tool_runtime_baseline_contract.py"],
+        [PY, "tools/audits/agent/audit_common_tool_runtime_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -164,7 +164,7 @@ def check_common_engine_commercialization_baseline() -> tuple[bool, str]:
 
 def check_local_agent_connection_recovery_baseline() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/agent/audit_local_agent_connection_recovery_baseline.py"],
+        [PY, "tools/audits/agent/audit_local_agent_connection_recovery_baseline.py"],
         timeout=120,
     )
     if not ok:
@@ -174,7 +174,7 @@ def check_local_agent_connection_recovery_baseline() -> tuple[bool, str]:
 
 def check_desktop_auth_runtime_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/agent/audit_desktop_auth_runtime_baseline_contract.py"],
+        [PY, "tools/audits/agent/audit_desktop_auth_runtime_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -184,7 +184,7 @@ def check_desktop_auth_runtime_baseline_contract() -> tuple[bool, str]:
 
 def check_app_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/app/audit_app_baseline_contract.py"],
+        [PY, "tools/audits/app/audit_app_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -234,7 +234,7 @@ def check_backend_core_baseline_contract() -> tuple[bool, str]:
 
 def check_local_agent_e2e_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/agent/audit_local_agent_e2e_baseline_contract.py"],
+        [PY, "tools/audits/agent/audit_local_agent_e2e_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -244,7 +244,7 @@ def check_local_agent_e2e_baseline_contract() -> tuple[bool, str]:
 
 def check_approval_flow_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/app/audit_approval_flow_baseline_contract.py"],
+        [PY, "tools/audits/app/audit_approval_flow_baseline_contract.py"],
         timeout=120,
     )
     if not ok:
@@ -254,7 +254,7 @@ def check_approval_flow_baseline_contract() -> tuple[bool, str]:
 
 def check_playwright_ai_baseline_contract() -> tuple[bool, str]:
     ok, message = _run_check_command(
-        [PY, "scripts/ops/audits/agent/audit_playwright_ai_baseline_contract.py"],
+        [PY, "tools/audits/agent/audit_playwright_ai_baseline_contract.py"],
         timeout=120,
     )
     if not ok:

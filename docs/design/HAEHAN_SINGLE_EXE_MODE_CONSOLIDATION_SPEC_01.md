@@ -398,7 +398,7 @@ HaehanAI.exe 실행
 - [x] 보안 정책 (§8)
 - [x] 위험 분석 (§9)
 - [x] 단계별 구현 계획 (§10)
-- [x] audit 스크립트 (`scripts/ops/audits/agent/audit_haehan_single_exe_mode_consolidation_spec.py`)
+- [x] audit 스크립트 (`tools/audits/agent/audit_haehan_single_exe_mode_consolidation_spec.py`)
 - [x] 테스트 (`tests/test_haehan_single_exe_mode_consolidation_spec.py`)
 
 ---

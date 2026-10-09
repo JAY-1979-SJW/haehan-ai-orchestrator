@@ -37,7 +37,7 @@ def test_smoke_script_import():
 
 
 def test_audit_script_import():
-    import scripts.ops.audits.app.audit_app_api_readonly_endpoints_browser_smoke  # noqa
+    import tools.audits.app.audit_app_api_readonly_endpoints_browser_smoke  # noqa
 
 
 # ── smoke 메타 ────────────────────────────────────────────────────────────────
@@ -279,7 +279,7 @@ def test_no_conflict_with_prep():
 
 
 def test_audit_verdict():
-    from scripts.ops.audits.app.audit_app_api_readonly_endpoints_browser_smoke import print_report, run_audit
+    from tools.audits.app.audit_app_api_readonly_endpoints_browser_smoke import print_report, run_audit
 
     run_audit()
     verdict = print_report()

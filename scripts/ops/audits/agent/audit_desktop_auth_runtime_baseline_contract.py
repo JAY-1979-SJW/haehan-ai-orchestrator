@@ -1,83 +1,27 @@
-"""Read-only audit for the locked desktop_auth_runtime baseline."""
-from __future__ import annotations
+# haehan-shim: tools.audits.agent.audit_desktop_auth_runtime_baseline_contract
+# 호환 shim: 실제 모듈은 tools.audits.agent.audit_desktop_auth_runtime_baseline_contract 로 이동했다 (tools/audits/agent/audit_desktop_auth_runtime_baseline_contract.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/devflow/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-import sys
-from pathlib import Path
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
+    from pathlib import Path as _Path
 
-ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    _root = str(_Path(__file__).resolve().parents[4])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
-DESKTOP_BASELINE = ROOT / "docs" / "baseline" / "modules" / "DESKTOP_AUTH_RUNTIME_BASELINE.md"
-MODULE_BASELINE = ROOT / "docs" / "baseline" / "MODULE_BASELINE.md"
-
-REQUIRED_DESKTOP_PHRASES = (
-    "Status: LOCKED",
-    "Baseline ID: HAEHAN-DESKTOP-AUTH-RUNTIME-BASELINE-01",
-    "desktop server API call auth boundary",
-    "configured session/auth context usage",
-    "safe failure when token or session is unavailable",
-    "task receiver auth header handling",
-    "token masking and redaction",
-    "desktop runtime state isolation",
-    "configured auth/session context",
-    "server base URL",
-    "task receiver request",
-    "hardcoded bearer token",
-    "global `SESSION_ID` shortcut",
-    "production mock auth",
-    "authenticated outbound request",
-    "safe failure when token/session unavailable",
-    "redacted log message",
-    "If token/session is missing, protected requests must not be sent.",
-    "Authorization header values must never be printed.",
-    "`Bearer admin-token` is forbidden.",
-    "hardcoded admin bearer is forbidden.",
-    "mix unrelated app UI state with this app",
-    "hide auth failure behind mock success",
-    "python scripts/ops/quality/module_quality_gate.py --module desktop_auth_runtime",
-)
-
-REQUIRED_MODULE_BASELINE_PHRASES = (
-    "### desktop_auth_runtime",
-    "docs/baseline/modules/DESKTOP_AUTH_RUNTIME_BASELINE.md",
-)
+    _runpy.run_module("tools.audits.agent.audit_desktop_auth_runtime_baseline_contract", run_name="__main__")
+    raise SystemExit
 
 
-def missing_phrases(text: str, phrases: tuple[str, ...]) -> list[str]:
-    return [phrase for phrase in phrases if phrase not in text]
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-def audit() -> tuple[bool, list[str]]:
-    from scripts.common.audit_cli import BaselineRefSpec, audit_baseline_with_module_ref
-
-    return audit_baseline_with_module_ref(
-        BaselineRefSpec(
-            baseline=DESKTOP_BASELINE,
-            baseline_missing="docs/baseline/modules/DESKTOP_AUTH_RUNTIME_BASELINE.md missing",
-            baseline_phrases=REQUIRED_DESKTOP_PHRASES,
-            baseline_fail_prefix="desktop_auth_runtime baseline missing phrase(s): ",
-            module_baseline=MODULE_BASELINE,
-            module_missing="docs/baseline/MODULE_BASELINE.md missing",
-            module_phrases=REQUIRED_MODULE_BASELINE_PHRASES,
-            module_fail_prefix="module baseline missing desktop_auth_runtime reference(s): ",
-            success=[
-                "DESKTOP_AUTH_RUNTIME_BASELINE exists and is locked",
-                "desktop auth/session/redaction/runtime-isolation boundaries are documented",
-                "module baseline references DESKTOP_AUTH_RUNTIME_BASELINE",
-            ],
-        ),
-        missing_phrases,
-    )
-
-
-def main() -> int:
-    from scripts.common.audit_cli import report_findings
-
-    ok, findings = audit()
-    return report_findings(ok, findings, "DESKTOP_AUTH_RUNTIME_BASELINE_CONTRACT")
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
-
+_install(_il.import_module("tools.audits.agent.audit_desktop_auth_runtime_baseline_contract"), globals(), _sys.modules)

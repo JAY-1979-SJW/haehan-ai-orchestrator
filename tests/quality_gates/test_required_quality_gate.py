@@ -81,7 +81,7 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/ops/audit_ai_agent_ui_structure_blueprint.py" in rendered
     assert "scripts/ops/audit_mcp_gateway_baseline.py" in rendered
     assert "scripts/common/ai_work_session.py" in rendered
-    assert "scripts/ops/audits/app/audit_ai_work_session_gate.py" in rendered
+    assert "tools/audits/app/audit_ai_work_session_gate.py" in rendered
     assert "scripts/google/ads_signup.py" in rendered
     assert "scripts/google/live_surface_explorer.py" in rendered
     assert "scripts/google/cloud/live_console_explorer.py" in rendered

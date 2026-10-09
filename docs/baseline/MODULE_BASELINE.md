@@ -115,7 +115,7 @@ docs/baseline/modules/COMMON_TOOL_RUNTIME_BASELINE.md
   sensitive field acceptance, or bypassing approval-required risk flags.
 - Security boundary: blocks unsafe task fields before any module executes work.
 - State changes: none except explicit task/result values returned to caller.
-- Required verification: `python scripts/ops/audits/agent/audit_common_tool_runtime.py` and
+- Required verification: `python tools/audits/agent/audit_common_tool_runtime.py` and
   `tests/test_common_tool_runtime.py`.
 - Known WARN: site-specific tools still need individual profiles on top of this
   shared contract.
@@ -174,7 +174,7 @@ docs/baseline/modules/LOCAL_AGENT_E2E_BASELINE.md
 - Security boundary: device-token authentication and dispatch filtering.
 - State changes: `queued -> delivered -> running -> completed | failed` and
   approved `waiting_approval -> queued` transitions.
-- Required verification: `python scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py`
+- Required verification: `python tools/audits/agent/audit_local_agent_e2e_flow_contract.py`
   and `python scripts/ops/quality/module_quality_gate.py --module local_agent_e2e`.
 - Known WARN: disconnect/retry recovery requires a future module-specific
   recovery baseline.
@@ -207,7 +207,7 @@ docs/baseline/modules/LOCAL_AGENT_CONNECTION_RECOVERY_BASELINE.md
 - State changes: no state changes during static audits; live checks may only
   perform approved auth/heartbeat/readonly dispatch probes.
 - Required verification:
-  `python scripts/ops/audits/agent/audit_local_agent_connection_recovery_baseline.py`,
+  `python tools/audits/agent/audit_local_agent_connection_recovery_baseline.py`,
   `python -m pytest tests/test_local_agent_connection_recovery_baseline.py -q`,
   and `python scripts/ops/quality/module_quality_gate.py --module local_agent_connection_recovery`.
 - Known WARN: live checks depend on current server and local credential, and

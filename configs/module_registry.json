@@ -11697,7 +11697,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_ai_agent_app_structure_design_baseline.py": {
+  "tools/audits/app/audit_ai_agent_app_structure_design_baseline.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11705,7 +11705,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_ai_agent_ui_structure_blueprint.py": {
+  "tools/audits/app/audit_ai_agent_ui_structure_blueprint.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11713,7 +11713,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_ai_work_session_gate.py": {
+  "tools/audits/app/audit_ai_work_session_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11721,7 +11721,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_api_contract_endpoints_prep.py": {
+  "tools/audits/app/audit_app_api_contract_endpoints_prep.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11729,7 +11729,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_api_readonly_endpoints_browser_smoke.py": {
+  "tools/audits/app/audit_app_api_readonly_endpoints_browser_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -11737,7 +11737,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_api_readonly_endpoints_implementation.py": {
+  "tools/audits/app/audit_app_api_readonly_endpoints_implementation.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11745,7 +11745,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_api_readonly_endpoints_implementation_plan.py": {
+  "tools/audits/app/audit_app_api_readonly_endpoints_implementation_plan.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11753,7 +11753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_baseline_contract.py": {
+  "tools/audits/app/audit_app_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11761,7 +11761,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_construction_schedule.py": {
+  "tools/audits/app/audit_app_construction_schedule.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11769,7 +11769,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_development_standard.py": {
+  "tools/audits/app/audit_app_development_standard.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11777,7 +11777,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_foundation_governance.py": {
+  "tools/audits/app/audit_app_foundation_governance.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11785,7 +11785,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_foundation_mvp_design.py": {
+  "tools/audits/app/audit_app_foundation_mvp_design.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11793,7 +11793,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_foundation_mvp_prep.py": {
+  "tools/audits/app/audit_app_foundation_mvp_prep.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11801,7 +11801,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_structure_contract.py": {
+  "tools/audits/app/audit_app_structure_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11809,7 +11809,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_task_queue_readonly_list_polish.py": {
+  "tools/audits/app/audit_app_task_queue_readonly_list_polish.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11817,7 +11817,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_test_baseline_current_contract_sync.py": {
+  "tools/audits/app/audit_app_test_baseline_current_contract_sync.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11825,7 +11825,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_ui_readonly_backend_status_cards.py": {
+  "tools/audits/app/audit_app_ui_readonly_backend_status_cards.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11833,7 +11833,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_ui_readonly_status_cards_api_bind.py": {
+  "tools/audits/app/audit_app_ui_readonly_status_cards_api_bind.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11841,7 +11841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_ui_shell_browser_smoke.py": {
+  "tools/audits/app/audit_app_ui_shell_browser_smoke.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "browser",
@@ -11849,7 +11849,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_ui_shell_readonly_api_wiring.py": {
+  "tools/audits/app/audit_app_ui_shell_readonly_api_wiring.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11857,7 +11857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_app_ui_shell_skeleton.py": {
+  "tools/audits/app/audit_app_ui_shell_skeleton.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11865,7 +11865,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/audit_approval_flow_baseline_contract.py": {
+  "tools/audits/app/audit_approval_flow_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -11873,7 +11873,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_authed_local_agent_dispatch_dry_run.py": {
+  "tools/audits/agent/audit_authed_local_agent_dispatch_dry_run.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12025,7 +12025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_common_tool_runtime.py": {
+  "tools/audits/agent/audit_common_tool_runtime.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12033,7 +12033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_common_tool_runtime_baseline_contract.py": {
+  "tools/audits/agent/audit_common_tool_runtime_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12041,7 +12041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_desktop_auth_runtime_baseline_contract.py": {
+  "tools/audits/agent/audit_desktop_auth_runtime_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12193,7 +12193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_haehan_single_exe_mode_consolidation_spec.py": {
+  "tools/audits/agent/audit_haehan_single_exe_mode_consolidation_spec.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12209,7 +12209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_local_agent_connection_recovery_baseline.py": {
+  "tools/audits/agent/audit_local_agent_connection_recovery_baseline.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12217,7 +12217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_local_agent_e2e_baseline_contract.py": {
+  "tools/audits/agent/audit_local_agent_e2e_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12225,7 +12225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py": {
+  "tools/audits/agent/audit_local_agent_e2e_flow_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12233,7 +12233,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_local_agent_gui_ux_design_spec.py": {
+  "tools/audits/agent/audit_local_agent_gui_ux_design_spec.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12241,7 +12241,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_local_agent_gui_ux_design_spec_ai_chat_amend.py": {
+  "tools/audits/agent/audit_local_agent_gui_ux_design_spec_ai_chat_amend.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12249,7 +12249,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_local_agent_ip_allowlist_policy.py": {
+  "tools/audits/agent/audit_local_agent_ip_allowlist_policy.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12257,7 +12257,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_local_agent_user_field_test.py": {
+  "tools/audits/agent/audit_local_agent_user_field_test.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -12265,7 +12265,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_local_desktop_agent_connection.py": {
+  "tools/audits/agent/audit_local_desktop_agent_connection.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12273,7 +12273,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_mcp_gateway_baseline.py": {
+  "tools/audits/agent/audit_mcp_gateway_baseline.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12385,7 +12385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/audit_playwright_ai_baseline_contract.py": {
+  "tools/audits/agent/audit_playwright_ai_baseline_contract.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23537,7 +23537,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/audits/__init__.py": {
+  "tools/audits/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23545,7 +23545,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/agent/__init__.py": {
+  "tools/audits/agent/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "local_agent",
@@ -23553,7 +23553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audits/app/__init__.py": {
+  "tools/audits/app/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",

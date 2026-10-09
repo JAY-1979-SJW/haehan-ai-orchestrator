@@ -25,7 +25,7 @@ def _read(path: Path) -> str:
 
 
 def test_audit_script_import():
-    import scripts.ops.audits.app.audit_app_ui_readonly_status_cards_api_bind  # noqa
+    import tools.audits.app.audit_app_ui_readonly_status_cards_api_bind  # noqa
 
 
 # ── api.ts 신규 함수 ──────────────────────────────────────────────────────────
@@ -181,7 +181,7 @@ def test_backend_smoke_still_passes():
 
 
 def test_audit_verdict():
-    from scripts.ops.audits.app.audit_app_ui_readonly_status_cards_api_bind import print_report, run_audit
+    from tools.audits.app.audit_app_ui_readonly_status_cards_api_bind import print_report, run_audit
 
     run_audit()
     verdict = print_report()

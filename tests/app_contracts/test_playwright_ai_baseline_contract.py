@@ -1,4 +1,4 @@
-from scripts.ops.audits.agent import audit_playwright_ai_baseline_contract as audit
+from tools.audits.agent import audit_playwright_ai_baseline_contract as audit
 
 
 def test_playwright_ai_baseline_contract_passes():

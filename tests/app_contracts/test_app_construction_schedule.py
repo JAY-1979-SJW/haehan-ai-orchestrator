@@ -183,12 +183,12 @@ def test_punch_list_has_eum():
 # ── 8. 감사 스크립트 ──────────────────────────────────────────────────────────
 
 def test_audit_script_importable():
-    import scripts.ops.audits.app.audit_app_construction_schedule as m
+    import tools.audits.app.audit_app_construction_schedule as m
     assert hasattr(m, "run_audit")
 
 
 def test_audit_script_runs_and_passes():
-    from scripts.ops.audits.app.audit_app_construction_schedule import run_audit
+    from tools.audits.app.audit_app_construction_schedule import run_audit
     report = run_audit()
     summary = report.summary()
     assert summary["failed"] == 0, f"Construction schedule audit 실패: {summary['issues']}"
