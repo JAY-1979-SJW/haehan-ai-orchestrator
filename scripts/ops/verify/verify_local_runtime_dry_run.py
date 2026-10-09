@@ -11,7 +11,6 @@ import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))  # 루트 패키지(local_agent 등) 해석용
-from local_agent.network_bypass import urlopen_for_server
 from scripts.common.app_paths import repo_root
 from local_agent.connection.network_bypass import urlopen_for_server
 
