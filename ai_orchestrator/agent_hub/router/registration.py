@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from ..registry import facade as _reg
 from ...audit.audit_logger import log_event
 from ...auth import registration_codes as _regcodes
-from ...gates.auth import require_role
+from tools.gates.auth import require_role
 from .schemas import (
     AgentRegisterRequest,
     IssueRegistrationCodeRequest,

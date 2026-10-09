@@ -12,8 +12,8 @@ from pydantic import BaseModel
 
 from ..registry import facade as _reg
 from ...audit.audit_logger import log_event
-from ...gates.approval import issue_token_for_dev_reg
-from ...gates.auth import require_role
+from tools.gates.approval import issue_token_for_dev_reg
+from tools.gates.auth import require_role
 from .schemas import (
     BrowserReadonlyInstructionRequest,
     CaptureScreenshotRequest,
