@@ -89,7 +89,7 @@ discover -> plan -> prepare -> submit -> verify -> log
 | 실행 로그 | `scripts/<site>/run_log.py` |
 | 실시간 감사 | `scripts/common/realtime_audit.py`, `scripts/ops/runtime/watch_log.py` |
 | 승인 게이트 | `scripts/common/gate.py`, `scripts/<site>/gates.py` |
-| 작업트리 분류 | `scripts/ops/devflow/worktree_change_index.py` |
+| 작업트리 분류 | `tools/devflow/worktree_change_index.py` |
 
 ## Common Session Safety Update
 

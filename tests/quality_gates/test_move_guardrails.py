@@ -12,9 +12,9 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops.devflow import move_preflight as mp
-from scripts.ops.devflow import run_impacted_tests as rit
-from scripts.ops.devflow.make_shim import make_shim
+from tools.devflow import move_preflight as mp
+from tools.devflow import run_impacted_tests as rit
+from tools.devflow.make_shim import make_shim
 
 
 def _w(root: Path, rel: str, text: str) -> None:

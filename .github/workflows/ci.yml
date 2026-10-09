@@ -184,7 +184,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # constraints.txt = 검증된 환경(Windows, Python 3.14)의 버전 집합 — 설치 시점마다 버전이 달라지지 않게 고정한다
-          # (scripts/ops/devflow/make_constraints.py 로 재생성, docs/specs/2026-10-04_portability_standard.md)
+          # (tools/devflow/make_constraints.py 로 재생성, docs/specs/2026-10-04_portability_standard.md)
           python -m pip install -r requirements.txt -c constraints.txt
 
       - name: Install dev tools (ruff · pytest-timeout)

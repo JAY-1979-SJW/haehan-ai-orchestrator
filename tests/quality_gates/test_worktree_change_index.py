@@ -1,4 +1,4 @@
-from scripts.ops.devflow import worktree_change_index as wt
+from tools.devflow import worktree_change_index as wt
 
 
 def test_parse_porcelain_handles_rename_and_untracked():
@@ -38,7 +38,7 @@ def test_index_embeds_operating_rules_and_reference_pack():
     assert any("pre-change dry-run" in rule for rule in index["operating_rules"]["before_new_work"])
     assert "docs/worktree_management_index.md" in index["reference_pack"]
     assert "docs/pre_change_dry_run_policy_20260513.md" in index["reference_pack"]
-    assert "scripts/ops/devflow/pre_change_dry_run.py" in index["reference_pack"]
+    assert "tools/devflow/pre_change_dry_run.py" in index["reference_pack"]
     assert "scripts/ops/quality/quality_gate.py" in index["reference_pack"]
 
 

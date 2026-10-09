@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops.devflow.make_shim import (
+from tools.devflow.make_shim import (
     BOOTSTRAP_MARK,
     MARKER,
     find_shims,
@@ -317,7 +317,7 @@ def test_generated_shim_passes_project_ruff(old_path, with_main):
     (커밋 훅이 ruff 로 정리·차단하므로 생성기가 정렬·서식이 맞는 형태를 내야 한다)."""
     import subprocess
 
-    from scripts.ops.devflow.make_shim import render_shim
+    from tools.devflow.make_shim import render_shim
 
     text = render_shim("scripts.instagram.demo_batch", with_main=with_main, old_path=old_path)
     for cmd in (["check"], ["format", "--check", "--diff"]):

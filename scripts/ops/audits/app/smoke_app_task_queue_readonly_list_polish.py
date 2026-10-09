@@ -1,7 +1,7 @@
 # haehan-shim: tools.audits.app.smoke_app_task_queue_readonly_list_polish
 # 호환 shim: 실제 모듈은 tools.audits.app.smoke_app_task_queue_readonly_list_polish 로 이동했다 (tools/audits/app/smoke_app_task_queue_readonly_list_polish.py).
 # 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
-# 생성: scripts/ops/devflow/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+# 생성: tools/devflow/make_shim.py — 계약 테스트: tests/test_shim_contract.py
 import importlib as _il
 import sys as _sys
 
