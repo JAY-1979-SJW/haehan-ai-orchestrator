@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 from ..audit.audit_logger import log_event
-from ..gates.approval import approve_token, reject_token
+from tools.gates.approval import approve_token, reject_token
 from ..tasks.inbox import create_inbox_item
 from ..dev_reg.dev_reg_telegram import parse_dev_reg_callback_data
 from .telegram_notifier import build_result_text, parse_callback_data
