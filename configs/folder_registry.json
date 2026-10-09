@@ -1,6 +1,6 @@
 {
  "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
- "count": 409,
+ "count": 407,
  "folders": [
   {
    "path": ".",
@@ -995,6 +995,46 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "ai_orchestrator/browser_tool/approval",
+   "purpose": "서버 쪽 브라우저 승인 기록·상태·감사 기록",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "ai_orchestrator/browser_tool/policy",
+   "purpose": "서버 쪽 브라우저 서버 경계·사이트 준수·보안 신호 정책",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "ai_orchestrator/browser_tool/preflight",
+   "purpose": "서버 쪽 브라우저 사전 점검(액션 등록·허용 목록·게이트 승인)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "ai_orchestrator/browser_tool/routing",
+   "purpose": "서버 쪽 브라우저 실행 위치·엔진 라우팅·폴백",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "ai_orchestrator/browser_tool/submit",
+   "purpose": "서버 쪽 브라우저 제출(쓰기) 정책·미리보기·게이트",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
    "path": "ai_orchestrator/browser_tool/worker",
    "purpose": "브라우저 워커(별도 컨테이너 앱, T4 때 재정리)",
    "kind": "앱",
@@ -1459,6 +1499,158 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "core/agent_runtime",
+   "purpose": "core/agent_runtime — 이동 배치 자동 등록(1단계 승인 폴더, move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(1단계 폴더 정리 사전 승인) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/browser",
+   "purpose": "core/agent_runtime/browser — 폴더 이름 이동으로 옛 폴더 local_agent/browser 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/browser 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/browser/approval",
+   "purpose": "core/agent_runtime/browser/approval — 폴더 이름 이동으로 옛 폴더 local_agent/browser/approval 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/browser/approval 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/browser/bridge",
+   "purpose": "core/agent_runtime/browser/bridge — 폴더 이름 이동으로 옛 폴더 local_agent/browser/bridge 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/browser/bridge 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/common",
+   "purpose": "core/agent_runtime/common — 폴더 이름 이동으로 옛 폴더 local_agent/common 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/common 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/connection",
+   "purpose": "core/agent_runtime/connection — 폴더 이름 이동으로 옛 폴더 local_agent/connection 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/connection 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/gui",
+   "purpose": "core/agent_runtime/gui — 폴더 이름 이동으로 옛 폴더 local_agent/gui 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/gui 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/policy",
+   "purpose": "core/agent_runtime/policy — 폴더 이름 이동으로 옛 폴더 local_agent/policy 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/policy 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime",
+   "purpose": "core/agent_runtime/runtime — 폴더 이름 이동으로 옛 폴더 local_agent/runtime 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/auth",
+   "purpose": "core/agent_runtime/runtime/auth — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/auth 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/auth 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/download",
+   "purpose": "core/agent_runtime/runtime/download — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/download 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/download 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/notify",
+   "purpose": "core/agent_runtime/runtime/notify — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/notify 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/notify 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/permission",
+   "purpose": "core/agent_runtime/runtime/permission — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/permission 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/permission 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/playwright",
+   "purpose": "core/agent_runtime/runtime/playwright — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/playwright 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/playwright 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/security_program",
+   "purpose": "core/agent_runtime/runtime/security_program — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/security_program 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/security_program 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/site_profile",
+   "purpose": "core/agent_runtime/runtime/site_profile — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/site_profile 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/site_profile 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/universal",
+   "purpose": "core/agent_runtime/runtime/universal — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/universal 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/universal 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/tools",
+   "purpose": "core/agent_runtime/tools — 폴더 이름 이동으로 옛 폴더 local_agent/tools 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/tools 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/user_present",
+   "purpose": "core/agent_runtime/user_present — 폴더 이름 이동으로 옛 폴더 local_agent/user_present 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/user_present 승인 이전) — move_run.py 자동 등록"
+  },
+  {
    "path": "local_agent",
    "purpose": "PC 실행 에이전트 (저장소 루트)",
    "kind": "기능",
@@ -1467,12 +1659,148 @@
    "approved_by": "대표님(사전 승인: 현재 트리·설계서 §1·§1-1·§1-2)"
   },
   {
+   "path": "local_agent/browser",
+   "purpose": "PC 에이전트 로컬 브라우저 실행·읽기·세션·로그인 탐지",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/browser/approval",
+   "purpose": "PC 에이전트 브라우저 액션 승인 저장·검증·감사 계약",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/browser/bridge",
+   "purpose": "PC 에이전트 브라우저↔서버 WS 브리지",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/common",
+   "purpose": "PC 에이전트 공용 잎(감사 로그·설정·데스크톱 설정·민감정보 마스킹)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/connection",
+   "purpose": "PC 에이전트 서버 WS 연결·등록·토큰·상태·진단·요청 실행 디스패치",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/gui",
+   "purpose": "PC 에이전트 데스크톱 GUI 상태·아이콘·로그 버퍼",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/policy",
+   "purpose": "x",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
    "path": "local_agent/runtime",
    "purpose": "로컬 에이전트 실행 런타임",
    "kind": "기능",
    "status": "approved",
    "approved_at": "2026-10-07",
    "approved_by": "대표님(T4 폴더 승인 23:40, 지휘창 전달)"
+  },
+  {
+   "path": "local_agent/runtime/auth",
+   "purpose": "PC 쪽 사용자 인증 대기·완료 감지·자동 재개",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/runtime/download",
+   "purpose": "PC 쪽 다운로드 정책·결과 정제·업로드 목록",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/runtime/notify",
+   "purpose": "PC 쪽 사용자 주의 알림",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/runtime/permission",
+   "purpose": "PC 쪽 위임 권한·승인 감사·게시 가드",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/runtime/playwright",
+   "purpose": "PC 쪽 Playwright 준비·실행·전면 창 어댑터",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/runtime/security_program",
+   "purpose": "PC 쪽 보안 프로그램 감지·설치 보조",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/runtime/site_profile",
+   "purpose": "PC 쪽 사이트 프로파일·허용 목록·셀렉터 팩",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/runtime/universal",
+   "purpose": "PC 쪽 범용 AI 사이트 에이전트(관찰→계획→실행→검증)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/tools",
+   "purpose": "x",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "local_agent/user_present",
+   "purpose": "x",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-08",
+   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
   },
   {
    "path": "orchestrator_v1",
@@ -2772,356 +3100,12 @@
    "approved_by": "대표님(시험 폴더 구조 설계안 A·D1~D6 승인 2026-10-08 00:55, 지휘창 전달)"
   },
   {
-   "path": "scripts/naver/agent_mixins",
-   "purpose": "엔진(scripts/browser/agent) 이 다중상속으로 합성하는 네이버 블로그·카페·메일 믹스인 — 도구 스크립트(blog·cafe)와 다른 모듈로 두어 엔진↔도구 순환을 끊는다",
-   "kind": "도구",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(지휘창 전달, T4 순환 해소)"
-  },
-  {
-   "path": "scripts/entry",
-   "purpose": "프로세스 시작점(CLI cdp_cli·site_access/site_crawl 직접 실행 main)과 사이트 로그인 조합(site_login_registry.install) — 모든 사이트 모듈을 아는 맨 위 층이라 사이트 모듈에서 도달 불가능해야 순환이 생기지 않는다",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(site_registry 조합 위치 승인, 지휘창 경유 2026-10-08)"
-  },
-  {
-   "path": "ai_orchestrator/browser_tool/routing",
-   "purpose": "서버 쪽 브라우저 실행 위치·엔진 라우팅·폴백",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "ai_orchestrator/browser_tool/preflight",
-   "purpose": "서버 쪽 브라우저 사전 점검(액션 등록·허용 목록·게이트 승인)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "ai_orchestrator/browser_tool/submit",
-   "purpose": "서버 쪽 브라우저 제출(쓰기) 정책·미리보기·게이트",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "ai_orchestrator/browser_tool/approval",
-   "purpose": "서버 쪽 브라우저 승인 기록·상태·감사 기록",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "ai_orchestrator/browser_tool/policy",
-   "purpose": "서버 쪽 브라우저 서버 경계·사이트 준수·보안 신호 정책",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/runtime/universal",
-   "purpose": "PC 쪽 범용 AI 사이트 에이전트(관찰→계획→실행→검증)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/runtime/site_profile",
-   "purpose": "PC 쪽 사이트 프로파일·허용 목록·셀렉터 팩",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/runtime/security_program",
-   "purpose": "PC 쪽 보안 프로그램 감지·설치 보조",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/runtime/permission",
-   "purpose": "PC 쪽 위임 권한·승인 감사·게시 가드",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/runtime/download",
-   "purpose": "PC 쪽 다운로드 정책·결과 정제·업로드 목록",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/runtime/notify",
-   "purpose": "PC 쪽 사용자 주의 알림",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/runtime/playwright",
-   "purpose": "PC 쪽 Playwright 준비·실행·전면 창 어댑터",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/runtime/auth",
-   "purpose": "PC 쪽 사용자 인증 대기·완료 감지·자동 재개",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/user_present",
-   "purpose": "x",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/gui",
-   "purpose": "PC 에이전트 데스크톱 GUI 상태·아이콘·로그 버퍼",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/policy",
-   "purpose": "x",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/tools",
-   "purpose": "x",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/browser/approval",
-   "purpose": "PC 에이전트 브라우저 액션 승인 저장·검증·감사 계약",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/browser/bridge",
-   "purpose": "PC 에이전트 브라우저↔서버 WS 브리지",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/common",
-   "purpose": "PC 에이전트 공용 잎(감사 로그·설정·데스크톱 설정·민감정보 마스킹)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/browser",
-   "purpose": "PC 에이전트 로컬 브라우저 실행·읽기·세션·로그인 탐지",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "local_agent/connection",
-   "purpose": "PC 에이전트 서버 WS 연결·등록·토큰·상태·진단·요청 실행 디스패치",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-08",
-   "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
-  },
-  {
-   "path": "tools/gates",
-   "purpose": "tools/gates — 이동 배치 자동 등록(1단계 승인 폴더, move_run.py)",
+   "path": "tools",
+   "purpose": "tools — 이동 배치 자동 등록(1단계 승인 폴더, move_run.py)",
    "kind": "기능",
    "status": "approved",
    "approved_at": "2026-10-09",
    "approved_by": "대표님(1단계 폴더 정리 사전 승인) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/browser",
-   "purpose": "core/agent_runtime/browser — 폴더 이름 이동으로 옛 폴더 local_agent/browser 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/browser 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/browser/approval",
-   "purpose": "core/agent_runtime/browser/approval — 폴더 이름 이동으로 옛 폴더 local_agent/browser/approval 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/browser/approval 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/browser/bridge",
-   "purpose": "core/agent_runtime/browser/bridge — 폴더 이름 이동으로 옛 폴더 local_agent/browser/bridge 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/browser/bridge 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/common",
-   "purpose": "core/agent_runtime/common — 폴더 이름 이동으로 옛 폴더 local_agent/common 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/common 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/connection",
-   "purpose": "core/agent_runtime/connection — 폴더 이름 이동으로 옛 폴더 local_agent/connection 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/connection 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/gui",
-   "purpose": "core/agent_runtime/gui — 폴더 이름 이동으로 옛 폴더 local_agent/gui 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/gui 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/policy",
-   "purpose": "core/agent_runtime/policy — 폴더 이름 이동으로 옛 폴더 local_agent/policy 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/policy 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime",
-   "purpose": "core/agent_runtime — 이동 배치 자동 등록(1단계 승인 폴더, move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(1단계 폴더 정리 사전 승인) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/runtime",
-   "purpose": "core/agent_runtime/runtime — 폴더 이름 이동으로 옛 폴더 local_agent/runtime 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/runtime/auth",
-   "purpose": "core/agent_runtime/runtime/auth — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/auth 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/auth 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/runtime/download",
-   "purpose": "core/agent_runtime/runtime/download — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/download 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/download 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/runtime/notify",
-   "purpose": "core/agent_runtime/runtime/notify — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/notify 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/notify 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/runtime/permission",
-   "purpose": "core/agent_runtime/runtime/permission — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/permission 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/permission 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/runtime/playwright",
-   "purpose": "core/agent_runtime/runtime/playwright — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/playwright 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/playwright 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/runtime/security_program",
-   "purpose": "core/agent_runtime/runtime/security_program — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/security_program 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/security_program 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/runtime/site_profile",
-   "purpose": "core/agent_runtime/runtime/site_profile — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/site_profile 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/site_profile 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/runtime/universal",
-   "purpose": "core/agent_runtime/runtime/universal — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/universal 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/universal 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/tools",
-   "purpose": "core/agent_runtime/tools — 폴더 이름 이동으로 옛 폴더 local_agent/tools 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/tools 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "core/agent_runtime/user_present",
-   "purpose": "core/agent_runtime/user_present — 폴더 이름 이동으로 옛 폴더 local_agent/user_present 의 승인을 이전(move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/user_present 승인 이전) — move_run.py 자동 등록"
   },
   {
    "path": "tools/audits",
@@ -3188,6 +3172,14 @@
    "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 scripts/ops/devflow 승인 이전) — move_run.py 자동 등록"
   },
   {
+   "path": "tools/gates",
+   "purpose": "tools/gates — 이동 배치 자동 등록(1단계 승인 폴더, move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(1단계 폴더 정리 사전 승인) — move_run.py 자동 등록"
+  },
+  {
    "path": "tools/hooks",
    "purpose": "tools/hooks — 폴더 이름 이동으로 옛 폴더 scripts/ops/hooks 의 승인을 이전(move_run.py)",
    "kind": "기능",
@@ -3218,14 +3210,6 @@
    "status": "approved",
    "approved_at": "2026-10-09",
    "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 scripts/ops/repo_gates 승인 이전) — move_run.py 자동 등록"
-  },
-  {
-   "path": "tools",
-   "purpose": "tools — 이동 배치 자동 등록(1단계 승인 폴더, move_run.py)",
-   "kind": "기능",
-   "status": "approved",
-   "approved_at": "2026-10-09",
-   "approved_by": "대표님(1단계 폴더 정리 사전 승인) — move_run.py 자동 등록"
   },
   {
    "path": "tools/runtime",
