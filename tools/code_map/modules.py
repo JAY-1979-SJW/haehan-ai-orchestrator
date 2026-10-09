@@ -32,6 +32,7 @@ if str(ROOT) not in sys.path:
 from tools.code_map.layer_rules import _FORBIDDEN_IMPORT_PAIRS, classify_path  # noqa: E402
 
 OUT_DIR = ROOT / "data" / "code_map"
+CYCLE_EXCEPTIONS_FILE = ROOT / "configs" / "cycle_exceptions.json"
 CODE_SUFFIX = (".py", ".ts", ".tsx", ".js")
 CODE_LAYERS = {f"L{i}" for i in range(1, 11)}  # L0 런타임·L11 테스트·L12 문서는 방향 규칙 밖
 RUN_LEVELS = ("R0", "R1")
@@ -303,11 +304,25 @@ def _cycle_edges(import_edges: dict) -> dict:
     }
 
 
+def _load_cycle_exceptions() -> set[tuple[str, str]]:
+    """configs/cycle_exceptions.json(승인된 '의도적 설계' 순환 — 플러그인 레지스트리처럼 폴더
+    분리가 비용 대비 과한 경우) — 늘리는 변경은 지휘창 승인 필요, 줄이는 방향(해소)은 자유."""
+    if not CYCLE_EXCEPTIONS_FILE.exists():
+        return set()
+    try:
+        data = json.loads(CYCLE_EXCEPTIONS_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return set()
+    return {tuple(sorted(e["pair"])) for e in data.get("exceptions", [])}
+
+
 def _cycle_pairs(import_edges: dict, mod: dict[str, str], nodes: dict) -> list[tuple[str, str]]:
-    """실제 import 기준 폴더 순환 쌍(정렬된 (a, b) 목록)."""
+    """실제 import 기준 폴더 순환 쌍(정렬된 (a, b) 목록) — 승인된 예외(cycle_exceptions.json)는 뺀다."""
     acc: dict[str, dict] = defaultdict(_make_module_accumulator)
     _accumulate_module_edges(_cycle_edges(import_edges), mod, nodes, acc)
-    return _module_edges_and_cycles(acc)[1]
+    cycles = _module_edges_and_cycles(acc)[1]
+    exceptions = _load_cycle_exceptions()
+    return [c for c in cycles if tuple(sorted(c)) not in exceptions]
 
 
 def _build_result(m: dict, ctx: dict, modules: dict[str, dict], mod_edges: Counter) -> dict:
