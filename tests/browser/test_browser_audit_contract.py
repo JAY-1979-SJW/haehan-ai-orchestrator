@@ -14,7 +14,7 @@ from __future__ import annotations
 import unittest
 from dataclasses import dataclass
 
-from local_agent.browser.approval.browser_audit_contract import (
+from core.agent_runtime.browser.approval.browser_audit_contract import (
     FORBIDDEN_AUDIT_FIELDS,
     REQUIRED_AUDIT_COLUMNS,
     BrowserAuditEvent,

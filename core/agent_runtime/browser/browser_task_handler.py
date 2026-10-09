@@ -18,9 +18,9 @@ import logging
 from dataclasses import asdict, dataclass
 from typing import Any
 
-from local_agent.browser.approval.browser_approval_verifier import BrowserApprovalVerifier
-from local_agent.browser.browser_action_contract import ServerApprovalAction
-from local_agent.browser.server_action_adapter import ServerActionAdapter
+from core.agent_runtime.browser.approval.browser_approval_verifier import BrowserApprovalVerifier
+from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
+from core.agent_runtime.browser.server_action_adapter import ServerActionAdapter
 
 logger = logging.getLogger(__name__)
 

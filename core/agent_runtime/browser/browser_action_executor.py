@@ -123,7 +123,7 @@ def default_target_resolver(target_id: str) -> dict[str, Any]:
     """
     if not target_id:
         return {"exists": True, "closed": False, "url": "", "title": ""}
-    from local_agent.browser.browser_session_store import TAB_CLOSED, default_store
+    from core.agent_runtime.browser.browser_session_store import TAB_CLOSED, default_store
 
     rec = default_store.get_tab(target_id)
     if rec is None:

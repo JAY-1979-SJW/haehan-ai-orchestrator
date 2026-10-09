@@ -325,7 +325,7 @@ class TestWebSocketCompatibility:
         from ai_orchestrator.contracts.user_present_ws_contract import (
             _VALID_STATUS_VALUES,
         )
-        from local_agent.browser.bridge.browser_websocket_schema import VALID_TASK_STATUS
+        from core.agent_runtime.browser.bridge.browser_websocket_schema import VALID_TASK_STATUS
 
         assert VALID_TASK_STATUS.isdisjoint(_VALID_STATUS_VALUES)
 

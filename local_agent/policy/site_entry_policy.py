@@ -11,7 +11,7 @@ L2 (Policy/Gate) — 사이트별 자동 업무 진입 시 따라야 하는 정�
 executor 또는 router) 가 수행한다. 신규 모듈 — 기존 코드 무단 변경 없음.
 
 연결되는 시스템 모듈:
-  - local_agent.browser.login_state_detector — has_logout/has_id_form 등 page signal 매핑
+  - core.agent_runtime.browser.login_state_detector — has_logout/has_id_form 등 page signal 매핑
   - desktop.local_server._handle_browser_action — navigate 전 정책 적용
   - scripts.naver.router 외 site router — 호출 시점 정책 확인
 """

@@ -6,7 +6,7 @@
 삭제 전 호출 규칙을 사람이 확인해야 한다.
 
 ## 1단계 — 삭제 완료 (비공개 도우미 17개)
-- `local_agent/browser/bridge/browser_websocket_handshake.py`: `_get_hostname_hash`(함수,L0)
+- `core/agent_runtime/browser/bridge/browser_websocket_handshake.py`: `_get_hostname_hash`(함수,L0)
 - `local_agent/tools/kras_connector.py`: `_http_error_detail`(함수,L0)
 - `scripts/cdp_client.py`: `_load_daemon_state`(함수,L0)
 - `scripts/browser/cdp/cdp_daemon.py`: `_clear_session_restore_artifacts`(함수,L0)
@@ -65,10 +65,10 @@
 - `ai_orchestrator/server/action_task_api.py`: `api_get_approval_request`(function,L168), `api_list_approval_requests`(function,L172), `api_get_evidence`(function,L179), `api_list_evidence`(function,L183)
 - `apps/ig-comment-dm-bot/core/settings_store.py`: `load_rules`(function,L44)
 - `local_agent/agent.py`: `poll_task`(function,L110)
-- `local_agent/browser/browser_action_executor.py`: `build_request_from_payload`(function,L355)
-- `local_agent/browser/browser_controller.py`: `BrowserApprovalError`(class,L113), `BrowserSensitiveFieldError`(class,L119), `create_and_inspect`(function,L663)
-- `local_agent/browser/browser_realtime_watcher.py`: `detect_login_states`(function,L170)
-- `local_agent/browser/bridge/browser_websocket_schema.py`: `safe_result_dict`(function,L497)
+- `core/agent_runtime/browser/browser_action_executor.py`: `build_request_from_payload`(function,L355)
+- `core/agent_runtime/browser/browser_controller.py`: `BrowserApprovalError`(class,L113), `BrowserSensitiveFieldError`(class,L119), `create_and_inspect`(function,L663)
+- `core/agent_runtime/browser/browser_realtime_watcher.py`: `detect_login_states`(function,L170)
+- `core/agent_runtime/browser/bridge/browser_websocket_schema.py`: `safe_result_dict`(function,L497)
 - `local_agent/gui/gui_chat_state.py`: `mode_label_kr`(function,L24), `ai_status_label_kr`(function,L40), `ChatUiController`(class,L99)
 - `scripts/browser/cdp/browser_tab_monitor.py`: `ensure_single_tab`(function,L138)
 - `scripts/community/sites/iboss.py`: `list_board`(function,L53), `fetch_post_detail`(function,L99)

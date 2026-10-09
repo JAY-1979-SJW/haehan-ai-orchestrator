@@ -33,8 +33,8 @@ import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from local_agent.browser.approval.browser_approval_errors import DuplicateApprovalError
-from local_agent.browser.approval.browser_approval_persistent_store import BrowserApprovalRecord
+from core.agent_runtime.browser.approval.browser_approval_errors import DuplicateApprovalError
+from core.agent_runtime.browser.approval.browser_approval_persistent_store import BrowserApprovalRecord
 
 logger = logging.getLogger(__name__)
 

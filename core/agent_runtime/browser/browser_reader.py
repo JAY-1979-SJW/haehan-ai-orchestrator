@@ -31,7 +31,7 @@ import time
 from typing import Any, Callable
 from urllib.parse import urlparse
 
-from local_agent.browser.web_reader import analyze_html_structure, validate_url_for_readonly_open
+from core.agent_runtime.browser.web_reader import analyze_html_structure, validate_url_for_readonly_open
 from local_agent.common import audit as _audit
 from scripts.browser.session.browser_sandbox_gate import assert_browser_launch_allowed
 
@@ -232,7 +232,7 @@ def _resolve_playwright_factory(
 ) -> tuple[Callable[[], Any] | None, dict[str, Any] | None]:
     """주입된 factory 가 없으면 playwright 를 로드. (factory, 오류결과)."""
     if factory is None:
-        assert_browser_launch_allowed(component="local_agent.browser.browser_reader", action="playwright_launch")
+        assert_browser_launch_allowed(component="core.agent_runtime.browser.browser_reader", action="playwright_launch")
         try:
             from playwright.sync_api import sync_playwright as _sync_playwright
         except ImportError:

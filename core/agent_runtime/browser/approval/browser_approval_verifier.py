@@ -15,7 +15,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
-from local_agent.browser.approval.browser_approval_errors import DuplicateApprovalError
+from core.agent_runtime.browser.approval.browser_approval_errors import DuplicateApprovalError
 
 logger = logging.getLogger(__name__)
 

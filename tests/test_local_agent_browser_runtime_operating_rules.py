@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from local_agent.browser.cdp_attach import (
+from core.agent_runtime.browser.cdp_attach import (
     CDPAttachValidationError,
     normalize_cdp_endpoint,
     summarize_cdp_tabs,

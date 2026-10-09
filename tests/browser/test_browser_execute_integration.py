@@ -44,7 +44,7 @@ MOCK_HTML_COUNTER = """<!DOCTYPE html>
 @pytest.mark.skipif(not PLAYWRIGHT_AVAILABLE, reason="Playwright not installed")
 class TestExecuteClickIntegration:
     def test_execute_click_normal_button_increments_counter(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True, args=["--disable-password-manager"])
@@ -65,7 +65,7 @@ class TestExecuteClickIntegration:
         asyncio.run(run_test())
 
     def test_execute_click_without_approval_rejected(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -84,7 +84,7 @@ class TestExecuteClickIntegration:
         asyncio.run(run_test())
 
     def test_execute_click_submit_not_executed(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -104,7 +104,7 @@ class TestExecuteClickIntegration:
 @pytest.mark.skipif(not PLAYWRIGHT_AVAILABLE, reason="Playwright not installed")
 class TestExecuteTypeIntegration:
     def test_execute_type_normal_input_writes_value(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -121,7 +121,7 @@ class TestExecuteTypeIntegration:
         asyncio.run(run_test())
 
     def test_execute_type_password_rejected(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -139,7 +139,7 @@ class TestExecuteTypeIntegration:
         asyncio.run(run_test())
 
     def test_result_no_secrets(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -156,7 +156,7 @@ class TestExecuteTypeIntegration:
         asyncio.run(run_test())
 
     def test_execute_type_email_input_writes_value(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -173,7 +173,7 @@ class TestExecuteTypeIntegration:
         asyncio.run(run_test())
 
     def test_execute_type_otp_rejected(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -191,7 +191,7 @@ class TestExecuteTypeIntegration:
         asyncio.run(run_test())
 
     def test_execute_type_hidden_rejected(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -207,7 +207,7 @@ class TestExecuteTypeIntegration:
         asyncio.run(run_test())
 
     def test_execute_click_delete_requires_final_approval_and_not_executed(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -225,7 +225,7 @@ class TestExecuteTypeIntegration:
         asyncio.run(run_test())
 
     def test_execute_click_comment_requires_final_approval_and_not_executed(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -243,7 +243,7 @@ class TestExecuteTypeIntegration:
         asyncio.run(run_test())
 
     def test_execute_click_register_requires_final_approval_and_not_executed(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -261,7 +261,7 @@ class TestExecuteTypeIntegration:
         asyncio.run(run_test())
 
     def test_execute_click_payment_requires_final_approval_and_not_executed(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -279,7 +279,7 @@ class TestExecuteTypeIntegration:
         asyncio.run(run_test())
 
     def test_all_risky_buttons_keep_danger_executed_false(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
@@ -299,7 +299,7 @@ class TestExecuteTypeIntegration:
         asyncio.run(run_test())
 
     def test_result_does_not_include_cookie_session_storage_or_base64_keywords(self):
-        from local_agent.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.browser_controller import BrowserController
         async def run_test():
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)

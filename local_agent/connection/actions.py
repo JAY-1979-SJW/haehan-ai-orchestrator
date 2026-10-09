@@ -24,7 +24,7 @@ from urllib.parse import urlparse
 
 from ai_orchestrator.browser_tool.router import route_browser_task_with_params
 from ai_orchestrator.contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
-from local_agent.browser import browser_actions
+from core.agent_runtime.browser import browser_actions
 from local_agent.common import config
 
 logger = logging.getLogger(__name__)
@@ -542,7 +542,7 @@ def action_web_analyze_html(params: dict) -> ActionResult:
     static 분석한다. 결과에는 password/hidden input value, cookie, token 류,
     HTML 원문 전체가 포함되지 않는다.
     """
-    from local_agent.browser import web_reader
+    from core.agent_runtime.browser import web_reader
 
     if not isinstance(params, dict):
         params = {}
@@ -666,7 +666,7 @@ def _readonly_open_options(params: dict) -> dict:
 
 def _readonly_open_data(result: dict, url: str, background_approved: bool) -> dict:
     """browser_reader 결과 → 반환 data (HTML 원문 제외)."""
-    from local_agent.browser import browser_reader
+    from core.agent_runtime.browser import browser_reader
 
     # HTML 원문은 반환 data 에 포함하지 않는다.
     _title_raw = str(result.get("title") or "")
@@ -727,7 +727,7 @@ def action_web_open_url_readonly(params: dict) -> ActionResult:
     업로드/쿠키 수집은 일절 수행하지 않으며, 반환 data 에는 HTML 원문
     전체가 포함되지 않는다 (page_structure 요약만 포함).
     """
-    from local_agent.browser import browser_reader
+    from core.agent_runtime.browser import browser_reader
 
     if not isinstance(params, dict):
         params = {}
@@ -850,7 +850,7 @@ def action_web_probe_manual_login(params: dict) -> ActionResult:
     클릭, 제출, 쿠키/스토리지 수집을 일절 수행하지 않는다. 반환 data 에는
     HTML 원문 / 쿠키 / 세션 / password / hidden value 가 포함되지 않는다.
     """
-    from local_agent.browser import browser_login_probe
+    from core.agent_runtime.browser import browser_login_probe
 
     if not isinstance(params, dict):
         params = {}
@@ -1073,7 +1073,7 @@ def action_web_build_site_map_prompt(params: dict) -> ActionResult:
     넘길 수 있는 범용 관찰 payload 를 만든다. HTML 원문 전체, password/hidden
     value, cookie, token 류 원문은 payload 에 포함되지 않는다.
     """
-    from local_agent.browser import site_mapper
+    from core.agent_runtime.browser import site_mapper
 
     if not isinstance(params, dict):
         params = {}

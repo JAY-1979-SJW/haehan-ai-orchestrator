@@ -11,8 +11,8 @@ from pathlib import Path
 
 import pytest
 
-from local_agent.browser import browser_action_executor as bx
-from local_agent.browser import browser_instance_guard as guard
+from core.agent_runtime.browser import browser_action_executor as bx
+from core.agent_runtime.browser import browser_instance_guard as guard
 
 
 @pytest.fixture()
@@ -153,7 +153,7 @@ def test_l2_navigate_with_alias_still_uses_navigator(monkeypatch):
 def test_l3_quit_closes_all_targets_first(monkeypatch, paths):
     """browser_quit 가 CDP /json/close 로 모든 page target 을 닫고 그 다음
     Chrome 프로세스를 종료해야 한다 (세션 복원 방지)."""
-    from local_agent.browser import browser_instance_guard as g
+    from core.agent_runtime.browser import browser_instance_guard as g
 
     monkeypatch.setattr(g, "close_all_cdp_targets", lambda port: ["T-1", "T-2", "T-3"])
     g.set_process_enumerator(lambda: [])  # 프로세스 없는 상태
@@ -165,7 +165,7 @@ def test_l3_quit_closes_all_targets_first(monkeypatch, paths):
 
 
 def test_l3_quit_close_targets_first_can_be_disabled(monkeypatch, paths):
-    from local_agent.browser import browser_instance_guard as g
+    from core.agent_runtime.browser import browser_instance_guard as g
 
     called = []
 

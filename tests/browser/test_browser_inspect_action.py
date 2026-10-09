@@ -93,7 +93,7 @@ def test_browser_inspect_dry_run_string_false():
 
 def test_browser_inspect_not_automation_import():
     """Verify browser_actions module does not import automation libraries."""
-    with Path("local_agent/browser/browser_actions.py").open(encoding="utf-8") as f:
+    with Path("core/agent_runtime/browser/browser_actions.py").open(encoding="utf-8") as f:
         content = f.read()
 
     # Check for common automation library imports
