@@ -23737,38 +23737,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "tests/app_contracts/test_5050_legacy_characterization_20260517.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/app_contracts/test_5050_legacy_fastapi_migration_readiness_20260516.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/app_contracts/test_5050_phase1_8400_contract_freeze_20260517.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/app_contracts/test_5050_phase1b_adapter_contract_detail_20260517.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "tests/app_contracts/test_5050_phase1d_adapter_dry_run_compat_20260517.py": {
    "layer": "L11",
    "role": "test",
