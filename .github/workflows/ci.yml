@@ -210,26 +210,39 @@ jobs:
         # 영향 테스트 선택만으로는 admin-web 단독 변경 커밋에서 안 돌 수 있어(2026-10-07
         # 지휘창 지적) CI에 직접 연결. 기존 끊긴 호출(configs/r1_api_contract_baseline.json
         # 허용목록)은 통과, 새로 끊기는 호출만 FAIL.
+        # continue-on-error+id: 이 단계가 죽어도 뒤 게이트들이 마저 돌아 한 번에 전부 보이게
+        # 한다("추가 5", 2026-10-09) — 완화 아님, 맨 끝 "verify-static 게이트 결과 집계" 단계가
+        # 하나라도 실패하면 작업 전체를 FAIL 로 되돌린다.
+        id: gate_r1
+        continue-on-error: true
         run: python scripts/ops/repo_gates/audit_r1_api_contract_gate.py
 
       - name: 도구 집 게이트 (도구 키워드 파일이 집 밖에 새로 생기면 차단)
         # 도구 파일은 구현 scripts/<도구>/·API connectors/<도구>/·화면 app/<도구>/ 집 안에 둔다
         # (docs/architecture/TOOL_HOME_MAP.md). 기존 집 밖 파일은 configs/tool_home_baseline.json 으로
         # 고정, 기준선에 없는 새 이탈만 FAIL. 규칙·예외 사유: configs/tool_home.json.
+        id: gate_tool_home
+        continue-on-error: true
         run: python scripts/ops/repo_gates/tool_home_gate.py --check-all
       - name: 최상위 평면 금지 게이트 (scripts·ai_orchestrator·루트 평면에 새 .py 가 생기면 차단)
         # 새 코드는 알맞은 하위 폴더에 둔다(docs/architecture/FOLDER_STRUCTURE.md). 기존 평면 파일은
         # configs/flat_root_baseline.json 으로 고정(줄이기만), 기준선에 없는 새 평면 파일만 FAIL.
         # 규칙·허용 진입점: configs/flat_root_gate.json.
+        id: gate_flat_root
+        continue-on-error: true
         run: python scripts/ops/repo_gates/flat_root_gate.py --check-all
       - name: 번들 경로 일관성 게이트 (spec·electron-builder·electron js·릴리스 워크플로의 깨진 경로/모듈 차단 — G17)
         # PyInstaller spec 진입 파일·우리 모듈 hiddenimports·datas, admin-web/electron/package.json extraResources,
         # lib/*.js 의 process.resourcesPath 경로, desktop-release.yml 경로가 실제(git 추적) 파일과 맞는지 본다.
         # 폴더 이동 뒤 이 참조들이 그대로 남아 데스크톱 앱이 반복해 깨졌다(2026-10-08). 규칙: scripts/ops/repo_gates/bundle_path_gate.py 머리말.
+        id: gate_bundle_path
+        continue-on-error: true
         run: python scripts/ops/repo_gates/bundle_path_gate.py --check-all
       - name: 폴더 승인 게이트 (승인 목록에 없는 폴더에 코드 파일이 있으면 차단 — G16)
         # 코드(.py·.ts·.tsx·.js)가 든 모든 폴더는 configs/folder_registry.json 에 승인돼 있어야 한다. 새 폴더는 대표님 승인 후 목록에 추가.
         # 규칙·절차: scripts/ops/repo_gates/folder_gate.py 머리말, docs/architecture/FOLDER_STRUCTURE.md.
+        id: gate_folder
+        continue-on-error: true
         run: python scripts/ops/repo_gates/folder_gate.py --check-all
       - name: Codebase layer audit (구조/보안/순환 게이트)
         # codebase_layer_audit.py 자체 종료코드는 CLAUDE.md가 실제 차단 조건으로 명시한
@@ -259,6 +272,8 @@ jobs:
       - name: G12 중복 게이트 (신규 구조동일 중복 함수 차단)
         # dup_gate.py check — PR의 base..head 사이에 바뀐(추가/수정) .py 파일만 대상.
         # 기존 중복은 configs/dup_baseline.json 기준선으로 고정(새로 생긴 것만 FAIL).
+        id: gate_g12_diff
+        continue-on-error: true
         shell: bash
         run: |
           # verify job 의 refs 단계가 계산한 base(PR base · push before · 수동 실행 base 입력)를 그대로 쓴다
@@ -277,10 +292,14 @@ jobs:
       - name: G12 중복 전체 비교 (기준선에 없는 새 중복 묶음이 저장소에 하나라도 있으면 FAIL)
         # 위 단계는 PR 이 바꾼 파일만 본다 — 두 파일이 모두 이번에 안 바뀌었거나 한쪽만 바뀐 새 중복은 놓친다(2026-10-07 기준선 감사에서
         # 기준선에 없는 중복 2묶음이 실제로 샜다). 저장소 전체 묶음을 기준선과 비교한다.
+        id: gate_g12_all
+        continue-on-error: true
         run: python scripts/ops/repo_gates/dup_gate.py check --all
       - name: 루트 직접 계산 차단 게이트 (새 줄만 — Path(__file__).parents[N] 등)
         # 저장소 루트를 파일마다 따로 계산하는 새 줄을 차단한다(기존 줄은 통과). 정본: ai_orchestrator.paths.repo_root /
         # scripts.common.app_paths.repo_root. 예외·사유: configs/root_calc_gate.json.
+        id: gate_root_calc
+        continue-on-error: true
         run: python scripts/ops/repo_gates/root_calc_gate.py --check-diff ${{ needs.refs.outputs.base }} ${{ needs.refs.outputs.head }}
 
       - name: Verify change — static (코드맵·층·순환·audit-kit·mypy·ruff; 시험은 verify-tests 가 돌린다)
@@ -297,6 +316,48 @@ jobs:
           name: verify-static
           path: verify_static.json
           if-no-files-found: ignore
+
+      - name: verify-static 게이트 결과 집계 (continue-on-error 로 미뤄둔 실패를 한 번에 보여주고 FAIL)
+        # 위 게이트들(R1·도구 집·평면·번들·폴더 승인·G12 2개·루트 계산)은 continue-on-error 로
+        # 서로를 가리지 않게 했다 — 여기서 실패한 단계 이름을 모아 한 번에 출력하고, 하나라도
+        # 있으면 이 작업을 FAIL 로 되돌린다("추가 5", 2026-10-09). 판정 완화가 아니다: 최종 결과는
+        # 여전히 FAIL, 달라지는 건 "한 번에 전부 보여준다"는 점뿐.
+        if: always()
+        shell: bash
+        run: |
+          declare -A names=(
+            [gate_r1]="R1 API 계약 게이트"
+            [gate_tool_home]="도구 집 게이트"
+            [gate_flat_root]="최상위 평면 금지 게이트"
+            [gate_bundle_path]="번들 경로 일관성 게이트"
+            [gate_folder]="폴더 승인 게이트"
+            [gate_g12_diff]="G12 중복 게이트"
+            [gate_g12_all]="G12 중복 전체 비교"
+            [gate_root_calc]="루트 직접 계산 차단 게이트"
+          )
+          outcomes=(
+            "gate_r1:${{ steps.gate_r1.outcome }}"
+            "gate_tool_home:${{ steps.gate_tool_home.outcome }}"
+            "gate_flat_root:${{ steps.gate_flat_root.outcome }}"
+            "gate_bundle_path:${{ steps.gate_bundle_path.outcome }}"
+            "gate_folder:${{ steps.gate_folder.outcome }}"
+            "gate_g12_diff:${{ steps.gate_g12_diff.outcome }}"
+            "gate_g12_all:${{ steps.gate_g12_all.outcome }}"
+            "gate_root_calc:${{ steps.gate_root_calc.outcome }}"
+          )
+          failed=()
+          for entry in "${outcomes[@]}"; do
+            id="${entry%%:*}"; outcome="${entry#*:}"
+            if [ "$outcome" = "failure" ]; then
+              failed+=("${names[$id]}")
+            fi
+          done
+          if [ "${#failed[@]}" -gt 0 ]; then
+            echo "[verify-static] continue-on-error 로 미룬 게이트 중 실패 ${#failed[@]}건:"
+            for n in "${failed[@]}"; do echo "  - $n"; done
+            exit 1
+          fi
+          echo "[verify-static] 게이트 결과 집계 — 전부 PASS"
 
   verify-tests:
     needs: refs
