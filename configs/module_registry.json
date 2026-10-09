@@ -24272,6 +24272,14 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_split_smartstore_automation.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "smartstore",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
