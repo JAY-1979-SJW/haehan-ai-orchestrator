@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops import audit_kit_gate as gate
+from scripts.ops.hooks import audit_kit_gate as gate
 
 FAKE_HOOK = """
 import sys
@@ -41,7 +41,7 @@ def check_file(path):
     return []
 """
 
-SCRIPT = Path(gate.__file__).with_name("audit_kit_batch.py")
+SCRIPT = Path(gate.__file__).resolve().parents[1] / "audit_kit_batch.py"  # scripts/ops/hooks/ 의 한 단계 위(scripts/ops/)
 
 
 @pytest.fixture()

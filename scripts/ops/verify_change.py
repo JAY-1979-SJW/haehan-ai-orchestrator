@@ -544,6 +544,7 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
     audit-kit 이 없는 PC·CI 에서는 검사를 생략하고 그 사실을 알린다(설치된 PC 에서는 필수: 새 문제가 있으면 FAIL).
     """
     from scripts.ops.hooks.audit_kit_gate import (
+        BATCH_SCRIPT,
         _new_typed,
         batch_raw_findings,
         find_audit_kit,
@@ -571,6 +572,10 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
 
     # audit-kit hook 은 호출마다 프로젝트 그래프를 새로 만들어 파일당 ~8초라서 변경 1000개면 90분을 넘겼다(PR #160) →
     # 한 프로세스에서 여러 파일을 묶어 돌려(그래프 1회) 파일당 ~1초 이하로. 묶음이 못 낸 파일만 단독 호출로 다시 시도한다.
+    batch_missing_warning = []
+    if not BATCH_SCRIPT.is_file():  # 2026-10-09(PR #165 7차 CI): 경로가 안 맞으면 묶음이 매번 조용히
+        # 빈 결과를 내 변경 전체가 단독 재시도로 폭주해 90분 제한을 넘겼다 — 눈에 보이게 남긴다.
+        batch_missing_warning = [f"audit-kit 묶음 스크립트를 찾지 못했습니다({BATCH_SCRIPT}) — 파일마다 단독 재시도로 느려집니다"]
     _log(f"audit-kit 묶음 검사 시작: 변경 {len(py_changed)}개 (head·base)")
     head_batch = batch_raw_findings(kit, head_tree, py_changed)
     base_batch = batch_raw_findings(kit, base_tree, [rel for rel in py_changed if (base_tree / rel).exists()])
@@ -607,6 +612,7 @@ def _audit_kit_new_findings(py_changed: list[str], base_tree: Path, head_tree: P
     _log(f"audit-kit 파일 검사 시작: {len(py_changed)}개")
     with ThreadPoolExecutor(4) as pool:
         found = [item for items in pool.map(one, py_changed) for item in items]
+    found += batch_missing_warning
     _log("audit-kit 파일 검사 끝")
     if is_real_kit(kit) and mypy_python(kit) is None:  # 진짜 audit-kit 인데 mypy 를 돌릴 파이썬이 없다 = 타입 검사가 조용히 빠진다 → 실패로 취급
         found.append("mypy 실행 환경(audit-kit 가상환경의 python)을 찾지 못해 타입 검사를 할 수 없습니다 — audit-kit 를 다시 설치하세요")

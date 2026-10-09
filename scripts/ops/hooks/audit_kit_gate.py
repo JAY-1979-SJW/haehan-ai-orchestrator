@@ -40,6 +40,7 @@ STOP_BUDGET_S = 90
 MAX_SHOWN = 30
 _NOISE = ("import-not-found", "import-untyped")  # audit-kit 가상환경에 프로젝트 의존성이 없어 생기는 잡음
 _EXE_NAMES = ("audit-kit.exe", "audit-kit")
+BATCH_SCRIPT = Path(__file__).resolve().parents[1] / "audit_kit_batch.py"  # scripts/ops/hooks/ 의 한 단계 위
 _MYPY_ARGS = ("--ignore-missing-imports", "--follow-imports=silent", "--no-error-summary", "--no-color-output")
 # `경로:줄:칸: error: 문장` — 경로는 드라이브 콜론(C:)을 포함할 수 있어 가장 짧게 잡고, 줄·칸은 없을 수도 있다
 _MYPY_ERROR_LINE = re.compile(r"^(?P<path>.+?)(?::\d+){0,2}: error: (?P<msg>.*)$")
@@ -127,7 +128,14 @@ def batch_raw_findings(
     py = mypy_python(kit)  # audit-kit 가상환경의 python (진짜 audit-kit 일 때만 — 시험용 가짜 kit 이면 None)
     if py is None or not rels:
         return {}
-    script = Path(__file__).with_name("audit_kit_batch.py")
+    # scripts/ops/hooks/ 의 한 단계 위(scripts/ops/)에 있다 — 2026-10-09(PR #165 7차 CI) 전까지
+    # with_name() 으로 같은 폴더를 찾아 항상 못 찾았다. 못 찾으면 묶음을 전혀 시도하지 않고 빈 dict
+    # 를 바로 돌려줘서(호출 쪽이 파일마다 raw_findings 로 단독 재시도) — 묶음이 조용히 매번 실패해
+    # 2240개 단독 재시도 폭주로 90분 제한을 넘기던 것과 같은 사고가 다시 나도 최소한 느려지기만
+    # 하고 멈추지는 않는다(경고는 호출 쪽 _audit_kit_new_findings 가 kit_errors 에 남긴다).
+    if not BATCH_SCRIPT.is_file():
+        return {}
+    script = BATCH_SCRIPT
     chunks = [rels[i::workers] for i in range(min(workers, len(rels)))]
 
     def run_chunk(chunk: list[str]) -> dict[str, list[str]]:
