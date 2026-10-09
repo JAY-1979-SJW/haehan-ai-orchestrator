@@ -1,8 +1,8 @@
 """tests/test_universal_agent_session_20260508.py"""
 import pytest
 
-from local_agent.runtime.universal.natural_language_task_api import check_result_safety
-from local_agent.runtime.universal.universal_agent_session import (
+from core.agent_runtime.runtime.universal.natural_language_task_api import check_result_safety
+from core.agent_runtime.runtime.universal.universal_agent_session import (
     clear_all_sessions,
     close_session,
     create_session,

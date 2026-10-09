@@ -4185,7 +4185,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/site_profile/browser_allowlist_expansion_preflight.py": {
+  "core/agent_runtime/runtime/site_profile/browser_allowlist_expansion_preflight.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4193,7 +4193,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/site_profile/browser_discovery_candidates.py": {
+  "core/agent_runtime/runtime/site_profile/browser_discovery_candidates.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4209,7 +4209,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/site_profile/browser_policy_integration.py": {
+  "core/agent_runtime/runtime/site_profile/browser_policy_integration.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4217,7 +4217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/site_profile/browser_site_registry.py": {
+  "core/agent_runtime/runtime/site_profile/browser_site_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4225,7 +4225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/site_profile/browser_value_registry.py": {
+  "core/agent_runtime/runtime/site_profile/browser_value_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
@@ -4329,7 +4329,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/universal/generic_selector_discovery.py": {
+  "core/agent_runtime/runtime/universal/generic_selector_discovery.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4345,7 +4345,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/universal/learned_site_profile_store.py": {
+  "core/agent_runtime/runtime/universal/learned_site_profile_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -4369,7 +4369,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/universal/natural_language_task_api.py": {
+  "core/agent_runtime/runtime/universal/natural_language_task_api.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4425,7 +4425,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/universal/real_site_smoke_runner.py": {
+  "core/agent_runtime/runtime/universal/real_site_smoke_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4513,7 +4513,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/site_profile/selector_pack_registry.py": {
+  "core/agent_runtime/runtime/site_profile/selector_pack_registry.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4521,7 +4521,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/site_profile/site_capability_matrix.py": {
+  "core/agent_runtime/runtime/site_profile/site_capability_matrix.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4529,7 +4529,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/site_profile/site_profile_registry.py": {
+  "core/agent_runtime/runtime/site_profile/site_profile_registry.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4537,7 +4537,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/site_profile/site_type_classifier.py": {
+  "core/agent_runtime/runtime/site_profile/site_type_classifier.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4545,7 +4545,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/task_client.py": {
+  "core/agent_runtime/runtime/task_client.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "local_agent",
@@ -4561,7 +4561,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/universal/universal_action_verifier.py": {
+  "core/agent_runtime/runtime/universal/universal_action_verifier.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4569,7 +4569,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/universal/universal_agent_session.py": {
+  "core/agent_runtime/runtime/universal/universal_agent_session.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4577,7 +4577,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/runtime/universal/universal_ai_site_agent.py": {
+  "core/agent_runtime/runtime/universal/universal_ai_site_agent.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4585,7 +4585,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/universal/universal_page_observer.py": {
+  "core/agent_runtime/runtime/universal/universal_page_observer.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4593,7 +4593,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/universal/universal_safe_result.py": {
+  "core/agent_runtime/runtime/universal/universal_safe_result.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4601,7 +4601,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/universal/universal_task_planner.py": {
+  "core/agent_runtime/runtime/universal/universal_task_planner.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4609,7 +4609,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/universal/universal_workflow_runner.py": {
+  "core/agent_runtime/runtime/universal/universal_workflow_runner.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -4617,7 +4617,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/universal/unknown_site_fallback_policy.py": {
+  "core/agent_runtime/runtime/universal/unknown_site_fallback_policy.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -4649,7 +4649,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/universal/user_intent_parser.py": {
+  "core/agent_runtime/runtime/universal/user_intent_parser.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -4665,7 +4665,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "local_agent/runtime/universal/workflow_template_engine.py": {
+  "core/agent_runtime/runtime/universal/workflow_template_engine.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -24217,7 +24217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/site_profile/__init__.py": {
+  "core/agent_runtime/runtime/site_profile/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -24225,7 +24225,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/runtime/universal/__init__.py": {
+  "core/agent_runtime/runtime/universal/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

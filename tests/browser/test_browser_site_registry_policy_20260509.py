@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from local_agent.runtime.site_profile.browser_site_registry import (
+from core.agent_runtime.runtime.site_profile.browser_site_registry import (
     CAPTURE_NONE,
     CRED_NO_CAPTURE,
     EXECUTION_LOCAL_AGENT_REQUIRED,

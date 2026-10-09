@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from local_agent.runtime.universal.universal_safe_result import (
+from core.agent_runtime.runtime.universal.universal_safe_result import (
     STATUS_COMPLETED,
     STATUS_FAILED,
     STATUS_WARN,

@@ -3,20 +3,20 @@ from __future__ import annotations
 
 import pytest
 
-from local_agent.runtime.site_profile.browser_allowlist_expansion_preflight import (
+from core.agent_runtime.runtime.site_profile.browser_allowlist_expansion_preflight import (
     VERDICT_ALLOW,
     VERDICT_BLOCKED,
     VERDICT_REVIEW,
     can_auto_approve,
     preflight_expansion,
 )
-from local_agent.runtime.site_profile.browser_discovery_candidates import (
+from core.agent_runtime.runtime.site_profile.browser_discovery_candidates import (
     CANDIDATE_DESTRUCTIVE_BUTTON,
     CANDIDATE_MENU,
     CANDIDATE_SUBMIT_BUTTON,
     build_candidate,
 )
-from local_agent.runtime.site_profile.browser_site_registry import (
+from core.agent_runtime.runtime.site_profile.browser_site_registry import (
     SitePolicy,
     clear_all,
     register_site,

@@ -13,7 +13,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from local_agent.runtime.site_profile.site_profile_registry import (  # noqa: E402
+from core.agent_runtime.runtime.site_profile.site_profile_registry import (  # noqa: E402
     _COMMON_BLOCKED,
     _REGISTRY,
 )

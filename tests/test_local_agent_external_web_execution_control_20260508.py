@@ -35,11 +35,11 @@ from core.agent_runtime.runtime.security_program.local_security_installer_runner
     STATUS_WAITING_USER_UAC,
     check_action_allowed,
 )
-from local_agent.runtime.site_profile.site_type_classifier import (
+from core.agent_runtime.runtime.site_profile.site_type_classifier import (
     SITE_GOVERNMENT,
     classify_site,
 )
-from local_agent.runtime.universal.universal_safe_result import (
+from core.agent_runtime.runtime.universal.universal_safe_result import (
     STATUS_COMPLETED,
     build_universal_result,
     sanitize_universal_result,

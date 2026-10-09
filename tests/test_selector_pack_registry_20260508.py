@@ -1,7 +1,7 @@
 """tests/test_selector_pack_registry_20260508.py - selector_pack_registry 단위 테스트"""
 import pytest
 
-from local_agent.runtime.site_profile.selector_pack_registry import (
+from core.agent_runtime.runtime.site_profile.selector_pack_registry import (
     _FORBIDDEN_SELECTOR_KEYS,
     _PACKS,
     generate_skeleton_pack,

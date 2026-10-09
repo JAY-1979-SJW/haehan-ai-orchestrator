@@ -1,6 +1,6 @@
 """tests/test_generic_selector_discovery_20260508.py"""
 
-from local_agent.runtime.universal.generic_selector_discovery import (
+from core.agent_runtime.runtime.universal.generic_selector_discovery import (
     discover_selectors,
     has_risk_buttons,
 )

@@ -4,16 +4,16 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from local_agent.runtime.site_profile.site_capability_matrix import (
+from core.agent_runtime.runtime.site_profile.site_capability_matrix import (
     GRADE_AUTO_ALLOWED,
     GRADE_BLOCKED,
     GRADE_USER_DELEGATED,
     GRADE_USER_DIRECT,
 )
-from local_agent.runtime.universal.unknown_site_fallback_policy import (
+from core.agent_runtime.runtime.universal.unknown_site_fallback_policy import (
     get_action_grade_for_unknown_site,
 )
-from local_agent.runtime.universal.user_intent_parser import (
+from core.agent_runtime.runtime.universal.user_intent_parser import (
     INTENT_DELETE_POST,
     INTENT_DOWNLOAD_ATTACHMENTS,
     INTENT_EXTRACT_TABLE,

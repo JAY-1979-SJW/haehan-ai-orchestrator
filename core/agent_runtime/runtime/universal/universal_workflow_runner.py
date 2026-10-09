@@ -27,12 +27,12 @@ from core.agent_runtime.runtime.permission.delegated_permission_gate import (
     GATE_PASS,
     evaluate_gate,
 )
-from local_agent.runtime.site_profile.site_profile_registry import (
+from core.agent_runtime.runtime.site_profile.site_profile_registry import (
     get_site_profile,
     is_action_blocked_for_site,
     is_action_direct_required,
 )
-from local_agent.runtime.universal.universal_safe_result import (
+from core.agent_runtime.runtime.universal.universal_safe_result import (
     STATUS_BLOCKED,
     STATUS_COMPLETED,
     STATUS_FAILED,
@@ -41,7 +41,7 @@ from local_agent.runtime.universal.universal_safe_result import (
     STATUS_WARN_PERMISSION,
     build_universal_result,
 )
-from local_agent.runtime.universal.workflow_template_engine import get_template
+from core.agent_runtime.runtime.universal.workflow_template_engine import get_template
 
 
 @dataclass

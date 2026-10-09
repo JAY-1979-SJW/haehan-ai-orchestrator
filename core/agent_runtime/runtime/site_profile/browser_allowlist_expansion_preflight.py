@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from local_agent.runtime.site_profile.browser_discovery_candidates import (
+from core.agent_runtime.runtime.site_profile.browser_discovery_candidates import (
     CANDIDATE_DESTRUCTIVE_BUTTON,
     CANDIDATE_DOWNLOAD_LINK,
     CANDIDATE_MENU,
@@ -25,12 +25,12 @@ from local_agent.runtime.site_profile.browser_discovery_candidates import (
     is_forbidden_label,
     validate_candidate_safety,
 )
-from local_agent.runtime.site_profile.browser_site_registry import (
+from core.agent_runtime.runtime.site_profile.browser_site_registry import (
     EXECUTION_LOCAL_AGENT_REQUIRED,
     get_site,
     validate_raw_url,
 )
-from local_agent.runtime.site_profile.browser_value_registry import (
+from core.agent_runtime.runtime.site_profile.browser_value_registry import (
     is_forbidden_value,
 )
 

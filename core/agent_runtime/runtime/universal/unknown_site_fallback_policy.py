@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from local_agent.runtime.site_profile.site_capability_matrix import (
+from core.agent_runtime.runtime.site_profile.site_capability_matrix import (
     GRADE_AUTO_ALLOWED,
     GRADE_BLOCKED,
     GRADE_USER_DELEGATED,

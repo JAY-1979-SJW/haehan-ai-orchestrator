@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from local_agent.runtime.site_profile.browser_value_registry import (
+from core.agent_runtime.runtime.site_profile.browser_value_registry import (
     VTYPE_SAMPLE_NUMBER,
     VTYPE_SAMPLE_TEXT,
     ValuePolicy,
