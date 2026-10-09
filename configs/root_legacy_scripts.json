@@ -11,6 +11,10 @@
   ],
   "scripts": [
     {"path": "app.py", "category": "runtime_entrypoint", "next_action": "Keep until Flask-to-FastAPI entrypoint migration is complete."},
-    {"path": "conftest.py", "category": "verification_tool", "next_action": "Keep as pytest runtime guard forcing repo-local temporary directories."}
+    {"path": "conftest.py", "category": "verification_tool", "next_action": "Keep as pytest runtime guard forcing repo-local temporary directories."},
+    {"path": "hiworks_mail_reader.py", "category": "shared_legacy_module", "next_action": "Pre-existing root residual tracked in configs/flat_root_baseline.json; move under a module when its callers are migrated."},
+    {"path": "inbox_store.py", "category": "shared_legacy_module", "next_action": "Pre-existing root residual tracked in configs/flat_root_baseline.json; move under a module when its callers are migrated."},
+    {"path": "log_analyzer.py", "category": "shared_legacy_module", "next_action": "Pre-existing root residual tracked in configs/flat_root_baseline.json; move under a module when its callers are migrated."},
+    {"path": "telegram_notifier.py", "category": "shared_legacy_module", "next_action": "Pre-existing root residual tracked in configs/flat_root_baseline.json; move under a module when its callers are migrated."}
   ]
 }

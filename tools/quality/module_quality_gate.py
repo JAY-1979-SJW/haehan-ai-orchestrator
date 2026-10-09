@@ -36,6 +36,7 @@ try:
         _source_contains,
     )
     from tools.quality.module_quality_gate_runner import CHECKS, main, print_module_list, run_step
+    from tools.quality.module_quality_gate_modules import MODULES, iter_selected_steps, module_names, selected_modules
 except ImportError:
     from tools.quality.module_quality_gate_exports import *  # noqa: F403
     from tools.quality.module_quality_gate_exports import (  # noqa: F401
@@ -44,6 +45,7 @@ except ImportError:
         _source_contains,
     )
     from tools.quality.module_quality_gate_runner import CHECKS, main, print_module_list, run_step  # noqa: F401
+    from tools.quality.module_quality_gate_modules import MODULES, iter_selected_steps, module_names, selected_modules  # noqa: F401
 
 # py alias — tests access gate.py
 py = PY  # noqa: F405

@@ -33,7 +33,7 @@ def _imports(path: Path) -> set[str]:
 @pytest.mark.parametrize("name", ["gate_core.py", "gate_types.py"])
 def test_gate_core_modules_do_not_import_scripts(name):
     """게이트 핵심은 scripts 패키지를 import 하지 않는다(함수 안쪽 import 포함 — 의존을 숨기지 않는다)."""
-    imports = _imports(ROOT / "ai_orchestrator" / "gates" / name)
+    imports = _imports(ROOT / "tools" / "gates" / name)
     assert imports, f"{name} 의 import 목록이 비어 있음(검사 대상 없음)"
     bad = {m for m in imports if m == "scripts" or m.startswith("scripts.")}
     assert not bad, f"{name} 이 scripts 를 import 함: {sorted(bad)}"

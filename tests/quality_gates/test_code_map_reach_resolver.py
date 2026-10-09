@@ -11,6 +11,8 @@ from tools.code_map.reach import Resolver
 
 # 이 저장소의 실제 충돌 배치를 그대로 본뜬 파일 목록
 FILES = [
+    "local_agent/__init__.py",
+    "local_agent/agent.py",
     "core/agent_runtime/__init__.py",
     "core/agent_runtime/agent.py",
     "scripts/local_agent.py",
@@ -34,13 +36,13 @@ def resolve(rel, module, names=(), level=0):
 def test_from_import_prefers_the_location_where_the_name_is_a_submodule():
     targets, status = resolve("scripts/site_engine/login_session.py", "local_agent", ["agent"])
     assert status == "internal"
-    assert "core/agent_runtime/agent.py" in targets  # 루트 패키지의 서브모듈
+    assert "local_agent/agent.py" in targets  # 루트 패키지의 서브모듈
     assert "scripts/local_agent.py" not in targets  # 같은 이름의 scripts 모듈이 아니다
 
 
 def test_the_same_holds_for_other_submodules_of_the_root_package():
     targets, _ = resolve("scripts/google/auth.py", "local_agent", ["agent"])
-    assert "core/agent_runtime/agent.py" in targets and "scripts/local_agent.py" not in targets
+    assert "local_agent/agent.py" in targets and "scripts/local_agent.py" not in targets
 
 
 def test_without_a_matching_submodule_the_nearest_base_still_wins():

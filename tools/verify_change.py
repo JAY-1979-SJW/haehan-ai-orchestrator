@@ -119,7 +119,7 @@ CODE_EXT = tuple(CFG.get("code_ext", [".py"]))  # 분류 정본에 있어야 하
 
 def run(cmd: list[str], cwd: Path, timeout: int = 900) -> subprocess.CompletedProcess:
     """명령 실행. 시간 초과면 자손(CDP 데몬·Chrome 등)까지 종료하고 TimeoutExpired — 파이프를 문 자손 때문에 영원히 멈추지 않는다."""
-    from code_map.proc_tree import run_tree_killed  # type: ignore[import-not-found]
+    from tools.code_map.proc_tree import run_tree_killed
 
     return run_tree_killed(cmd, cwd=cwd, timeout=timeout, env=ENV)
 
@@ -472,7 +472,7 @@ def affected_tests(changed: list[str]) -> list[str]:
     출발점은 바뀐 파일 + 바뀐 비-.py(설정·정본 json 등)를 문자열로 읽는 .py 다 — 코드맵 간선은 .py import 만 따라가서, 설정만 바뀌면
     그 설정을 여는 도구(와 그 도구를 import 하는 시험)가 빠졌다(2026-10-08 configs/folder_registry.json ↔ test_folder_gate).
     """
-    from code_map.ref_seeds import seeds_for  # type: ignore[import-not-found]
+    from tools.code_map.ref_seeds import seeds_for
 
     m = json.loads((ROOT / "data/code_map/map.json").read_text(encoding="utf-8"))
     rev: dict[str, set[str]] = {}

@@ -182,7 +182,12 @@ def _is_secret_scan_excluded(path: Path) -> bool:
         ("docs/", "scripts/archive/", "scripts/ops/", "data/logs/", "data/cdp_profile/", "data/sessions/")
     ):
         return True
-    if rel.startswith("scripts/module_quality_gate") and rel.endswith(".py"):
+    if rel.startswith("tools/quality/module_quality_gate") and rel.endswith(".py"):
+        return True
+    if rel in {
+        "tools/audits/agent/audit_desktop_auth_runtime_baseline_contract.py",
+        "tools/audits/backend/audit_backend_core_baseline_contract.py",
+    }:
         return True
     return False
 
