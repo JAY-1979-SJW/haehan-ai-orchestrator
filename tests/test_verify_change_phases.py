@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops import verify_change as vc
+from tools import verify_change as vc
 
 
 def test_shard_slices_partition_the_list_without_loss_or_overlap():

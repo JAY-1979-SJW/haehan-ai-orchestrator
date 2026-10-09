@@ -201,9 +201,9 @@ git push
        → BLOCK 판정 시 푸시 차단
 
 작업 후 수동 의무 (CLAUDE.md 규칙):
-  ├─ python scripts/ops/repo_gates/codebase_layer_audit.py
+  ├─ python tools/repo_gates/codebase_layer_audit.py
   ├─ pytest tests/test_codebase_layer_audit.py -q
-  └─ python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
+  └─ python tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 
   STOP 조건:
     FORBIDDEN_IMPORT > 0  → STOP
@@ -295,4 +295,4 @@ git push
 1. 새 라우터/모듈 추가 시
 2. 포트/서버 구성 변경 시
 3. 레이어 분류 변경 시
-4. `python scripts/ops/repo_gates/codebase_layer_audit.py` 실행 후 주요 변화 시
+4. `python tools/repo_gates/codebase_layer_audit.py` 실행 후 주요 변화 시

@@ -17,7 +17,7 @@ ROOT = next(
 )  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
 sys.path.insert(0, str(ROOT))
 
-PROVISIONING_SCRIPT = ROOT / "scripts" / "ops" / "deploy" / "create_web_project_provisioning_plan.py"
+PROVISIONING_SCRIPT = ROOT / "tools" / "deploy" / "create_web_project_provisioning_plan.py"
 
 
 def _load_factory():

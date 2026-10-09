@@ -88,7 +88,7 @@ def guarded(op_name, ok_fn=lambda r: True): ...   # 데코레이터. {"ok":False
 | 스마트스토어 문의 | **scripts/naver/smartstore/inquiry_reply.py**(지시서의 scripts/inquiry/ 는 없음) :81 `submit_reply` | except 없음, 실패를 문자열 반환 | 결과 문자열 판정 ok_fn |
 
 **예상 diff**: publish_guard.py 신규 ~70줄, tests/test_publish_guard.py 신규(텔레그램 monkeypatch: 실패 기록·stderr·알림 호출·미설정 skipped·알림 실패가 본작업을 깨지 않음), 4곳 데코레이터 각 +1~3줄.
-**영향 테스트**: tests/test_google_youtube_upload.py, tests/test_hiworks_mail_batch.py. instagram·inquiry_reply·op_log 직접 테스트는 못 찾음(`query.py tests-for` 는 저장소 루트 `scripts/ops/code_map/query.py` 이며 조사 에이전트 일부가 경로 오류로 실행 못 함 — 구현 시 실행).
+**영향 테스트**: tests/test_google_youtube_upload.py, tests/test_hiworks_mail_batch.py. instagram·inquiry_reply·op_log 직접 테스트는 못 찾음(`query.py tests-for` 는 저장소 루트 `tools/code_map/query.py` 이며 조사 에이전트 일부가 경로 오류로 실행 못 함 — 구현 시 실행).
 **라우트 영향**: 없음(시그니처·반환·예외 불변).
 **위험**: 알림 폭주(배치), ok_fn 오판(blocked=정상 대기), 텔레그램 미설정 시 skipped 처리(정상), 승인 대기 상태를 실패로 알림, L5→L3 import 게이트.
 **작업량**: 래퍼 S, 적용 4곳+테스트 M.

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops.hooks import audit_kit_gate as gate
+from tools.hooks import audit_kit_gate as gate
 
 FAKE_HOOK = """
 import sys

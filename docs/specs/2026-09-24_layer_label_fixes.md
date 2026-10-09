@@ -8,9 +8,9 @@ spec:
     modify:
       - configs/module_registry.overrides.json
       - configs/module_registry.json
-      - scripts/ops/code_map/classify.py
+      - tools/code_map/classify.py
   acceptance:
-    - cmd: "python scripts/ops/code_map/skeleton_gate.py"
+    - cmd: "python tools/code_map/skeleton_gate.py"
       expect: exit0
 ```
 
@@ -23,16 +23,16 @@ spec:
 
 ## 방법
 
-1. `python scripts/ops/code_map/build.py && python scripts/ops/code_map/modules.py` 로 현재
+1. `python tools/code_map/build.py && python tools/code_map/modules.py` 로 현재
    `data/code_map/map.json`·`inversions` 재계산.
 2. `configs/module_registry.json` 의 `allowed_deps` 를 `import_edges` 에 직접 적용해
    (`__init__.py` 제외, L1~L10 대상만) 위반 목록 재산출 → 98건, `modules.py` 결과(98)와 일치 확인.
 3. 위반이 큰 그룹부터 파일 내용을 직접 읽어(docstring·import·실제 동작) 라벨이 맞는지 검증.
    근거가 분명한 것만 `configs/module_registry.overrides.json` 에 `source: manual` 로 기록하고
-   `python scripts/ops/code_map/classify.py` 로 `configs/module_registry.json` 에 반영.
+   `python tools/code_map/classify.py` 로 `configs/module_registry.json` 에 반영.
 4. `apps/ig-comment-dm-bot/`, `apps/marketing-standalone/` 는 독립 제품으로 분리 결정된 저장소이므로
    추적 파일 26개(코드 파일, `.py`)를 layer `"APP"` 으로 오버라이드. `"APP"` 은
-   `configs/module_registry.json` 의 `allowed_deps`/`scripts/ops/code_map/modules.py` 의
+   `configs/module_registry.json` 의 `allowed_deps`/`tools/code_map/modules.py` 의
    `CODE_LAYERS = {L1..L10}` 어디에도 없으므로 방향 검사에서 자동 제외됨(직접 코드 확인).
 5. `classify.py` 요약 출력이 `"APP"` 처럼 숫자가 아닌 층 문자열에서 `int()` 캐스팅으로 죽는 버그를
    1줄 방어 처리(`x[0][1:].isdigit() else 999`)로 고쳤다 — 레지스트리 본문(`REGISTRY.write_text`)은
@@ -90,13 +90,13 @@ spec:
 추적 파일을 `configs/module_registry.overrides.json` 에 `layer: "APP"` 로 등록.
 사유: `"독립 제품 — 저장소 층 규칙 제외(사용자 결정 2026-09-24)"`.
 
-확인: `scripts/ops/code_map/modules.py` 의 `CODE_LAYERS = {f"L{i}" for i in range(1, 11)}` 및
+확인: `tools/code_map/modules.py` 의 `CODE_LAYERS = {f"L{i}" for i in range(1, 11)}` 및
 `ls not in CODE_LAYERS` 가드(85·104행)가 `"APP"` 층 파일을 방향 검사·역방향 검사에서 자동 스킵함을
 코드로 직접 확인했다(수정 불필요).
 
 ## 도구 버그 수정 (1줄)
 
-`scripts/ops/code_map/classify.py` 요약 출력에서 `"APP"` 처럼 숫자가 아닌 층 문자열을
+`tools/code_map/classify.py` 요약 출력에서 `"APP"` 처럼 숫자가 아닌 층 문자열을
 `int(x[0][1:])` 로 캐스팅하다 `ValueError` 로 비정상 종료하는 버그를
 `int(x[0][1:]) if x[0][1:].isdigit() else 999` 로 방어. 레지스트리 파일 쓰기는 이 줄보다 먼저
 실행되므로 라벨 반영에는 영향 없었지만, 도구가 매번 실패 종료하면 안 되므로 함께 고쳤다.
@@ -120,7 +120,7 @@ spec:
 
 ## 검증
 
-- `python scripts/ops/code_map/skeleton_gate.py` → PASS(4/4)
-- `python scripts/ops/code_map/registry_sync.py --check` → OK(2362 == 2362)
+- `python tools/code_map/skeleton_gate.py` → PASS(4/4)
+- `python tools/code_map/registry_sync.py --check` → OK(2362 == 2362)
 - `pytest tests/test_skeleton_gate.py tests/test_codebase_layer_audit.py tests/test_module_boundaries.py -q` → 35 passed
-- 위반 수: `python scripts/ops/code_map/modules.py` → `inversions=51`(재계산 스크립트와 일치)
+- 위반 수: `python tools/code_map/modules.py` → `inversions=51`(재계산 스크립트와 일치)

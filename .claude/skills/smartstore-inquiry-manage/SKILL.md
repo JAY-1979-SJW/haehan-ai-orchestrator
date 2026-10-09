@@ -17,7 +17,7 @@ description: 네이버 스마트스토어센터(반딧불 아뜰리에) CDP 상�
 ## 1. 상시 감시 — 클릭할 때마다 자동 분류
 
 ```bash
-python scripts/ops/runtime/cdp_click_watch.py --interval 1.5
+python tools/runtime/cdp_click_watch.py --interval 1.5
 ```
 
 Monitor 도구로 백그라운드 실행하면 화면 이동 시마다 아래 형식으로 이벤트가 온다:
@@ -27,7 +27,7 @@ Monitor 도구로 백그라운드 실행하면 화면 이동 시마다 아래 �
 [watch:counts] category=주문관리 발송기한 초과=0 신규주문(발주 전)=0 ...
 ```
 
-### 항목별 지원 현황 (`scripts/ops/runtime/cdp_click_watch.py::CATEGORY_RULES`/`COUNT_LABELS`)
+### 항목별 지원 현황 (`tools/runtime/cdp_click_watch.py::CATEGORY_RULES`/`COUNT_LABELS`)
 
 | 카테고리 | 화면 분류 | 숫자 카운트 자동 추출 | 비고 |
 |---|---|---|---|

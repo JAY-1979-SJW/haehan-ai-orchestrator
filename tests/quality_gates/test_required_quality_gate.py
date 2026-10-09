@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 
-from scripts.ops.quality import required_quality_gate as gate
+from tools.quality import required_quality_gate as gate
 
 ROOT = Path(__file__).resolve().parents[2]
 TEST_PYCACHE = ROOT
@@ -100,13 +100,13 @@ def test_required_gate_includes_browser_runtime_policy_tests():
     assert "scripts/youtube/oauth.py" in rendered
     assert "scripts/youtube/research.py" in rendered
     assert "scripts/youtube/router.py" in rendered
-    assert "scripts/ops/quality/module_quality_gate.py --module repo_guard" in rendered
+    assert "tools/quality/module_quality_gate.py --module repo_guard" in rendered
 
 
 def test_git_hooks_delegate_to_required_gate():
-    # 현행 위임 구조(2026-05-31 f6a169ae 이후 훅 재작성, 설치기 scripts/ops/hooks/install_git_hooks.py):
+    # 현행 위임 구조(2026-05-31 f6a169ae 이후 훅 재작성, 설치기 tools/hooks/install_git_hooks.py):
     #   pre-commit(체크리스트 래퍼) -> pre-commit.orig(ruff + ruff_new_only_gate)
-    #   pre-push -> scripts/ops/hooks/ai_code_review_gate.py
+    #   pre-push -> tools/hooks/ai_code_review_gate.py
     # required_quality_gate.py 를 직접 호출하던 구 구조는 더 이상 훅에 없다.
     pre_commit = (ROOT / ".githooks" / "pre-commit").read_text(encoding="utf-8")
     pre_commit_orig = (ROOT / ".githooks" / "pre-commit.orig").read_text(encoding="utf-8")
@@ -175,7 +175,7 @@ def test_repo_guard_gate_gets_extended_timeout(monkeypatch):
     monkeypatch.setenv("HAEHAN_REQUIRED_GATE_TIMEOUT_SECONDS", "30")
     monkeypatch.setattr(gate.subprocess, "run", fake_run)
 
-    result = gate.run_command((gate.sys.executable, "scripts/ops/quality/module_quality_gate.py", "--module", "repo_guard"))
+    result = gate.run_command((gate.sys.executable, "tools/quality/module_quality_gate.py", "--module", "repo_guard"))
 
     assert result.ok is True
     assert captured["timeout"] == 240

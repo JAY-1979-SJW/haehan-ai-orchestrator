@@ -17,8 +17,8 @@
 
 | 항목 | 레이어 | 상태 | 증거 파일 |
 |------|--------|------|-----------|
-| Layer Audit (P0 게이트) | L2 | ✅ | `scripts/ops/repo_gates/codebase_layer_audit.py` |
-| Quality Gate | L2 | ✅ | `scripts/ops/quality/quality_gate.py` |
+| Layer Audit (P0 게이트) | L2 | ✅ | `tools/repo_gates/codebase_layer_audit.py` |
+| Quality Gate | L2 | ✅ | `tools/quality/quality_gate.py` |
 | Governance Gate Matrix | L12 | ✅ | `docs/architecture/governance_gate_matrix.md` |
 | Domain Room Allocation Rule | L12 | ✅ | `docs/architecture/domain_room_allocation_rule.md` |
 | Shared Warehouse Model | L12 | ✅ | `docs/architecture/shared_warehouse_model.md` |

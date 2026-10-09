@@ -2,7 +2,7 @@
 
 import json
 
-from scripts.ops import verify_change as vc
+from tools import verify_change as vc
 
 
 def _tree(tmp_path, route_check):

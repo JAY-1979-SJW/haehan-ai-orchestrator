@@ -18,7 +18,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.ops.code_map import registry_sync, skeleton_gate  # noqa: E402
+from tools.code_map import registry_sync, skeleton_gate  # noqa: E402
 
 
 def _git(repo: Path, *args: str, env: dict | None = None) -> subprocess.CompletedProcess:

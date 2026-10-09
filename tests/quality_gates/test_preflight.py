@@ -1,4 +1,4 @@
-"""설치 점검(scripts/ops/verify/preflight.py) — 가짜 환경으로 PASS/WARN/FAIL 판정을 확인한다. 실제 Chrome·네트워크·설치 상태에 기대지 않는다."""
+"""설치 점검(tools/verify/preflight.py) — 가짜 환경으로 PASS/WARN/FAIL 판정을 확인한다. 실제 Chrome·네트워크·설치 상태에 기대지 않는다."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from scripts.ops.verify import preflight as pf
+from tools.verify import preflight as pf
 
 GOOD_PACKAGES = {name: "1.0.0" for name in pf.REQUIRED_PACKAGES}
 REAL_ENV = pf.Env  # 시험에서 pf.Env 를 바꿔도 도우미가 진짜 클래스를 쓰도록 미리 잡아 둔다

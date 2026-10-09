@@ -8,7 +8,7 @@
 import argparse
 import subprocess
 
-from scripts.ops import verify_change as vc
+from tools import verify_change as vc
 
 
 def _completed(stdout: str, returncode: int = 1) -> subprocess.CompletedProcess:

@@ -28,7 +28,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-AUDIT_SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_phase1d_adapter_dry_run_compat.py"
+AUDIT_SCRIPT = ROOT / "tools" / "audit_5050_phase1d_adapter_dry_run_compat.py"
 PHASE1B_SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_phase1b_adapter_contract_detail.py"
 PHASE1_8400_SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_phase1_8400_contract_freeze.py"
 CHARACTERIZATION_SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_legacy_characterization.py"
@@ -38,7 +38,7 @@ _DELETED_DEPENDENCY_REASON = (
 
 # known baseline failures — 이번 공정과 무관한 기존 실패 목록 (문서성 상수)
 # CAD 관련 4건은 2026-06-04 "CAD 모듈 전체 삭제"(17130f8e)로 그 시험 파일 자체가 없어져
-# 목록에서 제거(scripts/ops/audit_5050_phase1d_adapter_dry_run_compat.py 와 동기, B0-a).
+# 목록에서 제거(tools/audit_5050_phase1d_adapter_dry_run_compat.py 와 동기, B0-a).
 KNOWN_BASELINE_FAILURES = [
     "tests/app_contracts/test_app_foundation_p1_gates.py::test_server_browser_guard_no_violations",
     "tests/app_contracts/test_app_foundation_p1_gates.py::test_p1_gates_all_zero_new_violations",

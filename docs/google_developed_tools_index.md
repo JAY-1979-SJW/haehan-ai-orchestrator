@@ -162,7 +162,7 @@ Latest focused verification:
 ```powershell
 python -m pytest tests\test_google_workspace_basic.py -q
 python scripts\ops\audit_google_automation_baseline_contract.py
-python scripts\ops\quality\required_quality_gate.py
+python tools\quality\required_quality_gate.py
 ```
 
 Latest result:
@@ -170,7 +170,7 @@ Latest result:
 - `tests\test_google_workspace_basic.py`: `23 passed`
 - `scripts\ops\audit_google_automation_baseline_contract.py`:
   `RESULT=PASS_GOOGLE_AUTOMATION_BASELINE_CONTRACT`
-- `scripts\ops\quality\required_quality_gate.py`: `RESULT=PASS_REQUIRED_QUALITY_GATE`
+- `tools\quality\required_quality_gate.py`: `RESULT=PASS_REQUIRED_QUALITY_GATE`
 
 ## Remaining Work
 

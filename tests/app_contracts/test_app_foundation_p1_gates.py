@@ -29,12 +29,12 @@ def _load_report() -> dict:
     if not report_path.exists():
         report_path = Path(tempfile.mkdtemp(prefix="layer_audit_")) / "report.json"
         subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "ops" / "repo_gates" / "codebase_layer_audit.py"), "--output", str(report_path)],
+            [sys.executable, str(ROOT / "tools" / "repo_gates" / "codebase_layer_audit.py"), "--output", str(report_path)],
             cwd=ROOT,
             capture_output=True,
             check=False,
         )
-    assert report_path.exists(), "audit 리포트를 만들지 못함(scripts/ops/repo_gates/codebase_layer_audit.py 실행 실패)"
+    assert report_path.exists(), "audit 리포트를 만들지 못함(tools/repo_gates/codebase_layer_audit.py 실행 실패)"
     _REPORT_CACHE = json.loads(report_path.read_text(encoding="utf-8"))
     return _REPORT_CACHE
 
@@ -51,7 +51,7 @@ def _gate_results() -> dict:
 
 def test_router_thinness_check_function_exists():
     """check_router_thinness 함수가 audit 스크립트에 존재해야 한다."""
-    import scripts.ops.repo_gates.codebase_layer_audit as m
+    import tools.repo_gates.codebase_layer_audit as m
     assert hasattr(m, "check_router_thinness")
 
 
@@ -78,7 +78,7 @@ def test_router_thinness_gate_result_key_exists():
 
 def test_router_thinness_positive_detection():
     """실제 router 파일에 금지 패턴 없음을 확인 (site router)."""
-    from scripts.ops.repo_gates.codebase_layer_audit import check_router_thinness, classify_files
+    from tools.repo_gates.codebase_layer_audit import check_router_thinness, classify_files
     rows = classify_files(ROOT)
     issues = check_router_thinness(rows, ROOT)
     # 신규 warn 0
@@ -88,7 +88,7 @@ def test_router_thinness_positive_detection():
 
 def test_router_thinness_gabia_router_clean():
     """scripts/gabia/router.py는 ROUTER_THINNESS 위반이 없어야 한다."""
-    from scripts.ops.repo_gates.codebase_layer_audit import check_router_thinness, classify_files
+    from tools.repo_gates.codebase_layer_audit import check_router_thinness, classify_files
     rows = [r for r in classify_files(ROOT) if r.path == "scripts/gabia/router.py"]
     issues = check_router_thinness(rows, ROOT)
     violations = [i for i in issues if i.severity == "warn"]
@@ -97,7 +97,7 @@ def test_router_thinness_gabia_router_clean():
 
 def test_router_thinness_hiworks_router_clean():
     """scripts/hiworks/router.py는 ROUTER_THINNESS 위반이 없어야 한다."""
-    from scripts.ops.repo_gates.codebase_layer_audit import check_router_thinness, classify_files
+    from tools.repo_gates.codebase_layer_audit import check_router_thinness, classify_files
     rows = [r for r in classify_files(ROOT) if r.path == "scripts/hiworks/router.py"]
     issues = check_router_thinness(rows, ROOT)
     violations = [i for i in issues if i.severity == "warn"]
@@ -108,7 +108,7 @@ def test_router_thinness_hiworks_router_clean():
 
 def test_storage_boundary_check_function_exists():
     """check_storage_boundary 함수가 audit 스크립트에 존재해야 한다."""
-    import scripts.ops.repo_gates.codebase_layer_audit as m
+    import tools.repo_gates.codebase_layer_audit as m
     assert hasattr(m, "check_storage_boundary")
 
 
@@ -135,7 +135,7 @@ def test_storage_boundary_gate_result_key_exists():
 
 def test_storage_boundary_gabia_scripts_clean():
     """scripts/gabia/ 내 파일은 STORAGE_BOUNDARY WARN 위반이 없어야 한다."""
-    from scripts.ops.repo_gates.codebase_layer_audit import check_storage_boundary, classify_files
+    from tools.repo_gates.codebase_layer_audit import check_storage_boundary, classify_files
     rows = [r for r in classify_files(ROOT) if r.path.startswith("scripts/gabia/")]
     issues = check_storage_boundary(rows, ROOT)
     violations = [i for i in issues if i.severity == "warn"]
@@ -166,7 +166,7 @@ def test_storage_boundary_domain_assist_no_session_access():
 
 def test_server_browser_guard_check_function_exists():
     """check_server_browser_guard 함수가 audit 스크립트에 존재해야 한다."""
-    import scripts.ops.repo_gates.codebase_layer_audit as m
+    import tools.repo_gates.codebase_layer_audit as m
     assert hasattr(m, "check_server_browser_guard")
 
 
@@ -206,7 +206,7 @@ def test_server_browser_guard_gabia_credential_blocked():
 
 def test_server_browser_guard_forbidden_sites_list_exists():
     """_SERVER_FORBIDDEN_SITES 목록이 정의되어야 한다."""
-    from scripts.ops.repo_gates.codebase_layer_audit import _SERVER_FORBIDDEN_SITES
+    from tools.repo_gates.codebase_layer_audit import _SERVER_FORBIDDEN_SITES
     assert len(_SERVER_FORBIDDEN_SITES) > 0
     assert any("gabia" in s for s in _SERVER_FORBIDDEN_SITES)
     assert any("g2b" in s for s in _SERVER_FORBIDDEN_SITES)
@@ -216,8 +216,9 @@ def test_server_browser_guard_execution_gate_has_server_forbidden():
     """execution_gate.py에 is_server_forbidden_site 기능이 존재해야 한다."""
     import scripts.site_engine.execution_gate as m
     assert hasattr(m, "ExecutionGateInput")
-    from scripts.site_engine.execution_gate import ExecutionGateInput
     import inspect
+
+    from scripts.site_engine.execution_gate import ExecutionGateInput
     sig = inspect.signature(ExecutionGateInput.__init__)
     assert "is_server_forbidden_site" in sig.parameters, \
         "ExecutionGateInput에 is_server_forbidden_site 파라미터 없음"

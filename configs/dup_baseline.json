@@ -169,7 +169,7 @@
    "scripts/ops/audit_5050_legacy_characterization.py:main",
    "scripts/ops/audit_5050_phase1_8400_contract_freeze.py:main",
    "scripts/ops/audit_5050_phase1b_adapter_contract_detail.py:main",
-   "scripts/ops/audit_5050_phase1d_adapter_dry_run_compat.py:main",
+   "tools/audit_5050_phase1d_adapter_dry_run_compat.py:main",
    "scripts/ops/audit_web_project_provisioning_factory.py:main"
   ],
   "65ec1a903e7c4d29911e7ff388bae95e6542b527": [

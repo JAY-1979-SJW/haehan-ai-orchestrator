@@ -128,10 +128,10 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
      이미 있고(severity=improve, 차단 아님) 분포를 보면 158건(45%)이 임계값(10) 바로 위(11~13)라
      당장 규칙화하면 노이즈가 큼. 다만 **복잡도 30 이상 극단값 14개**는 실제 리팩터링 후보로
      가치 있어 보여 따로 남긴다:
-     `scripts/cdp_client.py:main`(**134**, 압도적 1위) · `scripts/ops/code_map/fullmap.py:extend`(44) ·
+     `scripts/cdp_client.py:main`(**134**, 압도적 1위) · `tools/code_map/fullmap.py:extend`(44) ·
      `scripts/naver/blog/community/blog_explorer.py:main`(39) ·
      `scripts/naver/cafe/collection/cafe_explorer.py:main`(38) ·
-     `scripts/ops/code_map/modules.py:main`(38) · `scripts/ops/repo_gates/codebase_layer_audit.py:classify_path`(35) ·
+     `tools/code_map/modules.py:main`(38) · `tools/repo_gates/codebase_layer_audit.py:classify_path`(35) ·
      `local_agent_redaction.py:_strip_result_data`(32) ·
      `tools/audits/google/audit_google_automation_baseline_contract.py:audit`(32) ·
      `tools/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py:run_audit`(32) ·
@@ -170,13 +170,13 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
 py -3.14 -m ruff check --config configs/ruff.toml --select <RULE_ID> --statistics .
 
 # 영향 테스트 찾기 + 실행 (전체 pytest 금지, 21분+ 걸리고 멈추는 결함 있음)
-HAEHAN_NO_BROWSER_LAUNCH=1 py -3.14 scripts/ops/code_map/query.py tests-for <파일>
+HAEHAN_NO_BROWSER_LAUNCH=1 py -3.14 tools/code_map/query.py tests-for <파일>
 py -3.14 -m pytest <나온 테스트 파일들> -q
 
 # 게이트 3종 (커밋 전 필수)
-py -3.14 scripts/ops/repo_gates/codebase_layer_audit.py
+py -3.14 tools/repo_gates/codebase_layer_audit.py
 py -3.14 -m pytest tests/test_codebase_layer_audit.py -q
-py -3.14 scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
+py -3.14 tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 
 # audit-kit 공식 재검사 (worktree 없는 깨끗한 상태에서만 신뢰할 것)
 audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrator" --no-mypy --fail-on never

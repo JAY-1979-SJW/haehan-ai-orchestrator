@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-HOOK = ROOT / "scripts" / "ops" / "hooks" / "hook_check_a4.py"
+HOOK = ROOT / "tools" / "hooks" / "hook_check_a4.py"
 
 
 def test_every_script_the_hook_runs_exists_next_to_the_office_tools():

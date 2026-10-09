@@ -1,6 +1,6 @@
 import json
 
-from scripts.ops import runtime_drift_watch as watch
+from tools import runtime_drift_watch as watch
 
 
 def test_write_payload_writes_latest_and_history(tmp_path):

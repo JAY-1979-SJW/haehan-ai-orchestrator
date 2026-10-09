@@ -1,5 +1,5 @@
 # 생성물 — 손으로 고치지 말 것. 다시 만들기: python scripts/ops/import_contracts_gen.py
-# 정본: configs/module_registry.json · scripts/ops/code_map/layer_rules.py · scripts/ops/module_separation_gate.py ·
+# 정본: configs/module_registry.json · tools/code_map/layer_rules.py · scripts/ops/module_separation_gate.py ·
 #       scripts/naver/blog/cli/check_blog_separability.py (머리말: scripts/ops/import_contracts_gen.py)
 # import-linter 가 볼 수 없는 층 파일 51개(루트 평면·namespace 폴더) — 목록: --gaps
 # 건너뛴 금지 쌍: scripts.site_engine -> scripts.cdp_ (해당 모듈 없음)

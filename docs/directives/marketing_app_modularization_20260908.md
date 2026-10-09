@@ -70,10 +70,10 @@ apps/marketing-standalone/          ← 신규 최상위 디렉터리 (신규 �
 ## 5. 완료 후 실행할 게이트
 
 ```bash
-python scripts/ops/repo_gates/codebase_layer_audit.py
+python tools/repo_gates/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
-python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
-python scripts/ops/hooks/duplicate_code_check.py   # 사본이 "중복 구현"으로 오탐되는지 확인
+python tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change
+python tools/hooks/duplicate_code_check.py   # 사본이 "중복 구현"으로 오탐되는지 확인
 ```
 
 `duplicate_code_check.py`가 사본을 중복으로 잡을 가능성이 높음 — 오탐이면

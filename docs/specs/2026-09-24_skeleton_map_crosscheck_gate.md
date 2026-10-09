@@ -31,7 +31,7 @@
 - 선언 모듈(module_boundaries) 경로가 없으면 FAIL
 - 금지 import: 스테이지된 파일에서 새로 생긴 것만 FAIL(기존 1건은 기준선)
 - 우회: 커밋 메시지 trailer `Skip-Skeleton-Gate: <사유>` (사유 없으면 무시) — 감사 집계
-- FAIL 메시지 끝: `python scripts/ops/code_map/registry_sync.py --fix && git add configs/module_registry.json`
+- FAIL 메시지 끝: `python tools/code_map/registry_sync.py --fix && git add configs/module_registry.json`
 
 ## 기존 부채 정리 (시공 1단계에 포함)
 - 정본의 미추적 파일 36개 제거(작업폴더 임시·미커밋 제품 파일) → 해당 파일이 커밋될 때 ①이 등록을 요구
@@ -49,7 +49,7 @@
 ③: 고장 브랜치 → 병합 거부 / 정상 → ff 병합+태그.
 
 ## 영향
-- 신규: scripts/ops/code_map/skeleton_gate.py, registry_sync.py, scripts/ops/merge_stage.py, 테스트 tests/test_skeleton_gate.py
+- 신규: tools/code_map/skeleton_gate.py, registry_sync.py, tools/merge_stage.py, 테스트 tests/test_skeleton_gate.py
 - 수정: .githooks/pre-commit.orig(① 호출 1줄 — 추적 정본 + install_git_hooks.py 반영), configs/module_registry.json(부채 정리), 선언 모듈 설정, 공용 스킬 verify-change(설치 대상에 포함)
 - API·DB·보안 영향 없음. CLAUDE.md 는 사용자 확인 후 "게이트 실행 의무" 절에 1줄 추가 제안.
 

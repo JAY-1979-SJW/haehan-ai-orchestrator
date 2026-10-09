@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from scripts.ops.hooks import install_git_hooks as ih
+from tools.hooks import install_git_hooks as ih
 
 
 def fake_git(initial: str | None, fail_set: bool = False):

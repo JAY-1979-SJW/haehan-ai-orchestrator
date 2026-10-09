@@ -18,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-PROVISIONING_SCRIPT = ROOT / "scripts" / "ops" / "deploy" / "create_web_project_provisioning_plan.py"
+PROVISIONING_SCRIPT = ROOT / "tools" / "deploy" / "create_web_project_provisioning_plan.py"
 AUDIT_SCRIPT = ROOT / "tools" / "audits" / "backend" / "audit_web_project_provisioning_factory.py"
 
 # 스크립트가 한글(em dash 포함)을 print 한다 — Windows 콘솔 기본 코드페이지(cp949)로는

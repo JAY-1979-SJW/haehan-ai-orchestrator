@@ -36,7 +36,7 @@ tests/test_module_boundaries.py
   (2026-10-07, user-approved desktop app release build); any other workflow
   file is still forbidden.
   Required checks remain local scripts plus pre-commit/pre-push hooks, reused
-  by ci.yml itself (`scripts/ops/verify_change.py`).
+  by ci.yml itself (`tools/verify_change.py`).
 - Browser runtime state must stay under `data/runtime/`, not under
   `scripts/archive/data/`.
 - Legacy root Python scripts are accepted residuals only. New root-level Python

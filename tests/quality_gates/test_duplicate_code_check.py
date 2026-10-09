@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from scripts.ops.hooks.duplicate_code_check import (
+from tools.hooks.duplicate_code_check import (
     find_basename_duplicates,
     find_body_duplicates,
     run,
@@ -47,7 +47,7 @@ def test_find_body_duplicates_detects_exact_copy(tmp_path):
 
     # run() uses ROOT-relative paths; call the lower-level function directly
     # against files under tmp_path is fine since it only needs Path objects.
-    import scripts.ops.hooks.duplicate_code_check as mod
+    import tools.hooks.duplicate_code_check as mod
 
     original_root = mod.ROOT
     mod.ROOT = tmp_path
@@ -67,7 +67,7 @@ def test_find_body_duplicates_ignores_same_file_repeats(tmp_path):
     _write(tmp_path, "only_here.py", FUNC_A + "\n" + FUNC_A.replace("compute_total", "compute_total2"))
     files = list(tmp_path.rglob("*.py"))
 
-    import scripts.ops.hooks.duplicate_code_check as mod
+    import tools.hooks.duplicate_code_check as mod
 
     original_root = mod.ROOT
     mod.ROOT = tmp_path
@@ -85,7 +85,7 @@ def test_find_body_duplicates_ignores_below_min_lines(tmp_path):
     _write(tmp_path, "b.py", TINY_FUNC)
     files = list(tmp_path.rglob("*.py"))
 
-    import scripts.ops.hooks.duplicate_code_check as mod
+    import tools.hooks.duplicate_code_check as mod
 
     original_root = mod.ROOT
     mod.ROOT = tmp_path
@@ -103,7 +103,7 @@ def test_find_body_duplicates_does_not_flag_renamed_variables(tmp_path):
     _write(tmp_path, "b.py", FUNC_A_RENAMED_VARS)
     files = list(tmp_path.rglob("*.py"))
 
-    import scripts.ops.hooks.duplicate_code_check as mod
+    import tools.hooks.duplicate_code_check as mod
 
     original_root = mod.ROOT
     mod.ROOT = tmp_path
@@ -120,7 +120,7 @@ def test_find_body_duplicates_does_not_flag_different_functions(tmp_path):
     _write(tmp_path, "b.py", FUNC_B_DIFFERENT)
     files = list(tmp_path.rglob("*.py"))
 
-    import scripts.ops.hooks.duplicate_code_check as mod
+    import tools.hooks.duplicate_code_check as mod
 
     original_root = mod.ROOT
     mod.ROOT = tmp_path
@@ -138,7 +138,7 @@ def test_find_basename_duplicates_detects_parallel_modules(tmp_path):
     _write(tmp_path, "site_a/unique.py", "x = 3\n")
     files = list(tmp_path.rglob("*.py"))
 
-    import scripts.ops.hooks.duplicate_code_check as mod
+    import tools.hooks.duplicate_code_check as mod
 
     original_root = mod.ROOT
     mod.ROOT = tmp_path
@@ -157,7 +157,7 @@ def test_find_basename_duplicates_ignores_init_py(tmp_path):
     _write(tmp_path, "site_b/__init__.py", "")
     files = list(tmp_path.rglob("*.py"))
 
-    import scripts.ops.hooks.duplicate_code_check as mod
+    import tools.hooks.duplicate_code_check as mod
 
     original_root = mod.ROOT
     mod.ROOT = tmp_path

@@ -9,7 +9,7 @@ import pytest
 from openpyxl import Workbook
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "ops" / "office" / "inspect_excel.py"
+SCRIPT = ROOT / "tools" / "office" / "inspect_excel.py"
 
 
 def _load():

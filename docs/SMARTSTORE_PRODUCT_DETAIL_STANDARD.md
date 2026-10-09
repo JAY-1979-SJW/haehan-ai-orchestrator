@@ -430,9 +430,9 @@ Step 4. 편집 이력 JSONL → 이력 탭 표시
 ## 9. 품질 게이트 (작업 후 필수 실행)
 
 ```bash
-python scripts/ops/repo_gates/codebase_layer_audit.py
+python tools/repo_gates/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
-python scripts/ops/quality/quality_gate.py --staged --enforce --allow-existing-code-change
+python tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 ```
 
 **판정 기준:**

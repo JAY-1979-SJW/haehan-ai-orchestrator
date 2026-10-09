@@ -113,8 +113,8 @@ python -m pytest tests/test_local_agent_connection_recovery_baseline.py -q
 Module verification:
 
 ```text
-python scripts/ops/quality/module_quality_gate.py --module local_agent_connection_recovery
-python scripts/ops/quality/required_quality_gate.py
+python tools/quality/module_quality_gate.py --module local_agent_connection_recovery
+python tools/quality/required_quality_gate.py
 ```
 
 ## 8. Known WARN

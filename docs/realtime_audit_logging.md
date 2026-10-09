@@ -66,14 +66,14 @@ python scripts/common/realtime_audit.py tail
 
 ```bash
 python scripts/common/realtime_audit.py tail --text
-python scripts/ops/runtime/watch_log.py
+python tools/runtime/watch_log.py
 ```
 
 특정 파일 감시:
 
 ```bash
-python scripts/ops/runtime/watch_log.py data/logs/app.log
-python scripts/ops/runtime/watch_log.py data/logs/critical.log
+python tools/runtime/watch_log.py data/logs/app.log
+python tools/runtime/watch_log.py data/logs/critical.log
 ```
 
 ---
@@ -124,7 +124,7 @@ python scripts/entry/cdp_cli.py eum work registration P-001 D-001 Seoul --prepar
 
 ## 6. 초기 품질 게이트
 
-저장소 변경 품질은 `scripts/ops/quality/quality_gate.py`가 검사한다.
+저장소 변경 품질은 `tools/quality/quality_gate.py`가 검사한다.
 
 검사 항목:
 
@@ -138,14 +138,14 @@ python scripts/entry/cdp_cli.py eum work registration P-001 D-001 Seoul --prepar
 실행:
 
 ```bash
-python scripts/ops/quality/quality_gate.py
-python scripts/ops/quality/quality_gate.py --staged --enforce
+python tools/quality/quality_gate.py
+python tools/quality/quality_gate.py --staged --enforce
 ```
 
 로컬 pre-commit 훅 설치:
 
 ```bash
-python scripts/ops/quality/install_quality_gate.py
+python tools/quality/install_quality_gate.py
 ```
 
 훅은 staged 변경만 검사하므로 기존 작업트리의 미정리 파일 때문에 커밋 전 검사가 불필요하게 깨지지 않는다.
@@ -179,13 +179,13 @@ python scripts\entry\cdp_cli.py login-watch 1 300
 배포 관련 변경 전 dry-run 기록:
 
 ```bash
-python scripts/ops/deploy/deploy_dry_run.py -- <dry-run command>
+python tools/deploy/deploy_dry_run.py -- <dry-run command>
 ```
 
 예:
 
 ```bash
-python scripts/ops/deploy/deploy_dry_run.py -- python -m pytest tests/test_quality_gate.py -q
+python tools/deploy/deploy_dry_run.py -- python -m pytest tests/test_quality_gate.py -q
 ```
 
 `docker/`, `Dockerfile`, `docker-compose.yml`, `ai_orchestrator.connectors.instagram/`, `ai_orchestrator.browser_tool.worker/`, `services/`, GitHub Actions workflow 변경은 성공한 dry-run 증적 없이는 게이트가 실패한다.
@@ -193,7 +193,7 @@ python scripts/ops/deploy/deploy_dry_run.py -- python -m pytest tests/test_quali
 
 Updated: 2026-05-13
 
-Use `scripts/ops/runtime/app_realtime_check.py` for live app-level monitoring. It is
+Use `tools/runtime/app_realtime_check.py` for live app-level monitoring. It is
 read-only and records one `APP_REALTIME_CHECK` event per cycle.
 
 Checks:

@@ -6,8 +6,8 @@ import json
 import subprocess
 from pathlib import Path
 
-from scripts.ops import verify_change as vc
-from scripts.ops.code_map import ref_seeds
+from tools import verify_change as vc
+from tools.code_map import ref_seeds
 
 NL = chr(10)
 

@@ -4197,9 +4197,9 @@
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "PR #165 CI165: browser_allowlist_expansion_preflight.py·browser_policy_integration.py(둘 다 L2, policy)가 참조하는 정적 후보 레지스트리 — 설정/계약성 데이터라 L1, L10 기본값 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/playwright/browser_foreground_adapter.py": {
    "layer": "L4",
@@ -4221,17 +4221,17 @@
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "PR #165 CI165: 상동 패키지의 사이트 레지스트리 — 상동 사유로 L1",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/site_profile/browser_value_registry.py": {
    "layer": "L1",
    "role": "contract",
    "domain": "local_agent",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "PR #165 CI165: 상동 패키지의 값 레지스트리 — 상동 사유로 L1",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/agent_hub/business_action_profiles.py": {
    "layer": "L1",
@@ -4251,11 +4251,11 @@
   },
   "core/agent_runtime/runtime/common_tool_runtime.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: scripts/google/cloud/local_browser.py·scripts/google/common/subdomain_logic.py·scripts/site_engine/sso_runtime.py(L4·L5)가 공통으로 쓰는 범용 도구 런타임 헬퍼 — L10 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/permission/content_publish_guard.py": {
    "layer": "L2",
@@ -4315,27 +4315,27 @@
   },
   "core/agent_runtime/runtime/download/download_result_sanitizer.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165(2차): download_upload_manifest.py(이번에 L4 로 정정) 가 부르는 형제 파일 — 같은 로컬 에이전트 패키지 L10 기본값 오분류, 같은 L4 로 맞춤",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/download/download_upload_manifest.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: scripts/g2b/run_readonly_local_e2e.py(L6)가 부르는 범용 다운로드/업로드 매니페스트 헬퍼 — L10 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/universal/generic_selector_discovery.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: scripts/explorer/page_analysis.py(L4)가 부르는 범용 셀렉터 탐색 헬퍼 — 이름 그대로 generic, L10 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/security_program/installer_folder_presenter.py": {
    "layer": "L4",
@@ -4411,11 +4411,11 @@
   },
   "core/agent_runtime/runtime/playwright/playwright_bootstrap.py": {
    "layer": "L4",
-   "role": "browser_engine",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "PR #165 CI165: run_readonly_local_e2e.py·run_naver_cafe_to_blog_workflow.py·run_playwright_smoke.py(전부 L6)가 공통으로 쓰는 playwright 부트스트랩 헬퍼 — L10 기본값 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/playwright/playwright_runner.py": {
    "layer": "L6",
@@ -4459,11 +4459,11 @@
   },
   "core/agent_runtime/runtime/security_program/security_installer_candidate_finder.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: security_program_auto_resume.py(L6, confirmed)가 부르는 범용 설치 탐지 헬퍼 — local_agent/* 디렉터리 기본값(L10)으로 떨어졌을 뿐, 그 confirmed 사유에 'L4 generic(low) 오분류'로 이미 지목됨",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/security_program/security_installer_policy.py": {
    "layer": "L2",
@@ -4483,11 +4483,11 @@
   },
   "core/agent_runtime/runtime/security_program/security_program_detector.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: security_program_auto_resume.py·security_program_install_completion_detector.py(둘 다 L6, confirmed)가 부르는 범용 탐지 헬퍼 — 상동(L10 기본값 오분류)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/security_program/security_program_install_completion_detector.py": {
    "layer": "L6",
@@ -4499,11 +4499,11 @@
   },
   "core/agent_runtime/runtime/security_program/security_program_install_result_sanitizer.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: security_program_auto_resume.py(L6, confirmed)가 부르는 결과 정제 헬퍼 — 상동(L10 기본값 오분류)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/security_program/security_program_permission_gate.py": {
    "layer": "L2",
@@ -4515,11 +4515,11 @@
   },
   "core/agent_runtime/runtime/site_profile/selector_pack_registry.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: scripts/site_engine/create_site_profile.py(L4)가 부르는 범용 셀렉터팩 레지스트리 — L10 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/site_profile/site_capability_matrix.py": {
    "layer": "L2",
@@ -4539,11 +4539,11 @@
   },
   "core/agent_runtime/runtime/site_profile/site_type_classifier.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165(2차): universal_ai_site_agent.py(이번에 L4 로 정정) 가 부르는 형제 파일 — 상동",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/task_client.py": {
    "layer": "L4",
@@ -4579,35 +4579,35 @@
   },
   "core/agent_runtime/runtime/universal/universal_ai_site_agent.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: natural_language_task_api.py(L6, confirmed)가 부르는 범용 사이트 에이전트 헬퍼 — 그 confirmed 사유에 'L4 browser_engine 오분류'로 이미 지목됨",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/universal/universal_page_observer.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165(2차): universal_ai_site_agent.py(이번에 L4 로 정정) 가 부르는 형제 파일 — 상동",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/universal/universal_safe_result.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: natural_language_task_api·real_site_smoke_runner·universal_action_verifier·universal_workflow_runner(전부 L6)가 공통으로 쓰는 안전결과 래퍼 — L10 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/universal/universal_task_planner.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165(2차): universal_ai_site_agent.py(이번에 L4 로 정정) 가 부르는 형제 파일 — 상동",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/universal/universal_workflow_runner.py": {
    "layer": "L6",
@@ -4651,19 +4651,19 @@
   },
   "core/agent_runtime/runtime/universal/user_intent_parser.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: natural_language_task_api.py(L6, confirmed)가 부르는 의도 파싱 헬퍼 — 상동(L10 기본값 오분류)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/notify/user_notification_adapter.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: scripts/naver/mail/watch_new_mail.py(L5)가 부르는 범용 알림 어댑터 — L10 기본값 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/runtime/universal/workflow_template_engine.py": {
    "layer": "L6",
@@ -13089,7 +13089,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/write_gates/__init__.py": {
+  "tools/write_gates/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13097,7 +13097,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/write_gates/duplicate_impl_gate.py": {
+  "tools/write_gates/duplicate_impl_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13105,7 +13105,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/write_gates/naver_blog_safety_gate.py": {
+  "tools/write_gates/naver_blog_safety_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_blog",
@@ -13113,7 +13113,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/write_gates/sitemap_gate.py": {
+  "tools/write_gates/sitemap_gate.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -21961,14 +21961,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/quality/module_quality_gate.py": {
-   "layer": "L6",
-   "role": "policy",
-   "domain": "common",
-   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/ops/quality/module_quality_gate_runner.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
-   "confidence": "high",
-   "source": "confirmed"
-  },
   "scripts/ops/quality/module_quality_gate_checks_audit.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -24486,6 +24478,1094 @@
    "role": "test",
    "domain": "common",
    "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/audit_5050_phase1d_adapter_dry_run_compat.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/audit_kit_batch.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/code_map/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/code_map/agent_brief.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/code_map/build.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/code_map/classify.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/code_map/fullmap.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/code_map/layer_count.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/code_map/layer_rules.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/code_map/modules.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/code_map/proc_tree.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/code_map/query.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/code_map/reach.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/code_map/ref_seeds.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/code_map/registry_sync.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/code_map/runcheck.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/code_map/scan.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "정의 위주(모델·스키마·dataclass)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/code_map/skeleton_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/deploy/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/deploy/create_web_project_provisioning_plan.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/deploy/deploy_diagnose.py": {
+   "layer": "L3",
+   "role": "connector",
+   "domain": "common",
+   "reason": "HTTP 클라이언트",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/deploy/deploy_dry_run.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/devflow/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/devflow/make_constraints.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/devflow/make_shim.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/devflow/merge_step_check.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/devflow/move_preflight.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/devflow/pre_change_dry_run.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/devflow/run_impacted_tests.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/devflow/worktree_change_index.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "정의 위주(모델·스키마·dataclass)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/guard_instagram_publish.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "instagram",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/hooks/agent_usage.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/hooks/ai_code_review_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/audit_kit_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/behavior_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/capability_check.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/duplicate_code_check.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "정의 위주(모델·스키마·dataclass)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/guard_cdp_new_tab.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "browser",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/guard_force_cdp.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "browser",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/guard_openai_call.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/guard_youtube_upload.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "youtube",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/hook_check_a4.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/hooks/install_git_hooks.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/hooks/post_edit_fast_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/pre_edit_dup_check.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/hooks/prewrite_capability_check.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/hooks/session_guard.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/session_handoff.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/hooks/stop_fast_verify.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/hooks/vendor_api_registry.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/hooks/worklog_realtime.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/local_cli_router.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/login_session_monitor.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/merge_stage.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/office/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/office/check_a4.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/office/check_excel_live.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/office/create_quote_template.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/office/inspect_excel.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/pc_inventory.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/pc_inventory_mcp.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/pc_inventory_server.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "common",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/publish_release_to_nas.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/quality/install_git_hooks.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/quality/install_quality_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/quality/log_code_change.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/quality/module_quality_gate.py": {
+   "layer": "L6",
+   "role": "policy",
+   "domain": "common",
+   "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 tools/quality/module_quality_gate_runner.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tools/quality/module_quality_gate_checks_audit.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/quality/module_quality_gate_checks_repo.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/quality/module_quality_gate_checks_web.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/quality/module_quality_gate_common.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "module_quality_gate 운영 도구의 공용 상수·dataclass·헬퍼 — 앱 정책이 아니라 감사 도구 보조 모듈. L12.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tools/quality/module_quality_gate_exports.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/quality/module_quality_gate_modules.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/quality/module_quality_gate_runner.py": {
+   "layer": "L6",
+   "role": "workflow",
+   "domain": "common",
+   "reason": "업무 흐름 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/quality/py_compile_no_cache.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/quality/quality_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "리포지토리 커밋/스테이지 변경 감사용 CLI 도구(quality gate). 앱 도메인 정책이 아니라 운영 도구 — L12(문서·운영 도구, 의존 방향 규칙 밖). 이름만 gate라 L2로 오분류.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tools/quality/required_quality_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "로컬 pre-commit/pre-push 필수 게이트 실행 CLI(빌드·배포·브라우저 실행 안 함) — 운영 도구. L12.",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tools/repo_gates/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/repo_gates/_dup_structure_hash.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/repo_gates/audit_api_contract_frontend_backend.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/audit_cdp_tab_lifecycle_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "browser",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/audit_r1_api_contract_gate.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/audit_root_legacy_scripts.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/bundle_path_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/ci_layer_gate_check.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/codebase_layer_audit.py": {
+   "layer": "L7",
+   "role": "persistence",
+   "domain": "common",
+   "reason": "DB·저장 신호",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/dup_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/flat_root_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/folder_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/import_contracts_gen.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/module_separation_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/root_calc_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/ruff_new_only_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/tool_home_gate.py": {
+   "layer": "L2",
+   "role": "policy",
+   "domain": "common",
+   "reason": "정책·게이트 이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/repo_gates/validate_common_operations_index.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/runtime/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/runtime/app_realtime_check.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/runtime/cdp_click_watch.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/runtime/log_watcher.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/runtime/session_probe.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/runtime/verify_runtime_drift.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/runtime/watch_log.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/runtime_drift_watch.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/selector_health/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/selector_health/core.py": {
+   "layer": "L1",
+   "role": "contract",
+   "domain": "common",
+   "reason": "정의 위주(모델·스키마·dataclass)",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/selector_health/selector_health_check.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/selector_health/sites/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/selector_health/sites/naver_blog.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "naver_blog",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/selector_health/sites/naver_smartstore.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "smartstore",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/selector_health_weekly.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/server_deploy.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/smoke/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/smoke/agent_dispatch_e2e.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/smoke/live_approved_browser_instruction_smoke.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "browser",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/smoke/live_parallel_task_dispatch_smoke.py": {
+   "layer": "L3",
+   "role": "connector",
+   "domain": "common",
+   "reason": "HTTP 클라이언트",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/smoke/local_agent_public_external_readonly_live_smoke.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "local_agent",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/smoke/run_playwright_smoke.py": {
+   "layer": "L6",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tools/smoke/run_security_install_discovery.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/smoke/run_universal_ai_real_site_smoke.py": {
+   "layer": "L6",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)",
+   "confidence": "high",
+   "source": "confirmed"
+  },
+  "tools/smoke/smoke_local_desktop_agent_live_connection.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/smoke/smoke_public_local_agent_ws_from_user_ip.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "local_agent",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify/__init__.py": {
+   "layer": "L4",
+   "role": "generic",
+   "domain": "common",
+   "reason": "근거 부족 — 기본값",
+   "confidence": "low",
+   "source": "rule"
+  },
+  "tools/verify/_shared.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify/check_playwright_bootstrap.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify/dry_run_approved_browser_instruction_api.py": {
+   "layer": "L8",
+   "role": "api",
+   "domain": "browser",
+   "reason": "FastAPI/Flask 라우터·앱 정의",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify/dry_run_local_agent_cdp_attach.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "local_agent",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify/dry_run_manual_local_agent_browser_smoke.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "local_agent",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify/preflight.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify/verify_agent_ws_auth.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify/verify_live_agent_smoke.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify/verify_live_browser_readonly_dispatch.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "browser",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify/verify_live_task_dispatch.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify/verify_local_runtime_dry_run.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify_change.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
   }

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.ops import selector_health_weekly as W
+from tools import selector_health_weekly as W
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

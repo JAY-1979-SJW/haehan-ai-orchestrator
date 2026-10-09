@@ -11,7 +11,7 @@ import importlib.util
 import subprocess
 from pathlib import Path
 
-from scripts.ops import verify_change as vc
+from tools import verify_change as vc
 
 
 def test_log_prints_elapsed_prefix_and_flushes(capsys):

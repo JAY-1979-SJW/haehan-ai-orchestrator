@@ -1,8 +1,8 @@
-"""scripts/ops/write_gates/duplicate_impl_gate.py 단위 테스트 (모듈 직접 호출)."""
+"""tools/write_gates/duplicate_impl_gate.py 단위 테스트 (모듈 직접 호출)."""
 
 from __future__ import annotations
 
-from scripts.ops.write_gates import duplicate_impl_gate as gate
+from tools.write_gates import duplicate_impl_gate as gate
 
 
 def test_is_automation_path_relative():

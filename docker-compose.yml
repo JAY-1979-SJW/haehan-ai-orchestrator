@@ -10,7 +10,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      # 빌드 식별(/api/v1/health 의 git_sha·build_time). scripts/ops/server_deploy.py 가 값을 넘기고, 없으면 "unknown".
+      # 빌드 식별(/api/v1/health 의 git_sha·build_time). tools/server_deploy.py 가 값을 넘기고, 없으면 "unknown".
       args:
         GIT_SHA: ${GIT_SHA:-unknown}
         BUILD_TIME: ${BUILD_TIME:-unknown}

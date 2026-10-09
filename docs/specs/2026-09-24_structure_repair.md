@@ -4,7 +4,7 @@
 - py 2128파일, 내부 import 6073. UNREACHED 2(scripts/_tmp_html_consts2.py, scripts/video/_cdp_tab.py).
 - 층간 위반: layer_violations.json = 150파일/282엣지 (커밋 메시지의 "51"은 다른 집계 기준 — 사용자 확인 필요).
   유형: L2->L4 50, L5->L6 37, L1->L4 34, L4->L5 25, L4->L6 23, L2->L5 22, L1->L2 16, L7->L5 13.
-- 거대 파일(>1500줄, 테스트 제외): local_agent/actions.py 1566, scripts/naver/blog/cli/blog_cad_draft_posts.py 1517, scripts/ops/repo_gates/codebase_layer_audit.py 1512.
+- 거대 파일(>1500줄, 테스트 제외): local_agent/actions.py 1566, scripts/naver/blog/cli/blog_cad_draft_posts.py 1517, tools/repo_gates/codebase_layer_audit.py 1512.
 - 중복 후보: duplicate_code_check 171건 (예: scripts/naver/blog/core/writer_pro.py vs blog/writer_pro.py, cafe/write/writer.py vs cafe/writer.py).
 - 데코레이터 라우트 ai_orchestrator 내 112개 집계(전체 288은 미재측정, 기준값 유지 검증 필요).
 

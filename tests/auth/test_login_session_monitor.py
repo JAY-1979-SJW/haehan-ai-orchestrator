@@ -12,7 +12,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.ops.login_session_monitor import (  # noqa: E402
+from tools.login_session_monitor import (  # noqa: E402
     _ALERT_STATUSES,
     SITES,
     SessionState,
@@ -96,7 +96,7 @@ async def test_check_site_logged_in_when_session_cookie_and_logout_link() -> Non
         "challenge": False,
         "login_error": False,
     }
-    with patch("scripts.ops.login_session_monitor._eval_js", AsyncMock(return_value=fake_data)):
+    with patch("tools.login_session_monitor._eval_js", AsyncMock(return_value=fake_data)):
         result = await check_site(site, targets=[fake_tab])
     assert result.status == "LOGGED_IN"
     assert result.has_session_cookie is True
@@ -125,7 +125,7 @@ async def test_check_site_session_expired_when_no_cookie() -> None:
         "challenge": False,
         "login_error": False,
     }
-    with patch("scripts.ops.login_session_monitor._eval_js", AsyncMock(return_value=fake_data)):
+    with patch("tools.login_session_monitor._eval_js", AsyncMock(return_value=fake_data)):
         result = await check_site(site, targets=[fake_tab])
     assert result.status == "SESSION_EXPIRED"
     assert result.status in _ALERT_STATUSES
@@ -153,7 +153,7 @@ async def test_check_site_login_required_when_login_form_detected() -> None:
         "has_login_form": True,
         "challenge": False,
     }
-    with patch("scripts.ops.login_session_monitor._eval_js", AsyncMock(return_value=fake_data)):
+    with patch("tools.login_session_monitor._eval_js", AsyncMock(return_value=fake_data)):
         result = await check_site(site, targets=[fake_tab])
     assert result.status == "LOGIN_REQUIRED"
     assert result.status in _ALERT_STATUSES
@@ -182,7 +182,7 @@ async def test_check_site_challenge_when_2fa_detected() -> None:
         "challenge": True,
         "login_error": False,
     }
-    with patch("scripts.ops.login_session_monitor._eval_js", AsyncMock(return_value=fake_data)):
+    with patch("tools.login_session_monitor._eval_js", AsyncMock(return_value=fake_data)):
         result = await check_site(site, targets=[fake_tab])
     assert result.status == "CHALLENGE"
     assert result.status in _ALERT_STATUSES
@@ -192,7 +192,7 @@ async def test_check_site_challenge_when_2fa_detected() -> None:
 
 
 def test_report_writes_json_without_cookie_values(tmp_path, monkeypatch) -> None:
-    import scripts.ops.login_session_monitor as mod
+    import tools.login_session_monitor as mod
 
     monkeypatch.setattr(mod, "OUTPUT_PATH", tmp_path / "out.json")
 
@@ -229,7 +229,7 @@ def test_report_writes_json_without_cookie_values(tmp_path, monkeypatch) -> None
 
 
 def test_report_alert_false_when_all_logged_in(tmp_path, monkeypatch) -> None:
-    import scripts.ops.login_session_monitor as mod
+    import tools.login_session_monitor as mod
 
     monkeypatch.setattr(mod, "OUTPUT_PATH", tmp_path / "out.json")
 

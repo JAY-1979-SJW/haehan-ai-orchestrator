@@ -39,8 +39,8 @@ REQUIRED_PLAYWRIGHT_PHRASES = (
     "execute server-side Playwright",
     "bypass local-agent dispatch",
     "use AI output as authorization or approval",
-    "python scripts/ops/verify/dry_run_local_agent_cdp_attach.py",
-    "python scripts/ops/quality/module_quality_gate.py --module repo_guard",
+    "python tools/verify/dry_run_local_agent_cdp_attach.py",
+    "python tools/quality/module_quality_gate.py --module repo_guard",
 )
 
 REQUIRED_MODULE_BASELINE_PHRASES = (

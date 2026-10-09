@@ -5,7 +5,7 @@ name: CI
 # (docs/defect_index.json #4). 사용자 승인으로 GitHub Actions를 먼저 도입한다.
 #
 # 핵심 검증은 이 저장소가 이미 갖고 있는 "로컬 CI" 도구를 그대로 재사용한다
-# (scripts/ops/verify_change.py — base/head를 같은 방식으로 재서 "기준 대비 새로 생긴
+# (tools/verify_change.py — base/head를 같은 방식으로 재서 "기준 대비 새로 생긴
 # 문제"만 FAIL로 잡는다. 신선한 CI 환경에서 흔한 플레이키/외부서비스 실패를 base·head
 # 양쪽에서 동일하게 겪으므로 상쇄된다). win32com·uiautomation 등 Windows 전용 의존성 때문에
 # Windows 러너를 쓴다(Linux 러너에서는 import 단계부터 실패).
@@ -184,7 +184,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # constraints.txt = 검증된 환경(Windows, Python 3.14)의 버전 집합 — 설치 시점마다 버전이 달라지지 않게 고정한다
-          # (scripts/ops/devflow/make_constraints.py 로 재생성, docs/specs/2026-10-04_portability_standard.md)
+          # (tools/devflow/make_constraints.py 로 재생성, docs/specs/2026-10-04_portability_standard.md)
           python -m pip install -r requirements.txt -c constraints.txt
 
       - name: Install dev tools (ruff · pytest-timeout)
@@ -215,7 +215,7 @@ jobs:
         # 하나라도 실패하면 작업 전체를 FAIL 로 되돌린다.
         id: gate_r1
         continue-on-error: true
-        run: python scripts/ops/repo_gates/audit_r1_api_contract_gate.py
+        run: python tools/repo_gates/audit_r1_api_contract_gate.py
 
       - name: 도구 집 게이트 (도구 키워드 파일이 집 밖에 새로 생기면 차단)
         # 도구 파일은 구현 scripts/<도구>/·API connectors/<도구>/·화면 app/<도구>/ 집 안에 둔다
@@ -223,27 +223,27 @@ jobs:
         # 고정, 기준선에 없는 새 이탈만 FAIL. 규칙·예외 사유: configs/tool_home.json.
         id: gate_tool_home
         continue-on-error: true
-        run: python scripts/ops/repo_gates/tool_home_gate.py --check-all
+        run: python tools/repo_gates/tool_home_gate.py --check-all
       - name: 최상위 평면 금지 게이트 (scripts·ai_orchestrator·루트 평면에 새 .py 가 생기면 차단)
         # 새 코드는 알맞은 하위 폴더에 둔다(docs/architecture/FOLDER_STRUCTURE.md). 기존 평면 파일은
         # configs/flat_root_baseline.json 으로 고정(줄이기만), 기준선에 없는 새 평면 파일만 FAIL.
         # 규칙·허용 진입점: configs/flat_root_gate.json.
         id: gate_flat_root
         continue-on-error: true
-        run: python scripts/ops/repo_gates/flat_root_gate.py --check-all
+        run: python tools/repo_gates/flat_root_gate.py --check-all
       - name: 번들 경로 일관성 게이트 (spec·electron-builder·electron js·릴리스 워크플로의 깨진 경로/모듈 차단 — G17)
         # PyInstaller spec 진입 파일·우리 모듈 hiddenimports·datas, admin-web/electron/package.json extraResources,
         # lib/*.js 의 process.resourcesPath 경로, desktop-release.yml 경로가 실제(git 추적) 파일과 맞는지 본다.
-        # 폴더 이동 뒤 이 참조들이 그대로 남아 데스크톱 앱이 반복해 깨졌다(2026-10-08). 규칙: scripts/ops/repo_gates/bundle_path_gate.py 머리말.
+        # 폴더 이동 뒤 이 참조들이 그대로 남아 데스크톱 앱이 반복해 깨졌다(2026-10-08). 규칙: tools/repo_gates/bundle_path_gate.py 머리말.
         id: gate_bundle_path
         continue-on-error: true
-        run: python scripts/ops/repo_gates/bundle_path_gate.py --check-all
+        run: python tools/repo_gates/bundle_path_gate.py --check-all
       - name: 폴더 승인 게이트 (승인 목록에 없는 폴더에 코드 파일이 있으면 차단 — G16)
         # 코드(.py·.ts·.tsx·.js)가 든 모든 폴더는 configs/folder_registry.json 에 승인돼 있어야 한다. 새 폴더는 대표님 승인 후 목록에 추가.
-        # 규칙·절차: scripts/ops/repo_gates/folder_gate.py 머리말, docs/architecture/FOLDER_STRUCTURE.md.
+        # 규칙·절차: tools/repo_gates/folder_gate.py 머리말, docs/architecture/FOLDER_STRUCTURE.md.
         id: gate_folder
         continue-on-error: true
-        run: python scripts/ops/repo_gates/folder_gate.py --check-all
+        run: python tools/repo_gates/folder_gate.py --check-all
       - name: Codebase layer audit (구조/보안/순환 게이트)
         # codebase_layer_audit.py 자체 종료코드는 CLAUDE.md가 실제 차단 조건으로 명시한
         # forbidden_imports/security_patterns/circular_imports 외에 "unknown layer 파일 수"
@@ -256,8 +256,8 @@ jobs:
         # 우선순위로" 스텝이 GITHUB_PATH 로 이미 고쳐뒀으므로 여긴 기본 shell: bash 사용.
         shell: bash
         run: |
-          python scripts/ops/repo_gates/codebase_layer_audit.py || true
-          python scripts/ops/repo_gates/ci_layer_gate_check.py
+          python tools/repo_gates/codebase_layer_audit.py || true
+          python tools/repo_gates/ci_layer_gate_check.py
 
       - name: Layer audit self-test
         run: python -m pytest tests/test_codebase_layer_audit.py -q
@@ -267,7 +267,7 @@ jobs:
         # pull_request: 추가가 있으면 라벨 필요 · workflow_dispatch: 추가가 있으면 FAIL · push: 병합 전 PR 에서 확인했으므로 경고만.
         env:
           FOLDER_GATE_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-        run: python scripts/ops/repo_gates/folder_gate.py --check-approval --base ${{ needs.refs.outputs.base }} --head ${{ needs.refs.outputs.head }}
+        run: python tools/repo_gates/folder_gate.py --check-approval --base ${{ needs.refs.outputs.base }} --head ${{ needs.refs.outputs.head }}
 
       - name: G12 중복 게이트 (신규 구조동일 중복 함수 차단)
         # dup_gate.py check — PR의 base..head 사이에 바뀐(추가/수정) .py 파일만 대상.
@@ -285,7 +285,7 @@ jobs:
           if [ "${#changed[@]}" -gt 0 ]; then
             changed_file="$RUNNER_TEMP/g12_changed_py.txt"
             printf '%s\n' "${changed[@]}" > "$changed_file"
-            python scripts/ops/repo_gates/dup_gate.py check --files-from "$changed_file"
+            python tools/repo_gates/dup_gate.py check --files-from "$changed_file"
           else
             echo "변경된 .py 없음 — G12 건너뜀"
           fi
@@ -294,17 +294,17 @@ jobs:
         # 기준선에 없는 중복 2묶음이 실제로 샜다). 저장소 전체 묶음을 기준선과 비교한다.
         id: gate_g12_all
         continue-on-error: true
-        run: python scripts/ops/repo_gates/dup_gate.py check --all
+        run: python tools/repo_gates/dup_gate.py check --all
       - name: 루트 직접 계산 차단 게이트 (새 줄만 — Path(__file__).parents[N] 등)
         # 저장소 루트를 파일마다 따로 계산하는 새 줄을 차단한다(기존 줄은 통과). 정본: ai_orchestrator.paths.repo_root /
         # scripts.common.app_paths.repo_root. 예외·사유: configs/root_calc_gate.json.
         id: gate_root_calc
         continue-on-error: true
-        run: python scripts/ops/repo_gates/root_calc_gate.py --check-diff ${{ needs.refs.outputs.base }} ${{ needs.refs.outputs.head }}
+        run: python tools/repo_gates/root_calc_gate.py --check-diff ${{ needs.refs.outputs.base }} ${{ needs.refs.outputs.head }}
 
       - name: Verify change — static (코드맵·층·순환·audit-kit·mypy·ruff; 시험은 verify-tests 가 돌린다)
         run: >
-          python scripts/ops/verify_change.py --phase static
+          python tools/verify_change.py --phase static
           --base ${{ needs.refs.outputs.base }}
           --head ${{ needs.refs.outputs.head }}
           --json verify_static.json
@@ -387,7 +387,7 @@ jobs:
 
       - name: Verify change — tests ${{ matrix.shard }}/3
         run: >
-          python scripts/ops/verify_change.py --phase tests --shard ${{ matrix.shard }}/3
+          python tools/verify_change.py --phase tests --shard ${{ matrix.shard }}/3
           --base ${{ needs.refs.outputs.base }}
           --head ${{ needs.refs.outputs.head }}
           --json verify_tests_${{ matrix.shard }}.json
@@ -435,7 +435,7 @@ jobs:
       - name: Verify change — report (static + 시험 묶음 합쳐 판정)
         shell: bash
         run: >
-          python scripts/ops/verify_change.py --phase report
+          python tools/verify_change.py --phase report
           --base ${{ needs.refs.outputs.base }}
           --head ${{ needs.refs.outputs.head }}
           --static-json verify_parts/verify-static/verify_static.json

@@ -253,7 +253,7 @@ def _check_no_dangerous_patterns() -> dict:
 
 
 def _check_quality_gate_runnable() -> dict:
-    qg = ROOT / "scripts/ops/quality/quality_gate.py"
+    qg = ROOT / "tools/quality/quality_gate.py"
     if not qg.exists():
         return _item("sb-13", "FAIL", "quality_gate.py 없음")
     try:

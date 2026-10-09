@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops.repo_gates import ruff_new_only_gate as gate
+from tools.repo_gates import ruff_new_only_gate as gate
 
 BODY = "import os\n\n\ndef f():\n    return 1\n"
 

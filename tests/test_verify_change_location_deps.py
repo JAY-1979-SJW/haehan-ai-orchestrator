@@ -8,7 +8,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from scripts.ops import verify_change as vc
+from tools import verify_change as vc
 
 
 def _git(repo: Path, *args: str) -> None:

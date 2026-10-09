@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from scripts.ops.code_map import modules as M
+from tools.code_map import modules as M
 
 
 def _mod(files: list[str]) -> dict[str, str]:

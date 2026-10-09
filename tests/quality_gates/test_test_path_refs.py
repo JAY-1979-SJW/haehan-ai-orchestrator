@@ -15,9 +15,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 # 시험 경로 문자열을 담고 있는 파일(§1-3-B 표) — 자유 텍스트(docs/, 주석)는 대상 밖.
 SOURCE_FILES = [
-    ROOT / "scripts" / "ops" / "quality" / "required_quality_gate.py",
-    ROOT / "scripts" / "ops" / "quality" / "module_quality_gate_modules.py",
-    ROOT / "scripts" / "ops" / "quality" / "module_quality_gate_checks_repo.py",
+    ROOT / "tools" / "quality" / "required_quality_gate.py",
+    ROOT / "tools" / "quality" / "module_quality_gate_modules.py",
+    ROOT / "tools" / "quality" / "module_quality_gate_checks_repo.py",
     ROOT / "configs" / "site_automation_status_index.json",
     ROOT / "configs" / "module_boundaries.json",
     ROOT / "tools" / "audits" / "google" / "audit_google_automation_baseline_contract.py",

@@ -1,4 +1,4 @@
-from scripts.ops.code_map import query
+from tools.code_map import query
 
 M = {
     "import_edges": {"a.py": ["b.py"], "b.py": ["c.py"], "tests/test_a.py": ["a.py"]},

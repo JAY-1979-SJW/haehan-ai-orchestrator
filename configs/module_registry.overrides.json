@@ -533,7 +533,7 @@
   "reason": "카카오 사이트 전용 로그인 자동화(login_detector 호출) — 사이트 모듈. 이름만 auth라 오분류.",
   "source": "manual"
  },
- "scripts/ops/quality/module_quality_gate_common.py": {
+ "tools/quality/module_quality_gate_common.py": {
   "layer": "L12",
   "role": "ops_tool",
   "reason": "module_quality_gate 운영 도구의 공용 상수·dataclass·헬퍼 — 앱 정책이 아니라 감사 도구 보조 모듈. L12.",
@@ -569,7 +569,7 @@
   "reason": "네이버 검색광고 사이트 전용 로그인 자동화(credentials 호출) — 사이트 모듈. 이름만 auth라 오분류.",
   "source": "manual"
  },
- "scripts/ops/quality/quality_gate.py": {
+ "tools/quality/quality_gate.py": {
   "layer": "L12",
   "role": "ops_tool",
   "reason": "리포지토리 커밋/스테이지 변경 감사용 CLI 도구(quality gate). 앱 도메인 정책이 아니라 운영 도구 — L12(문서·운영 도구, 의존 방향 규칙 밖). 이름만 gate라 L2로 오분류.",
@@ -581,7 +581,7 @@
   "reason": "실시간 감사 이벤트를 data/logs/realtime_audit.jsonl 에 기록/조회하는 감사 로그 저장소 — L7(저장·감사) 정의에 정확히 부합. L4 기본값 오분류를 L7로 정정.",
   "source": "manual"
  },
- "scripts/ops/quality/required_quality_gate.py": {
+ "tools/quality/required_quality_gate.py": {
   "layer": "L12",
   "role": "ops_tool",
   "reason": "로컬 pre-commit/pre-push 필수 게이트 실행 CLI(빌드·배포·브라우저 실행 안 함) — 운영 도구. L12.",
@@ -604,12 +604,12 @@
   "role": "generic",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
- "scripts/ops/smoke/run_playwright_smoke.py": {
+ "tools/smoke/run_playwright_smoke.py": {
   "layer": "L6",
   "role": "browser_engine",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
  },
- "scripts/ops/smoke/run_universal_ai_real_site_smoke.py": {
+ "tools/smoke/run_universal_ai_real_site_smoke.py": {
   "layer": "L6",
   "role": "browser_engine",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L4, 2026-10-07 재판정)"
@@ -619,10 +619,10 @@
   "role": "site_module",
   "reason": "진입 실행 스크립트(run_*·__main__) — 하위 모듈을 조립해 실행하는 워크플로 층(L6)으로 판정. 지우면 층 역전이 되살아난다(규칙 L5, 2026-10-07 재판정)"
  },
- "scripts/ops/quality/module_quality_gate.py": {
+ "tools/quality/module_quality_gate.py": {
   "layer": "L6",
   "role": "policy",
-  "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 scripts/ops/quality/module_quality_gate_runner.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
+  "reason": "층 위반을 가리는 임시 판정(해소 대상) — 규칙은 L2 이나 실제로 상위 층의 tools/quality/module_quality_gate_runner.py 를 import. 지우면 층 역전 +1건(2026-10-07 재판정, 구조 수정 뒤 삭제)"
  },
  "scripts/archive/one_off/temp_oauth_revoke.py": {
   "layer": "L6",
@@ -1186,5 +1186,100 @@
   "role": "workflow",
   "reason": "프로세스 시작점(직접 실행 main) — 사이트 등록표 조합(site_login_registry, L5)을 설치하고 엔진·탐색기를 부르는 맨 위 층(cdp_cli 와 같은 층·역할)",
   "source": "manual"
+ },
+ "core/agent_runtime/runtime/security_program/security_installer_candidate_finder.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165: security_program_auto_resume.py(L6, confirmed)가 부르는 범용 설치 탐지 헬퍼 — local_agent/* 디렉터리 기본값(L10)으로 떨어졌을 뿐, 그 confirmed 사유에 'L4 generic(low) 오분류'로 이미 지목됨"
+ },
+ "core/agent_runtime/runtime/security_program/security_program_detector.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165: security_program_auto_resume.py·security_program_install_completion_detector.py(둘 다 L6, confirmed)가 부르는 범용 탐지 헬퍼 — 상동(L10 기본값 오분류)"
+ },
+ "core/agent_runtime/runtime/security_program/security_program_install_result_sanitizer.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165: security_program_auto_resume.py(L6, confirmed)가 부르는 결과 정제 헬퍼 — 상동(L10 기본값 오분류)"
+ },
+ "core/agent_runtime/runtime/universal/universal_ai_site_agent.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165: natural_language_task_api.py(L6, confirmed)가 부르는 범용 사이트 에이전트 헬퍼 — 그 confirmed 사유에 'L4 browser_engine 오분류'로 이미 지목됨"
+ },
+ "core/agent_runtime/runtime/universal/universal_safe_result.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165: natural_language_task_api·real_site_smoke_runner·universal_action_verifier·universal_workflow_runner(전부 L6)가 공통으로 쓰는 안전결과 래퍼 — L10 기본값 오분류"
+ },
+ "core/agent_runtime/runtime/universal/user_intent_parser.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165: natural_language_task_api.py(L6, confirmed)가 부르는 의도 파싱 헬퍼 — 상동(L10 기본값 오분류)"
+ },
+ "core/agent_runtime/runtime/universal/generic_selector_discovery.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165: scripts/explorer/page_analysis.py(L4)가 부르는 범용 셀렉터 탐색 헬퍼 — 이름 그대로 generic, L10 기본값 오분류"
+ },
+ "core/agent_runtime/runtime/download/download_upload_manifest.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165: scripts/g2b/run_readonly_local_e2e.py(L6)가 부르는 범용 다운로드/업로드 매니페스트 헬퍼 — L10 기본값 오분류"
+ },
+ "core/agent_runtime/runtime/playwright/playwright_bootstrap.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165: run_readonly_local_e2e.py·run_naver_cafe_to_blog_workflow.py·run_playwright_smoke.py(전부 L6)가 공통으로 쓰는 playwright 부트스트랩 헬퍼 — L10 기본값 오분류"
+ },
+ "core/agent_runtime/runtime/common_tool_runtime.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165: scripts/google/cloud/local_browser.py·scripts/google/common/subdomain_logic.py·scripts/site_engine/sso_runtime.py(L4·L5)가 공통으로 쓰는 범용 도구 런타임 헬퍼 — L10 기본값 오분류"
+ },
+ "core/agent_runtime/runtime/notify/user_notification_adapter.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165: scripts/naver/mail/watch_new_mail.py(L5)가 부르는 범용 알림 어댑터 — L10 기본값 오분류"
+ },
+ "core/agent_runtime/runtime/download/download_result_sanitizer.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165(2차): download_upload_manifest.py(이번에 L4 로 정정) 가 부르는 형제 파일 — 같은 로컬 에이전트 패키지 L10 기본값 오분류, 같은 L4 로 맞춤"
+ },
+ "core/agent_runtime/runtime/site_profile/site_type_classifier.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165(2차): universal_ai_site_agent.py(이번에 L4 로 정정) 가 부르는 형제 파일 — 상동"
+ },
+ "core/agent_runtime/runtime/universal/universal_page_observer.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165(2차): universal_ai_site_agent.py(이번에 L4 로 정정) 가 부르는 형제 파일 — 상동"
+ },
+ "core/agent_runtime/runtime/universal/universal_task_planner.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165(2차): universal_ai_site_agent.py(이번에 L4 로 정정) 가 부르는 형제 파일 — 상동"
+ },
+ "core/agent_runtime/runtime/site_profile/selector_pack_registry.py": {
+  "layer": "L4",
+  "role": "automation",
+  "reason": "PR #165 CI165: scripts/site_engine/create_site_profile.py(L4)가 부르는 범용 셀렉터팩 레지스트리 — L10 기본값 오분류"
+ },
+ "core/agent_runtime/runtime/site_profile/browser_discovery_candidates.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "PR #165 CI165: browser_allowlist_expansion_preflight.py·browser_policy_integration.py(둘 다 L2, policy)가 참조하는 정적 후보 레지스트리 — 설정/계약성 데이터라 L1, L10 기본값 오분류"
+ },
+ "core/agent_runtime/runtime/site_profile/browser_site_registry.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "PR #165 CI165: 상동 패키지의 사이트 레지스트리 — 상동 사유로 L1"
+ },
+ "core/agent_runtime/runtime/site_profile/browser_value_registry.py": {
+  "layer": "L1",
+  "role": "contract",
+  "reason": "PR #165 CI165: 상동 패키지의 값 레지스트리 — 상동 사유로 L1"
  }
 }

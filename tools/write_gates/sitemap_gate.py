@@ -11,12 +11,19 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 
-from scripts.ops.write_gates.duplicate_impl_gate import is_automation_path
+from tools.write_gates.duplicate_impl_gate import is_automation_path
 
-ROOT = Path(__file__).resolve().parents[3]
+_BOOT = Path(__file__).resolve().parents[2]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
+
+ROOT = repo_root()
 SITEMAP_DIR = ROOT / "data" / "sitemap"
 LOG_PATH = ROOT / "data" / "logs" / "sitemap_gate.jsonl"
 

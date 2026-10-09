@@ -1,22 +1,22 @@
 ---
 name: duplicate-code-check
-description: 코드 중복 구현(복붙 함수, 병렬 모듈) 탐지. "중복 구현 확인해줘", "이 기능 이미 있나 전체 스캔해줘" 같은 요청, 또는 신규 코드 작성 전/대규모 작업 후 점검용. scripts/ops/hooks/duplicate_code_check.py 실전 검증 완료(2026-08-26).
+description: 코드 중복 구현(복붙 함수, 병렬 모듈) 탐지. "중복 구현 확인해줘", "이 기능 이미 있나 전체 스캔해줘" 같은 요청, 또는 신규 코드 작성 전/대규모 작업 후 점검용. tools/hooks/duplicate_code_check.py 실전 검증 완료(2026-08-26).
 ---
 
 # 코드 중복 검사 (duplicate_code_check.py)
 
 CLAUDE.md의 "기존 구현 확인 의무"를 사후에 검증하는 도구.
-`python scripts/ops/hooks/capability_check.py <키워드>` 는 신규 작업 **전에** 기존
+`python tools/hooks/capability_check.py <키워드>` 는 신규 작업 **전에** 기존
 구현을 찾는 도구이고, 이 스킬은 **이미 짜여진 코드 전체**에서 중복이
 남아있는지 사후 스캔한다. 둘은 상호보완적이다.
 
 ## 실행
 
 ```bash
-python scripts/ops/hooks/duplicate_code_check.py                       # scripts/ + ai_orchestrator/ 전체
-python scripts/ops/hooks/duplicate_code_check.py --path scripts/naver   # 범위 좁혀서
-python scripts/ops/hooks/duplicate_code_check.py --min-lines 10         # 짧은 보일러플레이트 제외
-python scripts/ops/hooks/duplicate_code_check.py --json                 # 자동화 파이프라인용
+python tools/hooks/duplicate_code_check.py                       # scripts/ + ai_orchestrator/ 전체
+python tools/hooks/duplicate_code_check.py --path scripts/naver   # 범위 좁혀서
+python tools/hooks/duplicate_code_check.py --min-lines 10         # 짧은 보일러플레이트 제외
+python tools/hooks/duplicate_code_check.py --json                 # 자동화 파이프라인용
 ```
 
 ## 잡아내는 것 2가지
