@@ -6561,7 +6561,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/connection/actions.py": {
+  "core/agent_runtime/connection/actions.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6753,7 +6753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/connection/connection_diagnostics.py": {
+  "core/agent_runtime/connection/connection_diagnostics.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6841,7 +6841,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/connection/network_bypass.py": {
+  "core/agent_runtime/connection/network_bypass.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6857,7 +6857,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/connection/registration_client.py": {
+  "core/agent_runtime/connection/registration_client.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6905,7 +6905,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/connection/token_store.py": {
+  "core/agent_runtime/connection/token_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -6953,7 +6953,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/connection/websocket_client.py": {
+  "core/agent_runtime/connection/websocket_client.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -9337,7 +9337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/connection/controller.py": {
+  "core/agent_runtime/connection/controller.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "local_agent",
@@ -9377,7 +9377,7 @@
    "confidence": "high",
    "source": "confirmed"
   },
-  "local_agent/connection/process_guard.py": {
+  "core/agent_runtime/connection/process_guard.py": {
    "layer": "L2",
    "role": "policy",
    "domain": "local_agent",
@@ -9433,7 +9433,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/connection/status_store.py": {
+  "core/agent_runtime/connection/status_store.py": {
    "layer": "L7",
    "role": "persistence",
    "domain": "local_agent",
@@ -24145,7 +24145,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/connection/__init__.py": {
+  "core/agent_runtime/connection/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

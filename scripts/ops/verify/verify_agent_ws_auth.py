@@ -35,14 +35,14 @@ async def _probe(server_url: str, timeout: float) -> tuple[bool, str, str]:
     from core.agent_runtime.common import (
         desktop_config,  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
     )
+    from core.agent_runtime.connection import (
+        token_store,  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
+    )
+    from core.agent_runtime.connection.connection_diagnostics import normalize_ws_url
+    from core.agent_runtime.connection.network_bypass import websocket_connect_kwargs
     from local_agent import (
         __version__,  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
     )
-    from local_agent.connection import (
-        token_store,  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
-    )
-    from local_agent.connection.connection_diagnostics import normalize_ws_url
-    from local_agent.connection.network_bypass import websocket_connect_kwargs
 
     try:
         import websockets  # type: ignore

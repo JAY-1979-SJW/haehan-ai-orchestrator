@@ -27,6 +27,12 @@ from ai_orchestrator.contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
 from core.agent_runtime.browser import browser_actions
 from core.agent_runtime.common import config
 
+_BOOT = Path(__file__).resolve().parents[3]  # 정본을 import 하기 전 sys.path 부트스트랩(G5 예외: scripts/ 독립 실행)
+if str(_BOOT) not in sys.path:
+    sys.path.insert(0, str(_BOOT))
+
+from scripts.common.app_paths import repo_root  # noqa: E402
+
 logger = logging.getLogger(__name__)
 
 
@@ -1343,7 +1349,7 @@ def action_cdp_run(params: dict) -> ActionResult:
     timeout = int(params.get("timeout", 90))
     no_wait = bool(params.get("no_wait", True))
 
-    root = Path(__file__).parents[2]
+    root = repo_root()
     script = root / "scripts" / "entry" / "cdp_cli.py"
 
     cmd = [sys.executable, str(script), site]
@@ -1503,7 +1509,7 @@ def action_run_claude_agent(params: dict) -> ActionResult:
     except (TypeError, ValueError):
         result_max_chars = 0
 
-    root = Path(__file__).parents[2]
+    root = repo_root()
     cmd = _build_claude_command(
         root=root,
         prompt=prompt,

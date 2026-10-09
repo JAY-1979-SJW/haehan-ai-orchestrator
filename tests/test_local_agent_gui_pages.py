@@ -114,7 +114,7 @@ def test_regression_gui_state_unchanged():
 
 
 def test_regression_connection_diagnostics_unchanged():
-    from local_agent.connection import connection_diagnostics as cd
+    from core.agent_runtime.connection import connection_diagnostics as cd
 
     for s in ("normalize_ws_url", "mask_agent_id", "explain_error", "find_token_leaks"):
         assert hasattr(cd, s)

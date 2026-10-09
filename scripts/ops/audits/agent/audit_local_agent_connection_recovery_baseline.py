@@ -12,8 +12,8 @@ BASELINE = ROOT / "docs" / "baseline" / "modules" / "LOCAL_AGENT_CONNECTION_RECO
 LOCAL_AGENT_E2E = ROOT / "docs" / "baseline" / "modules" / "LOCAL_AGENT_E2E_BASELINE.md"
 COMMON_ENGINE = ROOT / "docs" / "baseline" / "modules" / "COMMON_ENGINE_COMMERCIALIZATION_BASELINE.md"
 MODULE_BASELINE = ROOT / "docs" / "baseline" / "MODULE_BASELINE.md"
-CONNECTION_DIAGNOSTICS = ROOT / "local_agent" / "connection" / "connection_diagnostics.py"
-WEBSOCKET_CLIENT = ROOT / "local_agent" / "connection" / "websocket_client.py"
+CONNECTION_DIAGNOSTICS = ROOT / "core" / "agent_runtime" / "connection" / "connection_diagnostics.py"
+WEBSOCKET_CLIENT = ROOT / "core" / "agent_runtime" / "connection" / "websocket_client.py"
 WS_AUTH_PROBE = ROOT / "scripts" / "ops" / "verify" / "verify_agent_ws_auth.py"
 LIVE_DISPATCH = ROOT / "scripts" / "ops" / "verify" / "verify_live_task_dispatch.py"
 

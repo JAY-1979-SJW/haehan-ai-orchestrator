@@ -323,11 +323,11 @@ def test_empty_root_path_rejected() -> None:
     assert report["error_code"] == "ROOT_INVALID"
 
 
-# ─── local_agent.connection.actions 통합 ──────────────────────────────────────────────
+# ─── core.agent_runtime.connection.actions 통합 ──────────────────────────────────────────────
 
 
 def test_execute_action_scan_file_tree(sample_tree: Path) -> None:
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action("scan_file_tree", {"root_path": str(sample_tree)})
     assert result.success is True
@@ -338,7 +338,7 @@ def test_execute_action_scan_file_tree(sample_tree: Path) -> None:
 
 
 def test_execute_action_scan_file_tree_missing_root() -> None:
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action("scan_file_tree", {})
     assert result.success is False
@@ -346,7 +346,7 @@ def test_execute_action_scan_file_tree_missing_root() -> None:
 
 
 def test_execute_action_scan_file_tree_blocks_drive_root() -> None:
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action("scan_file_tree", {"root_path": "C:/"})
     assert result.success is False

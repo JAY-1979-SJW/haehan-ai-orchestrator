@@ -225,7 +225,7 @@ def test_audit_fail_rollback_missing(tmp_path):
 
 
 def test_regression_connection_diagnostics_imports():
-    from local_agent.connection import connection_diagnostics as cd
+    from core.agent_runtime.connection import connection_diagnostics as cd
 
     assert hasattr(cd, "normalize_ws_url")
     assert hasattr(cd, "build_diagnostics")

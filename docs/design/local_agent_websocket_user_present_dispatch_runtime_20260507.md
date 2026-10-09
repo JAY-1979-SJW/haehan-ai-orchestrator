@@ -33,7 +33,7 @@ routing dry-run 결과가 `DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED`일
 ## 수정 모듈
 
 - `ai_orchestrator/agent_hub/router/root.py`: dryrun 응답 후 user-present push 경로 추가
-- `local_agent/connection/websocket_client.py`: `user_present_task_push` message_type 확인
+- `core/agent_runtime/connection/websocket_client.py`: `user_present_task_push` message_type 확인
 
 ## 보안 원칙
 

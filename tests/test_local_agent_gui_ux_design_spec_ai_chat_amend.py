@@ -212,6 +212,6 @@ def test_regression_gui_state_unchanged():
 
 
 def test_regression_connection_diagnostics_unchanged():
-    from local_agent.connection import connection_diagnostics as cd
+    from core.agent_runtime.connection import connection_diagnostics as cd
     assert hasattr(cd, "render_user_block")
     assert hasattr(cd, "explain_error")

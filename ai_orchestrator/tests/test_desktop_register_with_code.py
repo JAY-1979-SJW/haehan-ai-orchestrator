@@ -22,12 +22,12 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
 from core.agent_runtime.common import desktop_config as _cfg
-from local_agent import agent as _agent
-from local_agent.connection import token_store as _ts
-from local_agent.connection.registration_client import (
+from core.agent_runtime.connection import token_store as _ts
+from core.agent_runtime.connection.registration_client import (
     RegistrationError,
     register_with_code,
 )
+from local_agent import agent as _agent
 
 
 class _FakeResp:
@@ -165,7 +165,7 @@ def test_cmd_register_with_code_writes_config_without_secret(fake_kr, tmp_path, 
     }
     with patch("local_agent.agent._register_with_code") as m:
         # m은 (meta, token) 튜플을 반환해야 한다 (실제 구현 시그니처 동일).
-        from local_agent.connection.registration_client import RegistrationResult
+        from core.agent_runtime.connection.registration_client import RegistrationResult
 
         m.return_value = (
             RegistrationResult(

@@ -29,7 +29,7 @@ import pytest
 from core.agent_runtime.browser import browser_reader as _br
 from core.agent_runtime.browser import web_reader as _wr
 from core.agent_runtime.common import audit as _audit_mod
-from local_agent.connection import actions as _actions
+from core.agent_runtime.connection import actions as _actions
 
 # ── Audit capture (모든 테스트에 자동 적용) ─────────────────────────────────
 

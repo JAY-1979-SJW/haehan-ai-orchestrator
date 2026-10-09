@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from local_agent.connection.actions import execute_action
+from core.agent_runtime.connection.actions import execute_action
 
 
 def test_browser_inspect_registered():
     """Verify browser.inspect is registered in _ACTIONS."""
-    from local_agent.connection.actions import _ACTIONS
+    from core.agent_runtime.connection.actions import _ACTIONS
 
     assert "browser.inspect" in _ACTIONS
 

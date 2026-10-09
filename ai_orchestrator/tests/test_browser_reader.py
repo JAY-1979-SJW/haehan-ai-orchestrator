@@ -640,7 +640,7 @@ def test_browser_reader_source_has_no_mutating_calls() -> None:
 
 def test_action_web_open_url_readonly_happy_path(monkeypatch) -> None:
     from core.agent_runtime.browser import browser_reader
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     captured: list[dict] = []
 
@@ -690,7 +690,7 @@ def test_action_web_open_url_readonly_happy_path(monkeypatch) -> None:
 
 def test_action_default_allow_private_network_false(monkeypatch) -> None:
     from core.agent_runtime.browser import browser_reader
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     captured: list[dict] = []
 
@@ -722,7 +722,7 @@ def test_action_default_allow_private_network_false(monkeypatch) -> None:
 
 def test_action_web_open_url_readonly_background_requires_approval(monkeypatch) -> None:
     from core.agent_runtime.browser import browser_reader
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     def fake_open(**_kwargs):
         raise AssertionError("browser should not open without background approval")
@@ -739,7 +739,7 @@ def test_action_web_open_url_readonly_background_requires_approval(monkeypatch) 
 
 def test_action_web_open_url_readonly_background_with_approval(monkeypatch) -> None:
     from core.agent_runtime.browser import browser_reader
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     captured: list[dict] = []
 
@@ -775,7 +775,7 @@ def test_action_web_open_url_readonly_background_with_approval(monkeypatch) -> N
 
 
 def test_action_web_open_url_readonly_missing_url() -> None:
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     r = execute_action("web_open_url_readonly", {})
     assert r.success is False
@@ -784,7 +784,7 @@ def test_action_web_open_url_readonly_missing_url() -> None:
 
 def test_action_web_open_url_readonly_propagates_error_code(monkeypatch) -> None:
     from core.agent_runtime.browser import browser_reader
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     def fake_open(**_kwargs):
         return {

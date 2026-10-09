@@ -26,9 +26,9 @@ from urllib.parse import urlparse, urlunparse
 
 from core.agent_runtime.common import config
 from core.agent_runtime.common.audit import log_local_event
+from core.agent_runtime.connection.actions import FORBIDDEN_ACTIONS, execute_action
+from core.agent_runtime.connection.network_bypass import websocket_connect_kwargs
 from local_agent import __version__
-from local_agent.connection.actions import FORBIDDEN_ACTIONS, execute_action
-from local_agent.connection.network_bypass import websocket_connect_kwargs
 
 
 class WebSocketDisabled(RuntimeError):

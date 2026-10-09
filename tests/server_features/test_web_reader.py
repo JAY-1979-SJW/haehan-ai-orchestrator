@@ -306,7 +306,7 @@ def test_validate_url_allow_private_network_opt_in() -> None:
 
 
 def test_execute_action_web_analyze_html() -> None:
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action(
         "web_analyze_html",
@@ -320,7 +320,7 @@ def test_execute_action_web_analyze_html() -> None:
 
 
 def test_execute_action_web_analyze_html_missing_html() -> None:
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action("web_analyze_html", {})
     assert result.success is False
@@ -364,7 +364,7 @@ def test_no_browser_automation_or_mutation_apis() -> None:
     from pathlib import Path
 
     import core.agent_runtime.browser.web_reader as wr
-    import local_agent.connection.actions as ac
+    import core.agent_runtime.connection.actions as ac
 
     reader_src = Path(wr.__file__).read_text(encoding="utf-8")
     actions_src = Path(ac.__file__).read_text(encoding="utf-8")

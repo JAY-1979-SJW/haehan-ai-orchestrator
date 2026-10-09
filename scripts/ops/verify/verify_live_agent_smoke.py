@@ -10,7 +10,7 @@ import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))  # 루트 패키지(local_agent 등) 해석용
-from local_agent.connection.network_bypass import urlopen_for_server, websocket_connect_kwargs
+from core.agent_runtime.connection.network_bypass import urlopen_for_server, websocket_connect_kwargs
 
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
 
@@ -52,7 +52,7 @@ class Report:
 
 def _load_credentials(server_url: str) -> tuple[str, str]:
     from core.agent_runtime.common import desktop_config
-    from local_agent.connection import token_store
+    from core.agent_runtime.connection import token_store
 
     cfg = desktop_config.load_config()
     effective_server = (server_url or cfg.server_url or DEFAULT_SERVER_URL).rstrip("/")
@@ -113,11 +113,11 @@ async def _await_heartbeat_ack(ws, report, agent_id, timeout):
 
 
 async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, token: str, timeout: float) -> None:
+    from core.agent_runtime.connection import (
+        connection_diagnostics,  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
+    )
     from local_agent import (
         __version__,  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
-    )
-    from local_agent.connection import (
-        connection_diagnostics,  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
     )
 
     normalize_ws_url = connection_diagnostics.normalize_ws_url
@@ -184,7 +184,7 @@ def main(argv: list[str] | None = None) -> int:
     check_server_health(report, server_url)
     asyncio.run(check_ws_heartbeat(report, server_url, agent_id, token, args.timeout))
     if any(level == "FAIL" and "AUTH_FAILED_4401" in detail for level, _, detail in report.rows):
-        from local_agent.connection import connection_diagnostics as cd
+        from core.agent_runtime.connection import connection_diagnostics as cd
 
         plan = cd.build_recovery_plan(
             state=cd.STATE_AUTH_FAILED,

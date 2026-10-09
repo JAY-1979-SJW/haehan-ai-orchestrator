@@ -12,8 +12,8 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from local_agent.connection.process_guard import cleanup_stale_processes
-from local_agent.connection.status_store import (
+from core.agent_runtime.connection.process_guard import cleanup_stale_processes
+from core.agent_runtime.connection.status_store import (
     acquire_lock,
     lock_exists,
     read_status,

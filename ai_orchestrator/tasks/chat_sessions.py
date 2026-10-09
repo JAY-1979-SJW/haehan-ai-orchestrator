@@ -8,7 +8,7 @@ _save_agents_to_disk/_load_agents_from_disk)을 그대로 따른다 — 신규 s
 docs/defect_index.json #14 — 더 늘리지 않기 위해 이 규모(개인 사용자 1명의 채팅 세션 목록)엔
 단일 JSON 파일이면 충분).
 
-세션의 claude_session_id는 local_agent/connection/actions.py::action_run_claude_agent 가 반환하는
+세션의 claude_session_id는 core/agent_runtime/connection/actions.py::action_run_claude_agent 가 반환하는
 session_id를 저장해뒀다가, 같은 세션의 다음 메시지에서 --resume 로 재사용한다(공식
 --system-prompt-snapshot 문서 근거 — resume 시 시스템 프롬프트/CLAUDE.md 재렌더링을
 건너뛰어 콜드 스타트 지연을 줄인다).
@@ -185,7 +185,7 @@ def add_message(
     claude_session_id: str = "",
 ) -> ChatSession | None:
     """메시지 추가. claude_session_id가 주어지면(보통 assistant 메시지 완료 시) 같이 갱신해
-    다음 메시지의 --resume 재사용에 쓴다(local_agent/connection/actions.py::action_run_claude_agent 참고).
+    다음 메시지의 --resume 재사용에 쓴다(core/agent_runtime/connection/actions.py::action_run_claude_agent 참고).
     """
     if role not in ("user", "assistant"):
         return None

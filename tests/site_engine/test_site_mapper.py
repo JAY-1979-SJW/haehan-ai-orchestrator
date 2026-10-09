@@ -478,7 +478,7 @@ def test_non_dict_observation_returns_ok_with_warning() -> None:
 
 
 def test_action_web_build_site_map_prompt_returns_ok() -> None:
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action(
         "web_build_site_map_prompt",
@@ -496,7 +496,7 @@ def test_action_web_build_site_map_prompt_returns_ok() -> None:
 
 
 def test_action_web_build_site_map_prompt_missing_observation() -> None:
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action("web_build_site_map_prompt", {})
     assert result.success is False
@@ -504,7 +504,7 @@ def test_action_web_build_site_map_prompt_missing_observation() -> None:
 
 
 def test_action_web_build_site_map_prompt_invalid_goal_type() -> None:
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action(
         "web_build_site_map_prompt",

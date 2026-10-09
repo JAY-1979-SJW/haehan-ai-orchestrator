@@ -27,8 +27,8 @@ sys.path.insert(0, str(ROOT))
 from ai_orchestrator.agent_dispatch import agent_dispatch_service as svc  # noqa: E402
 from ai_orchestrator.agent_dispatch import agent_dispatch_store as store  # noqa: E402
 from ai_orchestrator.agent_hub.redaction import _strip_result_data  # noqa: E402
-from local_agent.connection.actions import action_run_claude_agent  # noqa: E402
-from local_agent.connection.websocket_client import _build_result_message  # noqa: E402
+from core.agent_runtime.connection.actions import action_run_claude_agent  # noqa: E402
+from core.agent_runtime.connection.websocket_client import _build_result_message  # noqa: E402
 
 T0 = time.monotonic()
 LOCK = threading.Lock()
