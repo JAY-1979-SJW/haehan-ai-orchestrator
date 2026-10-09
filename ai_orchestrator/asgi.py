@@ -219,7 +219,7 @@ app = FastAPI(title="haehan-ai-orchestrator", version="1.0.0", lifespan=lifespan
 app.include_router(router)
 app_actions.configure_app(app)  # 앱 액션 목록이 라우트를 훑을 앱을 주입(routers 가 asgi 를 import 하지 않는다)
 
-from .gates.browser_gate_middleware import BrowserGateMiddleware  # noqa: E402
+from tools.gates.browser_gate_middleware import BrowserGateMiddleware  # noqa: E402
 
 app.add_middleware(BrowserGateMiddleware)
 

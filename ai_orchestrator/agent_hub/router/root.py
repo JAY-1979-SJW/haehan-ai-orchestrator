@@ -36,8 +36,8 @@ from ..registry import facade as _reg
 from . import guards as _guards
 from ...audit.audit_logger import log_event
 from ...auth import registration_codes as _regcodes
-from ...gates.approval import approve_token, issue_token_for_dev_reg, reject_token
-from ...gates.auth import require_role
+from tools.gates.approval import approve_token, issue_token_for_dev_reg, reject_token
+from tools.gates.auth import require_role
 
 try:
     from ..user_present_status_handler import (

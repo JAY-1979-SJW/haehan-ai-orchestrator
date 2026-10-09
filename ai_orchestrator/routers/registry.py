@@ -64,8 +64,8 @@ from ..connectors.session_status_router import session_status_router
 from ..connectors.smartstore.router import smartstore_router
 from ..connectors.youtube.router import youtube_router
 from ..core.models import TaskRequest
-from ..gates.approval import approve_token, issue_token, reject_token
-from ..gates.auth import require_role
+from tools.gates.approval import approve_token, issue_token, reject_token
+from tools.gates.auth import require_role
 from ..llm.planner import plan
 from ..marketing.marketing_ops_router import marketing_ops_router
 from ..notify.telegram_webhook import handle_telegram_update, handle_telegram_webhook

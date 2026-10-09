@@ -14,8 +14,8 @@ from ..policy import audit_event_policy as _policy
 from ..registry import facade as _reg
 from . import guards as _guards  # 공유 leaf
 from ...audit.audit_logger import log_event
-from ...gates.approval import approve_token, issue_token_for_dev_reg, reject_token
-from ...gates.auth import require_role
+from tools.gates.approval import approve_token, issue_token_for_dev_reg, reject_token
+from tools.gates.auth import require_role
 from .schemas import (
     AgentTaskApprovalRequest,
     AgentTaskRequest,
