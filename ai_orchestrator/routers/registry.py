@@ -56,8 +56,8 @@ from ..connectors.naver_blog.gonobi_router import gonobi_router
 from ..connectors.naver_blog.naver_blog_router import naver_blog_router
 from ..connectors.naver_cafe.naver_cafe_router import naver_cafe_router
 from ..connectors.naver_mail.naver_mail_router import naver_mail_router
-from ..connectors.naver_news_router import naver_news_router
-from ..connectors.naver_openapi_setup_router import naver_openapi_setup_router
+from ..connectors.naver_search.naver_news_router import naver_news_router
+from ..connectors.naver_search.naver_openapi_setup_router import naver_openapi_setup_router
 from ..connectors.naver_search.naver_search_router import naver_search_router
 from ..connectors.public_media_router import public_media_router
 from ..connectors.session_status_router import session_status_router
