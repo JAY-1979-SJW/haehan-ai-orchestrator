@@ -73,7 +73,7 @@ def test_chrome_ui_monitor_operating_rule_uses_runtime_state_path():
 
 
 def test_dry_run_gate_locks_runtime_state_path_check():
-    text = ROOT / "tools" / "verify" / "dry_run_local_agent_cdp_attach.py".read_text(
+    text = (ROOT / "tools" / "verify" / "dry_run_local_agent_cdp_attach.py").read_text(
         encoding="utf-8",
         errors="replace",
     )
