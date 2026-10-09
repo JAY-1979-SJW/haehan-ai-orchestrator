@@ -3,7 +3,7 @@
 """
 import pytest
 
-from local_agent.runtime.permission.delegated_permission_policy import (
+from core.agent_runtime.runtime.permission.delegated_permission_policy import (
     CHECK_ALLOWED,
     CHECK_EXHAUSTED,
     CHECK_EXPIRED,
@@ -12,7 +12,7 @@ from local_agent.runtime.permission.delegated_permission_policy import (
     PERM_ACTIVE,
     PERM_REVOKED,
 )
-from local_agent.runtime.permission.delegated_permission_store import (
+from core.agent_runtime.runtime.permission.delegated_permission_store import (
     clear_all,
     get_permission,
     grant_permission,
@@ -106,7 +106,7 @@ class TestUsePermission:
         assert result["result"] == CHECK_SCOPE_EXCEEDED
 
     def test_nonexistent_permission_required(self):
-        from local_agent.runtime.permission.delegated_permission_policy import CHECK_PERMISSION_REQUIRED
+        from core.agent_runtime.runtime.permission.delegated_permission_policy import CHECK_PERMISSION_REQUIRED
         result = use_permission("no-such-id", "blog_publish", "blog.naver.com")
         assert result["result"] == CHECK_PERMISSION_REQUIRED
 

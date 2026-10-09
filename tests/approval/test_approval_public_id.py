@@ -24,7 +24,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import ai_orchestrator.agent_hub.registry.facade as reg
-import ai_orchestrator.gates.approval as _ap
+import tools.gates.approval as _ap
 
 
 @pytest.fixture(autouse=True)
@@ -51,7 +51,7 @@ def _make_test_client(user):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.agent_hub.router.root import local_agent_router
-    from ai_orchestrator.gates.auth import get_current_user
+    from tools.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -153,8 +153,8 @@ def test_to_dispatch_legacy_falls_back_to_token_id_when_public_missing():
 
 
 def test_process_task_injects_public_approval_id():
-    import local_agent.connection.actions as _actions
-    import local_agent.connection.websocket_client as _wsc
+    import core.agent_runtime.connection.actions as _actions
+    import core.agent_runtime.connection.websocket_client as _wsc
 
     captured = {}
 
@@ -229,9 +229,9 @@ def test_approve_with_token_id_succeeds_public_id_rejected():
 
 def test_result_data_approval_id_is_public_id_not_token_id(tmp_path, monkeypatch):
     reg.clear()
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
-    from local_agent.connection.websocket_client import process_task
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
+    from core.agent_runtime.connection.websocket_client import process_task
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
 
@@ -296,7 +296,7 @@ def test_result_data_approval_id_is_public_id_not_token_id(tmp_path, monkeypatch
 
 def test_open_url_execute_result_data_uses_public_id(tmp_path):
     reg.clear()
-    from local_agent.connection.websocket_client import process_task
+    from core.agent_runtime.connection.websocket_client import process_task
 
     client = _make_test_client(_admin())
     agent_id, device_token = _register(client)
@@ -315,7 +315,7 @@ def test_open_url_execute_result_data_uses_public_id(tmp_path):
         json={"token_id": token_id},
     )
 
-    with mock.patch("local_agent.connection.actions.webbrowser.open"):
+    with mock.patch("core.agent_runtime.connection.actions.webbrowser.open"):
         with client.websocket_connect("/api/v1/local-agents/ws") as ws:
             ws.send_json({"type": "auth", "agent_id": agent_id, "device_token": device_token})
             assert ws.receive_json()["type"] == "auth_ok"

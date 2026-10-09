@@ -1,11 +1,11 @@
-"""scripts/ops/audits/backend/audit_log_sensitive_scan.py 시험 — 가짜 로그로 건수·값 미출력·재작성 원자성 확인."""
+"""tools/audits/backend/audit_log_sensitive_scan.py 시험 — 가짜 로그로 건수·값 미출력·재작성 원자성 확인."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from scripts.ops.audits.backend.audit_log_sensitive_scan import (
+from tools.audits.backend.audit_log_sensitive_scan import (
     Finding,
     main,
     rewrite_file,

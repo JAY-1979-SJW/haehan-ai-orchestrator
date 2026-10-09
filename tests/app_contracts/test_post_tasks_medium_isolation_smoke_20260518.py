@@ -32,7 +32,7 @@ def _load_module(name, rel_path):
 def audit_mod():
     return _load_module(
         "audit_isolation_smoke",
-        "scripts/ops/audits/backend/audit_post_tasks_medium_isolation_smoke.py",
+        "tools/audits/backend/audit_post_tasks_medium_isolation_smoke.py",
     )
 
 
@@ -73,7 +73,7 @@ def executor_content():
 
 @pytest.fixture(scope="module")
 def approval_content():
-    return (REPO_ROOT / "ai_orchestrator/gates/approval.py").read_text(encoding="utf-8", errors="ignore")
+    return (REPO_ROOT / "tools/gates/approval.py").read_text(encoding="utf-8", errors="ignore")
 
 
 # ── 1~2. import ──────────────────────────────────────────────────────────────
@@ -205,9 +205,9 @@ def router_mod():
     mock_names = [
         "ai_orchestrator.llm.planner",
         "ai_orchestrator.tasks.executor",
-        "ai_orchestrator.gates.approval",
+        "tools.gates.approval",
         "ai_orchestrator.audit.audit_logger",
-        "ai_orchestrator.gates.auth",
+        "tools.gates.auth",
         "ai_orchestrator.notify.telegram_webhook",
         "ai_orchestrator.tasks.inbox",
         "ai_orchestrator.connectors.google.gmail_reader",
@@ -227,9 +227,9 @@ def router_mod():
     mocks = {
         "ai_orchestrator.llm.planner": MagicMock(),
         "ai_orchestrator.tasks.executor": MagicMock(),
-        "ai_orchestrator.gates.approval": MagicMock(),
+        "tools.gates.approval": MagicMock(),
         "ai_orchestrator.audit.audit_logger": MagicMock(),
-        "ai_orchestrator.gates.auth": MagicMock(),
+        "tools.gates.auth": MagicMock(),
         "ai_orchestrator.notify.telegram_webhook": MagicMock(),
         "ai_orchestrator.tasks.inbox": MagicMock(),
         "ai_orchestrator.connectors.google.gmail_reader": MagicMock(),
@@ -484,7 +484,7 @@ def test_38_next_phase_requires_approval(next_phase):
 
 
 def test_39_no_http_import_in_audit_script():
-    content = (REPO_ROOT / "scripts/ops/audits/backend/audit_post_tasks_medium_isolation_smoke.py").read_text(
+    content = (REPO_ROOT / "tools/audits/backend/audit_post_tasks_medium_isolation_smoke.py").read_text(
         encoding="utf-8", errors="ignore"
     )
     try:

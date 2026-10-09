@@ -69,5 +69,5 @@ Before enabling a real MCP entry:
 - block risky tools by name;
 - reference secrets by environment variable name only;
 - add UI surface, result target, and approval behavior;
-- run `python scripts/ops/audits/agent/audit_mcp_gateway_baseline.py`;
+- run `python tools/audits/agent/audit_mcp_gateway_baseline.py`;
 - run `python scripts/ops/quality/required_quality_gate.py`.

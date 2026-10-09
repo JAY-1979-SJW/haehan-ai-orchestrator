@@ -7,7 +7,7 @@ import json
 
 import pytest
 
-from local_agent.browser.bridge.browser_websocket_handshake import (
+from core.agent_runtime.browser.bridge.browser_websocket_handshake import (
     AgentHeartbeatMessage,
     AgentHelloMessage,
     Capability,

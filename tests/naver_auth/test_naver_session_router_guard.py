@@ -8,9 +8,9 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.connectors.naver_auth import session_router as R
-from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.connectors.naver_auth import session_guard as G
+from ai_orchestrator.connectors.naver_auth import session_router as R
+from tools.gates.auth import get_current_user
 
 NOW = datetime(2026, 10, 1, 9, 0, 0)
 

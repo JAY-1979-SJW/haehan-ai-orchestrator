@@ -30,7 +30,7 @@ ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from local_agent.connection.network_bypass import direct_child_env, urlopen_for_server  # noqa: E402
+from core.agent_runtime.connection.network_bypass import direct_child_env, urlopen_for_server  # noqa: E402
 
 DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
 
@@ -42,7 +42,7 @@ def _mask_agent_id(agent_id: str) -> str:
 
 
 def _load_agent_id() -> str:
-    from local_agent.common import desktop_config
+    from core.agent_runtime.common import desktop_config
 
     return desktop_config.load_config().agent_id.strip()
 
@@ -127,7 +127,7 @@ def _start_worker(server_url: str, log_path: Path) -> subprocess.Popen:
         [
             sys.executable,
             "-m",
-            "local_agent.agent",
+            "core.agent_runtime.agent",
             "--run",
             "--server",
             server_url,

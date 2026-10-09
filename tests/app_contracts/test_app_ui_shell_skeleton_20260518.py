@@ -15,6 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND_ROOT = REPO_ROOT / "admin-web" / "src"
 ASSISTANT_APP = FRONTEND_ROOT / "app" / "assistant"
 from tests.app_ui_paths import assistant_route  # noqa: E402
+
 ASSISTANT_COMP = FRONTEND_ROOT / "components" / "assistant"
 MOCK_FILE = FRONTEND_ROOT / "lib" / "assistant" / "mock.ts"
 
@@ -220,7 +221,7 @@ def test_docker_compose_not_modified():
 
 
 def test_audit_verdict_ready_or_warn():
-    import scripts.ops.audits.app.audit_app_ui_shell_skeleton as m
+    import tools.audits.app.audit_app_ui_shell_skeleton as m
 
     report = m.run_audit()
     assert report.verdict in (m.VERDICT_READY, m.VERDICT_WARN), f"verdict={report.verdict}"

@@ -16,8 +16,8 @@ import time
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.gates.send_approval import addresses, require_send_approval
+from tools.gates.auth import require_role
+from tools.gates.send_approval import addresses, require_send_approval
 
 from ...audit.audit_logger import log_event
 
@@ -252,7 +252,7 @@ def api_ai_draft_unread(
 ) -> dict:
     """안 읽은 메일을 읽어 AI(run_claude_agent, 헤드리스 Claude Code)로 요약+회신초안 생성.
 
-    읽기전용 — 이 엔드포인트는 발송 능력이 전혀 없다(local_agent.connection.actions.action_run_claude_agent
+    읽기전용 — 이 엔드포인트는 발송 능력이 전혀 없다(core.agent_runtime.connection.actions.action_run_claude_agent
     를 allowed_tools 없이 호출해 순수 텍스트 생성만 시킨다 — MCP 도구 호출 자체가 불가능한
     구조적 안전장치, 프롬프트 준수에 기대지 않음). 결과 초안은 /reply(dry_run) 로 미리보기 후
     다시 dry_run=False 로 호출해야 실제 발송된다(사람이 화면에서 재확인 후).
@@ -290,7 +290,7 @@ def api_ai_draft_unread(
 
     import json as _json
 
-    from local_agent.connection.actions import action_run_claude_agent
+    from core.agent_runtime.connection.actions import action_run_claude_agent
 
     mail_block = "\n\n".join(
         f"[{m['key']}] 발신: {m['from']}\n제목: {m['subject']}\n본문: {m['body'][:600]}" for m in mails

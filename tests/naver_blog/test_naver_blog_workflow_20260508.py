@@ -4,16 +4,16 @@
 
 import pytest
 
-from local_agent.runtime.permission.content_workflow_policy import (
+from core.agent_runtime.runtime.permission.content_workflow_policy import (
     GRADE_AUTO_ALLOWED,
     GRADE_USER_DELEGATED,
     requires_permission,
 )
-from local_agent.runtime.permission.delegated_action_executor import (
+from core.agent_runtime.runtime.permission.delegated_action_executor import (
     EXEC_ALLOWED,
     EXEC_NEED_PERMISSION,
 )
-from local_agent.runtime.permission.delegated_permission_store import (
+from core.agent_runtime.runtime.permission.delegated_permission_store import (
     clear_all,
     grant_permission,
     revoke,

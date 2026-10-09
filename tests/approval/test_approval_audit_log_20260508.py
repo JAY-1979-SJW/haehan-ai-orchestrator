@@ -3,7 +3,7 @@
 """
 import pytest
 
-from local_agent.runtime.permission.approval_audit_log import (
+from core.agent_runtime.runtime.permission.approval_audit_log import (
     EVENT_EXECUTION_BLOCKED,
     EVENT_EXECUTION_COMPLETED,
     EVENT_EXECUTION_STARTED,

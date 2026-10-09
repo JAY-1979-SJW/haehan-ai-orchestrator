@@ -57,7 +57,7 @@ def app_client(tmp_path_factory):
     from ai_orchestrator.tasks import executor as _ex
 
     importlib.reload(_ex)
-    from ai_orchestrator.gates import approval as _ap
+    from tools.gates import approval as _ap
 
     importlib.reload(_ap)
     _ap.clear_rate_store()

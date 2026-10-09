@@ -29,7 +29,7 @@
 - [STD-04 chunk02] route count 계약 테스트, 문서 문구 검사(`google_workflows`, `tenant_scope_design`, `backend_runtime_contract_gate`) 다수 실패
 
 ## 기타
-- [STD-02] `test_local_agent_connection_repair.py` 7건 — `scripts/ops/audits/agent/audit_local_desktop_agent_connection.py` 코드 매칭 문제
+- [STD-02] `test_local_agent_connection_repair.py` 7건 — `tools/audits/agent/audit_local_desktop_agent_connection.py` 코드 매칭 문제
 - [STD-04 chunk03] `test_google_workflows.py` 6건 — tmp 디렉터리 미생성(경로 fixture) 문제
 
 ## 집계 메모

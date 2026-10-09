@@ -1,4 +1,4 @@
-from scripts.ops.audits.backend import audit_backend_runtime_contract as audit
+from tools.audits.backend import audit_backend_runtime_contract as audit
 
 
 def test_backend_runtime_route_count_is_locked():

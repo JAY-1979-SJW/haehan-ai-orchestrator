@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.ops.audits.app.audit_ai_agent_app_structure_design_baseline import audit
+from tools.audits.app.audit_ai_agent_app_structure_design_baseline import audit
 
 
 def test_ai_agent_app_structure_design_baseline_audit_passes() -> None:

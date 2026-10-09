@@ -138,7 +138,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
  *    세션 후보(상시 세션 프로세스 등)로 남김, 사용자에게 투명하게 설명.
  *
  * 경로: 이 컴포넌트 → POST /api/v1/ai-agent/run(로컬 에이전트 자동 선택) → 기존
- * local_agent_registry 작업 큐 → local_agent/agent.py(WS 상시 클라이언트) → 헤드리스
+ * local_agent_registry 작업 큐 → core/agent_runtime/agent.py(WS 상시 클라이언트) → 헤드리스
  * `claude -p --mcp-config .mcp.json` → 이 앱 자신의 MCP 서버(haehan-orchestrator) 호출.
  * 설계·실측 검증: docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md
  */
@@ -382,7 +382,7 @@ export function UniversalChat({ title, agentHint, presets, extraCards, className
         ))}
         {agentUnavailable && (
           <p className="text-[10px] text-amber-600 text-center px-2">
-            로컬 에이전트 미연결 — <code>python -m local_agent.agent --run</code> 실행 필요
+            로컬 에이전트 미연결 — <code>python -m core.agent_runtime.agent --run</code> 실행 필요
           </p>
         )}
       </div>

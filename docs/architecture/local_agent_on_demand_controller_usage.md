@@ -16,7 +16,7 @@
 ## API
 
 ```python
-from local_agent.connection.controller import (
+from core.agent_runtime.connection.controller import (
     start_local_agent,
     get_local_agent_status,
     stop_local_agent,
@@ -45,9 +45,9 @@ cleanup_stale(dry_run=True)
 
 | 파일 | 용도 |
 |------|------|
-| `local_agent/connection/controller.py` | start/status/stop/cleanup |
-| `local_agent/connection/status_store.py` | 상태 파일 읽기/쓰기, lock |
-| `local_agent/connection/process_guard.py` | stale 감지, cleanup |
+| `core/agent_runtime/connection/controller.py` | start/status/stop/cleanup |
+| `core/agent_runtime/connection/status_store.py` | 상태 파일 읽기/쓰기, lock |
+| `core/agent_runtime/connection/process_guard.py` | stale 감지, cleanup |
 | `data/local_agent/status.json` | 실행 상태 파일 |
 | `data/local_agent/agent.lock` | lock 파일 |
 

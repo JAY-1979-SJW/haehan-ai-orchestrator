@@ -25,8 +25,8 @@ def check(level: str, msg: str) -> None:
 
 REQUIRED_FILES = [
     "ai_orchestrator/agent_hub/router/root.py",
-    "ai_orchestrator/gates/approval.py",
-    "ai_orchestrator/gates/policy.py",
+    "tools/gates/approval.py",
+    "tools/gates/policy.py",
     "ai_orchestrator/policies/default_policy.yaml",
     "ai_orchestrator/agent_hub/registry/facade.py",
     "admin-web/src/app/local-agents/LocalAgentsClient.tsx",
@@ -74,7 +74,7 @@ for marker, file_path, severity in APPROVAL_MARKERS:
 # ── C. safety/policy marker ────────────────────────────────────────────────────
 
 POLICY_FILE = REPO_ROOT / "ai_orchestrator/policies/default_policy.yaml"
-APPROVAL_PY = REPO_ROOT / "ai_orchestrator/gates/approval.py"
+APPROVAL_PY = REPO_ROOT / "tools/gates/approval.py"
 ROUTER_PY = REPO_ROOT / "ai_orchestrator/agent_hub/router/root.py"
 
 SAFETY_MARKERS = [

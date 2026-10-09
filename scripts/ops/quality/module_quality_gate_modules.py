@@ -83,7 +83,7 @@ MODULES: tuple[GateModule, ...] = (
                 (
                     PY,
                     "scripts/ops/quality/py_compile_no_cache.py",
-                    "scripts/ops/audits/agent/audit_local_agent_connection_recovery_baseline.py",
+                    "tools/audits/agent/audit_local_agent_connection_recovery_baseline.py",
                     "tests/test_local_agent_connection_recovery_baseline.py",
                     "scripts/ops/verify/verify_agent_ws_auth.py",
                     "scripts/ops/verify/verify_live_agent_smoke.py",
@@ -177,9 +177,9 @@ MODULES: tuple[GateModule, ...] = (
                     "scripts/ops/quality/py_compile_no_cache.py",
                     "ai_orchestrator/asgi.py",
                     "ai_orchestrator/routers/registry.py",
-                    "ai_orchestrator/gates/auth.py",
+                    "tools/gates/auth.py",
                     "ai_orchestrator/auth/auth_router.py",
-                    "ai_orchestrator/gates/approval.py",
+                    "tools/gates/approval.py",
                     "ai_orchestrator/web_task/web_task_router.py",
                     "ai_orchestrator/services",  # 폴더째 컴파일 — 파일 하나를 이름으로 적으면 새 서비스가 빠지고, 코드맵이 services↔scripts 순환으로 읽는다
                     "ai_orchestrator/agent_hub/router/root.py",
@@ -189,7 +189,7 @@ MODULES: tuple[GateModule, ...] = (
                     "ai_orchestrator/server/server_egress_policy.py",
                     "ai_orchestrator/server/execution_location_guard.py",
                     "ai_orchestrator/server/external_url_blocker.py",
-                    "scripts/ops/audits/backend/audit_backend_runtime_contract.py",
+                    "tools/audits/backend/audit_backend_runtime_contract.py",
                 ),
             ),
             GateStep("backend_runtime_contract", check="backend_runtime_contract"),
@@ -230,13 +230,13 @@ MODULES: tuple[GateModule, ...] = (
                 (
                     PY,
                     "scripts/ops/quality/py_compile_no_cache.py",
-                    "scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py",
+                    "tools/audits/agent/audit_local_agent_e2e_flow_contract.py",
                     "tests/test_local_agent_e2e_flow_contract.py",
                 ),
             ),
             GateStep(
                 "local_agent_e2e_contract",
-                (PY, "scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py"),
+                (PY, "tools/audits/agent/audit_local_agent_e2e_flow_contract.py"),
             ),
             GateStep(
                 "local_agent_e2e_pytest",

@@ -21,7 +21,7 @@ from ai_orchestrator.agent_hub.registry.facade import (
     register_agent,
 )
 from ai_orchestrator.contracts.local_agent_actions import AUTO_EXECUTE_VIA_AGENT
-from local_agent.connection.actions import (
+from core.agent_runtime.connection.actions import (
     ActionResult,
     action_browser_inspect,
 )
@@ -135,7 +135,7 @@ class TestBrowserInspectApprovalPolicy:
         This is verified by checking that the module does not contain
         'playwright' in its imports.
         """
-        import local_agent.connection.actions as actions_module
+        import core.agent_runtime.connection.actions as actions_module
 
         source = actions_module.__file__
 
@@ -144,8 +144,8 @@ class TestBrowserInspectApprovalPolicy:
             source_code = f.read()
 
         # Should not import playwright directly
-        assert "from playwright" not in source_code, "local_agent.connection.actions should not import from playwright"
-        assert "import playwright" not in source_code, "local_agent.connection.actions should not import playwright"
+        assert "from playwright" not in source_code, "core.agent_runtime.connection.actions should not import from playwright"
+        assert "import playwright" not in source_code, "core.agent_runtime.connection.actions should not import playwright"
 
     def test_browser_inspect_task_flow_matches_policy(self):
         """Complete task flow: enqueue + execute matches approval policy."""

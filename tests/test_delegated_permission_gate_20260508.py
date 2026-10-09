@@ -3,14 +3,14 @@
 """
 import pytest
 
-from local_agent.runtime.permission.delegated_permission_gate import (
+from core.agent_runtime.runtime.permission.delegated_permission_gate import (
     GATE_BLOCKED,
     GATE_NEED_PERMISSION,
     GATE_PASS,
     GATE_USER_DIRECT,
     evaluate_gate,
 )
-from local_agent.runtime.permission.delegated_permission_policy import (
+from core.agent_runtime.runtime.permission.delegated_permission_policy import (
     CHECK_ALLOWED,
     CHECK_BLOCKED,
     CHECK_EXHAUSTED,
@@ -18,7 +18,7 @@ from local_agent.runtime.permission.delegated_permission_policy import (
     CHECK_REVOKED,
     CHECK_SCOPE_EXCEEDED,
 )
-from local_agent.runtime.permission.delegated_permission_store import (
+from core.agent_runtime.runtime.permission.delegated_permission_store import (
     clear_all,
     grant_permission,
     revoke,

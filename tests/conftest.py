@@ -71,9 +71,9 @@ def apply_basic_auth_users(mp, users_path) -> None:
     환경변수를 다시 읽으므로 값이 유지된다 — `monkeypatch.setattr(config, "AUTH_ENABLED", ...)` 처럼
     속성만 바꾸면 그런 독립적인 reload 한 번에 값이 날아간다(2026-10-08 B11 이동 중 실제로 겪음).
 
-    **`ai_orchestrator.gates.auth` 자체는 절대 reload 하지 않는다** — `gates.auth` 는
+    **`tools.gates.auth` 자체는 절대 reload 하지 않는다** — `gates.auth` 는
     `config.AUTH_ENABLED`·`config.HTTP_USERS_PATH` 를 호출마다 모듈 참조로 live 읽으므로 reload 가 필요
-    없다. `importlib.reload(ai_orchestrator.gates.auth)` 로 켜고 끄던 옛 방식은 두 가지를 깨뜨렸다:
+    없다. `importlib.reload(tools.gates.auth)` 로 켜고 끄던 옛 방식은 두 가지를 깨뜨렸다:
     ① reload 가 `get_current_user` 를 새 함수 객체로 만들어, 이미 import 돼 있는 라우터는 옛 객체에
     묶인 채 남는다 — 그 뒤 시험이 새 객체로 건 `dependency_overrides` 가 라우터에 안 닿아
     `AUTH_ENABLED=False` 의 고정 owner 로 통과한 것처럼 보였다. ② reload 가 `register_bearer_resolver`

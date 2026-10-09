@@ -27,10 +27,11 @@ from unittest.mock import patch
 
 import pytest
 
-# ── import 대상 모듈 ────────────────────────────────────────────────────────
-import ai_orchestrator.gates.approval as _appr
-import ai_orchestrator.gates.policy as _policy
 import ai_orchestrator.core.task_state as _ts
+
+# ── import 대상 모듈 ────────────────────────────────────────────────────────
+import tools.gates.approval as _appr
+import tools.gates.policy as _policy
 
 # ── 공통 픽스처 ──────────────────────────────────────────────────────────────
 

@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT))
 
 
 def test_audit_script_exists():
-    p = ROOT / "scripts" / "ops" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py"
+    p = ROOT / "tools" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py"
     assert p.exists(), f"audit script 없음: {p}"
 
 
@@ -32,7 +32,7 @@ def test_audit_script_importable():
 
     spec = importlib.util.spec_from_file_location(
         "audit_autowork_frontdoor_operation",
-        ROOT / "scripts" / "ops" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py",
+        ROOT / "tools" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py",
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -50,7 +50,7 @@ def test_autowork_fqdn_is_primary():
 
     spec = importlib.util.spec_from_file_location(
         "audit_autowork_frontdoor_operation",
-        ROOT / "scripts" / "ops" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py",
+        ROOT / "tools" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py",
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -62,7 +62,7 @@ def test_autowork_dns_target_ip():
 
     spec = importlib.util.spec_from_file_location(
         "audit_autowork_frontdoor_operation",
-        ROOT / "scripts" / "ops" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py",
+        ROOT / "tools" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py",
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -77,7 +77,7 @@ def _load_audit_mod():
 
     spec = importlib.util.spec_from_file_location(
         "audit_autowork_frontdoor_operation",
-        ROOT / "scripts" / "ops" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py",
+        ROOT / "tools" / "audits" / "backend" / "audit_autowork_frontdoor_operation.py",
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

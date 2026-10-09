@@ -9,11 +9,11 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.connectors.hanafax.router import hanafax_router
-from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.connectors.hanafax import authorization_store as store
 from ai_orchestrator.connectors.hanafax import attachments as att
 from ai_orchestrator.connectors.hanafax import authorization_service as service
+from ai_orchestrator.connectors.hanafax import authorization_store as store
+from ai_orchestrator.connectors.hanafax.router import hanafax_router
+from tools.gates.auth import get_current_user
 
 PDF = b"%PDF-1.4 sample"
 DOCX = b"PK\x03\x04 sample"

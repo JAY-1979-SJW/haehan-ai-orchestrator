@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
 router = APIRouter(prefix="/naver/session", tags=["naver-session"])
 

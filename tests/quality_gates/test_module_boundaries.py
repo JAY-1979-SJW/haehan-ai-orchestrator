@@ -1,4 +1,4 @@
-from scripts.ops.audits.app import audit_module_boundaries as audit
+from tools.audits.app import audit_module_boundaries as audit
 
 
 def test_module_boundary_audit_passes():

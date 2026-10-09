@@ -11,9 +11,9 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.paths.runtime import data_dir, storage_dir
 from scripts.youtube import uploader as _uploader
+from tools.gates.auth import require_role
 
 from ._helpers import audit
 

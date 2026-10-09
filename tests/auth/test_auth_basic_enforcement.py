@@ -93,7 +93,7 @@ def _make_local_agent_client():
 
 def test_auth_disabled_returns_dummy_owner(monkeypatch):
     _disable_auth(monkeypatch)
-    from ai_orchestrator.gates.auth import get_current_user
+    from tools.gates.auth import get_current_user
 
     user = get_current_user(credentials=None)
     assert user["actor"] == "system"
@@ -276,7 +276,7 @@ def test_auth_enabled_malformed_users_file_fails_closed(monkeypatch, tmp_path):
 
 def test_salted_sha256_verification_round_trip(tmp_path):
     """평문 → _salted_hash → _verify_password 라운드트립."""
-    from ai_orchestrator.gates.auth import _verify_password
+    from tools.gates.auth import _verify_password
 
     h = _salted_hash("hello")
     assert _verify_password("hello", h) is True
@@ -296,7 +296,7 @@ def test_auth_failure_does_not_log_password(monkeypatch, tmp_path, caplog):
     _enable_auth(monkeypatch, _write_users(tmp_path))
     client = _make_local_agent_client()
     secret_pw = "super-secret-pw-d3adbeef"  # noqa: S105
-    with caplog.at_level(logging.DEBUG, logger="ai_orchestrator.gates.auth"):
+    with caplog.at_level(logging.DEBUG, logger="tools.gates.auth"):
         client.get("/api/v1/local-agents", auth=("owner_u", secret_pw))
     text = "\n".join(r.getMessage() for r in caplog.records)
     assert secret_pw not in text

@@ -1,4 +1,4 @@
-from scripts.ops.audits.app import audit_standard_workflow_contract as audit
+from tools.audits.app import audit_standard_workflow_contract as audit
 
 
 def test_standard_workflow_contract_passes():

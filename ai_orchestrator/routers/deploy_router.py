@@ -26,8 +26,8 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
-from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.paths.runtime import data_dir
+from tools.gates.auth import require_role
 
 logger = logging.getLogger(__name__)
 

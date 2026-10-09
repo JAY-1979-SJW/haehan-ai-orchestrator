@@ -255,7 +255,7 @@
       "category": 1,
       "title": "포트 8400/8401 리터럴이 여러 곳에 따로 있고 HAEHAN_AGENT_SERVER 기본값이 파일마다 다름",
       "where": [
-        "local_agent/agent.py:307",
+        "core/agent_runtime/agent.py:307",
         "local_agent/config.py:13",
         "ai_orchestrator/mcp_server.py:52",
         "ai_orchestrator/routers/deploy_router.py:39"
@@ -1237,7 +1237,7 @@
       "category": 1,
       "title": "local_agent_registry.py facade가 get_task_count/get_completed_task_count/get_failed_task_count 재노출 누락 -> GET /local-agents 500",
       "where": "ai_orchestrator/local_agent_registry.py",
-      "evidence": "MCP 버튼 트리거 기준서(docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md)의 run_claude_agent 액션을 앱 UI에 연결하려고 로컬 에이전트(local_agent/agent.py)를 재등록·재연결하는 중 발견. WS 인증(auth_ok)까지는 성공했는데 GET /api/v1/local-agents가 500(Internal Server Error). FastAPI 로그 확인 결과 local_agent_models.py::LocalAgent.to_safe()가 registry.get_task_count(self.agent_id)를 호출하는데 AttributeError: module 'ai_orchestrator.local_agent_registry' has no attribute 'get_task_count'. 실제로는 local_agent_registry_agent.py(leaf 모듈)에 get_task_count/get_completed_task_count/get_failed_task_count 3개가 전부 구현돼 있었지만, facade(local_agent_registry.py)의 재노출 import 목록에서만 누락돼 있었다(module_separation_standard 리팩터링 때 생긴 회귀로 추정). 에이전트가 1개라도 등록돼 있으면 to_safe()가 반드시 호출되므로, 실질적으로 GET /local-agents가 상시 500이었을 가능성이 높다(오늘까지 로컬 에이전트가 등록된 적이 거의 없어 안 드러났던 것으로 추정).",
+      "evidence": "MCP 버튼 트리거 기준서(docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md)의 run_claude_agent 액션을 앱 UI에 연결하려고 로컬 에이전트(core/agent_runtime/agent.py)를 재등록·재연결하는 중 발견. WS 인증(auth_ok)까지는 성공했는데 GET /api/v1/local-agents가 500(Internal Server Error). FastAPI 로그 확인 결과 local_agent_models.py::LocalAgent.to_safe()가 registry.get_task_count(self.agent_id)를 호출하는데 AttributeError: module 'ai_orchestrator.local_agent_registry' has no attribute 'get_task_count'. 실제로는 local_agent_registry_agent.py(leaf 모듈)에 get_task_count/get_completed_task_count/get_failed_task_count 3개가 전부 구현돼 있었지만, facade(local_agent_registry.py)의 재노출 import 목록에서만 누락돼 있었다(module_separation_standard 리팩터링 때 생긴 회귀로 추정). 에이전트가 1개라도 등록돼 있으면 to_safe()가 반드시 호출되므로, 실질적으로 GET /local-agents가 상시 500이었을 가능성이 높다(오늘까지 로컬 에이전트가 등록된 적이 거의 없어 안 드러났던 것으로 추정).",
       "fix_note": "local_agent_registry.py의 local_agent_registry_agent import 블록에 get_task_count/get_completed_task_count/get_failed_task_count 3개 추가 + __all__에도 추가. ruff --fix로 import 정렬 자동 정리(기존 파일도 정렬 안 돼 있던 상태). 검증: py_compile+ruff 통과, codebase_layer_audit FORBIDDEN_IMPORT/CIRCULAR_IMPORT/SECURITY_PATTERN 전부 0, quality_gate 통과(경고 1건 CODE_WITHOUT_TEST_OR_DOC, 소규모 버그 수정이라 수용). FastAPI 재기동 후 GET /api/v1/local-agents 실제 호출로 200 정상 응답 확인 예정.",
       "stage": "RUN",
       "status": "fixed",
@@ -1249,7 +1249,7 @@
       "title": "앱 내 AI 상담 채팅을 실제 run_claude_agent(MCP) 파이프라인에 연결(REQ-3 UI 구현)",
       "where": "ai_orchestrator/routers/ai_agent_router.py(신규), ai_orchestrator/router.py, admin-web/src/components/chat/UniversalChat.tsx",
       "evidence": "사용자 요청: '앱 내부에 mcp를 연결해서 ai를 이용해서 작업이 되게 해줘'. docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md 확인 결과 run_claude_agent 액션·MCP 도구 3종·Electron 창 제어까지 백엔드는 이미 구현·실기 검증 완료 상태였고, 유일하게 남은 건 §10 item 3 '버튼 UI는 범위 밖'이었음. UniversalChat.tsx/SmartStoreChat.tsx는 2026-09-24에 'AI 작업은 Claude Code(MCP)로 합니다'라는 정적 안내로 비워져 있었음(개발자 자신의 Claude Code 세션 전제) — 사용자가 이 결정을 명시적으로 뒤집음.",
-      "fix_note": "(1) ai_agent_router.py 신규: POST /api/v1/ai-agent/run — 등록된 로컬 에이전트 자동 선택(idle 우선) 후 기존 local_agent_registry.enqueue_task(action=run_claude_agent) 재사용. 신규 실행/큐/폴링 로직 없음, 기존 GET /local-agents/{id}/tasks/{id} 그대로 재사용. (2) UniversalChat.tsx 재구현: 입력창 -> /ai-agent/run POST -> task 폴링(2s 간격, 최대 5분) -> 결과 표시. 모든 도메인 페이지(AiDock, smartstore 제외)에 자동 노출. 실측 검증: local_agent.agent --run 재등록(agent_id=la-058275583ae7) 후 '숫자 7만 답해' 프롬프트로 POST /ai-agent/run -> GET task 폴링 -> status=completed, result_summary='7' (약 21초) 확인. 부수 발견 버그 2건: local_agent_registry.py facade의 get_task_count 등 3개 재노출 누락 (defect_index #93), web_connector.py Playwright 인스턴스 leak(defect_index #91) — 둘 다 이번 작업 도중 실기로 발견·별도 커밋으로 수정. 게이트: py_compile+ruff+eslint+tsc 전부 통과, layer_audit 3종 0, skeleton_gate PASS(registry_sync --fix 실행), quality_gate 통과(경고 1건, 소규모 신규 기능이라 수용).",
+      "fix_note": "(1) ai_agent_router.py 신규: POST /api/v1/ai-agent/run — 등록된 로컬 에이전트 자동 선택(idle 우선) 후 기존 local_agent_registry.enqueue_task(action=run_claude_agent) 재사용. 신규 실행/큐/폴링 로직 없음, 기존 GET /local-agents/{id}/tasks/{id} 그대로 재사용. (2) UniversalChat.tsx 재구현: 입력창 -> /ai-agent/run POST -> task 폴링(2s 간격, 최대 5분) -> 결과 표시. 모든 도메인 페이지(AiDock, smartstore 제외)에 자동 노출. 실측 검증: core.agent_runtime.agent --run 재등록(agent_id=la-058275583ae7) 후 '숫자 7만 답해' 프롬프트로 POST /ai-agent/run -> GET task 폴링 -> status=completed, result_summary='7' (약 21초) 확인. 부수 발견 버그 2건: local_agent_registry.py facade의 get_task_count 등 3개 재노출 누락 (defect_index #93), web_connector.py Playwright 인스턴스 leak(defect_index #91) — 둘 다 이번 작업 도중 실기로 발견·별도 커밋으로 수정. 게이트: py_compile+ruff+eslint+tsc 전부 통과, layer_audit 3종 0, skeleton_gate PASS(registry_sync --fix 실행), quality_gate 통과(경고 1건, 소규모 신규 기능이라 수용).",
       "stage": "RUN",
       "status": "fixed",
       "no": 94
@@ -1259,7 +1259,7 @@
       "category": 2,
       "title": "로컬 에이전트 등록정보를 디스크에 영속화 -> FastAPI 재시작해도 재등록 없이 자동 재연결",
       "where": "ai_orchestrator/local_agent_registry_common.py, local_agent_registry_agent.py, local_agent_registry_cleanup.py, ai_orchestrator/tests/test_local_agent.py, test_local_agent_ws.py, test_local_agent_cleanup.py, test_registration_codes.py, test_capture_screenshot_{telegram,request_api,dry_run,approval}.py, test_admin_ui_capture_screenshot.py, tests/test_observe_summary_fixture.py, scripts/ops/dry_run_approved_browser_instruction_api.py",
-      "evidence": "사용자 요청: '자동으로 연결이 되게 해야 하고'. 기존 local_agent_registry는 순수 인메모리 dict(_agents={})라 FastAPI 프로세스가 재시작될 때마다(이 세션에서만 여러 번 발생) 등록 정보가 전부 사라져 WS auth가 4401로 거부됐다 — 클라이언트(local_agent/agent.py)는 자체 keyring에 device_token을 영속 보관하는데도, 서버가 매번 '모르는 토큰'으로 취급.",
+      "evidence": "사용자 요청: '자동으로 연결이 되게 해야 하고'. 기존 local_agent_registry는 순수 인메모리 dict(_agents={})라 FastAPI 프로세스가 재시작될 때마다(이 세션에서만 여러 번 발생) 등록 정보가 전부 사라져 WS auth가 4401로 거부됐다 — 클라이언트(core/agent_runtime/agent.py)는 자체 keyring에 device_token을 영속 보관하는데도, 서버가 매번 '모르는 토큰'으로 취급.",
       "fix_note": "local_agent_registry_common.py에 _save_agents_to_disk()/_load_agents_from_disk() 추가 — agent_id/host/os_name/version/registered_at/requested_by/token_hash/smoke_test만 data/local_agent_registry_state.json에 저장(device_token 원문 저장 안 함, 기존 보안정책과 동일 — token_hash만). 연결상태(connected_at 등)는 저장 안 함 -> 재시작 직후는 정확히 '미연결'로 계산되고 클라이언트 재연결 시 자연히 채워짐. register_agent()/cleanup_agent_and_tasks()에서 저장 호출, 모듈 임포트 시 1회 로드. clear()(테스트 전용)도 디스크 파일을 같이 지우도록 확장 — 이 때문에 기존 11개 테스트 파일의 _isolated_storage/clear_stores 픽스처가 _REGISTRY_STATE_PATH를 tmp_path로 monkeypatch 안 하고 있으면 테스트 실행마다 개발 세션의 실제 에이전트 상태 파일을 지우는 회귀가 생겨(실측 확인) 전부(9개 파일) 픽스처 보강. 검증: (1) 실제 FastAPI 재시작 2회 연속 테스트 — 재등록 없이 자동 재연결 확인(connected_at 재시작 직후 시각, agent_status=idle). (2) pytest 287 passed 확인(기존부터 실패하던 8개는 git stash로 대조해 무관함을 확증 — 동일하게 실패). (3) 테스트 실행 전후 실제 data/local_agent_registry_state.json 내용 보존 확인(picker 픽스처 격리 성공). layer_audit 3종 0, quality_gate 통과(경고 0).",
       "stage": "RUN",
       "status": "fixed",
@@ -1269,9 +1269,9 @@
       "id": "MCP-AGENT-AUTO-CONNECT-ELECTRON-AUTOSPAWN",
       "category": 2,
       "title": "Electron이 MCP 로컬 에이전트를 자동 스폰 + 미등록시 자동 등록(--auto-connect)",
-      "where": "local_agent/agent.py(--auto-connect 신설), admin-web/electron/lib/agent.js(startMcpAgent/stopMcpAgent 신설), docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md",
-      "evidence": "사용자 요청: '자동으로 연결이 되게 해야 하고'. defect_index #95(서버쪽 영속화)로 FastAPI 재시작 후 재연결은 해결됐지만, 여전히 사람이 터미널에서 수동으로 python -m local_agent.agent --run 을 매번 띄워야 했고, 최초 1회는 등록코드까지 수동으로 발급·소비해야 했다. Electron의 기존 lib/agent.js는 완전히 별개의 구 스마트스토어 에이전트(scripts/local_agent.py, /smartstore/agent/ws)만 자동 스폰하고 있었다.",
-      "fix_note": "(1) local_agent/agent.py에 cmd_auto_connect()/--auto-connect 추가: keyring에 device_token 없으면 POST /api/v1/local-agents/registration-codes를 인증 없이 호출해 (AUTH_ENABLED=False 로컬 개발 서버 전제) 코드 자동 발급 -> --register-with-code 로직 재사용해 등록 -> run_websocket(). 이미 등록돼 있으면 발급 자체를 건너뛰고 바로 연결. (2) admin-web/electron/lib/agent.js에 startMcpAgent()/stopMcpAgent() 추가 — 기존 startAgent() 호출 시 함께 스폰, HAEHAN_AGENT_WS_ENABLED=true로 local_agent.agent --auto-connect 실행. 패키징 빌드는 미지원 명시(로그 안내). 검증: (1) HAEHAN_AGENT_DESKTOP_CONFIG로 격리된 '완전 미등록' 상태 재현 -> --auto-connect가 등록코드 자동발급 -> 등록 -> WS auth_ok까지 성공. (2) Electron 처음부터 재기동 -> 로그에 '[mcp-agent] 시작(auto-connect)' -> auth_ok 확인(수동 조작 없음). (3) FastAPI 재시작 후 아무 조작 없이 GET /local-agents로 agent_status=idle, connected_at=재시작 직후 시각 확인 — 완전 자동 재연결 증명. py_compile+ruff 통과, node --check 통과, layer_audit 3종 0.",
+      "where": "core/agent_runtime/agent.py(--auto-connect 신설), admin-web/electron/lib/agent.js(startMcpAgent/stopMcpAgent 신설), docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md",
+      "evidence": "사용자 요청: '자동으로 연결이 되게 해야 하고'. defect_index #95(서버쪽 영속화)로 FastAPI 재시작 후 재연결은 해결됐지만, 여전히 사람이 터미널에서 수동으로 python -m core.agent_runtime.agent --run 을 매번 띄워야 했고, 최초 1회는 등록코드까지 수동으로 발급·소비해야 했다. Electron의 기존 lib/agent.js는 완전히 별개의 구 스마트스토어 에이전트(scripts/local_agent.py, /smartstore/agent/ws)만 자동 스폰하고 있었다.",
+      "fix_note": "(1) core/agent_runtime/agent.py에 cmd_auto_connect()/--auto-connect 추가: keyring에 device_token 없으면 POST /api/v1/local-agents/registration-codes를 인증 없이 호출해 (AUTH_ENABLED=False 로컬 개발 서버 전제) 코드 자동 발급 -> --register-with-code 로직 재사용해 등록 -> run_websocket(). 이미 등록돼 있으면 발급 자체를 건너뛰고 바로 연결. (2) admin-web/electron/lib/agent.js에 startMcpAgent()/stopMcpAgent() 추가 — 기존 startAgent() 호출 시 함께 스폰, HAEHAN_AGENT_WS_ENABLED=true로 core.agent_runtime.agent --auto-connect 실행. 패키징 빌드는 미지원 명시(로그 안내). 검증: (1) HAEHAN_AGENT_DESKTOP_CONFIG로 격리된 '완전 미등록' 상태 재현 -> --auto-connect가 등록코드 자동발급 -> 등록 -> WS auth_ok까지 성공. (2) Electron 처음부터 재기동 -> 로그에 '[mcp-agent] 시작(auto-connect)' -> auth_ok 확인(수동 조작 없음). (3) FastAPI 재시작 후 아무 조작 없이 GET /local-agents로 agent_status=idle, connected_at=재시작 직후 시각 확인 — 완전 자동 재연결 증명. py_compile+ruff 통과, node --check 통과, layer_audit 3종 0.",
       "stage": "RUN",
       "status": "fixed",
       "no": 96
@@ -1424,11 +1424,11 @@
     {
       "id": "MCP-AGENT-PROCESS-NO-CRASH-SUPERVISION",
       "category": 1,
-      "title": "Electron이 스폰하는 local_agent.agent(MCP 파이프라인) 프로세스가 죽으면 재기동 로직이 없어 Electron 전체 재시작 전까지 AI 채팅이 영구 오프라인",
+      "title": "Electron이 스폰하는 core.agent_runtime.agent(MCP 파이프라인) 프로세스가 죽으면 재기동 로직이 없어 Electron 전체 재시작 전까지 AI 채팅이 영구 오프라인",
       "where": [
         "admin-web/electron/lib/agent.js"
       ],
-      "evidence": "사용자 지시 '내일은 ai 대화창에서 mcp로 지시하면 업무가 바로 되게' 확인 중 GET /api/v1/local-agents 조회 결과 두 등록 에이전트 모두 agent_status=offline. 프로세스 목록(wmic)에 python -m local_agent.agent 자체가 없었음 — 이 긴 세션 동안 FastAPI를 여러 번 재기동한 부작용으로 연결이 끊긴 뒤 재기동되지 않은 것으로 추정. startMcpAgent()의 mcpAgentProc.on('exit') 핸들러가 로그만 남기고 아무 것도 안 함을 코드로 확인 — Electron 자체를 재시작해야만 복구되는 구조였음.",
+      "evidence": "사용자 지시 '내일은 ai 대화창에서 mcp로 지시하면 업무가 바로 되게' 확인 중 GET /api/v1/local-agents 조회 결과 두 등록 에이전트 모두 agent_status=offline. 프로세스 목록(wmic)에 python -m core.agent_runtime.agent 자체가 없었음 — 이 긴 세션 동안 FastAPI를 여러 번 재기동한 부작용으로 연결이 끊긴 뒤 재기동되지 않은 것으로 추정. startMcpAgent()의 mcpAgentProc.on('exit') 핸들러가 로그만 남기고 아무 것도 안 함을 코드로 확인 — Electron 자체를 재시작해야만 복구되는 구조였음.",
       "fix_note": "agent.js에 크래시 시 자동 재기동 추가: mcpAgentStopRequested 플래그로 의도적 정지(stopMcpAgent 명시 호출)와 예기치 않은 종료를 구분, 후자만 3~15초 백오프로 최대 5회(MCP_AGENT_MAX_RESTARTS) 재시도. 60초 이상 안정적으로 떠 있으면 재시도 카운터 리셋. 검증: (1) Electron 재기동 후 정상 auto-connect 확인, (2) 실제 프로세스(taskkill)를 강제 종료해 크래시 재현 -> 3000ms 후 자동 재기동 -> auth_ok 재연결 -> 이어서 실제 run_claude_agent 작업 큐잉->완료(result:9)까지 재확인. node -c 문법 검사 통과, eslint는 이 파일의 기존 require() 스타일 관련 사전 존재 오류 5건만(내 변경으로 생긴 신규 오류 0건, 비교 확인).",
       "stage": "RUN",
       "status": "fixed",

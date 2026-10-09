@@ -57,7 +57,7 @@ DOMAIN_CORE_MAP = {
     },
     "Approval": {
         "impl_files": [
-            "ai_orchestrator/gates/approval.py",
+            "tools/gates/approval.py",
             "ai_orchestrator/dev_reg/dev_reg_approval.py",
             "ai_orchestrator/web_task/web_task_approval_service.py",
         ],
@@ -68,7 +68,7 @@ DOMAIN_CORE_MAP = {
         "impl_files": [
             "ai_orchestrator/audit/audit_logger.py",
             "ai_orchestrator/server/action_approval_audit_store.py",
-            "local_agent/runtime/permission/approval_audit_log.py",
+            "core/agent_runtime/runtime/permission/approval_audit_log.py",
             "ai_orchestrator/audit_evidence/models.py",  # STEP 3: 표준 스키마 기준선
             "ai_orchestrator/audit_evidence/adapters.py",  # STEP 4: read-only adapter
         ],
@@ -125,7 +125,7 @@ DOMAIN_CORE_MAP = {
         "impl_files": [
             "ai_orchestrator/browser_tool/backend_policy.py",
             "ai_orchestrator/server/server_egress_policy.py",
-            "local_agent/runtime/security_guard.py",
+            "core/agent_runtime/runtime/security_guard.py",
             "ai_orchestrator/sites/secrets_policy.py",
             "ai_orchestrator/domain/models.py",
             "ai_orchestrator/domain/model_adapters.py",
@@ -840,7 +840,7 @@ CORE_FILES_MUST_EXIST = [
     "ai_orchestrator/server/action_evidence_store.py",
     "ai_orchestrator/core/task_state.py",
     "ai_orchestrator/audit/audit_logger.py",
-    "ai_orchestrator/gates/approval.py",
+    "tools/gates/approval.py",
     "ai_orchestrator/dev_reg/dev_reg_approval.py",
     "ai_orchestrator/web_task/web_task_approval_service.py",
     "ai_orchestrator/web_task/web_task_registry.py",
@@ -859,7 +859,7 @@ CORE_MODULES_MUST_IMPORT = [
     "ai_orchestrator.server.execution_location_guard",
     "ai_orchestrator.server.task_queue_schema",
     "ai_orchestrator.core.task_state",
-    "ai_orchestrator.gates.approval",
+    "tools.gates.approval",
     "ai_orchestrator.dev_reg.dev_reg_approval",
     "ai_orchestrator.web_task.web_task_approval_service",
     "ai_orchestrator.web_task.web_task_registry",

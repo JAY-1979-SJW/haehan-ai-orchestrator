@@ -17,7 +17,7 @@ EMAIL = "alice@example.com"
 
 @pytest.fixture
 def env(tmp_path, monkeypatch):
-    import ai_orchestrator.gates.auth as gauth
+    import tools.gates.auth as gauth
     ur = importlib.reload(importlib.import_module("ai_orchestrator.auth.user_auth_router"))
     global _gauth
     _gauth = gauth

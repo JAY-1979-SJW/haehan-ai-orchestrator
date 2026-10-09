@@ -1,12 +1,12 @@
 """browser.submit opt-in 정책 검증."""
 from __future__ import annotations
 
-from local_agent.runtime.site_profile.browser_discovery_candidates import (
+from core.agent_runtime.runtime.site_profile.browser_discovery_candidates import (
     CANDIDATE_BUTTON,
     CANDIDATE_DESTRUCTIVE_BUTTON,
     CANDIDATE_SUBMIT_BUTTON,
 )
-from local_agent.runtime.site_profile.browser_policy_integration import submit_with_policy
+from core.agent_runtime.runtime.site_profile.browser_policy_integration import submit_with_policy
 
 
 def test_submit_no_approval_blocked():

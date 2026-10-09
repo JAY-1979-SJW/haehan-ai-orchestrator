@@ -19,9 +19,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi import Path as PathParam
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.site_work import site_onboarding_service as service
 from ai_orchestrator.site_work import site_preflight_service as preflight
+from tools.gates.auth import require_role
 
 site_onboarding_router = APIRouter(prefix="/site-registry", tags=["site-registry"])
 _ADMIN = Depends(require_role("admin", "owner"))

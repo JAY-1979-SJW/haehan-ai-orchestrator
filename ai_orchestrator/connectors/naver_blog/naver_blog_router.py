@@ -12,13 +12,13 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.paths.runtime import data_dir
 from scripts.common.realtime_audit import emit_event
 from scripts.naver.blog.unsplash_images import UPLOADS_DIR
 from scripts.naver.blog.unsplash_images import (
     resolve_unsplash_images as _resolve_unsplash_images,  # 재노출(옛 이름 유지)
 )
+from tools.gates.auth import require_role
 
 _log = logging.getLogger(__name__)
 
@@ -204,8 +204,8 @@ def write_to_naver(
 
     BlogWriter 가 SE3 셀렉터·iframe·자동로그인을 처리. 범용 클릭 에이전트보다 정확.
     """
-    from ai_orchestrator.gates.gate_core import GateBlocked, require_side_effect
     from scripts.browser.cdp.connection import get_page, run_on_browser_thread
+    from tools.gates.gate_core import GateBlocked, require_side_effect
 
     if req.publish:
         # 외부 공개 발행: 사용자가 확인 단계에서 입력한 승인 문구가 있어야 한다. 막히면 브라우저를 열기 전에 403.

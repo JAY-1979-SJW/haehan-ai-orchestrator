@@ -3,8 +3,8 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.connectors.youtube.research_router import youtube_research_router
+from tools.gates.auth import get_current_user
 
 
 def _client() -> TestClient:

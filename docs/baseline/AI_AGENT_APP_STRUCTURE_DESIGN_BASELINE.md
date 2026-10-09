@@ -181,7 +181,7 @@ The MCP Gateway surface is retired and is not exposed on the home screen. After
 the home rewrite (commit 855d595a, "single AI console") the home is a single AI
 console, not a dashboard; the registry and its disabled-by-default rules above
 remain as backend/config policy only. MCP Gateway readiness is not shown on home.
-`scripts/ops/audits/agent/audit_mcp_gateway_baseline.py` enforces this: the home page must not
+`tools/audits/agent/audit_mcp_gateway_baseline.py` enforces this: the home page must not
 contain the retired MCP Gateway strings.
 
 ### Previous baseline (retired, kept for history)
@@ -271,8 +271,8 @@ Before claiming the AI agent app structure is ready:
 ```powershell
 npm run typecheck
 npm run build
-python scripts/ops/audits/app/audit_app_structure_contract.py
-python scripts/ops/audits/app/audit_site_work_function_baseline.py
+python tools/audits/app/audit_app_structure_contract.py
+python tools/audits/app/audit_site_work_function_baseline.py
 python scripts/ops/quality/required_quality_gate.py
 ```
 

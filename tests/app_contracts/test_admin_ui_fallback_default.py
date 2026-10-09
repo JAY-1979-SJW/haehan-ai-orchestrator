@@ -3,8 +3,8 @@ from fastapi.testclient import TestClient
 
 
 def _client(user: dict):
-    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.routers.admin_ui_router import admin_ui_router
+    from tools.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(admin_ui_router, prefix="/api/v1")

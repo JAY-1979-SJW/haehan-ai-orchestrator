@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-from local_agent.runtime.security_program.installer_folder_presenter import (
+from core.agent_runtime.runtime.security_program.installer_folder_presenter import (
     PRESENT_FAILED,
     PRESENT_NOT_SUPPORTED,
     build_explorer_command,

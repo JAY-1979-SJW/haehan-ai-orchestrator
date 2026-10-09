@@ -18,7 +18,7 @@ class TestAuthTenantContext:
 
     def test_build_tenant_context_adds_organization_ids(self):
         """build_tenant_context가 organization_ids 추가"""
-        from ai_orchestrator.gates.auth import build_tenant_context
+        from tools.gates.auth import build_tenant_context
 
         user = {"actor": "john", "role": "admin"}
         ctx = build_tenant_context(user)
@@ -29,7 +29,7 @@ class TestAuthTenantContext:
 
     def test_build_tenant_context_adds_active_organization_id(self):
         """build_tenant_context가 active_organization_id 추가"""
-        from ai_orchestrator.gates.auth import build_tenant_context
+        from tools.gates.auth import build_tenant_context
 
         user = {"actor": "john", "role": "admin"}
         ctx = build_tenant_context(user)
@@ -39,7 +39,7 @@ class TestAuthTenantContext:
 
     def test_build_tenant_context_maps_actor_to_actor_user_id(self):
         """build_tenant_context가 actor를 actor_user_id로 매핑"""
-        from ai_orchestrator.gates.auth import build_tenant_context
+        from tools.gates.auth import build_tenant_context
 
         user = {"actor": "john", "role": "admin"}
         ctx = build_tenant_context(user)
@@ -49,7 +49,7 @@ class TestAuthTenantContext:
 
     def test_build_tenant_context_preserves_existing_fields(self):
         """build_tenant_context가 기존 필드 유지"""
-        from ai_orchestrator.gates.auth import build_tenant_context
+        from tools.gates.auth import build_tenant_context
 
         user = {"actor": "john", "role": "admin"}
         ctx = build_tenant_context(user)
@@ -60,7 +60,7 @@ class TestAuthTenantContext:
 
     def test_require_active_organization_validates_context(self):
         """require_active_organization가 context 검증"""
-        from ai_orchestrator.gates.auth import require_active_organization
+        from tools.gates.auth import require_active_organization
 
         user = {"actor": "john", "role": "admin", "organization_ids": ["org-1"], "active_organization_id": "org-1"}
         org_id = require_active_organization(user)
@@ -69,7 +69,7 @@ class TestAuthTenantContext:
 
     def test_require_active_organization_rejects_missing_field(self):
         """active_organization_id 누락 시 migration bridge가 첫 org를 자동 설정한다 (TENANT-3 migration bridge)."""
-        from ai_orchestrator.gates.auth import require_active_organization
+        from tools.gates.auth import require_active_organization
 
         user = {"actor": "john", "role": "admin", "organization_ids": ["org-1"]}
 
@@ -79,7 +79,7 @@ class TestAuthTenantContext:
 
     def test_require_active_organization_rejects_mismatch(self):
         """active_organization_id not in organization_ids → ValueError"""
-        from ai_orchestrator.gates.auth import require_active_organization
+        from tools.gates.auth import require_active_organization
 
         user = {
             "actor": "john",
@@ -94,7 +94,7 @@ class TestAuthTenantContext:
 
     def test_require_membership_allows_known_org(self):
         """known organization membership allowed"""
-        from ai_orchestrator.gates.auth import require_membership
+        from tools.gates.auth import require_membership
 
         user = {
             "actor": "john",
@@ -111,7 +111,7 @@ class TestAuthTenantContext:
         """unknown organization membership rejected"""
         from fastapi import HTTPException
 
-        from ai_orchestrator.gates.auth import require_membership
+        from tools.gates.auth import require_membership
 
         user = {
             "actor": "john",
@@ -130,7 +130,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_agent_hello_message_has_organization_id_field(self):
         """AgentHelloMessage에 organization_id field 있음"""
-        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
             agent_id="agent-1",
@@ -142,7 +142,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_agent_hello_message_has_registration_user_id_field(self):
         """AgentHelloMessage에 registration_user_id field 있음"""
-        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
             agent_id="agent-1",
@@ -155,7 +155,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_agent_hello_to_dict_includes_organization_id(self):
         """AgentHelloMessage.to_dict()에 organization_id 포함"""
-        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
             agent_id="agent-1",
@@ -169,7 +169,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_agent_hello_safe_dict_keeps_organization_id(self):
         """AgentHelloMessage.safe_dict()에 organization_id 포함"""
-        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
             agent_id="agent-1",
@@ -184,7 +184,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_agent_hello_safe_dict_keeps_registration_user_id(self):
         """AgentHelloMessage.safe_dict()에 registration_user_id 포함"""
-        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         msg = AgentHelloMessage(
             agent_id="agent-1",
@@ -199,7 +199,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_agent_hello_validation_accepts_organization_id(self):
         """validate_agent_hello_message가 organization_id 수용"""
-        from local_agent.browser.bridge.browser_websocket_handshake import validate_agent_hello_message
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import validate_agent_hello_message
 
         msg = {
             "message_type": "agent.hello",
@@ -215,7 +215,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_server_policy_message_has_organization_id_field(self):
         """ServerPolicyMessage에 organization_id field 있음"""
-        from local_agent.browser.bridge.browser_websocket_handshake import ServerPolicyMessage
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import ServerPolicyMessage
 
         msg = ServerPolicyMessage(
             organization_id="org-1",
@@ -227,7 +227,7 @@ class TestWebSocketHandshakeOrganizationId:
 
     def test_server_policy_to_dict_includes_organization_id(self):
         """ServerPolicyMessage.to_dict()에 organization_id 포함"""
-        from local_agent.browser.bridge.browser_websocket_handshake import ServerPolicyMessage
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import ServerPolicyMessage
 
         msg = ServerPolicyMessage(
             organization_id="org-1",
@@ -244,7 +244,7 @@ class TestScopeValidationRules:
 
     def test_task_approval_agent_same_org_validates(self):
         """assert_task_approval_agent_same_org 함수 작동"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserApprovalScope,
             BrowserTaskScope,
             LocalAgentScope,
@@ -273,7 +273,7 @@ class TestScopeValidationRules:
 
     def test_task_approval_org_mismatch_rejected(self):
         """org mismatch → ValueError"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserApprovalScope,
             BrowserTaskScope,
             LocalAgentScope,
@@ -303,7 +303,7 @@ class TestScopeValidationRules:
 
     def test_result_task_scope_validates(self):
         """assert_result_task_same_org 함수 작동"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserResultScope,
             BrowserTaskScope,
             assert_result_task_same_org,
@@ -325,7 +325,7 @@ class TestScopeValidationRules:
 
     def test_result_task_org_mismatch_rejected(self):
         """result.org != task.org → ValueError"""
-        from local_agent.policy.tenant_scope_contract import (
+        from core.agent_runtime.policy.tenant_scope_contract import (
             BrowserResultScope,
             BrowserTaskScope,
             assert_result_task_same_org,
@@ -352,7 +352,7 @@ class TestSecurityValidation:
 
     def test_safe_dict_removes_approval_token(self):
         """safe_dict에서 approval_token 제거"""
-        from local_agent.policy.tenant_scope_contract import safe_tenant_scope_dict
+        from core.agent_runtime.policy.tenant_scope_contract import safe_tenant_scope_dict
 
         data = {
             "approval_token": "secret-token",
@@ -366,7 +366,7 @@ class TestSecurityValidation:
 
     def test_safe_dict_removes_token_hash(self):
         """safe_dict에서 token_hash 제거"""
-        from local_agent.policy.tenant_scope_contract import safe_tenant_scope_dict
+        from core.agent_runtime.policy.tenant_scope_contract import safe_tenant_scope_dict
 
         data = {
             "token_hash": "sha256:abc123",
@@ -379,7 +379,7 @@ class TestSecurityValidation:
 
     def test_websocket_safe_dict_removes_password(self):
         """WebSocket safe_dict에서 password 제거"""
-        from local_agent.browser.bridge.browser_websocket_handshake import safe_dict
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import safe_dict
 
         data = {
             "password": "secret123",
@@ -392,7 +392,7 @@ class TestSecurityValidation:
 
     def test_websocket_safe_dict_removes_raw_hostname(self):
         """WebSocket safe_dict에서 raw hostname 제거"""
-        from local_agent.browser.bridge.browser_websocket_handshake import safe_dict
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import safe_dict
 
         data = {
             "hostname": "my-computer.local",
@@ -409,7 +409,7 @@ class TestBackwardCompatibility:
 
     def test_existing_auth_format_preserved(self):
         """기존 auth format {actor, role} 유지"""
-        from ai_orchestrator.gates.auth import build_tenant_context
+        from tools.gates.auth import build_tenant_context
 
         user = {"actor": "john", "role": "admin"}
         ctx = build_tenant_context(user)
@@ -422,7 +422,7 @@ class TestBackwardCompatibility:
 
     def test_agent_hello_optional_organization_id(self):
         """AgentHelloMessage organization_id optional (backward compat)"""
-        from local_agent.browser.bridge.browser_websocket_handshake import AgentHelloMessage
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import AgentHelloMessage
 
         # Should be creatable without organization_id
         msg = AgentHelloMessage(
@@ -436,7 +436,7 @@ class TestBackwardCompatibility:
 
     def test_server_policy_optional_organization_id(self):
         """ServerPolicyMessage organization_id optional"""
-        from local_agent.browser.bridge.browser_websocket_handshake import ServerPolicyMessage
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import ServerPolicyMessage
 
         # Should be creatable without organization_id
         msg = ServerPolicyMessage()
@@ -456,7 +456,7 @@ class TestGapCoverageAndRegression:
 
     def test_existing_websocket_validation_still_works(self):
         """existing handshake validation still works"""
-        from local_agent.browser.bridge.browser_websocket_handshake import validate_agent_hello_message
+        from core.agent_runtime.browser.bridge.browser_websocket_handshake import validate_agent_hello_message
 
         # Backward compat: message without organization_id still valid
         msg = {

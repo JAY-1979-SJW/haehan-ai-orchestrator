@@ -1,5 +1,5 @@
 """tests/test_site_type_classifier_20260508.py"""
-from local_agent.runtime.site_profile.site_type_classifier import (
+from core.agent_runtime.runtime.site_profile.site_type_classifier import (
     SITE_BLOG,
     SITE_CAFE_OR_FORUM,
     SITE_CONTENT_PLATFORM,

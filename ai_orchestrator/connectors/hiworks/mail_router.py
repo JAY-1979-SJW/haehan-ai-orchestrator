@@ -13,8 +13,8 @@ import time
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.gates.send_approval import require_send_approval
+from tools.gates.auth import require_role
+from tools.gates.send_approval import require_send_approval
 
 from ...audit.audit_logger import log_event
 
@@ -93,8 +93,8 @@ def api_compose(
         }
 
     try:
-        from scripts.hiworks.mail import fill_compose
         from scripts.browser.cdp.connection import get_page, run_on_browser_thread
+        from scripts.hiworks.mail import fill_compose
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         result = run_on_browser_thread(
@@ -137,8 +137,8 @@ def api_send(
     )
 
     try:
-        from scripts.hiworks.mail import send_mail
         from scripts.browser.cdp.connection import get_page, run_on_browser_thread
+        from scripts.hiworks.mail import send_mail
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         result = run_on_browser_thread(lambda: send_mail(get_page()), timeout=120)

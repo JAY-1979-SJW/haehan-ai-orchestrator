@@ -60,7 +60,7 @@
   "role": "policy",
   "reason": "provider 등록/조회 레지스트리 — auth_policy_registry(L2)와 동급 정책 레지스트리, L4 오분류"
  },
- "ai_orchestrator/gates/__init__.py": {
+ "tools/gates/__init__.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "gates 패키지(정책·승인·인증 게이트)",
@@ -111,47 +111,47 @@
   "role": "browser_engine",
   "reason": "agent.py(BrowserAgent, L4)를 구동해 사이트맵을 탐지 — 단순 외부 API 커넥터(L3) 아님, 브라우저 엔진 성격"
  },
- "local_agent/runtime/permission/delegated_permission_store.py": {
+ "core/agent_runtime/runtime/permission/delegated_permission_store.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "저장 전 delegated_permission_policy(L2)의 build/check/revoke를 직접 호출해 검증까지 수행 — 단순 L7 저장소 아님, 정책 집행 성격"
  },
- "local_agent/runtime/local_session_boundary.py": {
+ "core/agent_runtime/runtime/local_session_boundary.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "세션 경계 판정 — auto_resume_after_auth(L2)가 참조하는 정책 헬퍼, L6 script_cli(low) 오분류"
  },
- "local_agent/runtime/universal/natural_language_task_api.py": {
+ "core/agent_runtime/runtime/universal/natural_language_task_api.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "자연어 입력→universal_ai_site_agent/user_intent_parser(L6) 호출 오케스트레이션 — L4 browser_engine 오분류"
  },
- "local_agent/runtime/result_sanitizer.py": {
+ "core/agent_runtime/runtime/result_sanitizer.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "결과 sanitize(보안 redaction) — security_guard(L2)와 동급 보안 정책, L6 script_cli(low) 오분류"
  },
- "local_agent/runtime/safe_write_result_sanitizer.py": {
+ "core/agent_runtime/runtime/safe_write_result_sanitizer.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "안전 쓰기 결과 sanitize — result_sanitizer와 동급 보안 정책, L6 script_cli(low) 오분류"
  },
- "local_agent/runtime/security_program/security_program_auto_resume.py": {
+ "core/agent_runtime/runtime/security_program/security_program_auto_resume.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "보안 프로그램 설치/탐지 워크플로 오케스트레이션(local_security_installer_runner 등 L6 호출) — L4 generic(low) 오분류"
  },
- "local_agent/runtime/security_program/security_program_install_completion_detector.py": {
+ "core/agent_runtime/runtime/security_program/security_program_install_completion_detector.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "security_program_detector(L6)와 동급 설치 완료 감지 워크플로 — L4 generic(low) 오분류"
  },
- "local_agent/runtime/site_profile/site_capability_matrix.py": {
+ "core/agent_runtime/runtime/site_profile/site_capability_matrix.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "사이트별 지원 능력 매트릭스(정적 레지스트리) — unknown_site_fallback_policy(L2)와 동급 정책, L6 script_cli(low) 오분류"
  },
- "local_agent/runtime/site_profile/site_profile_registry.py": {
+ "core/agent_runtime/runtime/site_profile/site_profile_registry.py": {
   "layer": "L2",
   "role": "policy",
   "reason": "docstring이 '사이트별 자동화 정책을 profile로 관리'라 명시 — site_capability_matrix(L2)와 동급 정책 레지스트리, L4 오분류"
@@ -161,12 +161,12 @@
   "role": "contract",
   "reason": "태스크 프로토콜 스키마 정의 — auth_wait_controller/auto_resume(L2)가 참조하는 순수 계약, L4 오분류"
  },
- "local_agent/runtime/universal/universal_action_verifier.py": {
+ "core/agent_runtime/runtime/universal/universal_action_verifier.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "universal_safe_result(L6)를 사용한 액션 검증 — 업무 흐름 검증기, L4 generic(low) 오분류"
  },
- "local_agent/runtime/universal/universal_agent_session.py": {
+ "core/agent_runtime/runtime/universal/universal_agent_session.py": {
   "layer": "L6",
   "role": "workflow",
   "reason": "delegated_permission_store(L2)+natural_language_task_api(L6)를 결합하는 세션 오케스트레이터 — L4 generic(low) 오분류"
@@ -740,7 +740,7 @@
   "role": "site_module",
   "reason": "스마트스토어 상품 일괄 등록(Playwright Page)이 본체이고 DB 기록은 부수적 — 'DB 기록' 규칙이 L7 로 오분류. L5 smartstore 모듈들이 import"
  },
- "local_agent/browser/approval/browser_approval_errors.py": {
+ "core/agent_runtime/browser/approval/browser_approval_errors.py": {
   "layer": "L1",
   "role": "contract",
   "reason": "저장소(L7)·검증기가 함께 쓰는 공용 예외 클래스만 정의(로직 없음) — 'approval' 이름 규칙이 L2 policy 로 오분류. L7 저장소가 import 하려면 L1 이어야 함"
@@ -932,7 +932,7 @@
   "reason": "지도 구조 요약·지문·map_rev·diff·버전 고정 확인 규칙(순수 함수, 입출력 없음) — generic L4 오분류",
   "source": "manual"
  },
- "ai_orchestrator/gates/gate_types.py": {
+ "tools/gates/gate_types.py": {
   "layer": "L1",
   "role": "shared",
   "reason": "게이트 결과 타입(RiskLevel·GateVerdict·GateResult)만 담은 scripts 비의존 말단 계약 모듈 — scripts/common/schemas.py(L1)가 재수출하므로 L1 공유 계약(R2d-2 설계서 §4). 이름만 보고 L2 policy 로 오분류됨",

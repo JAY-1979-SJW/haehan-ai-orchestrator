@@ -1,6 +1,6 @@
 {
  "_comment": "폴더 승인 게이트(G16) 정본 — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더. 목록에 없는 폴더에 코드 파일이 생기면 차단된다. 항목 추가는 대표님 승인 후 PR 라벨 folder-approved 가 있어야 CI 를 통과한다(지휘창만 라벨을 붙인다). 삭제는 승인 불필요. kind: 도구·기능·공용 기반·레거시·시험·앱, status: approved | legacy_to_remove. 규칙: scripts/ops/folder_gate.py",
- "count": 359,
+ "count": 395,
  "folders": [
   {
    "path": ".",
@@ -2962,6 +2962,206 @@
    "status": "approved",
    "approved_at": "2026-10-08",
    "approved_by": "대표님(LOCAL_AGENT_BROWSER_TOOL 폴더 설계안 승인 2026-10-08, 22개 새 폴더안)"
+  },
+  {
+   "path": "tools/gates",
+   "purpose": "tools/gates — 이동 배치 자동 등록(1단계 승인 폴더, move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(1단계 폴더 정리 사전 승인) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/browser",
+   "purpose": "core/agent_runtime/browser — 폴더 이름 이동으로 옛 폴더 local_agent/browser 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/browser 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/browser/approval",
+   "purpose": "core/agent_runtime/browser/approval — 폴더 이름 이동으로 옛 폴더 local_agent/browser/approval 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/browser/approval 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/browser/bridge",
+   "purpose": "core/agent_runtime/browser/bridge — 폴더 이름 이동으로 옛 폴더 local_agent/browser/bridge 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/browser/bridge 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/common",
+   "purpose": "core/agent_runtime/common — 폴더 이름 이동으로 옛 폴더 local_agent/common 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/common 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/connection",
+   "purpose": "core/agent_runtime/connection — 폴더 이름 이동으로 옛 폴더 local_agent/connection 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/connection 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/gui",
+   "purpose": "core/agent_runtime/gui — 폴더 이름 이동으로 옛 폴더 local_agent/gui 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/gui 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/policy",
+   "purpose": "core/agent_runtime/policy — 폴더 이름 이동으로 옛 폴더 local_agent/policy 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/policy 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime",
+   "purpose": "core/agent_runtime — 이동 배치 자동 등록(1단계 승인 폴더, move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(1단계 폴더 정리 사전 승인) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime",
+   "purpose": "core/agent_runtime/runtime — 폴더 이름 이동으로 옛 폴더 local_agent/runtime 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/auth",
+   "purpose": "core/agent_runtime/runtime/auth — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/auth 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/auth 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/download",
+   "purpose": "core/agent_runtime/runtime/download — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/download 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/download 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/notify",
+   "purpose": "core/agent_runtime/runtime/notify — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/notify 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/notify 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/permission",
+   "purpose": "core/agent_runtime/runtime/permission — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/permission 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/permission 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/playwright",
+   "purpose": "core/agent_runtime/runtime/playwright — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/playwright 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/playwright 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/security_program",
+   "purpose": "core/agent_runtime/runtime/security_program — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/security_program 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/security_program 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/site_profile",
+   "purpose": "core/agent_runtime/runtime/site_profile — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/site_profile 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/site_profile 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/runtime/universal",
+   "purpose": "core/agent_runtime/runtime/universal — 폴더 이름 이동으로 옛 폴더 local_agent/runtime/universal 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/runtime/universal 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/tools",
+   "purpose": "core/agent_runtime/tools — 폴더 이름 이동으로 옛 폴더 local_agent/tools 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/tools 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "core/agent_runtime/user_present",
+   "purpose": "core/agent_runtime/user_present — 폴더 이름 이동으로 옛 폴더 local_agent/user_present 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 local_agent/user_present 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "tools/audits",
+   "purpose": "tools/audits — 폴더 이름 이동으로 옛 폴더 scripts/ops/audits 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 scripts/ops/audits 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "tools/audits/agent",
+   "purpose": "tools/audits/agent — 폴더 이름 이동으로 옛 폴더 scripts/ops/audits/agent 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 scripts/ops/audits/agent 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "tools/audits/app",
+   "purpose": "tools/audits/app — 폴더 이름 이동으로 옛 폴더 scripts/ops/audits/app 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 scripts/ops/audits/app 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "tools/audits/backend",
+   "purpose": "tools/audits/backend — 폴더 이름 이동으로 옛 폴더 scripts/ops/audits/backend 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 scripts/ops/audits/backend 승인 이전) — move_run.py 자동 등록"
+  },
+  {
+   "path": "tools/audits/google",
+   "purpose": "tools/audits/google — 폴더 이름 이동으로 옛 폴더 scripts/ops/audits/google 의 승인을 이전(move_run.py)",
+   "kind": "기능",
+   "status": "approved",
+   "approved_at": "2026-10-09",
+   "approved_by": "대표님(폴더 이름 이동 승인 — 옛 폴더 scripts/ops/audits/google 승인 이전) — move_run.py 자동 등록"
   }
  ]
 }

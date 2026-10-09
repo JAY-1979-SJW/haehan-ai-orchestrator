@@ -17,10 +17,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi import Path as PathParam
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.agent_dispatch import agent_dispatch_store as store
-from ai_orchestrator.agent_dispatch import agent_dispatch_service as service
 from ai_orchestrator.agent_dispatch import agent_dispatch_runner as runner
+from ai_orchestrator.agent_dispatch import agent_dispatch_service as service
+from ai_orchestrator.agent_dispatch import agent_dispatch_store as store
+from tools.gates.auth import require_role
 
 agent_dispatch_router = APIRouter(prefix="/ai-agent/dispatch", tags=["ai-agent-dispatch"])
 _ADMIN = Depends(require_role("admin", "owner"))

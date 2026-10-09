@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import pytest
 
-from local_agent.runtime.site_profile.browser_policy_integration import (
+from core.agent_runtime.runtime.site_profile.browser_policy_integration import (
     attach_with_policy,
     download_with_policy,
 )
-from local_agent.runtime.site_profile.browser_site_registry import (
+from core.agent_runtime.runtime.site_profile.browser_site_registry import (
     SitePolicy,
     clear_all,
     register_site,

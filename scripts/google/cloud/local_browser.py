@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 from urllib.parse import urlparse
 
-from local_agent.runtime.common_tool_runtime import (
+from core.agent_runtime.runtime.common_tool_runtime import (
     EXECUTION_LOCAL_AGENT,
     RISK_READ,
     TOOL_BROWSER,

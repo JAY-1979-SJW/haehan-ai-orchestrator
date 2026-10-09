@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT))
 TESTS_DIR = ROOT / "tests"
 FRONTEND_SRC = ROOT / "admin-web" / "src"
 from tests.app_ui_paths import assistant_route  # noqa: E402
+
 ROUTER_FILE = ROOT / "ai_orchestrator" / "routers" / "registry.py"
 APP_STATUS_ROUTER = ROOT / "ai_orchestrator" / "routers" / "app_status_router.py"
 DASHBOARD_PAGE = assistant_route("page.tsx")
@@ -77,7 +78,7 @@ def cycle_test():
 # ── audit script ─────────────────────────────────────────────────────────────
 class TestAuditScriptImportable:
     def test_audit_script_exists(self):
-        audit = ROOT / "scripts" / "ops" / "audits" / "app" / "audit_app_test_baseline_current_contract_sync.py"
+        audit = ROOT / "tools" / "audits" / "app" / "audit_app_test_baseline_current_contract_sync.py"
         assert audit.exists()
 
     def test_audit_script_importable(self):
@@ -85,7 +86,7 @@ class TestAuditScriptImportable:
 
         spec = importlib.util.spec_from_file_location(
             "audit_sync",
-            ROOT / "scripts" / "ops" / "audits" / "app" / "audit_app_test_baseline_current_contract_sync.py",
+            ROOT / "tools" / "audits" / "app" / "audit_app_test_baseline_current_contract_sync.py",
         )
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
@@ -96,7 +97,7 @@ class TestAuditScriptImportable:
 
         spec = importlib.util.spec_from_file_location(
             "audit_sync2",
-            ROOT / "scripts" / "ops" / "audits" / "app" / "audit_app_test_baseline_current_contract_sync.py",
+            ROOT / "tools" / "audits" / "app" / "audit_app_test_baseline_current_contract_sync.py",
         )
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)

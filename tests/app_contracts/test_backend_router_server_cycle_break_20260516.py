@@ -156,12 +156,12 @@ def test_canonical_endpoint_count_registered():
     기존 50 + naver_search_router(3) + ops_router(7) = 60개.
     naver_search_router/ops_router 는 cf69c5c/202fe85 에서 router.py 에 등록됨.
     """
-    # Runtime route count is locked by scripts/ops/audits/backend/audit_backend_runtime_contract.py.
+    # Runtime route count is locked by tools/audits/backend/audit_backend_runtime_contract.py.
     # 2026-09-29 defect_index #40: 여기서 자체적으로 app.routes 를 isinstance 필터링하던
     # 코드는 FastAPI 0.137+ 의 지연 include_router(_IncludedRouter) 를 못 뚫어 항상 0건을
     # 셌음(공허하게 실패하던 게 아니라 대조 기준 자체가 깨져 항상 실패 — 이번에 발견해서
     # audit 모듈이 이미 고친 iter_runtime_routes() 를 재사용하도록 교체, 중복 로직 제거).
-    from scripts.ops.audits.backend import audit_backend_runtime_contract as audit
+    from tools.audits.backend import audit_backend_runtime_contract as audit
 
     routes = audit.iter_runtime_routes()
 

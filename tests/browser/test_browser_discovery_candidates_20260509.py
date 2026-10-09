@@ -1,7 +1,7 @@
 """Browser Discovery Candidates 테스트."""
 from __future__ import annotations
 
-from local_agent.runtime.site_profile.browser_discovery_candidates import (
+from core.agent_runtime.runtime.site_profile.browser_discovery_candidates import (
     CANDIDATE_BUTTON,
     CANDIDATE_DESTRUCTIVE_BUTTON,
     CANDIDATE_DOWNLOAD_LINK,

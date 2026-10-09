@@ -12,8 +12,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))  # 루트 패키지(local_agent 등) 해석용
 from local_agent.network_bypass import urlopen_for_server
+
+from core.agent_runtime.connection.network_bypass import urlopen_for_server
 from scripts.common.app_paths import repo_root
-from local_agent.connection.network_bypass import urlopen_for_server
 
 ROOT = repo_root()
 SERVER_URL = "https://haehan-ai.kr/orchestrator"
@@ -178,7 +179,7 @@ def check_server(report: Report, *, live_server: bool) -> None:
 
 
 def check_playwright(report: Report) -> None:
-    from local_agent.runtime.playwright.playwright_bootstrap import check_playwright_status
+    from core.agent_runtime.runtime.playwright.playwright_bootstrap import check_playwright_status
 
     status = check_playwright_status()
     state = status.get("status")

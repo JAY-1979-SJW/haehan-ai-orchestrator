@@ -325,10 +325,10 @@ python -m pytest tests/test_google_tab_registry.py tests/test_google_site_engine
 python -m pytest tests/test_google_domain_readiness_audit.py -q
 python -m pytest tests/test_google_secret_action_gate.py tests/test_google_managed_console.py tests/test_google_workspace_basic.py tests/test_google_ads_signup.py tests/test_youtube_oauth.py -q
 python -m pytest tests/test_google_home_login_gate.py -q
-python scripts/ops/audits/google/audit_google_home_login_gate.py
+python tools/audits/google/audit_google_home_login_gate.py
 python -m pytest tests/test_google_vision_usage_gate.py -q
 python scripts/google/domain_readiness_audit.py
-python scripts/ops/audits/google/audit_google_automation_baseline_contract.py
+python tools/audits/google/audit_google_automation_baseline_contract.py
 python scripts/ops/quality/module_quality_gate.py --module repo_guard
 ```
 
@@ -371,4 +371,4 @@ Do not split all Google modules in one change.
   final-click-ready for Play release handoff: the agent prepares the target
   screen and leaves the final Create/Generate/Release approval to the user while
   still blocking raw secret output and final submit. The tracking command is:
-  `python scripts/ops/audits/google/audit_google_prefill_maturity.py --json`.
+  `python tools/audits/google/audit_google_prefill_maturity.py --json`.

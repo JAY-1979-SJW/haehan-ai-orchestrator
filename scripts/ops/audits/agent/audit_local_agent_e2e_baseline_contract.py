@@ -1,84 +1,27 @@
-"""Read-only audit for the locked local_agent_e2e baseline."""
-from __future__ import annotations
+# haehan-shim: tools.audits.agent.audit_local_agent_e2e_baseline_contract
+# 호환 shim: 실제 모듈은 tools.audits.agent.audit_local_agent_e2e_baseline_contract 로 이동했다 (tools/audits/agent/audit_local_agent_e2e_baseline_contract.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/devflow/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-import sys
-from pathlib import Path
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
+    from pathlib import Path as _Path
 
-ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    _root = str(_Path(__file__).resolve().parents[4])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
-LOCAL_AGENT_BASELINE = ROOT / "docs" / "baseline" / "modules" / "LOCAL_AGENT_E2E_BASELINE.md"
-MODULE_BASELINE = ROOT / "docs" / "baseline" / "MODULE_BASELINE.md"
-
-REQUIRED_LOCAL_AGENT_PHRASES = (
-    "Status: LOCKED",
-    "Baseline ID: HAEHAN-LOCAL-AGENT-E2E-BASELINE-01",
-    "authenticated local-agent WebSocket connection",
-    "`agent_id + device_token` validation flow",
-    "receiving only server-dispatched tasks",
-    "unapproved high-risk task exclusion from dispatch",
-    "authenticated local-agent WebSocket",
-    "server-dispatched task",
-    "unapproved high-risk task",
-    "raw secret, token, cookie, session, password, OTP, or Authorization header",
-    "delivered state update",
-    "running state update",
-    "completed state update",
-    "failed state update",
-    "Local-agent WebSocket must require `agent_id + device_token`.",
-    "Unapproved high-risk tasks must not appear in the local-agent dispatch queue.",
-    "A single local-agent WebSocket session must receive at most one active task at",
-    "Concurrent server submissions must remain queued and drain one by one",
-    "True simultaneous local execution requires multiple registered agents",
-    "queued -> delivered -> running -> completed",
-    "waiting_approval -> queued -> delivered -> running -> completed | failed",
-    "execute server-contract-bypassing user-direct commands",
-    "accept unauthenticated WebSocket tasks",
-    "python scripts/ops/audits/agent/audit_local_agent_e2e_flow_contract.py",
-    "python scripts/ops/smoke/live_parallel_task_dispatch_smoke.py --temp-admin --count 5 --concurrency 5 --timeout 90",
-    "python scripts/ops/quality/module_quality_gate.py --module local_agent_e2e",
-)
-
-REQUIRED_MODULE_BASELINE_PHRASES = (
-    "### local_agent_e2e",
-    "docs/baseline/modules/LOCAL_AGENT_E2E_BASELINE.md",
-)
+    _runpy.run_module("tools.audits.agent.audit_local_agent_e2e_baseline_contract", run_name="__main__")
+    raise SystemExit
 
 
-def missing_phrases(text: str, phrases: tuple[str, ...]) -> list[str]:
-    return [phrase for phrase in phrases if phrase not in text]
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-def audit() -> tuple[bool, list[str]]:
-    from scripts.common.audit_cli import BaselineRefSpec, audit_baseline_with_module_ref
-
-    return audit_baseline_with_module_ref(
-        BaselineRefSpec(
-            baseline=LOCAL_AGENT_BASELINE,
-            baseline_missing="docs/baseline/modules/LOCAL_AGENT_E2E_BASELINE.md missing",
-            baseline_phrases=REQUIRED_LOCAL_AGENT_PHRASES,
-            baseline_fail_prefix="local_agent_e2e baseline missing phrase(s): ",
-            module_baseline=MODULE_BASELINE,
-            module_missing="docs/baseline/MODULE_BASELINE.md missing",
-            module_phrases=REQUIRED_MODULE_BASELINE_PHRASES,
-            module_fail_prefix="module baseline missing local_agent_e2e reference(s): ",
-            success=[
-                "LOCAL_AGENT_E2E_BASELINE exists and is locked",
-                "local-agent auth/dispatch/state/redaction boundaries are documented",
-                "module baseline references LOCAL_AGENT_E2E_BASELINE",
-            ],
-        ),
-        missing_phrases,
-    )
-
-
-def main() -> int:
-    from scripts.common.audit_cli import report_findings
-
-    ok, findings = audit()
-    return report_findings(ok, findings, "LOCAL_AGENT_E2E_BASELINE_CONTRACT")
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+_install(_il.import_module("tools.audits.agent.audit_local_agent_e2e_baseline_contract"), globals(), _sys.modules)

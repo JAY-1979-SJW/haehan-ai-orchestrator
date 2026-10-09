@@ -1,85 +1,27 @@
-"""Read-only audit for the locked app baseline document."""
-from __future__ import annotations
+# haehan-shim: tools.audits.app.audit_app_baseline_contract
+# 호환 shim: 실제 모듈은 tools.audits.app.audit_app_baseline_contract 로 이동했다 (tools/audits/app/audit_app_baseline_contract.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/devflow/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-import sys
-from pathlib import Path
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
+    from pathlib import Path as _Path
 
-ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    _root = str(_Path(__file__).resolve().parents[4])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
-BASELINE = ROOT / "docs" / "baseline" / "APP_BASELINE.md"
-GOVERNANCE = ROOT / "docs" / "architecture" / "development_governance_rules_20260515.md"
-
-REQUIRED_BASELINE_PHRASES = (
-    "Status: LOCKED",
-    "Baseline ID: HAEHAN-APP-BASELINE-01",
-    "The server is the final operational source of truth for HAEHAN.",
-    "The final runtime baseline is server-first:",
-    "Desktop and local-agent code are subordinate execution layers.",
-    "Desktop and local-agent code must not become an independent source of truth",
-    "must not register persistent autostart",
-    "server task creation",
-    "local-agent WebSocket authentication",
-    "AUTH_ENABLED",
-    "Unapproved high-risk tasks must not appear in the local-agent dispatch queue",
-    "python scripts/ops/quality/required_quality_gate.py",
-    "python scripts/ops/quality/module_quality_gate.py --module backend_core",
-    "python scripts/ops/quality/module_quality_gate.py --module local_agent_e2e",
-    "input/output contract",
-    "authorization boundary",
-    "state changes",
-    "regression gate",
-    "local verification is not the final verdict",
-    "the server repository HEAD matches the intended release HEAD",
-    "server smoke checks pass through the public route or server-side nginx route",
-    "server stress checks pass through the public route or server-side nginx route",
-    "post-deploy logs are checked for new runtime errors",
-)
-
-REQUIRED_GOVERNANCE_PHRASES = (
-    "docs/baseline/APP_BASELINE.md",
-    "The server is the final operational source of truth for HAEHAN.",
-    "Desktop and local-agent code are subordinate execution layers.",
-    "Persistent local autostart, background recovery, and always-on monitoring are",
-    "input/output contract",
-    "authorization boundary",
-    "state changes",
-    "regression gate",
-)
+    _runpy.run_module("tools.audits.app.audit_app_baseline_contract", run_name="__main__")
+    raise SystemExit
 
 
-def audit() -> tuple[bool, list[str]]:
-    failures: list[str] = []
-    if not BASELINE.exists():
-        return False, ["docs/baseline/APP_BASELINE.md missing"]
-    if not GOVERNANCE.exists():
-        return False, ["development governance rules missing"]
-
-    baseline_text = BASELINE.read_text(encoding="utf-8", errors="replace")
-    governance_text = GOVERNANCE.read_text(encoding="utf-8", errors="replace")
-
-    missing_baseline = [phrase for phrase in REQUIRED_BASELINE_PHRASES if phrase not in baseline_text]
-    if missing_baseline:
-        failures.append("baseline missing phrase(s): " + ", ".join(missing_baseline))
-
-    missing_governance = [phrase for phrase in REQUIRED_GOVERNANCE_PHRASES if phrase not in governance_text]
-    if missing_governance:
-        failures.append("governance missing phrase(s): " + ", ".join(missing_governance))
-
-    return not failures, failures or [
-        "APP_BASELINE exists and is locked",
-        "governance rules reference APP_BASELINE",
-        "4-point development checklist is required",
-    ]
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-def main() -> int:
-    from scripts.common.audit_cli import report_findings
-
-    ok, findings = audit()
-    return report_findings(ok, findings, "APP_BASELINE_CONTRACT")
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+_install(_il.import_module("tools.audits.app.audit_app_baseline_contract"), globals(), _sys.modules)

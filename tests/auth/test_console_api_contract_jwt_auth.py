@@ -18,11 +18,9 @@ import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.core import config
-from ai_orchestrator.auth import user_auth_router as user_auth
-from ai_orchestrator.gates import auth as gate
-from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.auth import auth_audit, user_db
+from ai_orchestrator.auth import user_auth_router as user_auth
+from ai_orchestrator.core import config
 from tests.console_api_contract_support import (
     API,
     basic,
@@ -30,6 +28,8 @@ from tests.console_api_contract_support import (
     enable_basic_auth,
     make_client,
 )
+from tools.gates import auth as gate
+from tools.gates.auth import require_role
 
 CHAT = f"{API}/chat/sessions"
 RUN = f"{API}/ai-agent/run"

@@ -1,4 +1,4 @@
-from scripts.ops.audits.app import audit_app_development_standard as audit
+from tools.audits.app import audit_app_development_standard as audit
 
 
 def test_app_development_standard_contract_passes():
@@ -128,8 +128,8 @@ def test_app_development_standard_requires_user_acceptance_checklist():
 def test_app_development_standard_requires_verification():
     text = audit.STANDARD.read_text(encoding="utf-8")
 
-    assert "python scripts/ops/audits/app/audit_app_development_standard.py" in text
-    assert "python scripts/ops/audits/app/audit_app_structure_contract.py" in text
+    assert "python tools/audits/app/audit_app_development_standard.py" in text
+    assert "python tools/audits/app/audit_app_structure_contract.py" in text
     assert "python -m pytest tests/test_app_development_standard.py -q" in text
 
 

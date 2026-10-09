@@ -33,7 +33,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     import ai_orchestrator.agent_hub.registry.common as _reg_common
     import ai_orchestrator.agent_hub.registry.facade as _reg
     import ai_orchestrator.audit.audit_logger as _al
-    import ai_orchestrator.gates.approval as _ap
+    import tools.gates.approval as _ap
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
@@ -93,7 +93,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.agent_hub.router.root import local_agent_router
-    from ai_orchestrator.gates.auth import get_current_user
+    from tools.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -423,7 +423,7 @@ def test_double_approve_is_idempotent(admin_user):
 
 
 def test_expired_token_rejects_task(admin_user, monkeypatch):
-    import ai_orchestrator.gates.approval as _ap
+    import tools.gates.approval as _ap
 
     client = _make_test_client(admin_user)
     agent_id, _ = _register(client)
@@ -453,7 +453,7 @@ def test_expired_token_rejects_task(admin_user, monkeypatch):
 
 
 def test_client_process_task_high_risk_without_approved_flag():
-    from local_agent.connection.websocket_client import process_task
+    from core.agent_runtime.connection.websocket_client import process_task
 
     r = process_task(
         {
@@ -470,8 +470,8 @@ def test_client_process_task_high_risk_without_approved_flag():
 
 def test_client_process_task_approved_capture_runs_action(monkeypatch, tmp_path):
     """approved=True + capture_screenshot → action 실제 호출 경로 확인."""
-    import local_agent.connection.actions as _actions
-    import local_agent.connection.websocket_client as _wsc
+    import core.agent_runtime.connection.actions as _actions
+    import core.agent_runtime.connection.websocket_client as _wsc
 
     called = {}
 
@@ -505,8 +505,8 @@ def test_client_process_task_approved_capture_runs_action(monkeypatch, tmp_path)
 
 
 def test_action_capture_screenshot_returns_basename_only(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
 
@@ -540,8 +540,8 @@ def test_action_capture_screenshot_returns_basename_only(tmp_path, monkeypatch):
 
 def test_action_capture_screenshot_dependency_missing(tmp_path, monkeypatch):
     """Pillow / mss 둘 다 없으면 SCREENSHOT_DEPENDENCY_MISSING 으로 실패."""
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
 
@@ -562,7 +562,7 @@ def test_action_capture_screenshot_dependency_missing(tmp_path, monkeypatch):
 
 def test_capture_screenshot_in_auto_exec_sets_both_sides():
     from ai_orchestrator.agent_hub.registry.facade import AUTO_EXECUTE_VIA_AGENT as _S
-    from local_agent.connection.websocket_client import _AUTO_EXECUTE_VIA_AGENT as _C
+    from core.agent_runtime.connection.websocket_client import _AUTO_EXECUTE_VIA_AGENT as _C
 
     assert "capture_screenshot" in _S
     assert "capture_screenshot" in _C
@@ -634,8 +634,8 @@ def test_h2_allowlist_includes_screenshot_keys():
 
 
 def test_h2_action_returns_safe_metadata_keys(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
 
@@ -674,8 +674,8 @@ def test_h2_action_returns_safe_metadata_keys(tmp_path, monkeypatch):
 
 
 def test_h2_action_data_no_full_path_or_raw_image(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
 
@@ -714,8 +714,8 @@ def test_h2_action_data_no_full_path_or_raw_image(tmp_path, monkeypatch):
 
 
 def test_h2_storage_ref_two_tier_when_no_agent_id(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
 
@@ -785,8 +785,8 @@ def test_h2_dry_run_data_preserved_through_strip():
 
 def test_h2_ws_client_injects_agent_id_and_approval_id():
     """process_task 가 capture_screenshot 에 _agent_id 와 _approval_id 를 주입."""
-    import local_agent.connection.actions as _actions
-    import local_agent.connection.websocket_client as _wsc
+    import core.agent_runtime.connection.actions as _actions
+    import core.agent_runtime.connection.websocket_client as _wsc
 
     captured = {}
 
@@ -824,9 +824,9 @@ def test_h2_ws_client_injects_agent_id_and_approval_id():
 
 def test_h2_ws_roundtrip_persists_screenshot_result_data(tmp_path, monkeypatch):
     """승인 → WS dispatch → process_task → result_data 저장 전체 경로."""
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
-    from local_agent.connection.websocket_client import process_task
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
+    from core.agent_runtime.connection.websocket_client import process_task
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
 

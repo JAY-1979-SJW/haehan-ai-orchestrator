@@ -97,7 +97,7 @@ The module boundary map remains the ownership source for parallel work:
 ```text
 configs/module_boundaries.json
 docs/architecture/module_boundary_map_20260523.md
-scripts/ops/audits/app/audit_module_boundaries.py
+tools/audits/app/audit_module_boundaries.py
 ```
 
 Parallel work is not allowed for live deploy, server restart, process kill,
@@ -234,9 +234,9 @@ screens, connection screens, or control-surface behavior changes, update:
 Minimum structure verification:
 
 ```text
-python scripts/ops/audits/app/audit_app_development_standard.py
-python scripts/ops/audits/app/audit_app_structure_contract.py
-python scripts/ops/audits/app/audit_standard_workflow_contract.py
+python tools/audits/app/audit_app_development_standard.py
+python tools/audits/app/audit_app_structure_contract.py
+python tools/audits/app/audit_standard_workflow_contract.py
 python -m pytest tests/test_app_development_standard.py -q
 python -m pytest tests/test_app_structure_contract.py -q
 python -m pytest tests/test_standard_workflow_contract.py -q

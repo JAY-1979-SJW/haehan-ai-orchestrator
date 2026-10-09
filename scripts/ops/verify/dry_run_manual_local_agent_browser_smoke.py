@@ -25,11 +25,11 @@ OUT_OF_SCOPE = {
 }
 REQUIRED_FILES = (
     "docs/design/authenticated_local_agent_dispatch_dry_run_20260523.md",
-    "scripts/ops/audits/agent/audit_authed_local_agent_dispatch_dry_run.py",
+    "tools/audits/agent/audit_authed_local_agent_dispatch_dry_run.py",
     "scripts/ops/verify/verify_live_browser_readonly_dispatch.py",
-    "local_agent/agent.py",
-    "local_agent/connection/websocket_client.py",
-    "local_agent/browser/browser_readonly_runtime.py",
+    "core/agent_runtime/agent.py",
+    "core/agent_runtime/connection/websocket_client.py",
+    "core/agent_runtime/browser/browser_readonly_runtime.py",
     "ai_orchestrator/agent_hub/router/root.py",
     "ai_orchestrator/contracts/local_agent_actions.py",
     "ai_orchestrator/agent_hub/policy/risk_policy.py",
@@ -131,7 +131,7 @@ def _dry_run_config_actions(findings):
 
 
 def _dry_run_ws_verifier(findings):
-    ws = read("local_agent/connection/websocket_client.py")
+    ws = read("core/agent_runtime/connection/websocket_client.py")
     if "await asyncio.to_thread(process_task, task)" in ws:
         add(findings, "PASS", "playwright_off_event_loop", "process_task uses to_thread")
     else:

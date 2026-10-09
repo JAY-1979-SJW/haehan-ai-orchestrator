@@ -26,12 +26,12 @@ from ai_orchestrator.contracts.user_present_ws_contract import (
     STATUS_USER_CONFIRMED,
     STATUS_WAITING_FOR_USER,
 )
-from local_agent.connection.websocket_client import process_user_present_task
-from local_agent.user_present.user_present_state_store import (
+from core.agent_runtime.connection.websocket_client import process_user_present_task
+from core.agent_runtime.user_present.user_present_state_store import (
     STATE_WAITING_FOR_USER,
     UserPresentStateStore,
 )
-from local_agent.user_present.user_present_ws_adapter import (
+from core.agent_runtime.user_present.user_present_ws_adapter import (
     build_cancelled_status_event,
     build_confirmed_status_event,
     build_failed_status_event,
@@ -309,14 +309,14 @@ class TestServerHandler:
 
 class TestWebSocketCompatibility:
     def test_process_task_still_works(self):
-        from local_agent.connection.websocket_client import process_task
+        from core.agent_runtime.connection.websocket_client import process_task
 
         task = {"task_id": "tid_test", "action": "ping", "params": {}, "risk_level": "low"}
         result = process_task(task)
         assert result["type"] == "result"
 
     def test_user_present_task_does_not_break_process_task(self):
-        from local_agent.connection.websocket_client import process_task, process_user_present_task
+        from core.agent_runtime.connection.websocket_client import process_task, process_user_present_task
 
         assert callable(process_task)
         assert callable(process_user_present_task)
@@ -325,7 +325,7 @@ class TestWebSocketCompatibility:
         from ai_orchestrator.contracts.user_present_ws_contract import (
             _VALID_STATUS_VALUES,
         )
-        from local_agent.browser.bridge.browser_websocket_schema import VALID_TASK_STATUS
+        from core.agent_runtime.browser.bridge.browser_websocket_schema import VALID_TASK_STATUS
 
         assert VALID_TASK_STATUS.isdisjoint(_VALID_STATUS_VALUES)
 
@@ -415,7 +415,7 @@ class TestCompatibility:
         assert task is not None
 
     def test_compatible_with_user_present_ui_server(self):
-        from local_agent.user_present.user_present_ui_server import _FASTAPI_AVAILABLE
+        from core.agent_runtime.user_present.user_present_ui_server import _FASTAPI_AVAILABLE
 
         # ui_server 임포트 가능 여부 확인 (실제 서버 실행 없음)
         assert _FASTAPI_AVAILABLE is True or _FASTAPI_AVAILABLE is False
@@ -434,7 +434,7 @@ def _call_process_user_present_task(
     store: "UserPresentStateStore",
 ) -> dict:
     """process_user_present_task를 store 주입하여 호출하는 테스트 헬퍼."""
-    from local_agent.user_present.user_present_ws_adapter import create_local_user_present_task_from_ws
+    from core.agent_runtime.user_present.user_present_ws_adapter import create_local_user_present_task_from_ws
 
     result = create_local_user_present_task_from_ws(msg, store=store)
     workflow_run_id = msg.get("workflow_run_id", "")

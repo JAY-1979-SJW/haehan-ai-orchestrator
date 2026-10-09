@@ -280,7 +280,7 @@ The following checks must pass before claiming the site work baseline is ready:
 - Python compile for routers and audit script.
 - Unit tests for Google, Naver, SmartStore, Hiworks, Gabia, YouTube, and SSO
   runtime contracts.
-- `scripts/ops/audits/app/audit_site_work_function_baseline.py`
+- `tools/audits/app/audit_site_work_function_baseline.py`
 - `scripts/ops/quality/module_quality_gate.py --module repo_guard`
 
 Live browser checks are useful evidence, but they are not required by this

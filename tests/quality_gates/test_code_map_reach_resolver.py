@@ -11,16 +11,16 @@ from scripts.ops.code_map.reach import Resolver
 
 # 이 저장소의 실제 충돌 배치를 그대로 본뜬 파일 목록
 FILES = [
-    "local_agent/__init__.py",
-    "local_agent/agent.py",
+    "core/agent_runtime/__init__.py",
+    "core/agent_runtime/agent.py",
     "scripts/local_agent.py",
-    "scripts/local_agent/__init__.py",
+    "scripts/core/agent_runtime/__init__.py",
     "scripts/local_agent/router.py",
     "scripts/site_engine/login_session.py",
     "scripts/google/auth.py",
     "scripts/common/logger.py",
     "logger.py",
-    "ai_orchestrator/local_agent/__init__.py",
+    "ai_orchestrator/core/agent_runtime/__init__.py",
     "ai_orchestrator/local_agent/actions.py",
     "ai_orchestrator/tests/test_x.py",
     "ai_orchestrator/agent_hub/registry/facade.py",
@@ -34,20 +34,20 @@ def resolve(rel, module, names=(), level=0):
 def test_from_import_prefers_the_location_where_the_name_is_a_submodule():
     targets, status = resolve("scripts/site_engine/login_session.py", "local_agent", ["agent"])
     assert status == "internal"
-    assert "local_agent/agent.py" in targets  # 루트 패키지의 서브모듈
+    assert "core/agent_runtime/agent.py" in targets  # 루트 패키지의 서브모듈
     assert "scripts/local_agent.py" not in targets  # 같은 이름의 scripts 모듈이 아니다
 
 
 def test_the_same_holds_for_other_submodules_of_the_root_package():
     targets, _ = resolve("scripts/google/auth.py", "local_agent", ["agent"])
-    assert "local_agent/agent.py" in targets and "scripts/local_agent.py" not in targets
+    assert "core/agent_runtime/agent.py" in targets and "scripts/local_agent.py" not in targets
 
 
 def test_without_a_matching_submodule_the_nearest_base_still_wins():
     """이름이 서브모듈이 아니면(예: 클래스·함수) 기존 순서(가까운 폴더 먼저)를 유지한다."""
     targets, status = resolve("scripts/site_engine/login_session.py", "local_agent", ["SomeClass"])
     assert status == "internal" and "scripts/local_agent.py" in targets
-    assert "local_agent/agent.py" not in targets
+    assert "core/agent_runtime/agent.py" not in targets
 
 
 def test_plain_import_statement_is_unchanged():
@@ -59,7 +59,7 @@ def test_sub_roots_keep_resolving_to_their_own_package():
     """ai_orchestrator 안의 파일은 가까운 ai_orchestrator/local_agent 를 계속 쓴다(루트 우선으로 바꾸면 깨진다)."""
     targets, _ = resolve("ai_orchestrator/tests/test_x.py", "local_agent", ["actions"])
     assert "ai_orchestrator/local_agent/actions.py" in targets
-    assert "local_agent/agent.py" not in targets
+    assert "core/agent_runtime/agent.py" not in targets
 
 
 def test_relative_imports_are_not_affected():

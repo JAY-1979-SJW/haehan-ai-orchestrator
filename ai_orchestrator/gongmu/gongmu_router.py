@@ -27,8 +27,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi import Path as PathParam
 from pydantic import BaseModel, Field
 
-from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.gongmu import gongmu_service as service
+from tools.gates.auth import require_role
 
 gongmu_router = APIRouter(prefix="/gongmu", tags=["gongmu"])
 _ADMIN = Depends(require_role("admin", "owner"))

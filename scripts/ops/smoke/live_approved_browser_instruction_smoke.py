@@ -28,7 +28,7 @@ from pathlib import Path
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
 sys.path.insert(0, str(ROOT))
 
-from local_agent.connection.network_bypass import (  # noqa: E402
+from core.agent_runtime.connection.network_bypass import (  # noqa: E402
     direct_child_env,
     urlopen_for_server,
 )

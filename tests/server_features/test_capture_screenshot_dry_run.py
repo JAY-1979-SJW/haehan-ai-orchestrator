@@ -33,7 +33,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     import ai_orchestrator.agent_hub.registry.common as _reg_common
     import ai_orchestrator.agent_hub.registry.facade as _reg
     import ai_orchestrator.audit.audit_logger as _al
-    import ai_orchestrator.gates.approval as _ap
+    import tools.gates.approval as _ap
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
@@ -62,7 +62,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.agent_hub.router.root import local_agent_router
-    from ai_orchestrator.gates.auth import get_current_user
+    from tools.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -86,8 +86,8 @@ def _register(client) -> tuple[str, str]:
 
 
 def test_dry_run_does_not_create_any_png_file(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
 
@@ -111,8 +111,8 @@ def test_dry_run_does_not_create_any_png_file(tmp_path, monkeypatch):
 
 
 def test_dry_run_summary_has_no_full_path_or_basename(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
     monkeypatch.setattr(_actions, "_grab_screen", lambda: (_ for _ in ()).throw(AssertionError("no-grab")))
@@ -136,8 +136,8 @@ def test_dry_run_summary_has_no_full_path_or_basename(tmp_path, monkeypatch):
 
 
 def test_dry_run_summary_contains_upload_false(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
     result = _actions.action_capture_screenshot(
@@ -160,8 +160,8 @@ def test_dry_run_summary_contains_upload_false(tmp_path, monkeypatch):
 
 
 def test_dry_run_reports_backend_none_gracefully(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
     monkeypatch.setattr(_actions, "_detect_backend", lambda: "none")
@@ -183,8 +183,8 @@ def test_dry_run_reports_backend_none_gracefully(tmp_path, monkeypatch):
 
 
 def test_real_capture_without_approved_flag_is_rejected(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
     # _grab_screen 은 호출되지 말아야 한다
@@ -213,8 +213,8 @@ def test_real_capture_without_approved_flag_is_rejected(tmp_path, monkeypatch):
 
 
 def test_real_capture_without_task_id_is_rejected(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
     monkeypatch.setattr(
@@ -238,8 +238,8 @@ def test_real_capture_without_task_id_is_rejected(tmp_path, monkeypatch):
 
 
 def test_real_capture_result_basename_only(tmp_path, monkeypatch):
-    import local_agent.common.config as _cfg
-    import local_agent.connection.actions as _actions
+    import core.agent_runtime.common.config as _cfg
+    import core.agent_runtime.connection.actions as _actions
 
     monkeypatch.setattr(_cfg, "LOCAL_AGENT_SCREENSHOT_DIR", tmp_path)
 

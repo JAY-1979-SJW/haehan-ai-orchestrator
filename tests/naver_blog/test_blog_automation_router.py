@@ -8,10 +8,10 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.connectors.naver_blog import automation_router as B
 from scripts.naver.blog.automation import runner as N
 from scripts.naver.blog.automation import store as S
+from tools.gates.auth import get_current_user
 
 NOW = datetime(2026, 10, 5, 9, 3)
 FRESH_RESEARCH = {

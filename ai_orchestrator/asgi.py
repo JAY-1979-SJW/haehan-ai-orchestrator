@@ -6,13 +6,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from ai_orchestrator.connectors.naver_search.naver_search_runner import schedule_loop
 from ai_orchestrator.paths import (
     bootstrap as _runtime_bootstrap,  # noqa: F401 - 저장소(DB)가 열리기 전에 데이터 폴더 준비·이행(맨 먼저 실행돼야 함)
 )
 
 from .core import config
 from .core.config import APP_HOST, APP_PORT
-from ai_orchestrator.connectors.naver_search.naver_search_runner import schedule_loop
 from .core.logging_setup import setup_logging
 from .routers import app_actions
 from .routers.registry import router
@@ -133,7 +133,7 @@ def _connect_gate_audit() -> None:
     게이트 핵심(gate_core)은 scripts 를 import 하지 않으므로(R2d-2 설계서 §4, 순환 해소) 감사 싱크를 여기서 주입한다.
     scripts.common.gate(shim)를 import 하는 CLI·스크립트 경로는 shim 이 같은 싱크를 등록한다.
     """
-    from ai_orchestrator.gates.gate_core import set_audit_sink
+    from tools.gates.gate_core import set_audit_sink
 
     def _audit(name: str, **fields) -> None:
         from scripts.common.op_log import log_op

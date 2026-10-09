@@ -7,8 +7,8 @@ import pytest
 
 from ai_orchestrator.agent_hub.registry import facade as reg
 from ai_orchestrator.auth import registration_codes as rc
-from local_agent.connection import connection_diagnostics as cd
-from scripts.ops.audits.agent import audit_local_desktop_agent_connection as audit
+from core.agent_runtime.connection import connection_diagnostics as cd
+from tools.audits.agent import audit_local_desktop_agent_connection as audit
 
 
 @pytest.fixture(autouse=True)
@@ -369,5 +369,5 @@ def test_regression_registration_codes_imports():
 
 
 def test_regression_websocket_client_imports():
-    from local_agent.connection import websocket_client
+    from core.agent_runtime.connection import websocket_client
     assert hasattr(websocket_client, "run_forever")

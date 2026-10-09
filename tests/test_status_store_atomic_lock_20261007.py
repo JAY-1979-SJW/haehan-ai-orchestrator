@@ -1,4 +1,4 @@
-"""local_agent/connection/status_store.py — 원자적 잠금·상태 저장 (T4 R10).
+"""core/agent_runtime/connection/status_store.py — 원자적 잠금·상태 저장 (T4 R10).
 
 acquire_lock()의 check-then-set 레이스와 write_status()의 비원자적 write_text()를
 O_CREAT|O_EXCL + tmp+replace로 고친 것을 확인한다.
@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from local_agent.connection import status_store as ss
+from core.agent_runtime.connection import status_store as ss
 
 
 @pytest.fixture(autouse=True)

@@ -13,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 FRONTEND_ROOT = REPO_ROOT / "admin-web" / "src"
 ASSISTANT_APP = FRONTEND_ROOT / "app" / "assistant"
 from tests.app_ui_paths import assistant_route  # noqa: E402
+
 ASSISTANT_COMP = FRONTEND_ROOT / "components" / "assistant"
 API_CLIENT = FRONTEND_ROOT / "lib" / "assistant" / "api.ts"
 TYPES_FILE = FRONTEND_ROOT / "types" / "assistant.ts"
@@ -32,7 +33,7 @@ def _all_frontend() -> list[Path]:
 # ── 1. audit script import ────────────────────────────────────────────────────
 
 def test_audit_script_importable():
-    import scripts.ops.audits.app.audit_app_ui_readonly_backend_status_cards  # noqa: F401
+    import tools.audits.app.audit_app_ui_readonly_backend_status_cards  # noqa: F401
 
 
 # ── 2. Dashboard status card 보강 ─────────────────────────────────────────────
@@ -224,25 +225,25 @@ def test_no_password_raw():
 # ── 10. 이전 공정 회귀 ────────────────────────────────────────────────────────
 
 def test_no_conflict_with_readonly_api_wiring():
-    import scripts.ops.audits.app.audit_app_ui_shell_readonly_api_wiring as m
+    import tools.audits.app.audit_app_ui_shell_readonly_api_wiring as m
     report = m.run_audit()
     assert report.verdict in (m.VERDICT_READY, m.VERDICT_WARN)
 
 
 def test_no_conflict_with_browser_smoke():
-    import scripts.ops.audits.app.audit_app_ui_shell_browser_smoke as m
+    import tools.audits.app.audit_app_ui_shell_browser_smoke as m
     report = m.run_audit()
     assert report.verdict in (m.VERDICT_PASS, m.VERDICT_WARN)
 
 
 def test_no_conflict_with_skeleton():
-    import scripts.ops.audits.app.audit_app_ui_shell_skeleton as m
+    import tools.audits.app.audit_app_ui_shell_skeleton as m
     report = m.run_audit()
     assert report.verdict in (m.VERDICT_READY, m.VERDICT_WARN)
 
 
 def test_no_conflict_with_mvp_design():
-    import scripts.ops.audits.app.audit_app_foundation_mvp_design as m
+    import tools.audits.app.audit_app_foundation_mvp_design as m
     report = m.run_audit()
     assert report.verdict in (m.VERDICT_READY, m.VERDICT_WARN)
 
@@ -250,7 +251,7 @@ def test_no_conflict_with_mvp_design():
 # ── 11. audit verdict ─────────────────────────────────────────────────────────
 
 def test_audit_verdict_ready_or_warn():
-    import scripts.ops.audits.app.audit_app_ui_readonly_backend_status_cards as m
+    import tools.audits.app.audit_app_ui_readonly_backend_status_cards as m
     report = m.run_audit()
     assert report.verdict in (m.VERDICT_READY, m.VERDICT_WARN), \
         f"verdict={report.verdict}"

@@ -9,8 +9,8 @@ import types
 
 import pytest
 
-import local_agent.runtime.playwright.playwright_bootstrap as bootstrap
-from local_agent.runtime.playwright.playwright_bootstrap import (
+import core.agent_runtime.runtime.playwright.playwright_bootstrap as bootstrap
+from core.agent_runtime.runtime.playwright.playwright_bootstrap import (
     _ALL_STATES,
     BROWSER_POLICY,
     NETWORK_BLOCKED,

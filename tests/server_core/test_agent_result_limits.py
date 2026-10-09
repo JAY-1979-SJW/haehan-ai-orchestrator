@@ -7,7 +7,7 @@ def test_result_full_limit_single_source():
     from ai_orchestrator.agent_hub.redaction import _RESULT_DATA_LONG_KEYS
     from ai_orchestrator.contracts import agent_result_limits as lim
     from ai_orchestrator.site_work import ai_agent_router as router
-    from local_agent.connection import actions
+    from core.agent_runtime.connection import actions
 
     assert lim.RESULT_FULL_MAX_CHARS == 20000  # 값은 바꾸지 않는다(통합만)
     assert actions._RESULT_FULL_MAX_CHARS == lim.RESULT_FULL_MAX_CHARS

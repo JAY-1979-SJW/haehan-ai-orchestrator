@@ -68,7 +68,7 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
 
 1. ~~**ABS-PATH-LITERAL 172건 재검토**~~ — **완료(2026-09-28 2차 세션)**. 173건 실측 결과:
    - 테스트 파일 104건 = 전부 가짜 픽스처(`C:\path\file.exe` 류) 확인, 문제 없음.
-   - 비-테스트 69건 중 **실제 버그 1건 발견·수정**: `ai_orchestrator/gates/risk_classifier.py:7`
+   - 비-테스트 69건 중 **실제 버그 1건 발견·수정**: `tools/gates/risk_classifier.py:7`
      민감 경로 목록에 `"C:/Users/skyjw/.ssh/"`가 사용자명 하드코딩돼 있어, 다른 계정/PC에서 실행하면
      SSH 디렉터리 보안 감지가 조용히 무력화되던 문제. `Path.home()` 기반 동적 계산으로 수정,
      `test_risk_classifier.py` 5개 통과·ruff·layer audit 확인. (미커밋 — 다음 세션에서 커밋 필요)
@@ -133,12 +133,12 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
      `scripts/naver/cafe/collection/cafe_explorer.py:main`(38) ·
      `scripts/ops/code_map/modules.py:main`(38) · `scripts/ops/repo_gates/codebase_layer_audit.py:classify_path`(35) ·
      `local_agent_redaction.py:_strip_result_data`(32) ·
-     `scripts/ops/audits/google/audit_google_automation_baseline_contract.py:audit`(32) ·
-     `scripts/ops/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py:run_audit`(32) ·
-     `scripts/ops/audits/app/audit_site_sso_subdomain_runtime_baseline.py:audit`(33) ·
+     `tools/audits/google/audit_google_automation_baseline_contract.py:audit`(32) ·
+     `tools/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py:run_audit`(32) ·
+     `tools/audits/app/audit_site_sso_subdomain_runtime_baseline.py:audit`(33) ·
      `scripts/naver/mail/collection/inbox_collector.py:collect_inbox`(34) ·
      `browser/agent.py:_cli`(30) · `scripts/explorer/site_crawler.py:crawl_site`(31) ·
-     `scripts/ops/audits/backend/audit_backend_operation_final_closeout.py:run_audit`(30).
+     `tools/audits/backend/audit_backend_operation_final_closeout.py:run_audit`(30).
      대부분 CLI `main()`의 긴 if/elif 분기라 구조적으로는 이해되지만, `cdp_client.py`(134)와
      `fullmap.py:extend`(44)는 CLI 분기가 아니라 실질적 복잡도라 우선순위가 높아 보임(미확인 —
      실제 리팩터링은 하지 않음, 다음 세션 후보).

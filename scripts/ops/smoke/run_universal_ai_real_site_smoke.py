@@ -16,17 +16,17 @@ _REPO_ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from local_agent.runtime.universal.learned_site_profile_store import clear_all  # noqa: E402
-from local_agent.runtime.universal.natural_language_task_api import (  # noqa: E402
+from core.agent_runtime.runtime.universal.learned_site_profile_store import clear_all  # noqa: E402
+from core.agent_runtime.runtime.universal.natural_language_task_api import (  # noqa: E402
     build_task_summary,
     check_result_safety,
     execute_natural_language_task,
 )
-from local_agent.runtime.universal.real_site_smoke_runner import (  # noqa: E402
+from core.agent_runtime.runtime.universal.real_site_smoke_runner import (  # noqa: E402
     is_safe_readonly_target,
     run_all_smoke_scenarios,
 )
-from local_agent.runtime.universal.universal_agent_session import (  # noqa: E402
+from core.agent_runtime.runtime.universal.universal_agent_session import (  # noqa: E402
     close_session,
     create_session,
     get_session_history,
@@ -137,7 +137,7 @@ def test_agent_session():
 
 def test_learned_profile():
     print("\n=== Learned Profile 저장/재사용 ===")
-    from local_agent.runtime.universal.learned_site_profile_store import (
+    from core.agent_runtime.runtime.universal.learned_site_profile_store import (
         get_learned_profile,
         has_learned_profile,
     )
@@ -182,7 +182,7 @@ def test_live_readonly_smoke(target_url: str):
         return
 
     try:
-        from local_agent.runtime.playwright.playwright_runner import run_task
+        from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
         # 1. 페이지 열기
         open_result = run_task({"action": "open_url", "target_url": target_url, "task_id": "smoke_open"})

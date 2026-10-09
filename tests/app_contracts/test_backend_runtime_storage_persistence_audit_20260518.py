@@ -9,8 +9,9 @@ ASSISTANT_BACKEND_RUNTIME_STORAGE_PERSISTENCE_AUDIT_01
 서버 반영 / secret 원문 출력 전면 금지.
 """
 import importlib.util
-import pytest
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 
@@ -27,7 +28,7 @@ def _load_module(name, rel_path):
 def audit_mod():
     return _load_module(
         "audit_storage_persistence",
-        "scripts/ops/audits/backend/audit_backend_runtime_storage_persistence.py",
+        "tools/audits/backend/audit_backend_runtime_storage_persistence.py",
     )
 
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from local_agent.runtime.result_sanitizer import (
+from core.agent_runtime.runtime.result_sanitizer import (
     sanitize_result,
     validate_sanitized_result,
 )

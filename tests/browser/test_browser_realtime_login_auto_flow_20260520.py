@@ -5,9 +5,9 @@
 
 from __future__ import annotations
 
-from local_agent.browser import browser_realtime_watcher as rw
-from local_agent.browser import login_state_detector as det
-from local_agent.browser.login_auto_flow import (
+from core.agent_runtime.browser import browser_realtime_watcher as rw
+from core.agent_runtime.browser import login_state_detector as det
+from core.agent_runtime.browser.login_auto_flow import (
     EVT_ACCOUNT_PICKER_DETECTED,
     EVT_AUTO_RESUME_PLANNED,
     EVT_CHALLENGE_REQUIRED,

@@ -21,7 +21,7 @@ def _fixture_url() -> str:
 @pytest.fixture(scope="module")
 def playwright_ready():
     pytest.importorskip("playwright")
-    from local_agent.runtime.playwright.playwright_bootstrap import (
+    from core.agent_runtime.runtime.playwright.playwright_bootstrap import (
         PLAYWRIGHT_READY,
         check_playwright_status,
     )
@@ -45,7 +45,7 @@ def test_open_about_blank(playwright_ready):
         STATUS_COMPLETED,
         build_task,
     )
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("open_url", "about:blank", domain="smoke")
     result = run_task(task)
@@ -58,7 +58,7 @@ def test_read_data_url(playwright_ready):
         STATUS_COMPLETED,
         build_task,
     )
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("read_page", "data:text/html,<h1>smoke</h1>", domain="smoke")
     result = run_task(task)
@@ -74,7 +74,7 @@ def test_open_fixture_url(playwright_ready, fixture_exists):
         STATUS_COMPLETED,
         build_task,
     )
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("open_url", _fixture_url(), domain="smoke")
     result = run_task(task)
@@ -84,7 +84,7 @@ def test_open_fixture_url(playwright_ready, fixture_exists):
 
 def test_read_fixture_page(playwright_ready, fixture_exists):
     from ai_orchestrator.contracts.local_task_protocol import build_task
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("read_page", _fixture_url(), domain="smoke")
     result = run_task(task)
@@ -94,7 +94,7 @@ def test_read_fixture_page(playwright_ready, fixture_exists):
 
 def test_read_fixture_title_hint(playwright_ready, fixture_exists):
     from ai_orchestrator.contracts.local_task_protocol import build_task
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("read_page", _fixture_url(), domain="smoke")
     result = run_task(task)
@@ -109,7 +109,7 @@ def test_extract_h1_text(playwright_ready, fixture_exists):
         STATUS_COMPLETED,
         build_task,
     )
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("extract_text", _fixture_url(), domain="smoke")
     task.setdefault("metadata", {})["selector"] = "h1"
@@ -121,7 +121,7 @@ def test_extract_h1_text(playwright_ready, fixture_exists):
 
 def test_extract_smoke_marker(playwright_ready, fixture_exists):
     from ai_orchestrator.contracts.local_task_protocol import build_task
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("extract_text", _fixture_url(), domain="smoke")
     task.setdefault("metadata", {})["selector"] = "#smoke-marker"
@@ -134,7 +134,7 @@ def test_extract_smoke_marker(playwright_ready, fixture_exists):
 
 def test_extract_table_rows(playwright_ready, fixture_exists):
     from ai_orchestrator.contracts.local_task_protocol import build_task
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("extract_table", _fixture_url(), domain="smoke")
     result = run_task(task)
@@ -145,7 +145,7 @@ def test_extract_table_rows(playwright_ready, fixture_exists):
 
 def test_extract_table_has_header_row(playwright_ready, fixture_exists):
     from ai_orchestrator.contracts.local_task_protocol import build_task
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("extract_table", _fixture_url(), domain="smoke")
     result = run_task(task)
@@ -162,7 +162,7 @@ def test_capture_screenshot(playwright_ready, fixture_exists):
         STATUS_COMPLETED,
         build_task,
     )
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("capture_screenshot", _fixture_url(), domain="smoke")
     result = run_task(task)
@@ -173,7 +173,7 @@ def test_capture_screenshot(playwright_ready, fixture_exists):
 def test_capture_screenshot_filename_only(playwright_ready, fixture_exists):
     """스크린샷은 파일명만 반환하고 이미지 바이너리는 포함하지 않는다."""
     from ai_orchestrator.contracts.local_task_protocol import build_task
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("capture_screenshot", _fixture_url(), domain="smoke")
     result = run_task(task)
@@ -192,7 +192,7 @@ def test_detect_login_status_no_signal(playwright_ready, fixture_exists):
         STATUS_COMPLETED,
         build_task,
     )
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("detect_login_status", _fixture_url(), domain="smoke")
     result = run_task(task)
@@ -204,7 +204,7 @@ def test_detect_login_status_no_signal(playwright_ready, fixture_exists):
 def test_detect_login_status_result_no_sensitive(playwright_ready, fixture_exists):
     """detect_login_status 결과에 민감값이 없어야 한다."""
     from ai_orchestrator.contracts.local_task_protocol import build_task
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("detect_login_status", _fixture_url(), domain="smoke")
     result = run_task(task)
@@ -220,7 +220,7 @@ def test_wait_for_user_auth_returns_waiting(playwright_ready):
         STATUS_WAITING_USER_AUTH,
         build_task,
     )
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("wait_for_user_auth", "", domain="smoke")
     result = run_task(task)
@@ -230,7 +230,7 @@ def test_wait_for_user_auth_returns_waiting(playwright_ready):
 def test_wait_for_user_auth_no_browser_access(playwright_ready):
     """wait_for_user_auth는 브라우저를 열지 않는다 (url 비어도 오류 없음)."""
     from ai_orchestrator.contracts.local_task_protocol import build_task
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("wait_for_user_auth", "", domain="smoke")
     result = run_task(task)
@@ -250,7 +250,7 @@ def test_wait_for_user_auth_no_browser_access(playwright_ready):
 )
 def test_result_no_sensitive_fields(playwright_ready, action, url):
     from ai_orchestrator.contracts.local_task_protocol import build_task
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task(action, url, domain="smoke")
     result = run_task(task)
@@ -260,7 +260,7 @@ def test_result_no_sensitive_fields(playwright_ready, action, url):
 
 def test_result_fixed_safe_fields_false(playwright_ready):
     from ai_orchestrator.contracts.local_task_protocol import build_task
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("open_url", "about:blank", domain="smoke")
     result = run_task(task)
@@ -277,7 +277,7 @@ def test_result_fixed_safe_fields_false(playwright_ready):
 
 def test_unsupported_action_blocked(playwright_ready):
     from ai_orchestrator.contracts.local_task_protocol import STATUS_BLOCKED, build_task
-    from local_agent.runtime.playwright.playwright_runner import run_task
+    from core.agent_runtime.runtime.playwright.playwright_runner import run_task
 
     task = build_task("open_url", "about:blank")
     task["action"] = "auto_bid_submit"

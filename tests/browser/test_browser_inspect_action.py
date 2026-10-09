@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from local_agent.connection.actions import execute_action
+from core.agent_runtime.connection.actions import execute_action
 
 
 def test_browser_inspect_registered():
     """Verify browser.inspect is registered in _ACTIONS."""
-    from local_agent.connection.actions import _ACTIONS
+    from core.agent_runtime.connection.actions import _ACTIONS
 
     assert "browser.inspect" in _ACTIONS
 
@@ -93,7 +93,7 @@ def test_browser_inspect_dry_run_string_false():
 
 def test_browser_inspect_not_automation_import():
     """Verify browser_actions module does not import automation libraries."""
-    with Path("local_agent/browser/browser_actions.py").open(encoding="utf-8") as f:
+    with Path("core/agent_runtime/browser/browser_actions.py").open(encoding="utf-8") as f:
         content = f.read()
 
     # Check for common automation library imports

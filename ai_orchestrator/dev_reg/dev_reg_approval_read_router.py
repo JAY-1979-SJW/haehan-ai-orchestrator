@@ -16,7 +16,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 
 from ai_orchestrator.dev_reg import dev_reg_approval as _dra
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
 dev_reg_approval_read_router = APIRouter(prefix="/dev-reg/approvals", tags=["dev-reg-approvals"])
 

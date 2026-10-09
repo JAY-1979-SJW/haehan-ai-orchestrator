@@ -15,8 +15,8 @@ import pytest
 
 from ai_orchestrator.auth import auth_audit, user_db
 from ai_orchestrator.core import config
-from ai_orchestrator.gates import auth as gate_auth
 from tests.console_api_contract_support import API, make_client
+from tools.gates import auth as gate_auth
 
 SIGNUP = f"{API}/users/signup"
 

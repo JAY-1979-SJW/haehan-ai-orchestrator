@@ -1,8 +1,8 @@
 import inspect
 
-from local_agent.connection import websocket_client
-from local_agent.connection.actions import ActionResult
-from local_agent.connection.websocket_client import _build_result_message
+from core.agent_runtime.connection import websocket_client
+from core.agent_runtime.connection.actions import ActionResult
+from core.agent_runtime.connection.websocket_client import _build_result_message
 
 
 def test_ws_session_uses_thread_for_task_execution():

@@ -33,7 +33,7 @@ def _isolated_storage(tmp_path, monkeypatch):
     import ai_orchestrator.agent_hub.registry.common as _reg_common
     import ai_orchestrator.agent_hub.registry.facade as _reg
     import ai_orchestrator.audit.audit_logger as _al
-    import ai_orchestrator.gates.approval as _ap
+    import tools.gates.approval as _ap
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
@@ -62,7 +62,7 @@ def _make_test_client(user_override: dict):
     from fastapi.testclient import TestClient
 
     from ai_orchestrator.agent_hub.router.root import local_agent_router
-    from ai_orchestrator.gates.auth import get_current_user
+    from tools.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -322,7 +322,7 @@ def test_client_process_task_open_url_scheme_guard(monkeypatch):
 
     monkeypatch.setattr(webbrowser, "open", fake_open)
 
-    from local_agent.connection.websocket_client import process_task
+    from core.agent_runtime.connection.websocket_client import process_task
 
     # 기본값: dry_run=true (명시적으로 지정하지 않음)
     result = process_task(
@@ -369,7 +369,7 @@ def test_client_process_task_open_url_scheme_guard(monkeypatch):
     ],
 )
 def test_client_process_task_forbidden_action(action):
-    from local_agent.connection.websocket_client import process_task
+    from core.agent_runtime.connection.websocket_client import process_task
 
     r = process_task(
         {
@@ -384,7 +384,7 @@ def test_client_process_task_forbidden_action(action):
 
 
 def test_client_process_task_unknown_auto_exec_action():
-    from local_agent.connection.websocket_client import process_task
+    from core.agent_runtime.connection.websocket_client import process_task
 
     r = process_task(
         {
@@ -435,7 +435,7 @@ def test_ws_high_risk_task_not_delivered(admin_user):
 
 
 def test_client_process_task_high_risk_returns_not_implemented_stage2():
-    from local_agent.connection.websocket_client import process_task
+    from core.agent_runtime.connection.websocket_client import process_task
 
     r = process_task(
         {
@@ -512,7 +512,7 @@ def test_ws_auth_failure_audit_event(admin_user):
 def test_server_and_client_auto_exec_sets_match():
     """서버와 클라이언트의 AUTO_EXECUTE_VIA_AGENT 집합은 동일해야 한다."""
     from ai_orchestrator.agent_hub.registry.facade import AUTO_EXECUTE_VIA_AGENT as _S
-    from local_agent.connection.websocket_client import _AUTO_EXECUTE_VIA_AGENT as _C
+    from core.agent_runtime.connection.websocket_client import _AUTO_EXECUTE_VIA_AGENT as _C
 
     assert set(_S) == set(_C)
 
@@ -1199,14 +1199,14 @@ def test_ws_noop_in_auto_execute_via_agent():
 
 def test_ws_noop_in_client_auto_execute():
     """ws_noop 은 클라이언트 _AUTO_EXECUTE_VIA_AGENT 에 포함되어야 한다."""
-    from local_agent.connection.websocket_client import _AUTO_EXECUTE_VIA_AGENT
+    from core.agent_runtime.connection.websocket_client import _AUTO_EXECUTE_VIA_AGENT
 
     assert "ws_noop" in _AUTO_EXECUTE_VIA_AGENT
 
 
 def test_ws_noop_action_handler_no_side_effect():
     """ws_noop handler 는 외부 동작 없이 success=True, summary='ws_noop_ok' 반환."""
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action("ws_noop", {})
     assert result.success is True
@@ -1217,7 +1217,7 @@ def test_ws_noop_action_handler_no_side_effect():
 
 def test_ws_noop_action_handler_ignores_payload():
     """ws_noop handler 는 임의 payload 가 있어도 동일한 결과를 반환한다."""
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action("ws_noop", {"arbitrary_key": "arbitrary_value"})
     assert result.success is True
@@ -1226,7 +1226,7 @@ def test_ws_noop_action_handler_ignores_payload():
 
 def test_client_process_task_ws_noop_returns_success():
     """process_task 에서 ws_noop 이 success=True result 메시지를 반환한다."""
-    from local_agent.connection.websocket_client import process_task
+    from core.agent_runtime.connection.websocket_client import process_task
 
     r = process_task(
         {
@@ -1294,7 +1294,7 @@ def test_ws_noop_enqueue_does_not_auto_complete(admin_user):
 
 def test_existing_actions_unchanged():
     """ping/system_info/list_allowed_apps 동작이 ws_noop 추가 후에도 불변이다."""
-    from local_agent.connection.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     assert execute_action("ping", {}).summary == "pong"
     assert execute_action("system_info", {}).success is True

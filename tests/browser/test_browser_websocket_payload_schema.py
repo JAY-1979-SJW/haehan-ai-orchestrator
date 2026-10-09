@@ -12,7 +12,7 @@ Verifies:
 import pytest
 
 from ai_orchestrator.agent_hub.registry import facade as _reg
-from local_agent.browser.bridge.browser_websocket_schema import (
+from core.agent_runtime.browser.bridge.browser_websocket_schema import (
     ALLOWED_ACTION_TYPES,
     RESULT_DATA_ALLOWED_KEYS,
     RESULT_DATA_FORBIDDEN_KEYS,

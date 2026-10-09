@@ -13,9 +13,6 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ai_orchestrator import mcp_server
-from ai_orchestrator.gates import auth as auth_module
-from ai_orchestrator.gates.auth import get_current_user
-from ai_orchestrator.site_work.site_onboarding_router import site_onboarding_router
 from ai_orchestrator.site_work import site_onboarding_service as onboarding
 from ai_orchestrator.site_work import site_preflight as sp
 from ai_orchestrator.site_work import site_preflight_service as svc
@@ -23,7 +20,10 @@ from ai_orchestrator.site_work import site_registry_store as reg_store
 from ai_orchestrator.site_work import site_task_map_explore_service as explore
 from ai_orchestrator.site_work import site_task_map_request_store as rstore
 from ai_orchestrator.site_work import site_task_map_store as map_store
+from ai_orchestrator.site_work.site_onboarding_router import site_onboarding_router
 from scripts.explorer import preflight_fetch
+from tools.gates import auth as auth_module
+from tools.gates.auth import get_current_user
 
 HOST = "new-site.example-test.kr"
 ROBOTS = """

@@ -42,7 +42,7 @@ def gates():
 
 
 def audit():
-    import scripts.ops.audits.app.audit_external_site_canonical_registry as m
+    import tools.audits.app.audit_external_site_canonical_registry as m
 
     return m
 
@@ -254,7 +254,7 @@ def test_33_no_github_actions_dependency():
     src_files = [
         REPO_ROOT / "ai_orchestrator/external_sites/provider_registry.py",
         REPO_ROOT / "ai_orchestrator/external_sites/approval_gate_registry.py",
-        REPO_ROOT / "scripts/ops/audits/app/audit_external_site_canonical_registry.py",
+        REPO_ROOT / "tools/audits/app/audit_external_site_canonical_registry.py",
     ]
     for f in src_files:
         content = f.read_text(encoding="utf-8")

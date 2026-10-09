@@ -11,21 +11,18 @@ from collections import defaultdict
 from typing import Any
 from urllib.parse import urlparse
 
-from local_agent.runtime.common_tool_runtime import (
+from core.agent_runtime.runtime.common_tool_runtime import (
     EXECUTION_LOCAL_AGENT,
     RISK_READ,
     TOOL_BROWSER,
     build_common_tool_task,
 )
-
+from scripts.google.common import surfaces, workflows
 from scripts.site_engine.sso_runtime import (
     build_login_entry_task,
     build_subdomain_readonly_task,
 )
 from scripts.site_engine.subdomain_registry import get_provider
-
-from scripts.google.common import surfaces
-from scripts.google.common import workflows
 
 READ_OPERATIONS = frozenset({"read", "open", "status", "inspect"})
 LOGIN_OPERATIONS = frozenset({"login", "signin", "sign_in", "account_login"})

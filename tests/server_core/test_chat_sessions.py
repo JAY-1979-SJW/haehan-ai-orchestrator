@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from ai_orchestrator.tasks import chat_sessions as store
-from local_agent.connection.actions import _build_claude_command
+from core.agent_runtime.connection.actions import _build_claude_command
 
 
 @pytest.fixture(autouse=True)

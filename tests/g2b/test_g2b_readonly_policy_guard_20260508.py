@@ -22,11 +22,11 @@ from ai_orchestrator.contracts.local_task_protocol import (
     EXEC_MODE_LOCAL_PLAYWRIGHT,
     build_task,
 )
-from local_agent.runtime.auth.auto_resume_after_auth import (
+from core.agent_runtime.runtime.auth.auto_resume_after_auth import (
     can_auto_resume,
     classify_resume_eligibility,
 )
-from local_agent.runtime.security_guard import (
+from core.agent_runtime.runtime.security_guard import (
     block_forbidden_action,
     validate_task_before_run,
 )

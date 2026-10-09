@@ -10,7 +10,7 @@ import pathlib
 
 import pytest
 
-from local_agent.browser.browser_readonly_runtime import (
+from core.agent_runtime.browser.browser_readonly_runtime import (
     DECISION_BLOCK,
     DECISION_FAILED,
     DECISION_READONLY_ALLOWED,
@@ -31,7 +31,7 @@ from local_agent.browser.browser_readonly_runtime import (
 )
 
 FIXTURE_PATH = pathlib.Path(__file__).parent / "fixtures" / "local_agent_browser_readonly_runtime_20260507.json"
-MODULE_PATH = pathlib.Path(__file__).parent.parent / "local_agent" / "browser" / "browser_readonly_runtime.py"
+MODULE_PATH = pathlib.Path(__file__).parent.parent / "core" / "agent_runtime" / "browser" / "browser_readonly_runtime.py"
 
 REQUIRED_CASE_FIELDS = ["case_id", "input", "expected_runtime_policy", "expected_detection", "expected_security_policy"]
 REQUIRED_POLICY_FIELDS = [

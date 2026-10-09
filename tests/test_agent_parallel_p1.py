@@ -14,7 +14,7 @@ import pytest
 
 from ai_orchestrator.agent_hub.registry import agent as reg_agent
 from ai_orchestrator.agent_hub.router import ws as server_ws
-from local_agent.connection import websocket_client as client
+from core.agent_runtime.connection import websocket_client as client
 
 
 class FakeClientWS:

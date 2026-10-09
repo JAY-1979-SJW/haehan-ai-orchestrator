@@ -232,12 +232,12 @@ def test_gate_priority_p2_exists():
 # ── 7. 감사 스크립트 smoke ─────────────────────────────────────────────────
 
 def test_audit_script_importable():
-    import scripts.ops.audits.app.audit_app_foundation_governance as m
+    import tools.audits.app.audit_app_foundation_governance as m
     assert hasattr(m, "run_audit")
 
 
 def test_audit_script_runs_and_passes():
-    from scripts.ops.audits.app.audit_app_foundation_governance import run_audit
+    from tools.audits.app.audit_app_foundation_governance import run_audit
     report = run_audit()
     summary = report.summary()
     assert summary["failed"] == 0, f"Governance audit failures: {summary['issues']}"

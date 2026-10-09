@@ -8,11 +8,11 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from ai_orchestrator.gates.auth import get_current_user
 from ai_orchestrator.scheduler import scheduled_job_service as svc
 from ai_orchestrator.scheduler import scheduled_job_store as store
 from ai_orchestrator.scheduler.scheduled_job_router import scheduled_job_router
 from ai_orchestrator.services import scheduled_job_actions as actions
+from tools.gates.auth import get_current_user
 
 NOW = datetime(2026, 10, 1, 0, 0, 0, tzinfo=UTC)
 

@@ -9,7 +9,7 @@ from typing import Literal
 from unittest.mock import patch
 
 from ai_orchestrator.core.models import RiskAssessment, TaskRequest
-from ai_orchestrator.gates import approval
+from tools.gates import approval
 
 
 def _make_test_request(task_id: str) -> TaskRequest:
@@ -149,7 +149,7 @@ def test_expired_token_no_secret_exposed():
     # Create token with 0 TTL (expires immediately)
     token = approval.issue_token(req, risk, ttl_minutes=0)
 
-    with patch("ai_orchestrator.gates.approval._now") as mock_now:
+    with patch("tools.gates.approval._now") as mock_now:
         # Simulate time passing
         mock_now.return_value = datetime.now(UTC)
 

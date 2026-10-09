@@ -6,7 +6,7 @@ from ai_orchestrator.agent_hub.policy.file_upload_policy import (
     get_server_upload_policy_summary,
     validate_upload_manifest,
 )
-from local_agent.runtime.download.download_upload_manifest import (
+from core.agent_runtime.runtime.download.download_upload_manifest import (
     build_manifest,
     is_safe_manifest,
     validate_manifest,
@@ -86,7 +86,7 @@ class TestBuildManifest:
         assert manifest["files"][0]["upload_allowed"] is False
 
     def test_oversized_file_blocked(self):
-        from local_agent.runtime.download.download_policy import MAX_FILE_SIZE_BYTES
+        from core.agent_runtime.runtime.download.download_policy import MAX_FILE_SIZE_BYTES
 
         manifest = build_manifest(
             TASK_ID,
@@ -207,28 +207,28 @@ class TestServerUploadPolicy:
 
 class TestSmoke:
     def test_playwright_runner_import_ok(self):
-        from local_agent.runtime.playwright import playwright_runner
+        from core.agent_runtime.runtime.playwright import playwright_runner
 
         assert hasattr(playwright_runner, "run_task")
 
     def test_auth_wait_import_ok(self):
-        from local_agent.runtime.auth.auth_wait_controller import enter_auth_wait
+        from core.agent_runtime.runtime.auth.auth_wait_controller import enter_auth_wait
 
         assert callable(enter_auth_wait)
 
     def test_auto_resume_import_ok(self):
-        from local_agent.runtime.auth.auto_resume_after_auth import can_auto_resume
+        from core.agent_runtime.runtime.auth.auto_resume_after_auth import can_auto_resume
 
         assert can_auto_resume("read_page") is True
         assert can_auto_resume("final_submit") is False
 
     def test_notification_adapter_import_ok(self):
-        from local_agent.runtime.notify.user_notification_adapter import send_notification
+        from core.agent_runtime.runtime.notify.user_notification_adapter import send_notification
 
         assert callable(send_notification)
 
     def test_browser_foreground_import_ok(self):
-        from local_agent.runtime.playwright.browser_foreground_adapter import request_foreground
+        from core.agent_runtime.runtime.playwright.browser_foreground_adapter import request_foreground
 
         result = request_foreground(is_headed=False)
         assert result["sensitive_data_read"] is False

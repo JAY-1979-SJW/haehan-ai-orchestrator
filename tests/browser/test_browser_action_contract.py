@@ -40,7 +40,7 @@ class TestServerApprovalActionContract:
     """Test ServerApprovalAction validation and risk assessment."""
 
     def test_action_validation_success(self):
-        from local_agent.browser.browser_action_contract import ServerApprovalAction
+        from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
 
         action = ServerApprovalAction(
             task_id="task-001",
@@ -53,7 +53,7 @@ class TestServerApprovalActionContract:
         assert error is None
 
     def test_action_validation_missing_task_id(self):
-        from local_agent.browser.browser_action_contract import ServerApprovalAction
+        from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
 
         action = ServerApprovalAction(
             task_id="",
@@ -66,7 +66,7 @@ class TestServerApprovalActionContract:
         assert "task_id" in error
 
     def test_action_validation_unsupported_type(self):
-        from local_agent.browser.browser_action_contract import ServerApprovalAction
+        from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
 
         action = ServerApprovalAction(
             task_id="task-001",
@@ -79,7 +79,7 @@ class TestServerApprovalActionContract:
         assert "not supported" in error
 
     def test_action_validation_missing_approval_token(self):
-        from local_agent.browser.browser_action_contract import ServerApprovalAction
+        from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
 
         action = ServerApprovalAction(
             task_id="task-001",
@@ -92,7 +92,7 @@ class TestServerApprovalActionContract:
         assert "approval_token required" in error
 
     def test_risk_assessment_safe_click(self):
-        from local_agent.browser.browser_action_contract import assess_action_risk
+        from core.agent_runtime.browser.browser_action_contract import assess_action_risk
 
         risk, needs_final = assess_action_risk(
             "browser.execute_click",
@@ -102,7 +102,7 @@ class TestServerApprovalActionContract:
         assert needs_final is False
 
     def test_risk_assessment_critical_delete(self):
-        from local_agent.browser.browser_action_contract import assess_action_risk
+        from core.agent_runtime.browser.browser_action_contract import assess_action_risk
 
         risk, needs_final = assess_action_risk(
             "browser.execute_click",
@@ -112,7 +112,7 @@ class TestServerApprovalActionContract:
         assert needs_final is True
 
     def test_execution_result_redaction(self):
-        from local_agent.browser.browser_action_contract import ExecutionResult
+        from core.agent_runtime.browser.browser_action_contract import ExecutionResult
 
         result = ExecutionResult(
             task_id="task-001",
@@ -130,7 +130,7 @@ class TestServerApprovalActionContract:
         assert "[REDACTED]" in s
 
     def test_result_validation_no_secrets(self):
-        from local_agent.browser.browser_action_contract import (
+        from core.agent_runtime.browser.browser_action_contract import (
             ExecutionResult,
             validate_execution_result,
         )
@@ -150,7 +150,7 @@ class TestServerApprovalActionContract:
         assert error is None
 
     def test_result_validation_rejects_non_redacted_text(self):
-        from local_agent.browser.browser_action_contract import (
+        from core.agent_runtime.browser.browser_action_contract import (
             ExecutionResult,
             validate_execution_result,
         )
@@ -176,9 +176,9 @@ class TestServerActionAdapterIntegration:
     """Test ServerActionAdapter with mock Playwright page."""
 
     def test_execute_click_without_approval_token_blocked(self):
-        from local_agent.browser.browser_action_contract import ServerApprovalAction
-        from local_agent.browser.browser_controller import BrowserController
-        from local_agent.browser.server_action_adapter import ServerActionAdapter
+        from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
+        from core.agent_runtime.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -205,9 +205,9 @@ class TestServerActionAdapterIntegration:
         asyncio.run(run_test())
 
     def test_execute_click_with_approval_token_succeeds(self):
-        from local_agent.browser.browser_action_contract import ServerApprovalAction
-        from local_agent.browser.browser_controller import BrowserController
-        from local_agent.browser.server_action_adapter import ServerActionAdapter
+        from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
+        from core.agent_runtime.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -236,9 +236,9 @@ class TestServerActionAdapterIntegration:
         asyncio.run(run_test())
 
     def test_execute_type_without_approval_token_blocked(self):
-        from local_agent.browser.browser_action_contract import ServerApprovalAction
-        from local_agent.browser.browser_controller import BrowserController
-        from local_agent.browser.server_action_adapter import ServerActionAdapter
+        from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
+        from core.agent_runtime.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -266,9 +266,9 @@ class TestServerActionAdapterIntegration:
         asyncio.run(run_test())
 
     def test_execute_type_with_approval_token_succeeds(self):
-        from local_agent.browser.browser_action_contract import ServerApprovalAction
-        from local_agent.browser.browser_controller import BrowserController
-        from local_agent.browser.server_action_adapter import ServerActionAdapter
+        from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
+        from core.agent_runtime.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -298,9 +298,9 @@ class TestServerActionAdapterIntegration:
         asyncio.run(run_test())
 
     def test_risky_action_requires_final_approval_and_not_executed(self):
-        from local_agent.browser.browser_action_contract import ServerApprovalAction
-        from local_agent.browser.browser_controller import BrowserController
-        from local_agent.browser.server_action_adapter import ServerActionAdapter
+        from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
+        from core.agent_runtime.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -329,9 +329,9 @@ class TestServerActionAdapterIntegration:
         asyncio.run(run_test())
 
     def test_result_does_not_include_approval_token(self):
-        from local_agent.browser.browser_action_contract import ServerApprovalAction
-        from local_agent.browser.browser_controller import BrowserController
-        from local_agent.browser.server_action_adapter import ServerActionAdapter
+        from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
+        from core.agent_runtime.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -359,9 +359,9 @@ class TestServerActionAdapterIntegration:
         asyncio.run(run_test())
 
     def test_result_does_not_include_typed_text(self):
-        from local_agent.browser.browser_action_contract import ServerApprovalAction
-        from local_agent.browser.browser_controller import BrowserController
-        from local_agent.browser.server_action_adapter import ServerActionAdapter
+        from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
+        from core.agent_runtime.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:
@@ -391,9 +391,9 @@ class TestServerActionAdapterIntegration:
         asyncio.run(run_test())
 
     def test_unsupported_action_type_rejected(self):
-        from local_agent.browser.browser_action_contract import ServerApprovalAction
-        from local_agent.browser.browser_controller import BrowserController
-        from local_agent.browser.server_action_adapter import ServerActionAdapter
+        from core.agent_runtime.browser.browser_action_contract import ServerApprovalAction
+        from core.agent_runtime.browser.browser_controller import BrowserController
+        from core.agent_runtime.browser.server_action_adapter import ServerActionAdapter
 
         async def run_test():
             async with async_playwright() as p:

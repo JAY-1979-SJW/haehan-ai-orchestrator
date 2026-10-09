@@ -44,7 +44,7 @@ def app_client(tmp_path_factory):
     from ai_orchestrator.core import config as _config
 
     importlib.reload(_config)
-    from ai_orchestrator.gates import approval as _approval
+    from tools.gates import approval as _approval
 
     importlib.reload(_approval)
     _approval.clear_rate_store()  # module 간 rate counter 누적 차단

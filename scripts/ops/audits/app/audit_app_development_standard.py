@@ -1,111 +1,27 @@
-"""Read-only audit for the locked app development standard."""
-from __future__ import annotations
+# haehan-shim: tools.audits.app.audit_app_development_standard
+# 호환 shim: 실제 모듈은 tools.audits.app.audit_app_development_standard 로 이동했다 (tools/audits/app/audit_app_development_standard.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/devflow/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-import sys
-from pathlib import Path
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
+    from pathlib import Path as _Path
 
-ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    _root = str(_Path(__file__).resolve().parents[4])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
-STANDARD = ROOT / "docs" / "baseline" / "APP_DEVELOPMENT_STANDARD.md"
-APP_BASELINE = ROOT / "docs" / "baseline" / "APP_BASELINE.md"
-APP_STRUCTURE = ROOT / "docs" / "architecture" / "APP_STRUCTURE.md"
-STANDARD_WORKFLOW = ROOT / "docs" / "baseline" / "STANDARD_WORKFLOW.md"
-
-REQUIRED_STANDARD_PHRASES = (
-    "Status: LOCKED",
-    "Baseline ID: HAEHAN-APP-DEVELOPMENT-STANDARD-01",
-    "The app is a server-first control surface.",
-    "## 2.1 User Convenience Standard",
-    "The app must be comfortable for a non-developer operator.",
-    "What can I safely do next?",
-    "## 2.2 Target Users",
-    "## 3. Required Navigation",
-    "Dashboard",
-    "Tasks",
-    "Approvals",
-    "Agents",
-    "Tools",
-    "Connections",
-    "Audit",
-    "Consent",
-    "Reports",
-    "Settings",
-    "## 4. First Screen Standard",
-    "The first screen is the operator dashboard, not a marketing landing page.",
-    "## 4.1 First-Time User Flow",
-    "## 5. Screen Contracts",
-    "## 6. API Integration Standard",
-    "## 7. Design Standard",
-    "## 7.1 Usability Standard",
-    "## 7.2 Accessibility And Readability",
-    "## 7.3 Responsive Standard",
-    "## 8. Security And Privacy Standard",
-    "## 8.1 User Trust Standard",
-    "## 9. Development Order",
-    "## 9.1 Connection And Command Lock",
-    "Allowed command classes:",
-    "Forbidden command classes:",
-    "unknown_tool_execute",
-    "## 9.2 Developed Tool Attachment Lock",
-    "Only developed and inventoried tools may be attached to the app.",
-    "Tools in `legacy`, `deprecated`, `unknown`, `TBD`, or `Lock Needed Queue`",
-    "## 10. Verification Standard",
-    "python scripts/ops/audits/app/audit_app_development_standard.py",
-    "## 11. Completion Rule",
-    "## 12. User Acceptance Checklist",
-)
-
-REQUIRED_REFERENCE_PHRASES = (
-    "The app must be developed as a server-first control surface.",
-    "The server is the final operational source of truth for HAEHAN.",
-    "User Data Contribution Consent Boundary",
-    "docs/baseline/APP_DEVELOPMENT_STANDARD.md",
-    "The app development standard controls app shell, route, screen, API integration",
-    "The app connection and command system is locked",
-    "only inventoried `active` or `locked` tools may be attached",
-)
+    _runpy.run_module("tools.audits.app.audit_app_development_standard", run_name="__main__")
+    raise SystemExit
 
 
-def _missing(text: str, phrases: tuple[str, ...]) -> list[str]:
-    return [phrase for phrase in phrases if phrase not in text]
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-def audit() -> tuple[bool, list[str]]:
-    failures: list[str] = []
-    paths = (STANDARD, APP_BASELINE, APP_STRUCTURE, STANDARD_WORKFLOW)
-    missing_paths = [str(path.relative_to(ROOT)) for path in paths if not path.exists()]
-    if missing_paths:
-        return False, ["missing required path(s): " + ", ".join(missing_paths)]
-
-    standard = STANDARD.read_text(encoding="utf-8", errors="replace")
-    app_baseline = APP_BASELINE.read_text(encoding="utf-8", errors="replace")
-    app_structure = APP_STRUCTURE.read_text(encoding="utf-8", errors="replace")
-    workflow = STANDARD_WORKFLOW.read_text(encoding="utf-8", errors="replace")
-
-    missing = _missing(standard, REQUIRED_STANDARD_PHRASES)
-    if missing:
-        failures.append("app development standard missing phrase(s): " + ", ".join(missing))
-
-    references = app_baseline + "\n" + app_structure + "\n" + workflow
-    missing = _missing(references, REQUIRED_REFERENCE_PHRASES)
-    if missing:
-        failures.append("app baseline references missing phrase(s): " + ", ".join(missing))
-
-    return not failures, failures or [
-        "APP_DEVELOPMENT_STANDARD exists and is locked",
-        "required navigation and screen contracts are present",
-        "server-first app structure references remain intact",
-    ]
-
-
-def main() -> int:
-    from scripts.common.audit_cli import report_findings
-
-    ok, findings = audit()
-    return report_findings(ok, findings, "APP_DEVELOPMENT_STANDARD")
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+_install(_il.import_module("tools.audits.app.audit_app_development_standard"), globals(), _sys.modules)

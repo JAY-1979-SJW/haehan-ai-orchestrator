@@ -6,13 +6,13 @@ Priority 1 read-only endpoint 구현 계획 검증.
 from __future__ import annotations
 
 import pytest
-import scripts.ops.audits.app.audit_app_api_readonly_endpoints_implementation_plan as m
 
+import tools.audits.app.audit_app_api_readonly_endpoints_implementation_plan as m
 
 # ── 1. audit script / 전역 플래그 ─────────────────────────────────────────────
 
 def test_audit_script_importable():
-    import scripts.ops.audits.app.audit_app_api_readonly_endpoints_implementation_plan  # noqa: F401
+    import tools.audits.app.audit_app_api_readonly_endpoints_implementation_plan  # noqa: F401
 
 
 def test_audit_id():
@@ -202,19 +202,19 @@ def test_all_tests_required():
 # ── 11. 이전 공정 회귀 ────────────────────────────────────────────────────────
 
 def test_no_conflict_with_api_contract_prep():
-    import scripts.ops.audits.app.audit_app_api_contract_endpoints_prep as a
+    import tools.audits.app.audit_app_api_contract_endpoints_prep as a
     report = a.run_audit()
     assert report.verdict in (a.VERDICT_READY, a.VERDICT_WARN)
 
 
 def test_no_conflict_with_readonly_status_cards():
-    import scripts.ops.audits.app.audit_app_ui_readonly_backend_status_cards as a
+    import tools.audits.app.audit_app_ui_readonly_backend_status_cards as a
     report = a.run_audit()
     assert report.verdict in (a.VERDICT_READY, a.VERDICT_WARN)
 
 
 def test_no_conflict_with_mvp_design():
-    import scripts.ops.audits.app.audit_app_foundation_mvp_design as a
+    import tools.audits.app.audit_app_foundation_mvp_design as a
     report = a.run_audit()
     assert report.verdict in (a.VERDICT_READY, a.VERDICT_WARN)
 

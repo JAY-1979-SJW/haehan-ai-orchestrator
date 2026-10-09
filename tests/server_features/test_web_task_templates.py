@@ -33,7 +33,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 def _isolated_storage(tmp_path, monkeypatch):
     import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.dev_reg.dev_reg_approval as _dra
-    import ai_orchestrator.gates.approval as _ap
+    import tools.gates.approval as _ap
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_dra, "_STORE_PATH", tmp_path / "dev_reg_approvals.jsonl")
@@ -69,8 +69,8 @@ def _make_test_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.web_task.web_task_router import web_task_router
+    from tools.gates.auth import get_current_user
 
     test_app = FastAPI()
     test_app.include_router(web_task_router, prefix="/api/v1")

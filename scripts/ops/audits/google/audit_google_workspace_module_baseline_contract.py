@@ -1,124 +1,27 @@
-"""Read-only audit for the locked Google Workspace module baseline."""
-from __future__ import annotations
+# haehan-shim: tools.audits.google.audit_google_workspace_module_baseline_contract
+# 호환 shim: 실제 모듈은 tools.audits.google.audit_google_workspace_module_baseline_contract 로 이동했다 (tools/audits/google/audit_google_workspace_module_baseline_contract.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/devflow/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-import sys
-from pathlib import Path
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
+    from pathlib import Path as _Path
 
-ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    _root = str(_Path(__file__).resolve().parents[4])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
-BASELINE = ROOT / "docs" / "baseline" / "GOOGLE_WORKSPACE_MODULE_BASELINE.md"
-
-WORKSPACE_SURFACES = (
-    "gmail",
-    "drive",
-    "calendar",
-    "docs",
-    "sheets",
-    "slides",
-    "forms",
-    "meet",
-    "chat",
-    "contacts",
-    "keep",
-    "tasks",
-)
-
-WORKSPACE_APPROVAL_ACTIONS = (
-    "gmail_send_email",
-    "drive_upload_share_file",
-    "calendar_create_event",
-    "docs_create_edit_document",
-    "sheets_update_cells",
-    "slides_create_presentation",
-    "forms_create_publish",
-    "meet_create_meeting",
-    "chat_send_message",
-    "contacts_create_update",
-    "keep_create_note",
-    "tasks_create_task",
-)
-
-REQUIRED_PHRASES = (
-    "Status: LOCKED",
-    "Baseline ID: GOOGLE-WORKSPACE-MODULE-BASELINE-01",
-    "Workspace surfaces: 12",
-    "Workspace actions: 24",
-    "Workspace read actions: 12",
-    "Workspace approval actions: 12",
-    "Workspace live input supported actions: 12",
-    "Workspace prepare/open-only approval actions: 0",
-    "All 12 Workspace approval actions support safe live input handoff.",
-    "no Google password replay",
-    "no mail body, account name, file name, document body, attendee, contact,",
-    "no broad Google refactor outside Workspace",
-    "python scripts/ops/audits/google/audit_google_workspace_module_baseline_contract.py",
-)
+    _runpy.run_module("tools.audits.google.audit_google_workspace_module_baseline_contract", run_name="__main__")
+    raise SystemExit
 
 
-def _missing(text: str, phrases: tuple[str, ...]) -> list[str]:
-    return [phrase for phrase in phrases if phrase not in text]
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-def audit() -> tuple[bool, list[str]]:
-    failures: list[str] = []
-    if not BASELINE.exists():
-        return False, ["docs/baseline/GOOGLE_WORKSPACE_MODULE_BASELINE.md missing"]
-
-    text = BASELINE.read_text(encoding="utf-8", errors="replace")
-    missing = _missing(text, REQUIRED_PHRASES)
-    if missing:
-        failures.append("Google Workspace baseline missing phrase(s): " + ", ".join(missing))
-
-    from scripts.google.common.live_inputs import build_live_input_coverage
-    from scripts.google.common.tab_registry import build_google_tab_summary
-
-    summary = build_google_tab_summary()
-    workspace = next((tab for tab in summary["tabs"] if tab["key"] == "workspace"), None)
-    if workspace is None:
-        failures.append("Google workspace tab missing")
-        return False, failures
-
-    surfaces = tuple(surface["key"] for surface in workspace["surfaces"])
-    if surfaces != WORKSPACE_SURFACES:
-        failures.append("Workspace surfaces changed: " + ", ".join(surfaces))
-
-    approval_actions = tuple(action["key"] for action in workspace["actions"] if action["requires_approval"])
-    if approval_actions != WORKSPACE_APPROVAL_ACTIONS:
-        failures.append("Workspace approval actions changed: " + ", ".join(approval_actions))
-
-    expected_counts = {
-        "surface_count": 12,
-        "action_count": 24,
-        "read_action_count": 12,
-        "approval_action_count": 12,
-    }
-    for key, expected in expected_counts.items():
-        if workspace.get(key) != expected:
-            failures.append(f"Workspace count mismatch {key}: expected {expected}, got {workspace.get(key)}")
-
-    if summary["host_warnings"]:
-        failures.append(f"Google host warnings must stay zero, got {len(summary['host_warnings'])}")
-
-    live_supported = {item["action_key"] for item in build_live_input_coverage()["supported"]}
-    workspace_live = [action["key"] for action in workspace["actions"] if action["key"] in live_supported]
-    if workspace_live != list(WORKSPACE_APPROVAL_ACTIONS):
-        failures.append("Workspace live-input-supported actions changed: " + ", ".join(workspace_live))
-
-    return not failures, failures or [
-        "GOOGLE_WORKSPACE_MODULE_BASELINE exists and is locked",
-        "Workspace owns 12 surfaces and 24 actions",
-        "Workspace approval and live-input boundaries are preserved",
-    ]
-
-
-def main() -> int:
-    from scripts.common.audit_cli import report_findings
-
-    ok, findings = audit()
-    return report_findings(ok, findings, "GOOGLE_WORKSPACE_MODULE_BASELINE_CONTRACT")
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+_install(_il.import_module("tools.audits.google.audit_google_workspace_module_baseline_contract"), globals(), _sys.modules)

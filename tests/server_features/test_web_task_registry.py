@@ -34,14 +34,14 @@ def _isolated_storage(tmp_path, monkeypatch):
     저장소 경로는 기존 모듈 객체의 속성을 monkeypatch 로 교체한다
     (reload 대신 속성 교체 — 동일 __globals__ 를 쓰는 함수가 즉시 반영).
 
-    auth(`ai_orchestrator.gates.auth`)는 reload 하지 않는다 — 어느 시험도 reload 하지 않으면
+    auth(`tools.gates.auth`)는 reload 하지 않는다 — 어느 시험도 reload 하지 않으면
     `get_current_user` 함수 객체가 세션 내내 안정적이라, 아래 `_make_client` 가 object-identity 기준
     `dependency_overrides` 를 써도 이미 import 된 `web_task_router` 의 라우트 의존성과 항상 같은
     객체를 가리킨다(2026-10-08 B11: reload 방식은 다른 시험까지 깨뜨려 제거함).
     """
     import ai_orchestrator.audit.audit_logger as _al
     import ai_orchestrator.dev_reg.dev_reg_approval as _dra
-    import ai_orchestrator.gates.approval as _ap
+    import tools.gates.approval as _ap
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_dra, "_STORE_PATH", tmp_path / "dev_reg_approvals.jsonl")
@@ -82,8 +82,8 @@ def _make_test_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.gates.auth import get_current_user
     from ai_orchestrator.web_task.web_task_router import web_task_router
+    from tools.gates.auth import get_current_user
 
     test_app = FastAPI()
     test_app.include_router(web_task_router, prefix="/api/v1")

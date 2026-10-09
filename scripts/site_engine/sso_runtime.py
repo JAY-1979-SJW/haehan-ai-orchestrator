@@ -4,14 +4,13 @@ from __future__ import annotations
 import urllib.parse
 from typing import Any
 
-from local_agent.runtime.common_tool_runtime import (
+from core.agent_runtime.runtime.common_tool_runtime import (
     EXECUTION_LOCAL_AGENT,
     RISK_READ,
     TOOL_BROWSER,
     build_common_tool_task,
     dry_run_common_tool_flow,
 )
-
 from scripts.site_engine.subdomain_registry import get_provider, get_service
 
 FORBIDDEN_SSO_FIELDS = frozenset(

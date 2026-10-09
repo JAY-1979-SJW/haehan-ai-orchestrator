@@ -1,4 +1,4 @@
-"""R2d-2 P0a — 게이트 핵심 이전(scripts/common/gate.py → ai_orchestrator/gates/gate_core.py) 시험.
+"""R2d-2 P0a — 게이트 핵심 이전(scripts/common/gate.py → tools/gates/gate_core.py) 시험.
 
 목적: ① 핵심이 `scripts` 를 import 하지 않는다(순환 해소의 구조 보장) ② 기존 `scripts.common.gate` 호출자 동작이 같다(shim)
 ③ 감사 기록(op_log)이 싱크 주입으로 그대로 남는다 ④ `__file__` 기준 경로가 저장소 루트를 가리킨다.
@@ -11,10 +11,10 @@ from pathlib import Path
 
 import pytest
 
-import ai_orchestrator.gates.gate_core as core
-import ai_orchestrator.gates.gate_types as gtypes
 import scripts.common.gate as shim
 import scripts.common.schemas as schemas
+import tools.gates.gate_core as core
+import tools.gates.gate_types as gtypes
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -40,8 +40,8 @@ def test_gate_core_modules_do_not_import_scripts(name):
 
 
 def test_send_approval_adapter_uses_core_not_scripts():
-    imports = _imports(ROOT / "ai_orchestrator" / "gates" / "send_approval.py")
-    assert imports and "ai_orchestrator.gates.gate_core" in imports
+    imports = _imports(ROOT / "tools" / "gates" / "send_approval.py")
+    assert imports and "tools.gates.gate_core" in imports
     scripts_imports = {m for m in imports if m.startswith("scripts")}
     assert not scripts_imports, f"send_approval 이 scripts 를 import 함: {sorted(scripts_imports)}"
 

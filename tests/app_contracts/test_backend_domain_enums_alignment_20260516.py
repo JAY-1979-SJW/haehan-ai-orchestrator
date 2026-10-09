@@ -102,7 +102,7 @@ def test_verdict_values():
     for v in ("PASS", "WARN", "FAIL", "BLOCK", "SKIP", "ERROR"):
         assert Verdict(v).value == v
     # BrowserAuditStatus 기존 값(PASS/WARN/FAIL/SKIP/ERROR)이 Verdict에 포함됨
-    from local_agent.browser.approval.browser_audit_contract import BrowserAuditStatus
+    from core.agent_runtime.browser.approval.browser_audit_contract import BrowserAuditStatus
 
     for bs in BrowserAuditStatus:
         assert Verdict(bs.value).value == bs.value
@@ -171,7 +171,7 @@ def test_execution_location_guard_import():
 
 
 def test_approval_import():
-    from ai_orchestrator.gates.approval import issue_token
+    from tools.gates.approval import issue_token
 
     assert callable(issue_token)
 
