@@ -25568,6 +25568,38 @@
    "reason": "도메인(naver_search) 자동화",
    "confidence": "low",
    "source": "rule"
+  },
+  "tests/naver_search/test_naver_search_router_run_endpoints.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_search",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/quality_gates/test_layer_inversion_shim_exempt.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/quality_gates/test_module_cycles_shim_exempt.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/quality_gates/test_cycle_exceptions.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
