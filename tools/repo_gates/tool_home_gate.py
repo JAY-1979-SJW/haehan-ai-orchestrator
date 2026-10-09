@@ -126,8 +126,23 @@ def tracked_files(root: Path = ROOT) -> list[str]:
     return [f for f in r.stdout.split("\0") if f]
 
 
+def _is_shim_file(root: Path, rel: str) -> bool:
+    """`# haehan-shim:` 로 시작하는 1줄 경로-포워딩 호환 파일인가(scripts/ops/make_shim.py 가
+    만듦). shim 은 옛 경로에 그대로 남아 실제 모듈을 가리키는 메커니즘이라 "도구 집 밖에 새로
+    생긴 파일"로 보면 안 된다(PR #165 분석, 2026-10-09 — verify_change.py 의 층간 위반 판정에서
+    같은 이유로 이미 제외함)."""
+    try:
+        with (root / rel).open(encoding="utf-8", errors="replace") as f:
+            return f.readline().startswith("# haehan-shim:")
+    except OSError:
+        return False
+
+
 def current_leaks(root: Path, cfg: dict) -> list[str]:
-    return sorted(f for f in tracked_files(root) if (root / f).exists() and classify(f, cfg)[0] == "leak")
+    return sorted(
+        f for f in tracked_files(root)
+        if (root / f).exists() and classify(f, cfg)[0] == "leak" and not _is_shim_file(root, f)
+    )
 
 
 def staged_added(root: Path = ROOT) -> list[tuple[str, str]]:
@@ -155,11 +170,13 @@ def staged_added(root: Path = ROOT) -> list[tuple[str, str]]:
     return out
 
 
-def violations(entries: list[tuple[str, str]], cfg: dict, baseline: set[str]) -> list[tuple[str, str, str]]:
+def violations(
+    entries: list[tuple[str, str]], cfg: dict, baseline: set[str], root: Path = ROOT,
+) -> list[tuple[str, str, str]]:
     bad = []
     for st, path in entries:
         verdict, tool, _ = classify(path, cfg)
-        if verdict == "leak" and path not in baseline:
+        if verdict == "leak" and path not in baseline and not _is_shim_file(root, path):
             bad.append((st, path, tool or "?"))
     return bad
 
@@ -274,7 +291,7 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912 - CLI 모
         entries = staged_added(root)
         if not entries:
             return 0
-        bad = violations(entries, cfg, baseline)
+        bad = violations(entries, cfg, baseline, root)
         if bad:
             _report(bad, cfg)
             return 1

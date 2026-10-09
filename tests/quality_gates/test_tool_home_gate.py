@@ -199,3 +199,40 @@ def test_sync_baseline_grows_when_rule_change_adds_preexisting_leak(repo):
 def test_real_repo_check_all_matches_committed_baseline():
     """실제 저장소: 지금 집 밖 파일은 모두 기준선 안(새 이탈 0) — CI 의 --check-all 과 같은 판정."""
     assert gate.main(["--check-all", "--root", str(REAL_ROOT)]) == 0
+
+
+def test_shim_file_outside_home_is_not_a_leak(repo):
+    """PR #165 tool_home 작업(2026-10-09): `# haehan-shim:` 호환 파일은 메커니즘상 늘 "도구
+    키워드가 들어간 옛 경로"에 남아 집 밖처럼 보인다 — leak 으로 잡으면 안 된다."""
+    _w(
+        repo, "scripts/ig_shim.py",
+        "# haehan-shim: tools.ig_shim\n# 호환 shim\nimport importlib as _il\n",
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add ig shim outside home")
+
+    leaks = gate.current_leaks(repo, gate.load_config(repo))
+
+    assert "scripts/ig_shim.py" not in leaks
+
+
+def test_non_shim_file_outside_home_is_still_a_leak(repo):
+    """shim 예외가 전체 판정을 꺼버리는 게 아님을 증명하는 양성 대조."""
+    _w(repo, "scripts/ig_not_a_shim.py", "import instagram_api\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "add non-shim leak outside home")
+
+    leaks = gate.current_leaks(repo, gate.load_config(repo))
+
+    assert "scripts/ig_not_a_shim.py" in leaks
+
+
+def test_staged_shim_file_outside_home_passes(repo):
+    """--staged 경로(violations())도 shim 을 제외해야 한다."""
+    _w(
+        repo, "scripts/ig_shim2.py",
+        "# haehan-shim: tools.ig_shim2\n# 호환 shim\nimport importlib as _il\n",
+    )
+    _git(repo, "add", "-A")
+
+    assert _staged(repo) == 0
