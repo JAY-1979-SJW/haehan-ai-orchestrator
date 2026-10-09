@@ -35,7 +35,7 @@ TASK_NAME = "HaehanSelectorHealthWeekly"
 LOG_DIR = ROOT / "data" / "selector_health"
 LOG_FILE = LOG_DIR / "weekly_log.jsonl"
 
-CHECKER = ROOT / "scripts" / "ops" / "selector_health" / "selector_health_check.py"
+CHECKER = ROOT / "tools" / "selector_health" / "selector_health_check.py"
 CDP_STARTER = ROOT / "scripts" / "browser" / "cdp" / "cdp_force_start.py"
 
 

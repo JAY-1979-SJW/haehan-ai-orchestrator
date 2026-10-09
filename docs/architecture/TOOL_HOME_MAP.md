@@ -109,7 +109,7 @@
 - 제외: `scripts/common/youtube_search_cache.py`(⚠ G5 겹침, §6-1), `tools/hooks/guard_youtube_upload.py`(`.claude/settings.json` 훅), `apps/youtube-analyzer-standalone/*`(10, 독립앱 결정 1)
 
 **instagram (이탈 23)**: 평면 `connectors/instagram_*`(7) → `connectors/instagram/`(⚠ `instagram_dm_db.py`는 G5와 겹침), `scripts/instagram/ig_batch.py` → `scripts/instagram/ops/`, `apps/ig-comment-dm-bot/*`(14) → 독립앱(결정 1; `processed_store.py`는 G5에서 이미 B 분류).
-**smartstore (이탈 8)**: `scripts/naver/automation/smartstore/*`(6) → `scripts/naver/smartstore/automation/`(참조 있음, `__init__` 6), 평면 `smartstore_router.py`는 이미 4줄 shim(제거 대상), `scripts/ops/selector_health/sites/naver_smartstore.py`는 정상.
+**smartstore (이탈 8)**: `scripts/naver/automation/smartstore/*`(6) → `scripts/naver/smartstore/automation/`(참조 있음, `__init__` 6), 평면 `smartstore_router.py`는 이미 4줄 shim(제거 대상), `tools/selector_health/sites/naver_smartstore.py`는 정상.
 **eum (6)**: 루트 `scripts/eum_*.py` 5개 → `scripts/eum/`(이름에서 `eum_` 접두 제거), 평면 `eum_router.py` → `connectors/eum/`.
 **gabia (7)**: 루트 `gabia_login_watch.py` 외 → `scripts/gabia/`, `scripts/ops/` 일회성 4개 archive후보.
 **g2b (9)**: `ai_orchestrator/browser_tool/g2b_*.py` 8개 → T4연동(엔진 패키지 안의 도구 전용 파일, 집은 `scripts/g2b/`), `scripts/smoke/g2b_*` → `scripts/g2b/smoke/`.

@@ -13017,7 +13017,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/selector_health/__init__.py": {
+  "tools/selector_health/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13025,7 +13025,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/selector_health/core.py": {
+  "tools/selector_health/core.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13033,7 +13033,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/selector_health/sites/__init__.py": {
+  "tools/selector_health/sites/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13041,7 +13041,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/selector_health/sites/naver_blog.py": {
+  "tools/selector_health/sites/naver_blog.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "naver_blog",
@@ -13049,7 +13049,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/selector_health/sites/naver_smartstore.py": {
+  "tools/selector_health/sites/naver_smartstore.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "smartstore",
@@ -13057,7 +13057,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/selector_health/selector_health_check.py": {
+  "tools/selector_health/selector_health_check.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",

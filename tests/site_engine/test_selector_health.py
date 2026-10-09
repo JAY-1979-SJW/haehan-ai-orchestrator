@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from scripts.ops.selector_health.core import (
+from tools.selector_health.core import (
     ERROR,
     HIDDEN,
     MISSING,
