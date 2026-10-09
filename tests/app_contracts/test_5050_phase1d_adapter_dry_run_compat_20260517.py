@@ -9,16 +9,32 @@ ASSISTANT_BACKEND_5050_LEGACY_PHASE1D_ADAPTER_DRY_RUN_COMPAT_TEST_01
     execute 호출 금지 / webhook 호출 금지 / DB write 금지
     5050 중단 금지 / nginx 변경 금지 / secret 출력 금지 / adapter 실제 구현 금지
     skip/xfail 금지 / 테스트 삭제 금지
+
+예외(2026-10-09, PR #165 CI165, 대표님 승인): phase1b·phase1_8400·characterization 교차
+일관성 시험 4개(test_phase1d_consistent_with_phase1b·test_phase1d_risk_consistent_with_phase1b·
+test_phase1d_paths_in_phase1_contracts·test_phase1d_paths_in_characterization)는 커밋
+c3e50f0c("사용처 0 확인한 일회성 8개와 그 전용 시험 5개 삭제")로 대상 감사 스크립트 3개가
+전부 영구 삭제돼 교차 비교 자체가 불가능하다. 위 "skip 금지" 는 코드 안전성 검증을 회피하는
+것을 막기 위한 원칙이라, 검증 대상이 아예 존재하지 않게 된 이 4건에 한해서만
+`pytest.skip(reason=...)` 로 처리한다(다른 시험·다른 사유로 확대 적용 금지).
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 AUDIT_SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_phase1d_adapter_dry_run_compat.py"
+PHASE1B_SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_phase1b_adapter_contract_detail.py"
+PHASE1_8400_SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_phase1_8400_contract_freeze.py"
+CHARACTERIZATION_SCRIPT = ROOT / "scripts" / "ops" / "audit_5050_legacy_characterization.py"
+_DELETED_DEPENDENCY_REASON = (
+    "의존 스크립트 삭제 확정(c3e50f0c, 2026-10-08)으로 교차 비교 불가 — {script} 없음"
+)
 
 # known baseline failures — 이번 공정과 무관한 기존 실패 목록 (문서성 상수)
 # CAD 관련 4건은 2026-06-04 "CAD 모듈 전체 삭제"(17130f8e)로 그 시험 파일 자체가 없어져
@@ -626,6 +642,8 @@ def test_audit_boundary_no_violations():
 # ---------------------------------------------------------------------------
 
 def test_phase1d_consistent_with_phase1b():
+    if not PHASE1B_SCRIPT.is_file():
+        pytest.skip(_DELETED_DEPENDENCY_REASON.format(script=PHASE1B_SCRIPT))
     import importlib.util
     phase1b_spec = importlib.util.spec_from_file_location(
         "audit_5050_phase1b_adapter_contract_detail",
@@ -644,6 +662,8 @@ def test_phase1d_consistent_with_phase1b():
 
 
 def test_phase1d_risk_consistent_with_phase1b():
+    if not PHASE1B_SCRIPT.is_file():
+        pytest.skip(_DELETED_DEPENDENCY_REASON.format(script=PHASE1B_SCRIPT))
     import importlib.util
     phase1b_spec = importlib.util.spec_from_file_location(
         "audit_5050_phase1b_adapter_contract_detail",
@@ -669,6 +689,8 @@ def test_phase1d_risk_consistent_with_phase1b():
 # ---------------------------------------------------------------------------
 
 def test_phase1d_paths_in_phase1_contracts():
+    if not PHASE1_8400_SCRIPT.is_file():
+        pytest.skip(_DELETED_DEPENDENCY_REASON.format(script=PHASE1_8400_SCRIPT))
     import importlib.util
     phase1_spec = importlib.util.spec_from_file_location(
         "audit_5050_phase1_8400_contract_freeze",
@@ -692,6 +714,8 @@ def test_phase1d_paths_in_phase1_contracts():
 # ---------------------------------------------------------------------------
 
 def test_phase1d_paths_in_characterization():
+    if not CHARACTERIZATION_SCRIPT.is_file():
+        pytest.skip(_DELETED_DEPENDENCY_REASON.format(script=CHARACTERIZATION_SCRIPT))
     import importlib.util
     char_spec = importlib.util.spec_from_file_location(
         "audit_5050_legacy_characterization",
