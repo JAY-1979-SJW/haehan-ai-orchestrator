@@ -39,7 +39,7 @@ python tools/hooks/capability_check.py naver mail
 - 위반 시 quality gate `NO_LOCAL_DOCKER_CLI` 에러로 커밋 차단됨
 - 삭제된 스크립트(복구 금지): `deploy_api_with_runtime_gates.py`, `verify_compose_project_boundary.py`, `verify_docker_context_policy.py`, `verify_container_orphans.py`, `docker/docker-compose.dev.yml`, `docker/docker-compose.file-map-executor.yml`
 
-### 정책 예외 (Scoped Exception) — `scripts/ops/server_deploy.py`
+### 정책 예외 (Scoped Exception) — `tools/server_deploy.py`
 
 - **유일하게 docker 호출이 허용된 스크립트.** `configs/quality_gate.json` 의 `no_local_docker_cli_allow_paths` 에 등록.
 - 사유: 서버 배포는 docker compose가 정당하게 필요(서버는 docker로 구동). 배포 스크립트를 repo에 두어 버전관리·리뷰 대상으로 유지하기 위함.

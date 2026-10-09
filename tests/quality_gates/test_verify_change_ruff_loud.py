@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops import verify_change as vc
+from tools import verify_change as vc
 
 
 def _proc(stdout: str, returncode: int, stderr: str = "") -> subprocess.CompletedProcess:

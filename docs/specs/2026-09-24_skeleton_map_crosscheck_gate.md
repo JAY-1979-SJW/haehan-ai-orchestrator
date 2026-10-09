@@ -49,7 +49,7 @@
 ③: 고장 브랜치 → 병합 거부 / 정상 → ff 병합+태그.
 
 ## 영향
-- 신규: tools/code_map/skeleton_gate.py, registry_sync.py, scripts/ops/merge_stage.py, 테스트 tests/test_skeleton_gate.py
+- 신규: tools/code_map/skeleton_gate.py, registry_sync.py, tools/merge_stage.py, 테스트 tests/test_skeleton_gate.py
 - 수정: .githooks/pre-commit.orig(① 호출 1줄 — 추적 정본 + install_git_hooks.py 반영), configs/module_registry.json(부채 정리), 선언 모듈 설정, 공용 스킬 verify-change(설치 대상에 포함)
 - API·DB·보안 영향 없음. CLAUDE.md 는 사용자 확인 후 "게이트 실행 의무" 절에 1줄 추가 제안.
 

@@ -5,7 +5,7 @@ name: CI
 # (docs/defect_index.json #4). 사용자 승인으로 GitHub Actions를 먼저 도입한다.
 #
 # 핵심 검증은 이 저장소가 이미 갖고 있는 "로컬 CI" 도구를 그대로 재사용한다
-# (scripts/ops/verify_change.py — base/head를 같은 방식으로 재서 "기준 대비 새로 생긴
+# (tools/verify_change.py — base/head를 같은 방식으로 재서 "기준 대비 새로 생긴
 # 문제"만 FAIL로 잡는다. 신선한 CI 환경에서 흔한 플레이키/외부서비스 실패를 base·head
 # 양쪽에서 동일하게 겪으므로 상쇄된다). win32com·uiautomation 등 Windows 전용 의존성 때문에
 # Windows 러너를 쓴다(Linux 러너에서는 import 단계부터 실패).
@@ -304,7 +304,7 @@ jobs:
 
       - name: Verify change — static (코드맵·층·순환·audit-kit·mypy·ruff; 시험은 verify-tests 가 돌린다)
         run: >
-          python scripts/ops/verify_change.py --phase static
+          python tools/verify_change.py --phase static
           --base ${{ needs.refs.outputs.base }}
           --head ${{ needs.refs.outputs.head }}
           --json verify_static.json
@@ -387,7 +387,7 @@ jobs:
 
       - name: Verify change — tests ${{ matrix.shard }}/3
         run: >
-          python scripts/ops/verify_change.py --phase tests --shard ${{ matrix.shard }}/3
+          python tools/verify_change.py --phase tests --shard ${{ matrix.shard }}/3
           --base ${{ needs.refs.outputs.base }}
           --head ${{ needs.refs.outputs.head }}
           --json verify_tests_${{ matrix.shard }}.json
@@ -435,7 +435,7 @@ jobs:
       - name: Verify change — report (static + 시험 묶음 합쳐 판정)
         shell: bash
         run: >
-          python scripts/ops/verify_change.py --phase report
+          python tools/verify_change.py --phase report
           --base ${{ needs.refs.outputs.base }}
           --head ${{ needs.refs.outputs.head }}
           --static-json verify_parts/verify-static/verify_static.json

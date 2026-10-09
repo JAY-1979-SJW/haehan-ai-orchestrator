@@ -1,4 +1,4 @@
-"""scripts/ops/publish_release_to_nas.py 시험 — 원격 호출은 전부 mock."""
+"""tools/publish_release_to_nas.py 시험 — 원격 호출은 전부 mock."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from unittest import mock
 
 import pytest
 
-from scripts.ops.publish_release_to_nas import (
+from tools.publish_release_to_nas import (
     PublishError,
     local_checksums,
     main,
@@ -101,7 +101,7 @@ def test_local_checksums_parses_sha256sum_format(tmp_path):
 
 def test_dry_run_does_not_call_subprocess_run(tmp_path):
     d = _make_artifact_dir(tmp_path)
-    with mock.patch("scripts.ops.publish_release_to_nas.subprocess.run") as run:
+    with mock.patch("tools.publish_release_to_nas.subprocess.run") as run:
         rc = publish(d, "20261007-abc1234", dry_run=True)
     assert rc == 0
     run.assert_not_called()
@@ -110,7 +110,7 @@ def test_dry_run_does_not_call_subprocess_run(tmp_path):
 def test_cli_without_execute_flag_defaults_to_dry_run(tmp_path):
     """--execute 를 안 주면(옵션 없이 실행) 실제 업로드가 일어나면 안 된다."""
     d = _make_artifact_dir(tmp_path)
-    with mock.patch("scripts.ops.publish_release_to_nas.subprocess.run") as run:
+    with mock.patch("tools.publish_release_to_nas.subprocess.run") as run:
         rc = main([str(d), "--version", "20261007-abc1234"])
     assert rc == 0
     run.assert_not_called()
@@ -126,7 +126,7 @@ def test_cli_with_execute_flag_calls_subprocess(tmp_path):
             return mock.Mock(stdout="deadbeef  /some/path/HaehanAI-20261007-abc1234-portable.exe\n")
         return mock.Mock(returncode=0)
 
-    with mock.patch("scripts.ops.publish_release_to_nas.subprocess.run", side_effect=_fake_run) as run:
+    with mock.patch("tools.publish_release_to_nas.subprocess.run", side_effect=_fake_run) as run:
         rc = main([str(d), "--version", "20261007-abc1234", "--execute"])
     assert rc == 0
     run.assert_called()
@@ -134,7 +134,7 @@ def test_cli_with_execute_flag_calls_subprocess(tmp_path):
 
 def test_duplicate_version_aborts_before_any_upload(tmp_path):
     d = _make_artifact_dir(tmp_path)
-    with mock.patch("scripts.ops.publish_release_to_nas.subprocess.run") as run:
+    with mock.patch("tools.publish_release_to_nas.subprocess.run") as run:
         run.return_value = mock.Mock(returncode=0)  # test -d 성공 = 이미 존재
         rc = publish(d, "20261007-abc1234", dry_run=False)
     assert rc == 1
@@ -152,7 +152,7 @@ def test_publish_uploads_when_version_is_new(tmp_path):
             return mock.Mock(stdout="deadbeef  /some/path/HaehanAI-20261007-abc1234-portable.exe\n")
         return mock.Mock(returncode=0)
 
-    with mock.patch("scripts.ops.publish_release_to_nas.subprocess.run", side_effect=_fake_run) as run:
+    with mock.patch("tools.publish_release_to_nas.subprocess.run", side_effect=_fake_run) as run:
         rc = publish(d, "20261007-abc1234", dry_run=False)
     assert rc == 0
     assert run.call_count > 1
@@ -168,6 +168,6 @@ def test_publish_fails_on_checksum_mismatch(tmp_path):
             return mock.Mock(stdout="wrongsha  /some/path/HaehanAI-20261007-abc1234-portable.exe\n")
         return mock.Mock(returncode=0)
 
-    with mock.patch("scripts.ops.publish_release_to_nas.subprocess.run", side_effect=_fake_run):
+    with mock.patch("tools.publish_release_to_nas.subprocess.run", side_effect=_fake_run):
         rc = publish(d, "20261007-abc1234", dry_run=False)
     assert rc == 1

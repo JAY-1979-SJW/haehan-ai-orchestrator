@@ -3,7 +3,7 @@
 > 2026-09-29 정정: 아래 "GitHub Actions 등은 쓰지 않는다" 결정은 **번복됨**(사용자 승인).
 > Jenkins 는 설계만 있고 실제로 설치·구현된 적이 없었다(docs/defect_index.json #4 —
 > "CI 없음"). 대신 `.github/workflows/ci.yml` 로 GitHub Actions를 도입, 이 저장소가
-> 이미 갖고 있던 "로컬 CI" 도구 `scripts/ops/verify_change.py`(기준 대비 새로 생긴
+> 이미 갖고 있던 "로컬 CI" 도구 `tools/verify_change.py`(기준 대비 새로 생긴
 > 문제만 FAIL로 판정)를 그대로 재사용한다. 아래 Jenkins 설계는 실행 이력으로만 남긴다.
 
 ## 결정 (사용자, 2026-09-24 — 2026-09-29 번복됨)

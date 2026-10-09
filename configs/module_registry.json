@@ -9297,7 +9297,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/pc_inventory.py": {
+  "tools/pc_inventory.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -9305,7 +9305,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/pc_inventory_mcp.py": {
+  "tools/pc_inventory_mcp.py": {
    "layer": "L4",
    "role": "generic",
    "domain": "common",
@@ -9313,7 +9313,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/pc_inventory_server.py": {
+  "tools/pc_inventory_server.py": {
    "layer": "L8",
    "role": "api",
    "domain": "common",
@@ -9385,7 +9385,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/local_cli_router.py": {
+  "tools/local_cli_router.py": {
    "layer": "L6",
    "role": "workflow",
    "domain": "local_agent",
@@ -12889,7 +12889,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/login_session_monitor.py": {
+  "tools/login_session_monitor.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -12913,7 +12913,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/merge_stage.py": {
+  "tools/merge_stage.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13009,7 +13009,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/runtime_drift_watch.py": {
+  "tools/runtime_drift_watch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13065,7 +13065,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/selector_health_weekly.py": {
+  "tools/selector_health_weekly.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13073,7 +13073,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/server_deploy.py": {
+  "tools/server_deploy.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -13217,7 +13217,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/verify_change.py": {
+  "tools/verify_change.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -19337,7 +19337,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/publish_release_to_nas.py": {
+  "tools/publish_release_to_nas.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22481,7 +22481,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_kit_batch.py": {
+  "tools/audit_kit_batch.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -22985,7 +22985,7 @@
    "confidence": "low",
    "source": "rule"
   },
-  "scripts/ops/guard_instagram_publish.py": {
+  "tools/guard_instagram_publish.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "instagram",
@@ -23329,7 +23329,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/__init__.py": {
+  "tools/__init__.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",
@@ -23657,7 +23657,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/ops/audit_5050_phase1d_adapter_dry_run_compat.py": {
+  "tools/audit_5050_phase1d_adapter_dry_run_compat.py": {
    "layer": "L12",
    "role": "ops_tool",
    "domain": "common",

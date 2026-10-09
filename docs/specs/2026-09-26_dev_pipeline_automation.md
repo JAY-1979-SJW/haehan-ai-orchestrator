@@ -64,8 +64,8 @@
 
 | 자산 | 현재 동작(실측) | 이 설계에서의 역할 |
 |---|---|---|
-| `scripts/ops/verify_change.py` (439줄) | `--base/--head/--json`, 기준·대상 트리를 임시 `git worktree`(`verify_base_*`)로 꺼내 병렬 측정, 잔여 프로세스 정리(`kill_leftovers`). **락 없음** | 락 획득 1곳만 추가(§5.2). 나머지 그대로 |
-| `scripts/ops/merge_stage.py` (286줄) | 내부에서 verify_change 실행 → PASS 시 `merge --ff-only` + 태그 `verified/<name>`, base 체크아웃 확인·태그 중복·겹침 검사 | 그대로 사용. merge 락 + 자식 verify 에 토큰 전달만 추가 |
+| `tools/verify_change.py` (439줄) | `--base/--head/--json`, 기준·대상 트리를 임시 `git worktree`(`verify_base_*`)로 꺼내 병렬 측정, 잔여 프로세스 정리(`kill_leftovers`). **락 없음** | 락 획득 1곳만 추가(§5.2). 나머지 그대로 |
+| `tools/merge_stage.py` (286줄) | 내부에서 verify_change 실행 → PASS 시 `merge --ff-only` + 태그 `verified/<name>`, base 체크아웃 확인·태그 중복·겹침 검사 | 그대로 사용. merge 락 + 자식 verify 에 토큰 전달만 추가 |
 | `tools/code_map/build.py` | `meta = {generated_at, commit(short HEAD), scan_root, digest}` — **작업트리 변경 반영 여부 없음** | 지문 필드 추가 |
 | `tools/code_map/layer_count.py` | map.json 을 **검증 없이** 읽음(R4 원인) | 신선도 확인 호출 1줄 |
 | `tools/code_map/query.py` | map.json 로드, 없으면 에러 | 신선도 확인 |
@@ -126,7 +126,7 @@
   "branch": "stage/lock-p1",
   "worktree": "C:/work/wt-lock-p1",
   "layer": "L2",
-  "files_allowed": ["scripts/ops/pipeline_lock.py", "scripts/ops/verify_change.py", "tests/test_pipeline_lock.py"],
+  "files_allowed": ["scripts/ops/pipeline_lock.py", "tools/verify_change.py", "tests/test_pipeline_lock.py"],
   "files_forbidden": ["configs/module_registry.json"],
   "spec_path": "docs/specs/2026-09-26_lock_p1.md",
   "expect_routes": null,

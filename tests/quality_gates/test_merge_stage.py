@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.ops import merge_stage  # noqa: E402
+from tools import merge_stage  # noqa: E402
 
 
 def test_tag_name_strips_stage_prefix():

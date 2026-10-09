@@ -33,7 +33,7 @@ Claude가 신규 함수를 짤 때 (a) 이미 있는 유사 기능을 다시 짜
 | `CLAUDE.md` | 수정 | 기존 "작업 원칙" 절 아래 문단 추가(신규 섹션 만들지 않음 — 기존 "기준서→드라이런→승인", "게이트 실행 의무"와 중복 방지) |
 
 기존 파일은 **수정하지 않는다**: `tools/hooks/duplicate_code_check.py`,
-`tools/code_map/query.py`, `scripts/ops/verify_change.py`, `.githooks/pre-commit.orig`,
+`tools/code_map/query.py`, `tools/verify_change.py`, `.githooks/pre-commit.orig`,
 `configs/ruff.toml` — 그대로 재사용.
 
 왜 `.claude/hooks/`인가 (기존 관례와 차이): 현재 저장소의 모든 훅 스크립트는 `scripts/ops/`에
@@ -158,7 +158,7 @@ Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/i
 
 ### 워크플로
 복잡하거나 여러 파일에 걸친 작업은 Explore → Plan(Plan Mode) → Implement → Verify → Commit
-순서로 진행한다. Verify 단계는 `scripts/ops/verify_change.py`(전체) 또는 세션 빠른 게이트
+순서로 진행한다. Verify 단계는 `tools/verify_change.py`(전체) 또는 세션 빠른 게이트
 (ruff+영향 테스트, 바뀐 파일 기준)로 한다 — 전체 pytest는 21분+ 걸리고 멈추는 결함이 있어
 매번 돌리지 않는다.
 
@@ -267,7 +267,7 @@ python 스크립트만 import).
 - `.claude/agents/` 디렉터리 없음 (신규 생성 필요, 삭제/충돌 없음).
 - `tools/hooks/duplicate_code_check.py` — 본문 해시 기반 사후 전체 스캔, PreToolUse 실시간
   이름 매칭과 목적이 달라 별도 스크립트 필요하나 세션 종료 시 참고용으로 그대로 재사용 가능.
-- `scripts/ops/verify_change.py` — 9개 판정 항목 이미 구현(기준 커밋과 비교, 영향 테스트 포함).
+- `tools/verify_change.py` — 9개 판정 항목 이미 구현(기준 커밋과 비교, 영향 테스트 포함).
   전체 검증은 이것을 그대로 쓰고 신규 로직 불필요.
 - `tools/code_map/query.py tests-for` — 실측 0.368초, 파일→영향 테스트 매핑 이미 존재.
 - `.githooks/pre-commit.orig` — ruff check --fix + format을 `configs/ruff.toml`로 이미 실행 중

@@ -71,7 +71,7 @@
 - 이 브랜치는 master 보다 145+커밋 앞서고 **다른 세션 작업(CDP 칸 분리, 스마트스토어 조사, 하이웍스 문서, 건설업 공무 문서 등)이 섞여 있다.** PR 은 그것까지 포함 — 병합 범위를 사용자가 정해야 한다(필요하면 이 작업만 따로 추려 새 브랜치로 PR).
 - `merge_stage.py` 는 master 체크아웃이 필요 → 공유 폴더에서 브랜치 전환 금지. PR 병합이 정식 경로.
 - 로컬 `verify_change.py --base origin/master --head <sha>` 는 145커밋 규모에서 **메모리 부족으로 중단**됨 → GitHub `verify` 결과로 대체.
-- 운영 배포: 서버는 `origin/master` 만 pull(`scripts/ops/server_deploy.py`). webhook 자동배포는 끊긴 것으로 추정(`defect_index #6`) → 운영 서버에서 직접 실행해야 하며 **서버 접근 방법·별도 승인 필요**.
+- 운영 배포: 서버는 `origin/master` 만 pull(`tools/server_deploy.py`). webhook 자동배포는 끊긴 것으로 추정(`defect_index #6`) → 운영 서버에서 직접 실행해야 하며 **서버 접근 방법·별도 승인 필요**.
 **할 일(승인 후)**: ① PR #57 확인(초안 해제 여부 포함) → ② GitHub 검사 3개 결과 확인 → ③ 병합 범위 결정(다른 세션 작업 포함 여부) → ④ 병합 → ⑤ 운영 서버 `server_deploy.py` → ⑥ 로컬 서버(8401) 재시작(앱 안 쓸 때) + 실제 채팅 긴 답변·`/ai-agent/dispatch` 확인 → ⑦ 임시 worktree·`verify_base_*` 정리(사용자 확인 후).
 **시작 문구**: "docs/specs/HANDOFF_2026-10-02_agent-dispatch.md 의 창 A 를 이어서 해줘. 승인 없이 master 병합·서버 재시작·운영 배포는 하지 마."
 

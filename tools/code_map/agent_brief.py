@@ -53,7 +53,7 @@ def build(spec_id: str, role: str, files: list[str], map_path: Path | None = Non
         "## 금지 파일(미커밋 WIP, 수정 금지)",
         *[f"- {f}" for f in forbidden],
         "## 검증",
-        "- HAEHAN_NO_BROWSER_LAUNCH=1 python scripts/ops/verify_change.py --head",
+        "- HAEHAN_NO_BROWSER_LAUNCH=1 python tools/verify_change.py --head",
     ]
     return "\n".join(L) + "\n"
 

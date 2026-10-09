@@ -7,4 +7,4 @@ args = [
 
 [mcp_servers.pc-inventory]
 command = "python"
-args = ["scripts/ops/pc_inventory_mcp.py"]
+args = ["tools/pc_inventory_mcp.py"]

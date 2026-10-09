@@ -86,7 +86,7 @@ def _run_main(monkeypatch, capsys, *, before, after, gates_ok=True, blocking=(),
     monkeypatch.setattr(msc, "_run", lambda cmd, cwd, timeout=0: subprocess.CompletedProcess(cmd, 0, "", ""))
     monkeypatch.setattr(msc, "preflight_blocking", lambda base, head, root: block)
     monkeypatch.setattr(msc, "moved_py", lambda base, head, root: {})
-    monkeypatch.setattr("scripts.ops.verify_change._checkout", lambda ref, dest: True)
+    monkeypatch.setattr("tools.verify_change._checkout", lambda ref, dest: True)
     monkeypatch.setattr(msc, "_git", lambda cwd, *args: subprocess.CompletedProcess(args, 0, "", ""))
     rc = msc.main(["--base", "origin/master", "--no-runcheck", *extra])
     return rc, capsys.readouterr().out
@@ -168,7 +168,7 @@ def test_run_impacted_caps_workers_at_four(monkeypatch, tmp_path):
         seen.append(cmd)
         return subprocess.CompletedProcess(cmd, 0, "", "")
 
-    monkeypatch.setattr("scripts.ops.verify_change.run", fake_run)
+    monkeypatch.setattr("tools.verify_change.run", fake_run)
     monkeypatch.setattr(msc, "_xdist_available", lambda: True)
     assert msc.run_impacted(tmp_path, ["tests/test_a.py"], 99) == []
     assert seen[0][seen[0].index("-n") + 1] == "4"
@@ -185,7 +185,7 @@ def test_main_fails_on_new_impacted_failure_but_not_on_existing_ones(monkeypatch
     monkeypatch.setattr(msc, "_run", lambda cmd, cwd, timeout=0: subprocess.CompletedProcess(cmd, 0, "", ""))
     monkeypatch.setattr(msc, "preflight_blocking", lambda base, head, root: [])
     monkeypatch.setattr(msc, "moved_py", lambda base, head, root: {})
-    monkeypatch.setattr("scripts.ops.verify_change._checkout", lambda ref, dest: True)
+    monkeypatch.setattr("tools.verify_change._checkout", lambda ref, dest: True)
     monkeypatch.setattr(msc, "_git", lambda cwd, *args: subprocess.CompletedProcess(args, 0, "", ""))
     section = {"status": "run", "files": ["tests/test_a.py"], "new_failures": [], "existing_failures": ["tests/test_a.py::old"], "notice": ""}
     monkeypatch.setattr(msc, "impacted_section", lambda base, base_tree, workers, max_files: section)
@@ -200,7 +200,7 @@ def test_main_fails_on_new_impacted_failure_but_not_on_existing_ones(monkeypatch
 
 
 def test_impacted_test_files_uses_the_shared_selection(monkeypatch, tmp_path):
-    from scripts.ops import verify_change as vc
+    from tools import verify_change as vc
 
     (tmp_path / "tests").mkdir()
     (tmp_path / "tests" / "test_a.py").write_text("x = 1", encoding="utf-8")
@@ -212,7 +212,7 @@ def test_impacted_test_files_uses_the_shared_selection(monkeypatch, tmp_path):
 
 
 def test_no_changes_means_no_tests(monkeypatch, tmp_path):
-    from scripts.ops import verify_change as vc
+    from tools import verify_change as vc
 
     monkeypatch.setattr(vc, "changed_files", lambda base, head: [])
     monkeypatch.setattr(vc, "affected_tests", lambda changed: (_ for _ in ()).throw(AssertionError("변경이 없으면 부르지 않는다")))

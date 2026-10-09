@@ -34,7 +34,7 @@ docker 호출 스크립트의 repo 커밋을 차단 → 배포 스크립트를 r
 ### 3-1. `configs/quality_gate.json` (L2 정책 설정)
 ```json
 "no_local_docker_cli": true,
-"no_local_docker_cli_allow_paths": ["scripts/ops/server_deploy.py"]   // 신규
+"no_local_docker_cli_allow_paths": ["tools/server_deploy.py"]   // 신규
 ```
 
 ### 3-2. `tools/quality/quality_gate.py` (L2 게이트)
@@ -46,7 +46,7 @@ if path in allow:
 ```
 - 변경 최소화: 예외 목록에 포함된 경로면 docker 검사 skip.
 
-### 3-3. `scripts/ops/server_deploy.py` (신규, L2/운영)
+### 3-3. `tools/server_deploy.py` (신규, L2/운영)
 서버 전용 배포 스크립트. **로컬 PC 오작동 방지 가드 필수:**
 ```python
 # 가드: docker 없으면(=로컬 PC) 즉시 중단

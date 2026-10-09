@@ -124,7 +124,7 @@ def _hook_lines(messages: list[str]) -> list[str]:
 def batch_raw_findings(
     kit: list[str], root: Path, rels: list[str], *, workers: int = 4, timeout_s: int = 1500
 ) -> dict[str, list[str]]:
-    """여러 파일의 audit-kit 검사를 프로세스 몇 개에서 묶어 돈다(`scripts/ops/audit_kit_batch.py`) — 프로젝트 그래프를 프로세스마다 한 번만 만든다.
+    """여러 파일의 audit-kit 검사를 프로세스 몇 개에서 묶어 돈다(`tools/audit_kit_batch.py`) — 프로젝트 그래프를 프로세스마다 한 번만 만든다.
 
     파일마다 `raw_findings`(= `audit-kit hook` 호출)를 따로 부르면 호출마다 그래프를 새로 만들어 파일당 수 초가 걸린다(PR #160 verify 정지의 원인).
     돌려주는 dict 에 없는 파일(진짜 audit-kit 가 아니거나 묶음 실행이 실패한 경우)은 호출 쪽이 `raw_findings` 로 단독 재시도한다.

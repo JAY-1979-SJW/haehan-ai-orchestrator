@@ -54,7 +54,7 @@ python tools/hooks/capability_check.py naver mail
 - 위반 시 quality gate `NO_LOCAL_DOCKER_CLI` 에러로 커밋 차단됨
 - 삭제된 스크립트(복구 금지): `deploy_api_with_runtime_gates.py`, `verify_compose_project_boundary.py`, `verify_docker_context_policy.py`, `verify_container_orphans.py`, `docker/docker-compose.dev.yml`, `docker/docker-compose.file-map-executor.yml`
 
-### 정책 예외 (Scoped Exception) — `scripts/ops/server_deploy.py`
+### 정책 예외 (Scoped Exception) — `tools/server_deploy.py`
 
 - **유일하게 docker 호출이 허용된 스크립트.** `configs/quality_gate.json` 의 `no_local_docker_cli_allow_paths` 에 등록.
 - 사유: 서버 배포는 docker compose가 정당하게 필요(서버는 docker로 구동). 배포 스크립트를 repo에 두어 버전관리·리뷰 대상으로 유지하기 위함.
@@ -296,7 +296,7 @@ FORBIDDEN_IMPORT > 0 → STOP
 SECURITY_PATTERN > 0 → STOP  
 CIRCULAR_IMPORT > 0 → STOP  
 quality gate errors > 0 → STOP  
-지도↔골격 대조(`tools/code_map/skeleton_gate.py`, pre-commit 자동·차단) FAIL → 안내된 `registry_sync.py --fix` 로 정본 맞춘 뒤 재커밋. master 병합은 `python scripts/ops/merge_stage.py <branch>`(verify_change PASS 일 때만) — 설계 docs/specs/2026-09-24_skeleton_map_crosscheck_gate.md
+지도↔골격 대조(`tools/code_map/skeleton_gate.py`, pre-commit 자동·차단) FAIL → 안내된 `registry_sync.py --fix` 로 정본 맞춘 뒤 재커밋. master 병합은 `python tools/merge_stage.py <branch>`(verify_change PASS 일 때만) — 설계 docs/specs/2026-09-24_skeleton_map_crosscheck_gate.md
 
 ## 코딩 컨벤션 및 완료 보고 기준 (2026-09-26 추가)
 
@@ -318,7 +318,7 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
 
 ### 워크플로
 복잡하거나 여러 파일에 걸친 작업은 Explore → Plan(Plan Mode) → Implement → Verify → Commit
-순서로 진행한다. Verify 단계는 `scripts/ops/verify_change.py`(전체) 또는 세션 빠른 게이트
+순서로 진행한다. Verify 단계는 `tools/verify_change.py`(전체) 또는 세션 빠른 게이트
 (ruff+영향 테스트, 바뀐 파일 기준)로 한다 — 전체 pytest는 21분+ 걸리고 멈추는 결함이 있어
 매번 돌리지 않는다(2026-10-05 실측: CI 조건 약 16분 25초, 위 gotcha 정정 참조).
 
@@ -412,7 +412,7 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
 
 - **린트 (파일 단위)**: `python -m ruff check --config configs/ruff.toml <파일경로>` — 새 편집으로 생긴 오류만 확인 (레거시 오류 다수 존재, 위 gotcha 참조)
 - **영향 테스트 조회 → 실행**: `HAEHAN_NO_BROWSER_LAUNCH=1 python tools/code_map/query.py tests-for <변경파일>` 로 관련 테스트 목록을 얻은 뒤 해당 테스트만 `pytest` 실행 (전체 pytest 금지, 위 gotcha 참조)
-- **전체 변경 검증**: `python scripts/ops/verify_change.py --base <기준커밋> --head <대상커밋> [--expect-routes N]`
+- **전체 변경 검증**: `python tools/verify_change.py --base <기준커밋> --head <대상커밋> [--expect-routes N]`
 - **게이트 3종**: 위 "게이트 실행 의무" 섹션 참조 (`codebase_layer_audit.py`, `test_codebase_layer_audit.py`, `quality_gate.py --staged --enforce --allow-existing-code-change`)
 - **프론트 타입체크**: `cd admin-web && npm run typecheck` (`tsc --noEmit -p tsconfig.app.json`) — 확인 완료(통과)
 - **프론트 빌드**: `cd admin-web && npm run build` (`next build`) — 시간이 걸리므로 필요할 때만

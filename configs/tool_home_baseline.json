@@ -57,7 +57,7 @@
   "scripts/ops/audit_naver_mail_unread_filter_dom_fix.py",
   "scripts/ops/audit_naver_mail_unread_pagination_depth.py",
   "scripts/ops/daily_cafe_marketing_pipeline.py",
-  "scripts/ops/guard_instagram_publish.py",
+  "tools/guard_instagram_publish.py",
   "scripts/ops/ig_batch.py"
  ]
 }

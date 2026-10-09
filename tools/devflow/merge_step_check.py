@@ -138,7 +138,7 @@ def preflight_blocking(base: str, head: str, root: Path) -> list[str]:
 def impacted_test_files(base: str, head: str, root: Path) -> list[str]:
     """바뀐 파일(base...head)에 닿는 시험 파일(현재 트리에 있는 것만). 선별은 CI 의 verify_change.affected_tests 와 같은 함수:
     출발점 = 바뀐 파일 + 바뀐 비-.py 를 문자열로 읽는 .py(code_map/ref_seeds), 거기서 코드맵 간선으로 역탐색."""
-    from scripts.ops import verify_change as vc
+    from tools import verify_change as vc
 
     changed_all = vc.changed_files(base, head)
     if not changed_all:
@@ -161,7 +161,7 @@ def _xdist_available() -> bool:
 
 def run_impacted(tree: Path, files: list[str], workers: int) -> list[str]:
     """시험 파일을 묶음으로 실행하고 실패·수집오류 id 목록을 돌려준다. 병렬은 xdist 가 있을 때 최대 IMPACTED_MAX_WORKERS."""
-    from scripts.ops import verify_change as vc
+    from tools import verify_change as vc
 
     workers = max(1, min(workers, IMPACTED_MAX_WORKERS))
     extra = ["-n", str(workers)] if workers > 1 and _xdist_available() else []
@@ -285,7 +285,7 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0915 - 이동 
     a = ap.parse_args(argv)
     runcheck = not a.no_runcheck
 
-    from scripts.ops.verify_change import (
+    from tools.verify_change import (
         _checkout,  # 기준 트리를 임시 worktree 로 꺼내 head 의 code_map 도구를 넣는다(같은 잣대)
     )
 

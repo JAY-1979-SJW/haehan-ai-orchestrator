@@ -1,83 +1,27 @@
-"""로컬 PC 탐색 결과를 FastAPI로 제공 (포트 8402, 로컬 전용).
+# haehan-shim: tools.pc_inventory_server
+# 호환 shim: 실제 모듈은 tools.pc_inventory_server 로 이동했다 (tools/pc_inventory_server.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: tools/devflow/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-엔드포인트:
-  GET /inventory          — 전체 수집 (캐시 60초)
-  GET /inventory/system   — 시스템 정보
-  GET /inventory/apps     — 설치된 프로그램
-  GET /inventory/processes— 실행 중인 프로세스
-  GET /inventory/ports    — 열린 포트
-  GET /inventory/services — Windows 서비스
-  GET /inventory/startup  — 시작프로그램
-  POST /inventory/refresh — 캐시 강제 갱신
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
+    from pathlib import Path as _Path
 
-실행:
-  python scripts/ops/pc_inventory_server.py
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    _root = str(_Path(__file__).resolve().parents[2])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
-보안: 127.0.0.1 바인딩 (로컬 전용), 외부 노출 없음.
-"""
-
-from __future__ import annotations
-
-import time
-from typing import Any
-
-import uvicorn
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
-from pc_inventory import (  # type: ignore[import-not-found]  # 직접실행 시 스크립트 자기 폴더가 sys.path[0] — 정적 분석 범위 밖
-    SECTIONS,
-    collect_all,
-    save,
-)
-
-app = FastAPI(title="PC Inventory", version="1.0.0")
-
-_cache: dict[str, Any] = {}
-_cache_ts: float = 0.0
-CACHE_TTL = 60  # 초
+    _runpy.run_module("tools.pc_inventory_server", run_name="__main__")
+    raise SystemExit
 
 
-def _get_cache() -> dict[str, Any]:
-    global _cache, _cache_ts
-    if time.time() - _cache_ts > CACHE_TTL:
-        _cache = collect_all()
-        _cache_ts = time.time()
-        save(_cache)
-    return _cache
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-@app.get("/inventory")
-def get_inventory() -> JSONResponse:
-    return JSONResponse(_get_cache())
-
-
-@app.get("/inventory/{section}")
-def get_section(section: str) -> JSONResponse:
-    if section not in SECTIONS:
-        raise HTTPException(status_code=404, detail=f"unknown section: {section}")
-    data = _get_cache()
-    return JSONResponse(
-        {
-            "section": section,
-            "collected_at": data.get("collected_at"),
-            "data": data.get(section),
-            "secret_values_output": False,
-        }
-    )
-
-
-@app.post("/inventory/refresh")
-def refresh() -> dict[str, Any]:
-    global _cache_ts
-    _cache_ts = 0.0
-    data = _get_cache()
-    return {"refreshed": True, "collected_at": data.get("collected_at")}
-
-
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "service": "pc-inventory"}
-
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8402, log_level="info")
+_install(_il.import_module("tools.pc_inventory_server"), globals(), _sys.modules)

@@ -224,7 +224,7 @@ def tree_aware_kit(tmp_path, monkeypatch):
 
 
 def test_verify_counts_only_findings_new_versus_base(tmp_path, tree_aware_kit):
-    from scripts.ops import verify_change as vc
+    from tools import verify_change as vc
 
     base, head = _two_trees(tmp_path)
     found, note = vc._audit_kit_new_findings(["pkg/a.py", "pkg/new.py"], base, head)
@@ -236,7 +236,7 @@ def test_verify_counts_only_findings_new_versus_base(tmp_path, tree_aware_kit):
 
 
 def test_verify_skips_when_kit_missing(tmp_path, monkeypatch):
-    from scripts.ops import verify_change as vc
+    from tools import verify_change as vc
 
     monkeypatch.setenv("AUDIT_KIT_BIN", str(tmp_path / "missing.py"))
     found, note = vc._audit_kit_new_findings(["pkg/a.py"], tmp_path, tmp_path)
@@ -244,7 +244,7 @@ def test_verify_skips_when_kit_missing(tmp_path, monkeypatch):
 
 
 def test_verify_reports_unchecked_file_instead_of_passing_silently(tmp_path, monkeypatch):
-    from scripts.ops import verify_change as vc
+    from tools import verify_change as vc
 
     script = tmp_path / "broken_kit.py"
     script.write_text("import sys\nsys.exit(1)\n", encoding="utf-8")
@@ -312,7 +312,7 @@ def test_mypy_keys_parses_error_lines_and_handles_failures(monkeypatch, tmp_path
 def test_verify_includes_mypy_diff_against_base(tmp_path, tree_aware_kit, monkeypatch):
     import importlib
 
-    from scripts.ops import verify_change as vc
+    from tools import verify_change as vc
 
     # verify_change 는 scripts/ops 를 경로에 넣고 `audit_kit_gate` 를 최상위 이름으로 가져온다 — 그 모듈 객체를 패치해야 한다
     akg = importlib.import_module("tools.hooks.audit_kit_gate")
@@ -375,7 +375,7 @@ def test_verify_fails_when_real_kit_has_no_python_for_mypy(tmp_path, tree_aware_
     """진짜 audit-kit 인데 mypy 를 돌릴 파이썬이 없으면 조용히 생략하지 않고 검사 결과(FAIL 사유)로 올린다."""
     import importlib
 
-    from scripts.ops import verify_change as vc
+    from tools import verify_change as vc
 
     akg = importlib.import_module("tools.hooks.audit_kit_gate")
     base, head = _two_trees(tmp_path)

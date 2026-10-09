@@ -2,7 +2,7 @@
 
 기존 `behavior_gate.py`는 그대로 두고(파일 보존 원칙), settings.json Stop 배열에
 이 스크립트를 별도 항목으로 추가한다(§3.3 참조). 전체 pytest(21분+, 멈춤 결함 있음)는
-여기서 돌리지 않는다 — 전체 검증은 `scripts/ops/verify_change.py`(커밋 시점) 담당.
+여기서 돌리지 않는다 — 전체 검증은 `tools/verify_change.py`(커밋 시점) 담당.
 
 2026-09-26 수정: 최초 구현은 `git status --porcelain` 전체를 대상으로 했으나, 이 저장소는
 항상 다수의 미커밋 변경이 있어 "다른 세션이 건드린 파일"까지 이 세션의 Stop 게이트가
