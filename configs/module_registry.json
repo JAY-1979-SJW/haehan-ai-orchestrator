@@ -22673,14 +22673,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/planner.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "ai_orchestrator/routers/auth_router.py": {
    "layer": "L2",
    "role": "policy",
@@ -22729,14 +22721,6 @@
    "confidence": "low",
    "source": "rule"
   },
-  "ai_orchestrator/web_task_templates.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/app_paths.py": {
    "layer": "L1",
    "role": "shared",
@@ -22761,14 +22745,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_cdp_selection_gate.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "browser",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/browser_paths.py": {
    "layer": "L4",
    "role": "browser_engine",
@@ -22777,23 +22753,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_rpc_server.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/browser_tab_monitor.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/browser_task_session.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",
@@ -22834,14 +22794,6 @@
    "source": "rule"
   },
   "scripts/cdp_lane_start.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/cdp_tab_manager.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",

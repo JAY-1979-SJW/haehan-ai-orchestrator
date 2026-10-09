@@ -1108,3 +1108,12 @@ git checkout pre-openai-removal -- <경로>
 
 보존(사용처 0 아님): `tests/fixtures/browser_submit_execution_gate_fixture_20260506.json` — 남아있는 `tests/test_browser_gate_module_design_20260506.py` 가 여전히 참조(파일 없으면 skip 처리되어 삭제해도 안 깨지지만, 다른 시험이 참조 중이라 보존).
 - `scripts/web_connector.py` — `shutdown_browser_session`(탭·브라우저 전체 종료 — 로그인 세션 보존 정책과 반대)
+
+## 2026-10-09 W2(flat_root_baseline 55건 재분류) 수동 삭제 — 기준 커밋 `f383f912ebc1fc57020460663fcfc72fcad5aa9a`
+참조 0(①~⑤, unused_code_check.py 북키핑 노이즈 필터 수정 후 재확인)·⑥(--confirm-no-scheduled-task, shim은 예약작업/서버등록 진입점 성격 아님) 확인된 호환 shim 6건.
+- `ai_orchestrator/planner.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- ai_orchestrator/planner.py`
+- `ai_orchestrator/web_task_templates.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- ai_orchestrator/web_task_templates.py`
+- `scripts/browser_cdp_selection_gate.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/browser_cdp_selection_gate.py`
+- `scripts/browser_rpc_server.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/browser_rpc_server.py`
+- `scripts/browser_task_session.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/browser_task_session.py`
+- `scripts/cdp_tab_manager.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/cdp_tab_manager.py`
