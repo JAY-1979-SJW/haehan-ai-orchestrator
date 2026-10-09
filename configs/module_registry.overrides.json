@@ -1281,5 +1281,30 @@
   "layer": "L1",
   "role": "contract",
   "reason": "PR #165 CI165: 상동 패키지의 값 레지스트리 — 상동 사유로 L1"
+ },
+ "tools/code_map/skeleton_gate.py": {
+  "layer": "L4",
+  "role": "tool",
+  "reason": "PR 건강점검(2026-10-10): 같은 폴더(tools/code_map/) 형제 전부(build·fullmap·layer_count·modules·proc_tree·query·reach·ref_seeds·registry_sync·runcheck 등) L4 인데 이 파일만 policy 키워드로 L2 오분류 — 기능상 같은 code_map 도구 묶음, L4 로 맞춤"
+ },
+ "tools/devflow/worktree_change_index.py": {
+  "layer": "L4",
+  "role": "tool",
+  "reason": "PR 건강점검(2026-10-10): 이 파일이 직접 의존하는 tools/code_map/layer_rules.py 가 L4(형제 전부 L4) — contract 키워드로 L1 오분류, L4 로 맞춤"
+ },
+ "tools/repo_gates/codebase_layer_audit.py": {
+  "layer": "L4",
+  "role": "tool",
+  "reason": "PR 건강점검(2026-10-10): 같은 폴더(tools/repo_gates/) 형제(dup_gate·flat_root_gate·folder_gate·tool_home_gate 등) 전부 L2/L4 대역 — persistence 키워드로 L7 오분류, 실제론 code_map/layer_rules.py 를 쓰는 분류기라 L4 로 맞춤"
+ },
+ "tools/repo_gates/dup_gate.py": {
+  "layer": "L4",
+  "role": "tool",
+  "reason": "PR 건강점검(2026-10-10): 직접 의존 tools/repo_gates/_dup_structure_hash.py 가 L4 — policy 키워드로 L2 오분류, L4 로 맞춤"
+ },
+ "tools/hooks/session_guard.py": {
+  "layer": "L4",
+  "role": "tool",
+  "reason": "PR 건강점검(2026-10-10): 같은 폴더(tools/hooks/) 형제 session_handoff.py 가 L4 — policy 키워드로 L2 오분류, L4 로 맞춤"
  }
 }
