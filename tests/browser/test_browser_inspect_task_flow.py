@@ -1,9 +1,11 @@
 """Tests for browser.inspect action in task context (mock flow)."""
-import pytest
 import sys
+
+import pytest
+
 sys.path.insert(0, '.')
 
-from local_agent.agent import execute_local
+from core.agent_runtime.agent import execute_local
 
 
 def test_browser_inspect_dry_run_task():

@@ -108,7 +108,7 @@ def _start_worker(server_url: str, log_path: Path) -> subprocess.Popen:
         [
             sys.executable,
             "-m",
-            "local_agent.agent",
+            "core.agent_runtime.agent",
             "--run",
             "--server",
             server_url,

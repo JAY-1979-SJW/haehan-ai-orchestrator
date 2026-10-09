@@ -6553,7 +6553,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/__init__.py": {
+  "core/agent_runtime/__init__.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",
@@ -6569,7 +6569,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "local_agent/agent.py": {
+  "core/agent_runtime/agent.py": {
    "layer": "L10",
    "role": "local_agent",
    "domain": "local_agent",

@@ -53,7 +53,7 @@ def _start_worker(server_url: str, log_path: Path) -> subprocess.Popen:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     out = log_path.open("a", encoding="utf-8")
     return subprocess.Popen(
-        [sys.executable, "-m", "local_agent.agent", "--run", "--server", server_url],
+        [sys.executable, "-m", "core.agent_runtime.agent", "--run", "--server", server_url],
         cwd=ROOT,
         env=env,
         stdout=out,

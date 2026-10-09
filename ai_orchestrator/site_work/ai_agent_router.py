@@ -65,7 +65,7 @@ def run_agent(
     if agent is None:
         raise HTTPException(
             status_code=503,
-            detail=("연결된 로컬 에이전트가 없습니다. python -m local_agent.agent --run 이 실행 중인지 확인하세요."),
+            detail=("연결된 로컬 에이전트가 없습니다. python -m core.agent_runtime.agent --run 이 실행 중인지 확인하세요."),
         )
     agent_id = agent["agent_id"]
 

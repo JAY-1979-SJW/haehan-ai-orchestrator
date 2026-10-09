@@ -23,9 +23,9 @@ from typing import Any
 
 import psutil
 
-from ai_orchestrator.agent_hub.registry import facade as _reg
 from ai_orchestrator.agent_dispatch import agent_dispatch_policy as pol
 from ai_orchestrator.agent_dispatch import agent_dispatch_store as store
+from ai_orchestrator.agent_hub.registry import facade as _reg
 from ai_orchestrator.contracts.agent_result_limits import RESULT_FULL_MAX_CHARS
 
 logger = logging.getLogger(__name__)
@@ -135,7 +135,7 @@ def create_dispatch(goal: str, created_by: str, max_parallel: int | None = None)
         raise DispatchError(f"목표는 {GOAL_MAX_CHARS}자 이하여야 합니다")
     agent = _reg.select_agent(_reg.list_agents())
     if agent is None:
-        raise DispatchError("연결된 로컬 에이전트가 없습니다 (python -m local_agent.agent --run 확인)")
+        raise DispatchError("연결된 로컬 에이전트가 없습니다 (python -m core.agent_runtime.agent --run 확인)")
     cap = pol.clamp_parallel(max_parallel if max_parallel is not None else pol.DEFAULT_PARALLEL)
     task_id = _enqueue(
         agent_id=agent["agent_id"],

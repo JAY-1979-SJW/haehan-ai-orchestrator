@@ -27,7 +27,7 @@ REQUIRED_FILES = (
     "docs/design/authenticated_local_agent_dispatch_dry_run_20260523.md",
     "scripts/ops/audits/agent/audit_authed_local_agent_dispatch_dry_run.py",
     "scripts/ops/verify/verify_live_browser_readonly_dispatch.py",
-    "local_agent/agent.py",
+    "core/agent_runtime/agent.py",
     "core/agent_runtime/connection/websocket_client.py",
     "core/agent_runtime/browser/browser_readonly_runtime.py",
     "ai_orchestrator/agent_hub/router/root.py",

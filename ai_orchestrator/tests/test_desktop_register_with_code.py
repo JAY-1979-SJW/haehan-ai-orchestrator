@@ -21,13 +21,13 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent / ".." / ".."))
 
+from core.agent_runtime import agent as _agent
 from core.agent_runtime.common import desktop_config as _cfg
 from core.agent_runtime.connection import token_store as _ts
 from core.agent_runtime.connection.registration_client import (
     RegistrationError,
     register_with_code,
 )
-from local_agent import agent as _agent
 
 
 class _FakeResp:
@@ -163,7 +163,7 @@ def test_cmd_register_with_code_writes_config_without_secret(fake_kr, tmp_path, 
         "label": "demo",
         "allowed_actions": ["open_url"],
     }
-    with patch("local_agent.agent._register_with_code") as m:
+    with patch("core.agent_runtime.agent._register_with_code") as m:
         # m은 (meta, token) 튜플을 반환해야 한다 (실제 구현 시그니처 동일).
         from core.agent_runtime.connection.registration_client import RegistrationResult
 
@@ -207,7 +207,7 @@ def test_cmd_register_with_code_writes_config_without_secret(fake_kr, tmp_path, 
 
 def test_cmd_register_with_code_failure_no_secret(fake_kr, capsys):
     with patch(
-        "local_agent.agent._register_with_code",
+        "core.agent_runtime.agent._register_with_code",
         side_effect=RegistrationError(http_status=400, generic_message="invalid_registration_code"),
     ):
         rc = _agent.cmd_register_with_code(

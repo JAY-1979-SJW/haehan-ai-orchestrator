@@ -280,7 +280,7 @@ class TestLocalAgentModelGap:
         # agent.py는 모듈이고 LocalAgent 클래스가 정의되어 있지 않음
         # gap: LocalAgent 모델 클래스 전무
         try:
-            from local_agent.agent import (
+            from core.agent_runtime.agent import (
                 LocalAgent,  # noqa: F401 — 존재 여부만 확인(gap 테스트)
             )
 

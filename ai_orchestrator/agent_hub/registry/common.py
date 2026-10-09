@@ -81,7 +81,7 @@ _tasks: dict[str, LocalAgentTask] = {}
 
 # ── 에이전트 정체성 영속화 (2026-09-29 추가) ──────────────────────────────
 # FastAPI 프로세스가 재시작되면 인메모리 _agents가 비어 authenticate_agent()가 기존
-# device_token을 전부 거부해 WS가 4401로 끊기는 문제(실측 확인: local_agent/agent.py는
+# device_token을 전부 거부해 WS가 4401로 끊기는 문제(실측 확인: core/agent_runtime/agent.py는
 # 클라이언트 쪽 토큰을 keyring에 영속 보관하지만 서버는 재시작마다 전부 잊었다) — 등록
 # 정체성(agent_id/token_hash 등, 연결상태 제외)만 디스크에 저장해 재시작 후에도 기존
 # 에이전트가 그대로 재인증되게 한다. 연결상태(connected_at 등)는 저장하지 않는다 —
