@@ -4099,11 +4099,11 @@
   },
   "scripts/naver/agent_mixins/cafe_mixin_activity.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "naver_cafe",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: cafe_mixin.py(L4, confirmed)의 사유('CafeReadMixin 등 L4 하위 믹스인들을 다중상속으로 결합')가 이 파일을 포함한 형제 믹스인 전부를 L4 로 지목 — SITE_MODULES 기본값(L5) 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/naver/agent_mixins/cafe_mixin_article.py": {
    "layer": "L4",
@@ -4115,35 +4115,35 @@
   },
   "scripts/naver/agent_mixins/cafe_mixin_common.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "naver_cafe",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: cafe_mixin_article.py(L4, 임시판정)가 부르는 공용 베이스 — cafe_mixin 믹스인 가족과 같은 L4(SITE_MODULES 기본값 L5 오분류)",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/naver/agent_mixins/cafe_mixin_media.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "naver_cafe",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: cafe_mixin.py(L4, confirmed) 와 동일 사유 — 상동",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/naver/agent_mixins/cafe_mixin_member.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "naver_cafe",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: cafe_mixin.py(L4, confirmed) 와 동일 사유 — 상동",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/naver/agent_mixins/cafe_mixin_read.py": {
    "layer": "L4",
-   "role": "generic",
+   "role": "automation",
    "domain": "naver_cafe",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR #165 CI165: cafe_mixin.py(L4, confirmed) 와 동일 사유 — 상동",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/browser/agent/calendar_mixin.py": {
    "layer": "L4",
@@ -4155,11 +4155,11 @@
   },
   "scripts/naver/agent_mixins/mail_mixin.py": {
    "layer": "L4",
-   "role": "browser_engine",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "PR #165 CI165: scripts/browser/agent/agent.py 가 다중상속으로 묶는 형제 믹스인(calendar_mixin·mybox_mixin·blog_mixin·cafe_mixin) 전부 L4(blog_mixin·cafe_mixin 은 이미 confirmed)인데 이 파일만 SITE_MODULES 기본값(L5)으로 빠짐 — 형제와 맞춤",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "scripts/browser/agent/mybox_mixin.py": {
    "layer": "L4",
@@ -4771,11 +4771,11 @@
   },
   "ai_orchestrator/agent_hub/registry/common.py": {
    "layer": "L4",
-   "role": "browser_engine",
+   "role": "automation",
    "domain": "local_agent",
-   "reason": "범용 브라우저·CDP",
+   "reason": "PR #165 CI165: '공용 기반 이름(common)' 휴리스틱이 L1 으로 잘못 당겼음(L1 은 자기 자신만 허용, policy(L2)·contracts(L4) 를 못 부름). 같은 폴더 형제(agent.py·cleanup.py·exports.py·task_cancel.py·task_lifecycle.py·task_queue.py)가 전부 L4(기본값)라 그 형제들과 맞춤 — L8 로 먼저 시도했다가 바로 그 형제들(L4)과 충돌해 정정함",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "ai_orchestrator/agent_hub/registry/sanitize.py": {
    "layer": "L4",
@@ -5285,7 +5285,7 @@
    "layer": "L6",
    "role": "workflow",
    "domain": "naver_cafe",
-   "reason": "sites/runner.py(L6)를 직접 호출해 수집을 실행 — 수동적 L4 어댑터 아님, 수집 워크플로 성격",
+   "reason": "PR #165 CI165: 형제 ai_orchestrator/sites/runner.py(L6, 업무 흐름)를 부르는 사이트 수집 워크플로 — classify.py 자신이 '근거 부족, 기본값'으로 표시한 low-confidence 판정, runner.py 와 같은 L6 로 맞춤",
    "confidence": "high",
    "source": "confirmed"
   },
@@ -24470,6 +24470,22 @@
    "role": "ops_tool",
    "domain": "google",
    "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_ci165_layer_overrides.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_verify_change_shim_violations.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
   }

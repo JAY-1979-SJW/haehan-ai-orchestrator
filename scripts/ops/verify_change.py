@@ -273,15 +273,32 @@ def _measure_routes(tree: Path) -> str:
     return "-"
 
 
+def _is_shim_file(tree: Path, rel: str) -> bool:
+    """`# haehan-shim:` 마커로 시작하는 1줄 경로-포워딩 호환 파일인가(scripts/ops/make_shim.py 가
+    만듦). shim 은 메커니즘상 항상 '낮은 층 shim → 실제 모듈'로 보여 층 규칙과 무관하게 위반으로
+    잡힌다(PR #165 분석, 2026-10-09) — 층 위반 판정에서 제외한다."""
+    try:
+        with (tree / rel).open(encoding="utf-8", errors="replace") as f:
+            return f.readline().startswith("# haehan-shim:")
+    except OSError:
+        return False
+
+
 def _measure_violations(tree: Path, m: dict) -> list[str]:
-    """층간 위반 — configs/module_registry.json 의 allowed_deps 기준."""
+    """층간 위반 — configs/module_registry.json 의 allowed_deps 기준. 호환 shim 파일은 제외
+    (위 _is_shim_file 참고)."""
     reg_p = tree / "configs/module_registry.json"
     viol = set()
     if reg_p.exists():
         reg = json.loads(reg_p.read_text(encoding="utf-8"))
         files, allowed = reg["files"], reg.get("allowed_deps", {})
         for s, ts in m.get("import_edges", m["all_edges"]).items():  # 실제 import 만(문자열 언급 제외)
-            if s in files and not s.endswith("__init__.py") and files[s]["layer"] in allowed:
+            if (
+                s in files
+                and not s.endswith("__init__.py")
+                and files[s]["layer"] in allowed
+                and not _is_shim_file(tree, s)
+            ):
                 for t in ts:
                     if t in files and not t.endswith("__init__.py"):
                         lt = files[t]["layer"]
