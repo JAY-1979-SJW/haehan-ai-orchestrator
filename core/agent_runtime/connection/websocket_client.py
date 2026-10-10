@@ -62,7 +62,7 @@ try:
 except ImportError:
     # Fallback for environments where ai_orchestrator cannot be imported.
     # This maintains consistency with ai_orchestrator.contracts.local_agent_actions.
-    _AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset(
+    _AUTO_EXECUTE_VIA_AGENT: frozenset[str] = frozenset(  # type: ignore[no-redef]  # try/except 양쪽에 같은 이름 할당하는 표준 폴백(동작 변경 없음) — mypy 가 재정의로 오인
         {
             "ping",
             "system_info",

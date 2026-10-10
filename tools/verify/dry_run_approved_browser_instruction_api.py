@@ -172,6 +172,7 @@ def dry_run() -> DryRunResult:
     else:
         add(findings, "PASS", "out_of_scope_staged", "none")
 
+    from ai_orchestrator.agent_hub.registry import common as _reg_common
     from ai_orchestrator.agent_hub.registry import facade as _reg
     from ai_orchestrator.audit import audit_logger as _al
     from tools.gates import approval as _ap
@@ -180,6 +181,11 @@ def dry_run() -> DryRunResult:
     run_id = uuid.uuid4().hex
     _al._LOG_PATH = DRY_RUN_TMP_ROOT / f"audit_{run_id}.jsonl"
     _ap._STORE_PATH = DRY_RUN_TMP_ROOT / f"approval_tokens_{run_id}.jsonl"
+    # _reg.clear() 는 data/local_agent_registry_state.json(실제로 등록된 로컬 에이전트
+    # 상태)도 unlink 한다(2026-09-30 conftest.py 의 같은 격리 패턴 참고) — pytest 밖에서
+    # 단독 스크립트로 돌리면 그 autouse fixture 가 안 걸려 실제 상태 파일이 지워졌다
+    # (2026-10-10 브라우저 승인 스모크 사전조사 중 발견). 임시 경로로 바꿔치기.
+    _reg_common._REGISTRY_STATE_PATH = DRY_RUN_TMP_ROOT / f"local_agent_registry_state_{run_id}.json"
     try:
         _reg.clear()
         _ap._store.clear()

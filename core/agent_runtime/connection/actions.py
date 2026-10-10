@@ -387,6 +387,7 @@ def action_capture_screenshot(params: dict) -> ActionResult:
     resolved_dir, dir_err = _screenshot_prepare_dir(target_dir)
     if dir_err is not None:
         return dir_err
+    assert resolved_dir is not None  # _screenshot_prepare_dir 계약: dir_err 가 None 이면 항상 Path(동작 변경 없음, mypy 용 타입 좁히기)
 
     grabbed = _screenshot_grab_or_error()
     if isinstance(grabbed, ActionResult):

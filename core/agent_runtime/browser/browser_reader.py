@@ -135,6 +135,7 @@ def open_url_readonly(  # noqa: PLR0913 - 공개 API keyword-only 시그니처 �
     factory, dep_err = _resolve_playwright_factory(_playwright_factory, url, audit_base)
     if dep_err is not None:
         return dep_err
+    assert factory is not None  # _resolve_playwright_factory 계약: dep_err 가 None 이면 항상 factory(동작 변경 없음, mypy 용 타입 좁히기)
 
     _audit.log_local_event("browser_open_started", **audit_base)
 
