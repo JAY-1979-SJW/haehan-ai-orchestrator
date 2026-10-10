@@ -7,9 +7,15 @@
 결과:
     dist/local-agent/local-agent.exe
 
-2026-10-07 복구(W2): 2026-09-23 b13d1216에서 삭제됐다가 전체 복구. 진입점
-core/agent_runtime/runtime/local_agent.py와 hidden_imports의 smartstore 경로는 그대로 유효해
-변경 없음(정적 점검으로 확인, 실제 빌드는 CI 첫 실행에서 확인).
+2026-10-07 복구(W2): 2026-09-23 b13d1216에서 삭제됐다가 전체 복구.
+
+결함 수정(2026-10-10, GitHub 데스크톱 빌드 38025062351 E2E FAIL — "No module
+named core.agent_runtime.runtime.local_agent"): 진입점이 scripts/local_agent.py
+(호환 shim, `runpy.run_module("core.agent_runtime.runtime.local_agent", ...)`로
+문자열 동적 호출)였는데, PyInstaller 정적 분석은 문자열로만 참조되는 모듈을
+못 보고 번들에서 빼버린다. 진입점을 shim 이 아니라 **정본**
+core/agent_runtime/runtime/local_agent.py 로 직접 지정해 정적 분석이 실제
+import 체인(smartstore 등)을 그대로 따라가게 했다.
 """
 
 import os
@@ -62,7 +68,7 @@ except Exception as e:
     print(f"[spec] WARNING: Playwright 경로 탐지 실패: {e}")
 
 a = Analysis(
-    [str(ROOT / "scripts" / "local_agent.py")],
+    [str(ROOT / "core" / "agent_runtime" / "runtime" / "local_agent.py")],
     pathex=[str(ROOT)],
     binaries=[],
     datas=datas,

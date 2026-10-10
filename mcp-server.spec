@@ -17,6 +17,14 @@ mcp_server.py에서 더 이상 안 보여 hidden_imports에서 뺐다. 대신 �
 실제로 동적 import하는 경로(scripts.naver.smartstore.*, scripts.naver.cafe.*,
 scripts.browser.agent.*)로 갱신했다(정적 점검, 실제 빌드 확인은
 CI 첫 실행에서).
+
+결함 수정(2026-10-10, local-agent.spec 과 같은 종류 — GitHub 데스크톱 빌드
+38025062351 E2E FAIL 조사 중 발견): frd_batch1 이동으로 ai_orchestrator/mcp_server.py
+가 호환 shim(`runpy.run_module("ai_orchestrator.server.mcp_server", ...)` 문자열
+동적 호출)이 됐는데, 이 spec 의 Analysis 진입점은 그 shim 을 그대로 가리키고 있어
+PyInstaller 정적 분석이 실제 ai_orchestrator.server.mcp_server 를 못 보고 번들에서
+뺐다(dist/haehan-mcp/haehan-mcp.exe 실행 시 ModuleNotFoundError 재현 확인). 진입점을
+정본 ai_orchestrator/server/mcp_server.py 로 직접 지정.
 """
 
 from pathlib import Path
@@ -43,7 +51,7 @@ hidden_imports = [
 ]
 
 a = Analysis(
-    [str(ROOT / "ai_orchestrator" / "mcp_server.py")],
+    [str(ROOT / "ai_orchestrator" / "server" / "mcp_server.py")],
     pathex=[str(ROOT)],
     binaries=[],
     datas=[
