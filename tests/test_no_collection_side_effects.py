@@ -41,16 +41,13 @@ _ALLOWED_TOP_LEVEL_CALLS = {
     "timezone",
     "astimezone",
     "textwrap.dedent",
-    # 환경변수 읽기/설정(테스트 격리 목적, 네트워크·프로세스 부작용 없음)
-    "os.environ.setdefault",
-    "os.environ.pop",
+    # 환경변수 "읽기"만(쓰기는 부작용 가능 분류로 뺐다 — 총괄 지적, 2026-10-10)
     "os.environ.get",
     "os.getenv",
     "warnings.filterwarnings",
     # 로컬 저장소 파일을 읽기만 하는 결정론적 헬퍼(네트워크·쓰기 없음)
     "importlib.util.spec_from_file_location",
     "importlib.util.module_from_spec",
-    "importlib.reload",
     "ast.parse",
     "shutil.which",
     "tempfile.gettempdir",
