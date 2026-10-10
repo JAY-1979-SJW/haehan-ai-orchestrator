@@ -22,13 +22,16 @@ from __future__ import annotations
 import argparse
 import contextlib
 import importlib.util
+import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 import time
+import tokenize
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -161,6 +164,36 @@ def normalize_renamed(after: dict, moved: dict[str, str]) -> dict:
     return {**after, "violations": sorted(viol)}
 
 
+def _string_token_spans(src: str) -> dict[int, list[tuple[int, int]]]:
+    """src 를 tokenize 해서 '줄 번호 → [그 줄에서 STRING 토큰이 덮는 (시작열, 끝열) 범위]'를 만든다.
+
+    주석 속 인용부호·삼중따옴표가 끼면 "앞쪽 인용부호 개수가 홀수면 문자열 안"식 어림짐작이
+    틀린다(총괄 지적, run38009465088) — 진짜 토크나이저로 STRING 토큰 범위를 구해 좌표로 본다.
+    토큰화 자체가 실패하면(문법이 깨진 파일 등) 빈 dict — 아무 줄도 '문자열 안'으로 안 쳐서
+    원래 동작(모두 검사)으로 안전하게 되돌아간다.
+    """
+    spans: dict[int, list[tuple[int, int]]] = {}
+    try:
+        for tok in tokenize.generate_tokens(io.StringIO(src).readline):
+            if tok.type != tokenize.STRING:
+                continue
+            (sr, sc), (er, ec) = tok.start, tok.end
+            if sr == er:
+                spans.setdefault(sr, []).append((sc, ec))
+                continue
+            spans.setdefault(sr, []).append((sc, 1 << 30))
+            for r in range(sr + 1, er):
+                spans.setdefault(r, []).append((0, 1 << 30))
+            spans.setdefault(er, []).append((0, ec))
+    except (tokenize.TokenError, SyntaxError, IndentationError):
+        return {}
+    return spans
+
+
+def _in_string_span(spans: dict[int, list[tuple[int, int]]], line_no: int, col: int) -> bool:
+    return any(sc <= col < ec for sc, ec in spans.get(line_no, []))
+
+
 def moved_location_deps(base: str, head: str | None) -> list[str]:
     """폴더 깊이가 바뀐 이동 파일에서, 위치 의존 줄(__file__ 경로·상대 import)이 손대지 않은 채 남은 곳.
 
@@ -179,6 +212,7 @@ def moved_location_deps(base: str, head: str | None) -> list[str]:
             continue
         old_lines = set(run(["git", "show", f"{base}:{old}"], ROOT).stdout.splitlines())
         new_src = run(["git", "show", f"{head}:{new}"], ROOT).stdout if head else (ROOT / new).read_text("utf-8")
+        string_spans = _string_token_spans(new_src)
         for i, line in enumerate(new_src.splitlines(), 1):
             s = line.strip()
             if s.startswith("#"):
@@ -194,7 +228,22 @@ def moved_location_deps(base: str, head: str | None) -> list[str]:
             # "__file__" 단독(.parent/.parents 체인 없음)은 자기 경로를 그대로 재실행/참조하는
             # 용도라 이동 깊이와 무관 — .parent 체인이 있는 것만 본다(실측: browser_rpc_server.py·
             # cdp_daemon.py 의 자기 재실행 줄이 깊이 변화마다 오탐).
-            has_file_dep = "__file__" in s and ".parent" in s
+            # 결함(2026-10-10, run38009465088): "Path(__file__)" 요구 없이 "__file__"+".parent"만
+            # 보면 (a) docstring 설명문("Path(__file__).resolve().parents[N]" 같은 예시 문장,
+            # test_repo_root_canonical.py:3)과 (b) 형제 파일 하나를 찾는 단일 .parent(이동 깊이와
+            # 무관, test_audit_kit_gate.py:26 의 "pathlib.Path(__file__).parent / 'plan.json'")
+            # 까지 잡는다. 저장소 루트까지 올라가는 진짜 깊이의존 줄만 본다: parents[digit] 또는
+            # .parent 가 2번 이상 이어지는 체인.
+            has_parents_index = bool(re.search(r"parents\[\d+\]", s))
+            has_parent_chain = s.count(".parent") >= 2
+            # "Path(__file__).resolve().parents[2]" 가 실제 코드가 아니라 시험 데이터 문자열
+            # 그대로(test_root_calc_gate.py 의 (경로, 코드문자열) 튜플, test_move_guardrails.py
+            # 의 예시 줄)로 등장하면 깊이의존이 아니라 "그 패턴을 검사하는 시험 자체의 데이터"다.
+            # 인용부호 개수의 홀짝은 주석 속 인용부호·삼중따옴표에서 오판하므로(총괄 지적),
+            # tokenize 로 실제 STRING 토큰 범위(원본 줄 기준)인지를 본다.
+            _col = line.find("Path(__file__)")
+            _in_string = _col >= 0 and _in_string_span(string_spans, i, _col)
+            has_file_dep = _col >= 0 and (has_parents_index or has_parent_chain) and not _in_string
             if not (is_rel_import or has_file_dep):
                 continue
             if line in old_lines and not _same_relative_target(s, old, new, base, head, moved):
@@ -223,6 +272,34 @@ def _resolve_rel(stmt: str, file: str) -> list[str]:
     return out
 
 
+def _read_at(ref: str | None, path: str) -> str | None:
+    if ref is None:
+        return (ROOT / path).read_text("utf-8") if (ROOT / path).exists() else None
+    r = run(["git", "show", f"{ref}:{path}"], ROOT)
+    return r.stdout if r.returncode == 0 else None
+
+
+def _shim_points_to(old: str, new: str, head: str | None) -> bool:
+    """old 가 (head 시점에) `# haehan-shim: <dotted>` shim 이고 그 dotted 가 new 와 같은 파일을 가리키면 참.
+
+    예: ai_orchestrator/config.py(shim) → ai_orchestrator.core.config(실제) 처럼, 옮긴 파일과
+    옛 경로의 shim 이 같은 대상을 가리키는 경우 git rename 추적(moved)엔 안 잡히지만 실제로는
+    같은 모듈이라 '미조정'이 아니다.
+    """
+    content = _read_at(head, old)
+    if not content:
+        return False
+    first = content.splitlines()[0].strip() if content.splitlines() else ""
+    marker = "# haehan-shim:"
+    if not first.startswith(marker):
+        return False
+    dotted = first[len(marker):].strip()
+    stem = new[:-3] if new.endswith(".py") else new
+    if stem.endswith("/__init__"):
+        stem = stem[: -len("/__init__")]
+    return dotted == stem.replace("/", ".")
+
+
 def _same_relative_target(stmt: str, old: str, new: str, base: str, head: str | None, moved: dict[str, str]) -> bool:
     """상대 import 가 이동 전후에 '같은 파일'을 가리키면(함께 이동한 형제 등) 미조정이 아니다."""
     if "__file__" in stmt or not stmt.startswith("from ."):
@@ -235,7 +312,9 @@ def _same_relative_target(stmt: str, old: str, new: str, base: str, head: str | 
 
     olds = [t for t in _resolve_rel(stmt, old) if exists(base, t)]
     news = [t for t in _resolve_rel(stmt, new) if exists(head, t)]
-    return bool(olds) and len(olds) == len(news) and all(moved.get(n, n) == o for n, o in zip(news, olds, strict=False))
+    return bool(olds) and len(olds) == len(news) and all(
+        moved.get(n, n) == o or _shim_points_to(o, n, head) for n, o in zip(news, olds, strict=False)
+    )
 
 
 def _checkout(ref: str, dest: Path) -> bool:

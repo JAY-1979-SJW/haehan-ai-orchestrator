@@ -45,7 +45,23 @@ MAX_SHOWN = 30
 _NOISE = ("import-not-found", "import-untyped")  # audit-kit 가상환경에 프로젝트 의존성이 없어 생기는 잡음
 _EXE_NAMES = ("audit-kit.exe", "audit-kit")
 BATCH_SCRIPT = Path(__file__).resolve().parents[1] / "audit_kit_batch.py"  # tools/hooks/ 의 한 단계 위(tools/) — 이동 후 깊이 보정 누락 버그(2026-10-10, CI verify-static 90분 지연 조사 중 발견: parents[0]은 이 파일 자신의 폴더라 늘 실패해 배치스크립트를 못 찾고 파일별 단독 재시도로 느려짐)
-_MYPY_ARGS = ("--ignore-missing-imports", "--follow-imports=silent", "--no-error-summary", "--no-color-output")
+_MYPY_ARGS = (
+    "--ignore-missing-imports",
+    "--follow-imports=silent",
+    "--no-error-summary",
+    "--no-color-output",
+    "--explicit-package-bases",  # core/agent_runtime 처럼 __init__.py 없는 최상위 폴더가 생기면서
+    # mypy 가 "Source file found twice under different module names" 자체오류로 전체 묶음·파일별
+    # 재시도까지 전부 "실행 못함"으로 죽이던 문제(run38009465088, 161건) — 이 플래그로 파일마다
+    # __init__.py 없는 첫 상위 폴더를 패키지 기준으로 명시해 모호성을 없앤다(실측: mypy==2.4.0 으로
+    # core/agent_runtime/agent.py 단독 재현 — 이 플래그 전 exit=2 자체오류 → 후 exit=1 진짜 결과).
+)
+# __init__.py 가 전혀 없는 독립 실행 앱(런타임에 자기 폴더를 직접 sys.path 에 넣는 설계) — bare
+# import(예: blog_router.py 의 "from core import ai_writer")가 cwd=ROOT 인 mypy 호출에선 저장소
+# 최상위 core/(agent_runtime, 최근 신설) 로 잘못 풀린다("Module 'core' has no attribute
+# 'ai_writer'", run38009465088 실측 재현). MYPYPATH 에 앱 폴더를 더해 각자 자기 core/ 를 먼저
+# 보게 한다(실측: 추가 전 exit=1 오탐 → 추가 후 exit=0).
+_STANDALONE_APP_DIRS = ("apps/marketing-standalone", "apps/ig-comment-dm-bot", "apps/youtube-analyzer-standalone")
 # `경로:줄:칸: error: 문장` — 경로는 드라이브 콜론(C:)을 포함할 수 있어 가장 짧게 잡고, 줄·칸은 없을 수도 있다
 _MYPY_ERROR_LINE = re.compile(r"^(?P<path>.+?)(?::\d+){0,2}: error: (?P<msg>.*)$")
 _HOOK_WORKERS = max(1, min(8, os.cpu_count() or 1))  # audit-kit hook 은 파일을 읽기만 해서 동시에 돌려도 된다
@@ -166,8 +182,17 @@ def batch_raw_findings(
 
 
 def _utf8_env() -> dict[str, str]:
-    """하위 프로세스(audit-kit·mypy)가 콘솔 코드페이지(cp949)가 아니라 utf-8 로 출력하게 한다 — 결과를 utf-8 로 읽기 때문."""
-    return {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
+    """하위 프로세스(audit-kit·mypy)가 콘솔 코드페이지(cp949)가 아니라 utf-8 로 출력하게 한다 — 결과를 utf-8 로 읽기 때문.
+
+    MYPYPATH 에 독립 실행 앱(__init__.py 없음, `_STANDALONE_APP_DIRS`)을 더한다 — mypy 가
+    --explicit-package-bases 로도 그 안의 bare import("core" 등)를 저장소 최상위로 잘못
+    풀지 않고 앱 자신의 폴더부터 보게 한다(run38009465088 조사, 실측 재현·검증).
+    """
+    mypypath = os.pathsep.join(str(ROOT / d) for d in _STANDALONE_APP_DIRS)
+    extra = {"PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8", "MYPYPATH": mypypath}
+    if os.environ.get("MYPYPATH"):
+        extra["MYPYPATH"] = os.environ["MYPYPATH"] + os.pathsep + mypypath
+    return {**os.environ, **extra}
 
 
 def is_real_kit(kit: list[str]) -> bool:
