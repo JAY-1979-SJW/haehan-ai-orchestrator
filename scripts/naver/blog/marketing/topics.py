@@ -286,6 +286,25 @@ def generate_topics(cache: dict, count: int, dry_run: bool = False) -> list[dict
         print("\n[DRY-RUN] 주제 선정 (리서치 결과 직접 사용, AI 미호출)")
         print(f"  요청 수: {count}개 / 리서치 매칭: {len(result)}개")
         print(f"  기존 캐시 주제 수: {len(used_titles)}개")
+        matched = len(result)
+        if len(result) < count:
+            # 리서치 결과가 부족해도 real-run 과 같은 주제-선정 경로를 타야
+            # dry-run 이 리허설로서 의미가 있다 — AI 호출 없는 고정 폴백만 보충.
+            existing = {r["topic"] for r in result}
+            for title in get_topic_seed():
+                if len(result) >= count:
+                    break
+                if title and title not in existing and not is_duplicate(title, cache):
+                    result.append(
+                        {
+                            "topic": title,
+                            "keywords": ["건설실무", "건설업"],
+                            "angle": "고정 폴백 주제(리서치 결과 부족)",
+                            "source_description": "",
+                        }
+                    )
+                    existing.add(title)
+            print(f"  폴백 보충: {len(result) - matched}개")
         return result[:count]
 
     remaining = count - len(result)
