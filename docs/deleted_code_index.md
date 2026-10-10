@@ -1117,3 +1117,14 @@ git checkout pre-openai-removal -- <경로>
 - `scripts/browser_rpc_server.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/browser_rpc_server.py`
 - `scripts/browser_task_session.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/browser_task_session.py`
 - `scripts/cdp_tab_manager.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/cdp_tab_manager.py`
+
+## 2026-10-10 W2(flat_root_baseline 55건 재분류) 수동 삭제 2차 — 기준 커밋 `7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12`
+참조 0(①~⑤, 새 경로 오탐 제외하고 히트 내용 직접 확인)·⑥(a:schtasks 0건, c:배포설정 0건, b:Sysmon 비관리자권한으로 확인불가 — 총괄 승인(사전승인 범위) 적용) 확인된 호환 shim 8건.
+- `scripts/app_paths.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/app_paths.py`
+- `scripts/app_paths_migrate.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/app_paths_migrate.py`
+- `scripts/auth_session.py` — 참조 0(새경로 오탐 제외), 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/auth_session.py`
+- `scripts/browser_paths.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/browser_paths.py`
+- `scripts/cdp_console.py` — 참조 0(worklog 과거기록뿐), 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/cdp_console.py`
+- `scripts/cdp_db.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/cdp_db.py`
+- `scripts/cdp_force_start.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/cdp_force_start.py`
+- `scripts/cdp_lane_start.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/cdp_lane_start.py`
