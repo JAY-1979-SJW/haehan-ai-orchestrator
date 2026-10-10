@@ -36,7 +36,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from ai_orchestrator.paths.runtime import atomic_write_bytes, atomic_write_text, data_dir  # noqa: E402
+from ai_orchestrator.paths.runtime import atomic_write_bytes, data_dir  # noqa: E402
 from ai_orchestrator.core.security_utils import mask_identifier  # noqa: E402
 
 CRED_FILE = data_dir() / "credentials.json"
@@ -194,8 +194,23 @@ def _load_raw() -> dict:
 
 
 def _save_raw(data: dict) -> None:
+    """같은 폴더 tmp 에 쓰고 fsync 후 os.replace — 쓰는 도중 끊겨도 원본이 안 손상된다
+    (2026-10-10, licenses.json 손상 사고와 같은 위험을 자격증명 파일에서도 막기 위해
+    atomic_write_text 보다 한 단계 더 — fsync 로 OS 캐시에만 있던 내용까지 디스크에
+    확실히 반영하고, 실패하면 tmp 를 지워 흔적을 안 남긴다)."""
     CRED_FILE.parent.mkdir(parents=True, exist_ok=True)
-    atomic_write_text(CRED_FILE, json.dumps(data, ensure_ascii=False, indent=2))
+    payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
+    tmp = CRED_FILE.with_name(f"{CRED_FILE.name}.tmp-{os.getpid()}")
+    try:
+        with open(tmp, "wb") as f:
+            f.write(payload)
+            f.flush()
+            os.fsync(f.fileno())
+        tmp.replace(CRED_FILE)
+    except Exception:
+        with contextlib.suppress(Exception):
+            tmp.unlink()
+        raise
     # chmod 권한 강화 실패는 무시해도 자격증명 값 노출이나 보안 우회로 이어지지 않음
     with contextlib.suppress(Exception):
         CRED_FILE.chmod(0o600)
