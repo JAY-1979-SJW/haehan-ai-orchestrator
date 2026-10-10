@@ -595,7 +595,26 @@ def _pytest(tree: Path, files: list[str], timeout: int, reasons: dict[str, str] 
             prefix = f"[crash] {crash_lines[-1]} || " if crash_lines else ""
             budget = max(0, 2000 - len(prefix))
             reasons[synthetic_id] = prefix + joined[-budget:]
+            _dump_raw_pytest_output(tree, synthetic_id, p.stdout or "", p.stderr or "")
     return out
+
+
+def _dump_raw_pytest_output(tree: Path, synthetic_id: str, stdout: str, stderr: str) -> None:
+    """reasons 의 2000자 요약은 재발 조사에 부족할 수 있다(2026-10-10, run38015451820
+    조사 중 — 매번 손 봐야 하는 땜질). rc 비정상 종료 시 전체 stdout/stderr 를 잘림 없이
+    shard JSON 아티팩트 옆 verify_raw_dumps/ 에 txt 로 남긴다(ci.yml 이 같이 업로드).
+    파일 하나가 너무 커지는 사고를 막기 위해 2MB 상한(넘으면 앞 200KB + 뒤 1.8MB만)을 둔다.
+    """
+    safe_name = re.sub(r"[^A-Za-z0-9._-]", "_", synthetic_id)[:150]
+    out_dir = tree / "verify_raw_dumps"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    body = f"=== stdout ===\n{stdout}\n=== stderr ===\n{stderr}\n"
+    limit = 2 * 1024 * 1024
+    if len(body) > limit:
+        head = body[:200_000]
+        tail = body[-(limit - 200_000):]
+        body = f"{head}\n\n... [중간 생략, 전체 {len(body)}자] ...\n\n{tail}"
+    (out_dir / f"{safe_name}.txt").write_text(body, encoding="utf-8", errors="replace")
 
 
 def affected_tests(changed: list[str]) -> list[str]:

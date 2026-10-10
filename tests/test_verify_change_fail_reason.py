@@ -107,6 +107,34 @@ def test_pytest_synthetic_rc_id_surfaces_crash_marker_line_first(tmp_path, monke
     assert reasons[sid].startswith("[crash] Replacing crashed worker gw3")
 
 
+def test_pytest_synthetic_rc_id_dumps_full_raw_output(tmp_path, monkeypatch):
+    """reasons 의 2000자 요약은 부족할 수 있다(2026-10-10) — rc 비정상 종료 시
+    verify_raw_dumps/ 에 stdout/stderr 전체를 잘림 없이 남겨야 한다."""
+    stdout = "\n".join(f"line{i}" for i in range(50))
+    monkeypatch.setattr(
+        vc, "run", lambda cmd, cwd, timeout=900: _completed(stdout, returncode=3)
+    )
+    reasons: dict[str, str] = {}
+    out = vc._pytest(tmp_path, ["tests/x.py"], 60, reasons)
+    sid = out[0]
+    dumps = list((tmp_path / "verify_raw_dumps").glob("*.txt"))
+    assert len(dumps) == 1
+    dumped = dumps[0].read_text(encoding="utf-8")
+    assert "line0" in dumped and "line49" in dumped  # 요약(최대 30줄)보다 전체가 다 남음
+
+
+def test_dump_raw_pytest_output_caps_at_2mb_keeping_head_and_tail(tmp_path):
+    """2MB 를 넘는 출력은 통째로 안 남기고 앞 200KB + 뒤 1.8MB만 남긴다."""
+    stdout = "H" * 300_000 + "\n" + ("x" * 100) * 30_000  # 3MB+ 짜리 가짜 출력
+    vc._dump_raw_pytest_output(tmp_path, "tests/x.py..(+1)::<rc=3>", stdout, "")
+    files = list((tmp_path / "verify_raw_dumps").glob("*.txt"))
+    assert len(files) == 1
+    content = files[0].read_text(encoding="utf-8")
+    assert len(content) <= 2 * 1024 * 1024 + 200
+    assert "H" * 100 in content  # 앞부분 보존
+    assert "x" * 100 in content[-500:]  # 끝부분(stderr 꼬리표 바로 앞)도 보존
+
+
 # ── _build_verify_report — 보고서에 사유가 붙는지 ──────────────────────────────
 
 

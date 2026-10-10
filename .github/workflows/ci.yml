@@ -411,7 +411,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: verify-tests-${{ matrix.shard }}
-          path: verify_tests_${{ matrix.shard }}.json
+          path: |
+            verify_tests_${{ matrix.shard }}.json
+            verify_raw_dumps/
           if-no-files-found: ignore
 
   # 최종 판정 — 필수 검사 이름 'verify' 를 유지한다. static 과 시험 묶음 3개가 모두 성공해야 하고, 묶음 결과가 하나라도 빠지면 FAIL.
