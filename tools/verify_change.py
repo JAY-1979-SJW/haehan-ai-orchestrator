@@ -291,7 +291,7 @@ def _route_check_for(tree: Path) -> str | None:
     cfg_path = tree / "configs" / "verify_change.json"
     try:
         return json.loads(cfg_path.read_text(encoding="utf-8")).get("route_check") or CFG["route_check"]
-    except OSError, ValueError:
+    except (OSError, ValueError):
         return CFG["route_check"]
 
 
