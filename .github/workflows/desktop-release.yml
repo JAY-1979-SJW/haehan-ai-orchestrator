@@ -115,15 +115,23 @@ jobs:
           echo "pkg_version=${pkg_version}" >> "$GITHUB_OUTPUT"
           echo "sha7=${sha7}" >> "$GITHUB_OUTPUT"
 
-      - name: electron-builder --win portable
+      - name: electron-builder --win portable nsis (포터블 + 설치형)
         # -c.extraMetadata.version 은 앱 메타데이터·Windows 파일 버전용 semver(<yyyy>.<mmdd>.<run>).
-        # 산출물 이름은 package.json portable.artifactName 의 HaehanAI-${env.HAEHAN_BUILD_VERSION}-portable.exe 로
+        # 산출물 이름은 package.json portable/nsis.artifactName 의 HaehanAI-${env.HAEHAN_BUILD_VERSION}-{portable,setup}.exe 로
         # 사람이 읽는 yyyymmdd-sha7 이 들어간다 → 게시 도구 glob(HaehanAI-*.exe)·VERSION_RE 가 그대로 통과한다.
+        # 자동 업데이트(electron-updater·publish·latest.yml)는 이번 이식 범위 밖(보류, 2026-10-10
+        # BUILD_PLAN 0' 단계) — --publish never 로 전부 끈다.
         shell: bash
         working-directory: admin-web/electron
         env:
           HAEHAN_BUILD_VERSION: ${{ steps.buildinfo.outputs.version }}
-        run: npx electron-builder --win portable -c.extraMetadata.version=${{ steps.buildinfo.outputs.pkg_version }}
+        run: npx electron-builder --win portable nsis --publish never -c.extraMetadata.version=${{ steps.buildinfo.outputs.pkg_version }}
+
+      - name: 설치본 내용물 점검 (빠진 파일을 E2E 전에 잡는다)
+        # 빌드는 성공해도 묶을 파일이 빠질 수 있다(2026-10-08: .next/static·public 누락 → 앱이 "로딩 중"에서 멈춤).
+        # 앱이 실행 때 찾는 경로를 직접 확인해 1분 안에 실패시킨다 — 40분짜리 E2E 까지 가지 않는다.
+        shell: bash
+        run: python scripts/ops/verify_desktop_bundle.py dist-electron-new/win-unpacked --dist dist-electron-new
 
       - name: SHA256 checksums
         shell: bash
@@ -185,6 +193,17 @@ jobs:
             e2e-app-logs/**
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Upload UNVERIFIED installer (E2E 실패 시 — 대표님 PC 수동 확인용, 배포 금지)
+        # E2E 가 실패해도 빌드 자체는 된 설치 파일을 사람이 직접 설치해 확인할 수 있게 남긴다.
+        # 이름에 UNVERIFIED 를 붙여 정식 아티팩트(HaehanAI-Desktop-<버전>)와 섞이지 않게 하고 1일만 보관한다.
+        if: failure() && steps.e2e.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: UNVERIFIED-HaehanAI-setup-${{ steps.buildinfo.outputs.version }}
+          path: dist-electron-new/*-setup.exe
+          if-no-files-found: ignore
+          retention-days: 1
 
       - name: Stage release files (exe·checksums·릴리스 노트·설치 안내서를 한 폴더에 평평하게)
         # 게시 도구(publish_release_to_nas.py)는 산출물 폴더에 HaehanAI-*.exe·checksums.txt(필수)와

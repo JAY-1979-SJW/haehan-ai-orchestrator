@@ -55,6 +55,16 @@
         "filter": ["**/*"]
       },
       {
+        "from": "../.next/static",
+        "to": "nextjs/.next/static",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../public",
+        "to": "nextjs/public",
+        "filter": ["**/*"]
+      },
+      {
         "from": "build-info.json",
         "to": "build-info.json"
       }
@@ -77,8 +87,13 @@
       "icon": "icon.png"
     },
     "nsis": {
+      "artifactName": "HaehanAI-${env.HAEHAN_BUILD_VERSION}-setup.exe",
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false,
       "installerLanguages": [
         "ko_KR"
       ],
