@@ -194,34 +194,25 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: Upload UNVERIFIED installer (E2E 실패 시 — 대표님 PC 수동 확인용, 배포 금지)
-        # E2E 가 실패해도 빌드 자체는 된 설치 파일을 사람이 직접 설치해 확인할 수 있게 남긴다.
-        # 이름에 UNVERIFIED 를 붙여 정식 아티팩트(HaehanAI-Desktop-<버전>)와 섞이지 않게 하고 1일만 보관한다.
-        if: failure() && steps.e2e.outcome == 'failure'
-        uses: actions/upload-artifact@v7
-        with:
-          name: UNVERIFIED-HaehanAI-setup-${{ steps.buildinfo.outputs.version }}
-          path: dist-electron-new/*-setup.exe
-          if-no-files-found: ignore
-          retention-days: 1
-
-      - name: Stage release files (exe·checksums·릴리스 노트·설치 안내서를 한 폴더에 평평하게)
-        # 게시 도구(publish_release_to_nas.py)는 산출물 폴더에 HaehanAI-*.exe·checksums.txt(필수)와
-        # RELEASE_NOTES.md·설치_및_사용_안내.md(있으면)를 기대한다. 업로드 경로가 여러 폴더에 걸치면
-        # 아티팩트 안에 폴더 구조가 생기므로 release-out/ 한 폴더로 모아 올린다.
+      - name: Stage release files (checksums·릴리스 노트·설치 안내서만 — 설치 파일 자체는 GitHub 에 안 올림)
+        # 대표님 지시(2026-10-10 13:0x): 설치 파일(.exe·.msi·.zip·.blockmap 등)은 GitHub 에 올리지
+        # 않는다(배포는 NAS 로만) — 빌드·검증(verify_desktop_bundle·E2E)은 그대로 GitHub Actions 에서
+        # 계속하고, 그 결과물 중 exe 본체를 뺀 checksums.txt(SHA256 기록용)·릴리스 노트·설치 안내서만
+        # 산출물로 남긴다. 실제 설치 파일은 NAS 배포 담당자가 로컬 빌드(dist-electron-new/)에서 직접
+        # publish_release_to_nas.py 로 올린다(이 워크플로가 만든 GH 아티팩트를 쓰지 않음).
         shell: bash
         run: |
           mkdir -p release-out
-          cp dist-electron-new/*.exe dist-electron-new/checksums.txt release-out/
+          cp dist-electron-new/checksums.txt release-out/
           for f in docs/release/desktop/*.md; do
             if [ -f "$f" ]; then cp "$f" release-out/; else echo "릴리스 문서 없음(이 ref 에는 docs/release/desktop 이 없다) — 건너뜀"; fi
           done
           ls -la release-out
 
-      - name: Upload artifact
+      - name: Upload artifact (checksums·릴리스 노트만 — 설치 파일 본체 제외)
         uses: actions/upload-artifact@v7
         with:
           name: HaehanAI-Desktop-${{ steps.buildinfo.outputs.version }}
           path: release-out/*
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 3
