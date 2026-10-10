@@ -5,7 +5,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from ai_orchestrator.paths.runtime import data_dir, storage_dir
+from ai_orchestrator.paths.runtime import atomic_write_text, data_dir, storage_dir
 
 # 명시적 UTF-8 인코딩으로 .env 파일 로드 (인코딩 오류 방지)
 load_dotenv(encoding="utf-8")
@@ -96,9 +96,37 @@ except (ValueError, TypeError):
     APP_PORT = 8401
 
 # ── JWT 인증 ────────────────────────────────────────────────────────────────
+_JWT_SECRET_FILE_NAME = "jwt_secret.key"
+
+
+def _load_or_create_persisted_jwt_secret() -> str:
+    """JWT_SECRET 환경변수가 없을 때 쓰는 영속 비밀 — storage_dir()/jwt_secret.key.
+
+    결함(2026-10-10): env 없으면 매 import(=매 프로세스 시작)마다 secrets.token_hex(32)
+    로 새 비밀을 만들어, 서버를 재시작하면 그 전에 발급한 토큰이 전부 무효화됐다. 파일에
+    한 번 만든 값을 저장해 재사용 — tmp+rename 원자적 쓰기, 생성 시 0o600(소유자 전용).
+    storage_dir() 는 .gitignore:110(`storage/`)로 이미 커밋 차단된다.
+    """
+    path = storage_dir() / _JWT_SECRET_FILE_NAME
+    try:
+        existing = path.read_text(encoding="utf-8").strip()
+        if existing:
+            return existing
+    except OSError:
+        pass
+    new_secret = _secrets.token_hex(32)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write_text(path, new_secret)
+        os.chmod(path, 0o600)
+    except OSError:
+        pass  # 파일 쓰기 실패해도 이번 프로세스는 이 값으로 계속 동작(재시작 시 또 바뀔 위험만 남음)
+    return new_secret
+
+
 _JWT_SECRET_ENV = os.environ.get("JWT_SECRET", "").strip()
-JWT_SECRET_CONFIGURED = bool(_JWT_SECRET_ENV)  # False 면 아래 임의 키 — 재시작·다중 프로세스에서 토큰이 맞지 않는다
-JWT_SECRET = _JWT_SECRET_ENV or _secrets.token_hex(32)
+JWT_SECRET_CONFIGURED = bool(_JWT_SECRET_ENV)  # False 면 영속 파일 비밀(위) 사용
+JWT_SECRET = _JWT_SECRET_ENV or _load_or_create_persisted_jwt_secret()
 # true 면 AUTH_ENABLED 인데 JWT_SECRET 이 없을 때 서버가 시작하지 않는다(asgi._check_jwt_secret). 기본 false = 경고만.
 JWT_SECRET_REQUIRED = os.environ.get("JWT_SECRET_REQUIRED", "").strip().lower() in {"1", "true", "yes", "on"}
 JWT_SECRET_MIN_LENGTH = 32

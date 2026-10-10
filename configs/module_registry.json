@@ -16329,6 +16329,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "scripts/ops/verify_desktop_bundle.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
+   "confidence": "high",
+   "source": "rule"
+  },
   "scripts/popup_monitor.py": {
    "layer": "L4",
    "role": "browser_engine",
@@ -17881,6 +17889,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/auth/test_credentials_atomic_save.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/auth/test_credentials_cli_security.py": {
    "layer": "L11",
    "role": "test",
@@ -18969,6 +18985,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/desktop/test_websocket_client_ws_once.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/electron_guard_harness.js": {
    "layer": "L11",
    "role": "test",
@@ -19106,6 +19130,14 @@
    "source": "rule"
   },
   "tests/g2b/__init__.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "g2b",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/g2b/conftest.py": {
    "layer": "L11",
    "role": "test",
    "domain": "g2b",
@@ -20226,6 +20258,14 @@
    "source": "rule"
   },
   "tests/naver_blog/test_blog_automation_writer.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_blog",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/naver_blog/test_blog_topics_dry_run_fallback.py": {
    "layer": "L11",
    "role": "test",
    "domain": "naver_blog",
@@ -21362,6 +21402,14 @@
    "source": "rule"
   },
   "tests/server_core/test_job_state_unit.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/server_core/test_jwt_secret_persistence.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -22673,6 +22721,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_local_agent_edit_product_guard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "local_agent",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_local_agent_error_mapping.py": {
    "layer": "L11",
    "role": "test",
@@ -23082,6 +23138,14 @@
    "source": "rule"
   },
   "tests/test_network_bypass.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_no_collection_side_effects.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -23521,7 +23585,23 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tests/test_verify_change_smoke_verify_exempt.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tests/test_verify_change_speed_and_progress.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "common",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tests/test_verify_desktop_bundle.py": {
    "layer": "L11",
    "role": "test",
    "domain": "common",
@@ -25401,6 +25481,14 @@
    "confidence": "high",
    "source": "rule"
   },
+  "tools/verify/app_smoke_all.py": {
+   "layer": "L3",
+   "role": "connector",
+   "domain": "common",
+   "reason": "HTTP 클라이언트",
+   "confidence": "high",
+   "source": "rule"
+  },
   "tools/verify/check_playwright_bootstrap.py": {
    "layer": "L12",
    "role": "ops_tool",
@@ -25438,6 +25526,14 @@
    "role": "browser_engine",
    "domain": "common",
    "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
+  },
+  "tools/verify/smoke_ws_handshake.py": {
+   "layer": "L12",
+   "role": "ops_tool",
+   "domain": "common",
+   "reason": "운영·감사 도구",
    "confidence": "high",
    "source": "rule"
   },
@@ -25518,86 +25614,6 @@
    "role": "policy",
    "domain": "common",
    "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_verify_change_smoke_verify_exempt.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/naver_blog/test_blog_topics_dry_run_fallback.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "naver_blog",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_local_agent_edit_product_guard.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "local_agent",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tools/verify/app_smoke_all.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "common",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/desktop/test_websocket_client_ws_once.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tools/verify/smoke_ws_handshake.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_no_collection_side_effects.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/g2b/conftest.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "g2b",
-   "reason": "테스트 경로·이름",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/ops/verify_desktop_bundle.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "tests/test_verify_desktop_bundle.py": {
-   "layer": "L11",
-   "role": "test",
-   "domain": "common",
-   "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
   }
