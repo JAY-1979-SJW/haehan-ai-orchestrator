@@ -1,5 +1,12 @@
 # audit-kit(프로그램 건강도 검사) 설정 전용. 이 저장소의 패키지 설치/빌드 설정이 아니다 —
 # 의존성은 requirements.txt, ruff 는 configs/ruff.toml 을 그대로 쓴다(이 파일에는 ruff 설정을 넣지 않는다).
+# [project] 는 버전 하한 선언용 메타데이터만(아래). [build-system] 없음 — pip install . 를 트리거하지 않으며
+# 이 저장소에 그런 명령도 없음(2026-10-10 확인). 패키징 설정으로 오해해 setup.py 등을 추가하지 말 것.
+[project]
+name = "haehan-ai-orchestrator"
+version = "0.0.0"
+requires-python = ">=3.14"
+
 [tool.audit-kit]
 # 전체 pytest 는 tests/test_local_agent_installer_package.py 에서 멈추는 기존 결함이 있어(CLAUDE.md gotcha)
 # audit-kit 안에서 돌리지 않는다. 테스트는 CI 의 verify(영향 테스트)가 맡는다.
