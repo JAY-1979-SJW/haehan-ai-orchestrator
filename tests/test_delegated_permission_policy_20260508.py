@@ -4,7 +4,7 @@
 
 import pytest
 
-from ai_orchestrator.local_agent.action_risk_policy import (
+from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_AUTO_ALLOWED,
     GRADE_BLOCKED,
     GRADE_USER_DELEGATED,
@@ -15,7 +15,7 @@ from ai_orchestrator.local_agent.action_risk_policy import (
     is_delegatable,
     is_user_direct_required,
 )
-from ai_orchestrator.local_agent.delegated_permission_policy import (
+from core.agent_runtime.runtime.permission.delegated_permission_policy import (
     CHECK_ALLOWED,
     CHECK_BLOCKED,
     CHECK_EXHAUSTED,

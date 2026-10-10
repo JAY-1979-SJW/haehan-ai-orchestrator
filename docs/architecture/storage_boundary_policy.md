@@ -188,4 +188,4 @@ STORAGE_BOUNDARY 게이트는 다음을 자동 검사한다:
 - `docs/architecture/domain_warehouse_allocation.md` — Domain별 창고 배정
 - `docs/architecture/shared_warehouse_manifest.json` — 기계 검사용 manifest
 - `docs/architecture/storage_audit_evidence_model.md` — 기존 저장소 모델
-- `scripts/ops/codebase_layer_audit.py` — STORAGE_BOUNDARY 게이트 구현
+- `tools/repo_gates/codebase_layer_audit.py` — STORAGE_BOUNDARY 게이트 구현

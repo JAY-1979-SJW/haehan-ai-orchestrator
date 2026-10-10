@@ -15,8 +15,8 @@
        data/discovered/<host>/ (미설계 페이지 자료)
 
 사용:
-    python -m scripts.explorer.site_crawler <site> [depth] [max_pages]
-    python scripts/cdp_client.py crawl <site> [depth] [max]
+    python -m scripts.entry.site_crawl_cli <site> [depth] [max_pages]
+    python scripts/entry/cdp_cli.py crawl <site> [depth] [max]
 """
 
 from __future__ import annotations
@@ -24,7 +24,6 @@ from __future__ import annotations
 import contextlib
 import json
 import re
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -32,7 +31,7 @@ from urllib.parse import urljoin, urlparse
 
 from scripts.explorer.page_classifier import classify_page
 from scripts.form.bot_radar import scan as bot_scan
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -41,11 +40,11 @@ def _dismiss_popups(page, rounds: int = 3) -> list[dict]:
     """홈페이지/페이지 진입 시 자동 팝업 닫기.
 
     기존 모듈 재사용:
-      - scripts.popup_detector.handle_page_popups: DOM 모달 닫기
-      - scripts.popup_detector.close_popup_windows: 별도 창 팝업 닫기
+      - scripts.browser.popup.popup_detector.handle_page_popups: DOM 모달 닫기
+      - scripts.browser.popup.popup_detector.close_popup_windows: 별도 창 팝업 닫기
     연쇄 팝업 대비 여러 라운드.
     """
-    from scripts.popup_detector import close_popup_windows, handle_page_popups
+    from scripts.browser.popup.popup_detector import close_popup_windows, handle_page_popups
 
     all_actions: list[dict] = []
     for i in range(rounds):
@@ -484,28 +483,3 @@ def crawl_site(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리�
         _save_crawl_result(result, host)
 
     return result
-
-
-def main() -> None:
-    if len(sys.argv) < 2:
-        print("사용법: python -m scripts.explorer.site_crawler <site> [depth] [max_pages]")
-        return
-    site = sys.argv[1]
-    depth = int(sys.argv[2]) if len(sys.argv) > 2 else 3
-    max_pages = int(sys.argv[3]) if len(sys.argv) > 3 else 50
-
-    from scripts.site_access import open_site
-
-    page = open_site(site)
-    result = crawl_site(page, depth=depth, max_pages=max_pages)
-    print("\n✓ 크롤 완료")
-    print(f"  방문: {result['visited_count']} / 미설계 반영: {result['discovered_count']}")
-    print(f"  타입 분포: {result['type_counts']}")
-    if result.get("saved_to"):
-        print(f"  사이트맵: {result['saved_to']}")
-    if result.get("aborted_reason"):
-        print(f"  중단: {result['aborted_reason']}")
-
-
-if __name__ == "__main__":
-    main()

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.business_action_profiles import (
+from ai_orchestrator.agent_hub.business_action_profiles import (
     COMMON_FORBIDDEN_FIELDS,
     build_approval_scope,
     build_evidence_policy,

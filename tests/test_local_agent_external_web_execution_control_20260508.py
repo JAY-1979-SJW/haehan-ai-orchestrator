@@ -14,29 +14,12 @@ mock/local fixture만 사용. 외부 사이트 실접속 0건.
 
 import pytest
 
-from ai_orchestrator.local_agent.action_risk_policy import (
+from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_AUTO_ALLOWED,
     GRADE_BLOCKED,
     GRADE_USER_DELEGATED,
     GRADE_USER_DIRECT,
     classify_action,
-)
-from ai_orchestrator.local_agent.local_security_installer_runner import (
-    GRADE_BLOCKED as INSTALLER_GRADE_BLOCKED,
-)
-from ai_orchestrator.local_agent.local_security_installer_runner import (
-    STATUS_INSTALL_PERMISSION_REQUIRED,
-    STATUS_WAITING_USER_UAC,
-    check_action_allowed,
-)
-from ai_orchestrator.local_agent.site_type_classifier import (
-    SITE_GOVERNMENT,
-    classify_site,
-)
-from ai_orchestrator.local_agent.universal_safe_result import (
-    STATUS_COMPLETED,
-    build_universal_result,
-    sanitize_universal_result,
 )
 from ai_orchestrator.server.execution_location_guard import (
     LOCAL_AGENT_REQUIRED,
@@ -44,6 +27,23 @@ from ai_orchestrator.server.execution_location_guard import (
     classify_execution_location_for_server,
 )
 from ai_orchestrator.server.universal_agent_task_api import clear_all, create_task
+from core.agent_runtime.runtime.security_program.local_security_installer_runner import (
+    GRADE_BLOCKED as INSTALLER_GRADE_BLOCKED,
+)
+from core.agent_runtime.runtime.security_program.local_security_installer_runner import (
+    STATUS_INSTALL_PERMISSION_REQUIRED,
+    STATUS_WAITING_USER_UAC,
+    check_action_allowed,
+)
+from core.agent_runtime.runtime.site_profile.site_type_classifier import (
+    SITE_GOVERNMENT,
+    classify_site,
+)
+from core.agent_runtime.runtime.universal.universal_safe_result import (
+    STATUS_COMPLETED,
+    build_universal_result,
+    sanitize_universal_result,
+)
 
 _SAFE_FIELDS = [
     "cookie_exported",

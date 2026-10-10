@@ -21,7 +21,7 @@
 |---|---|---|
 | `ai_orchestrator/services/execution_policy_service.py` | fail-open 정책 판정 5개 메서드 | (STD-04 배치 중) |
 | `ai_orchestrator/persistence/registration_code_store.py` | DB 쓰기 실패를 조용히 삼켜 1회용 등록코드 재사용 가능 | `a910ba57` |
-| `scripts/google/live_inputs_fill.py` | `Path` import 누락으로 무조건 NameError (5월부터 존재) | `9d20cac9` |
+| `scripts/google/common/live_inputs_fill.py` | `Path` import 누락으로 무조건 NameError (5월부터 존재) | `9d20cac9` |
 | `.githooks/pre-commit.orig` 등 3개 훅 | worktree에서 커밋 시 메인 체크아웃을 조용히 훼손 | `19e6035b` |
 | `.githooks/commit-msg` | 자기 `print()`가 cp949에서 죽어 대량삭제 차단 자체가 안 됨 | `c6d0be71` |
 
@@ -68,7 +68,7 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
 
 1. ~~**ABS-PATH-LITERAL 172건 재검토**~~ — **완료(2026-09-28 2차 세션)**. 173건 실측 결과:
    - 테스트 파일 104건 = 전부 가짜 픽스처(`C:\path\file.exe` 류) 확인, 문제 없음.
-   - 비-테스트 69건 중 **실제 버그 1건 발견·수정**: `ai_orchestrator/gates/risk_classifier.py:7`
+   - 비-테스트 69건 중 **실제 버그 1건 발견·수정**: `tools/gates/risk_classifier.py:7`
      민감 경로 목록에 `"C:/Users/skyjw/.ssh/"`가 사용자명 하드코딩돼 있어, 다른 계정/PC에서 실행하면
      SSH 디렉터리 보안 감지가 조용히 무력화되던 문제. `Path.home()` 기반 동적 계산으로 수정,
      `test_risk_classifier.py` 5개 통과·ruff·layer audit 확인. (미커밋 — 다음 세션에서 커밋 필요)
@@ -128,17 +128,17 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
      이미 있고(severity=improve, 차단 아님) 분포를 보면 158건(45%)이 임계값(10) 바로 위(11~13)라
      당장 규칙화하면 노이즈가 큼. 다만 **복잡도 30 이상 극단값 14개**는 실제 리팩터링 후보로
      가치 있어 보여 따로 남긴다:
-     `scripts/cdp_client.py:main`(**134**, 압도적 1위) · `scripts/ops/code_map/fullmap.py:extend`(44) ·
+     `scripts/cdp_client.py:main`(**134**, 압도적 1위) · `tools/code_map/fullmap.py:extend`(44) ·
      `scripts/naver/blog/community/blog_explorer.py:main`(39) ·
      `scripts/naver/cafe/collection/cafe_explorer.py:main`(38) ·
-     `scripts/ops/code_map/modules.py:main`(38) · `scripts/ops/codebase_layer_audit.py:classify_path`(35) ·
+     `tools/code_map/modules.py:main`(38) · `tools/repo_gates/codebase_layer_audit.py:classify_path`(35) ·
      `local_agent_redaction.py:_strip_result_data`(32) ·
-     `scripts/ops/audit_google_automation_baseline_contract.py:audit`(32) ·
-     `scripts/ops/audit_post_tasks_medium_approve_gate_preflight.py:run_audit`(32) ·
-     `scripts/ops/audit_site_sso_subdomain_runtime_baseline.py:audit`(33) ·
+     `tools/audits/google/audit_google_automation_baseline_contract.py:audit`(32) ·
+     `tools/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py:run_audit`(32) ·
+     `tools/audits/app/audit_site_sso_subdomain_runtime_baseline.py:audit`(33) ·
      `scripts/naver/mail/collection/inbox_collector.py:collect_inbox`(34) ·
      `browser/agent.py:_cli`(30) · `scripts/explorer/site_crawler.py:crawl_site`(31) ·
-     `scripts/ops/audit_backend_operation_final_closeout.py:run_audit`(30).
+     `tools/audits/backend/audit_backend_operation_final_closeout.py:run_audit`(30).
      대부분 CLI `main()`의 긴 if/elif 분기라 구조적으로는 이해되지만, `cdp_client.py`(134)와
      `fullmap.py:extend`(44)는 CLI 분기가 아니라 실질적 복잡도라 우선순위가 높아 보임(미확인 —
      실제 리팩터링은 하지 않음, 다음 세션 후보).
@@ -170,13 +170,13 @@ audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrat
 py -3.14 -m ruff check --config configs/ruff.toml --select <RULE_ID> --statistics .
 
 # 영향 테스트 찾기 + 실행 (전체 pytest 금지, 21분+ 걸리고 멈추는 결함 있음)
-HAEHAN_NO_BROWSER_LAUNCH=1 py -3.14 scripts/ops/code_map/query.py tests-for <파일>
+HAEHAN_NO_BROWSER_LAUNCH=1 py -3.14 tools/code_map/query.py tests-for <파일>
 py -3.14 -m pytest <나온 테스트 파일들> -q
 
 # 게이트 3종 (커밋 전 필수)
-py -3.14 scripts/ops/codebase_layer_audit.py
+py -3.14 tools/repo_gates/codebase_layer_audit.py
 py -3.14 -m pytest tests/test_codebase_layer_audit.py -q
-py -3.14 scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+py -3.14 tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 
 # audit-kit 공식 재검사 (worktree 없는 깨끗한 상태에서만 신뢰할 것)
 audit-kit std --path "C:\Users\skyjw\claude-dev-handoff\01. haehan-ai-orchestrator" --no-mypy --fail-on never

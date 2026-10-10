@@ -506,7 +506,7 @@ git 없이 보려면: `C:\work\_backup\haehan-ai-orchestrator_deleted_20260923.z
 
 <details><summary><code>ai_orchestrator/local_agent</code> — 20개</summary>
 
-- `ai_orchestrator/local_agent/browser/site_map_store.py`
+- `scripts/browser/agent/site_map_store.py`
 - `ai_orchestrator/local_agent/official_alternative_route_finder.py`
 - `ai_orchestrator/local_agent/scenarios/__init__.py`
 - `ai_orchestrator/local_agent/scenarios/cafe_to_blog.py`
@@ -890,7 +890,7 @@ git 없이 보려면: `C:\work\_backup\haehan-ai-orchestrator_deleted_20260923.z
 # 2026-09-24 추가 — OpenAI(GPT) 호출 코드 완전 삭제
 
 기준서: `docs/specs/2026-09-24_openai_removal_claude_mcp.md`. 정리 직전 태그: `pre-openai-removal`.
-사유: 앱 런타임 유료 AI API 호출 0, AI(판단·글쓰기·에이전트)는 Claude Code가 MCP(`ai_orchestrator/mcp_server.py`)로 앱에 붙어 수행.
+사유: 앱 런타임 유료 AI API 호출 0, AI(판단·글쓰기·에이전트)는 Claude Code가 MCP(`ai_orchestrator/server/mcp_server.py`)로 앱에 붙어 수행.
 
 ## 복원 방법
 
@@ -964,7 +964,7 @@ git checkout pre-openai-removal -- <경로>
 - `ai_orchestrator/connectors/smartstore/chat.py` — 전체 재작성, /images/upload만 유지
 - `ai_orchestrator/connectors/smartstore/description.py` — /description/ai-generate·/gpt-generate GPT 호출 제거(스텁 응답)
 - `ai_orchestrator/connectors/gabia_router.py` — gabia/chat.py include 제거
-- `ai_orchestrator/mcp_server.py` — generate_description 도구에서 model=gpt 제거, builder 전용화
+- `ai_orchestrator/server/mcp_server.py` — generate_description 도구에서 model=gpt 제거, builder 전용화
 - `ai_orchestrator/openai_client.py` — OpenAI 호출 분기 제거, 항상 MOCK 폴백 반환
 - `ai_orchestrator/app_llm.py` — APP_LLM_PROVIDER="none", APP_LLM_MODEL/QUALITY_MODEL 상수 제거
 - `ai_orchestrator/config.py` — OPENAI_API_KEY 설정 제거
@@ -1004,7 +1004,7 @@ git checkout pre-openai-removal -- <경로>
 `git checkout <이 커밋>^ -- <경로>` (커밋 해시는 `git log -1 --grep="네이버 로그인 죽은 코드 삭제"` 로 확인).
 
 - `scripts/naver/cafe.py` — 같은 이름의 `scripts/naver/cafe/` 패키지가 가려 import 불가(실제 import 가 패키지로 해석됨을 확인)
-- `ai_orchestrator/local_agent/browser/secure_login.py` (+ `browser/__init__.py` 의 재내보내기 26개) — 가져다 쓰는 곳도 테스트도 없음
+- `scripts/browser/agent/secure_login.py` (+ `browser/__init__.py` 의 재내보내기 26개) — 가져다 쓰는 곳도 테스트도 없음
 - `scripts/naver/auth.py::_human_type` — deprecated, 호출자 없음
 - `scripts/login_detector.py::wait_for_logout` — 호출자 없음(독스트링에만 이름)
 - `scripts/credentials.py::list_naver_accounts` — 호출자 없음(세션 라우터 `list_accounts` 가 같은 일을 따로 구현)
@@ -1043,18 +1043,88 @@ git checkout pre-openai-removal -- <경로>
 복원: `git show <삭제 커밋>^:<경로>` (삭제 직전 내용).
 
 - `ai_orchestrator/connectors/instagram_dm_db.py` — `set_legacy_ig_user_id`
-- `ai_orchestrator/gates/auth.py` — `get_tenant_context`(build_tenant_context 의 별칭)
-- `ai_orchestrator/local_agent/delegated_permission_store.py` — `get_store_snapshot`
-- `ai_orchestrator/local_agent/task_client.py` — `poll_loop`
+- `tools/gates/auth.py` — `get_tenant_context`(build_tenant_context 의 별칭)
+- `local_agent/runtime/delegated_permission_store.py` — `get_store_snapshot`
+- `core/agent_runtime/runtime/task_client.py` — `poll_loop`
 - `ai_orchestrator/openai_client.py` — `generate_plan_explanation`(호출되지 않는 유료 AI 호출 경로)
 - `ai_orchestrator/persistence/registration_code_store.py` — `reset_store_for_tests`
 - `ai_orchestrator/router.py` — `TelegramWebhookBody`
-- `local_agent/agent.py` — `poll_task`
+- `core/agent_runtime/agent.py` — `poll_task`
 - `local_agent/browser_controller.py` — `BrowserApprovalError`, `BrowserSensitiveFieldError`, `create_and_inspect`
 - `scripts/browser_tab_monitor.py` — `ensure_single_tab`
 - `scripts/instagram/kotara_ctc_reel.py` — `render_thumbnail`, `render_all_frames`, `strip_audio`, `extract_check_frames`
 - `scripts/naver/mail/collection/folder_discovery.py` — `folders_to_dicts`
 - `scripts/naver/smartstore/product/detail_collector.py` — `list_cached_product_ids`
-- `scripts/ops/codebase_layer_audit.py` — `issue_key`
+- `tools/repo_gates/codebase_layer_audit.py` — `issue_key`
 - `scripts/session_tracker.py` — `clear_state`, `all_states`
 - `scripts/web_connector.py` — `shutdown_browser_session`(탭·브라우저 전체 종료 — 로그인 세션 보존 정책과 반대)
+
+## 2026-10-08 추가 삭제 — tests-split(B12) 중 발견한 미사용 archive 스크립트
+
+근거: `scripts/archive/one_off/validate_site_policy_config.py` — 저장소 전체(코드·설정·CI·활성 운영 문서)에서
+정의 외 참조 0(삭제 직전 재확인: import 0, configs/registry 외 참조 0, scripts/ops 게이트·감사 스크립트
+참조 0, CI 참조 0, 활성 문서 참조 0 — docs/reports·docs/specs 의 역사적 언급만 있음, data 참조 0). 자기
+시험(`tests/test_validate_site_policy_config_20260509.py`)만 호출하고 있어 시험도 같이 지운다.
+(참고: 같은 B12 조사에서 함께 archive 로 분류됐던 `scripts/archive/misc/chrome_ui_monitor.py` 는 실제로
+`scripts/browser/cdp/cdp_daemon.py` 가 서브프로세스로 띄우고 재시작시키는 **살아있는 코드**로 확인돼
+삭제하지 않았다 — stage/no-cdp-autostart(a2ad1162) 병합 후 재확인 예정.)
+복원: `git show <삭제 커밋>^:<경로>` (삭제 직전 내용).
+
+- `scripts/archive/one_off/validate_site_policy_config.py` — 사이트 정책 설정 검증 one-off 스크립트
+- `tests/test_validate_site_policy_config_20260509.py` — 위 스크립트만 시험하던 파일
+---
+
+## 2026-10-08 추가 삭제(3차) — browser_tool submit 6파일 + gui_chat_state.py 전체 삭제
+
+근거: 운영 import·호출 0(실제 submit 플로우는 ai_orchestrator/local_agent/actions/browser_submit_with_user_approval.py 등 별도 구현이 담당, 이 파일들을 import 안 함), 문자열 경로·workflow·spec·Electron·.mcp.json·훅·docs 실행 안내·PC 예약 작업 참조 0. model_adapters.py 의 "impl" 문자열 1건만 걸려있었고(정책 설명용, 실제 호출 아님) 실제 구현 경로로 수정함. 삭제마다 같은 모듈만 전용으로 검사하는 시험 파일도 함께 제거(다른 기능과 섞인 test_browser_action_registry_risk_mapping_20260506.py 는 보존). 삭제 전후 `pytest --collect-only` 12849→12522(차이 327 = 삭제된 시험 파일 몫), 영향 시험(test_browser_gate_module_design, test_browser_action_registry_risk_mapping, model_adapters 관련 3파일) 전부 통과 확인(HAEHAN_NO_BROWSER_LAUNCH=1, py -3.14).
+복원: `git show <삭제 커밋>^:<경로>` (삭제 직전 내용).
+
+소스 파일:
+- `ai_orchestrator/browser_tool/controlled_submit.py`
+- `ai_orchestrator/browser_tool/submit_policy.py`
+- `ai_orchestrator/browser_tool/submit_preview.py`
+- `ai_orchestrator/browser_tool/submit_execution_gate.py`
+- `ai_orchestrator/browser_tool/submit_audit_log.py`
+- `ai_orchestrator/browser_tool/submit_approval_state.py`
+- `local_agent/gui_chat_state.py` — `ChatUiController`, `ChatUiMessage`, `AiModeState`, `ChatUiState`, `mode_label_kr`, `ai_status_label_kr`
+
+전용 시험 파일(위 6개 소스만 검사):
+- `tests/test_browser_submit_controlled_browser_smoke_20260506.py`
+- `tests/test_browser_submit_controlled_internal_20260506.py`
+- `tests/test_browser_submit_gate_controlled_integration_smoke_20260506.py`
+- `tests/test_browser_submit_real_browser_audit_integration_20260506.py`
+- `tests/test_browser_submit_real_browser_controlled_click_smoke_20260506.py`
+- `tests/test_browser_submit_approval_state_persistence_20260506.py`
+- `tests/test_browser_submit_audit_log_persistence_20260506.py`
+- `tests/test_browser_submit_execution_gate_validator_20260506.py`
+- `tests/test_browser_submit_execution_gate_schema_20260506.py`
+- `tests/test_browser_submit_policy_validator_20260506.py`
+- `tests/test_browser_submit_policy_design_20260506.py`
+- `tests/test_browser_submit_preview_schema_20260506.py`
+
+전용 fixture(위 시험 파일에서만 참조, 다른 곳 0):
+- `tests/fixtures/browser_controlled_submit_form_20260506.html`
+- `tests/fixtures/browser_submit_policy_allowlist_20260506.json`
+
+보존(사용처 0 아님): `tests/fixtures/browser_submit_execution_gate_fixture_20260506.json` — 남아있는 `tests/test_browser_gate_module_design_20260506.py` 가 여전히 참조(파일 없으면 skip 처리되어 삭제해도 안 깨지지만, 다른 시험이 참조 중이라 보존).
+- `scripts/web_connector.py` — `shutdown_browser_session`(탭·브라우저 전체 종료 — 로그인 세션 보존 정책과 반대)
+
+## 2026-10-09 W2(flat_root_baseline 55건 재분류) 수동 삭제 — 기준 커밋 `f383f912ebc1fc57020460663fcfc72fcad5aa9a`
+참조 0(①~⑤, unused_code_check.py 북키핑 노이즈 필터 수정 후 재확인)·⑥(--confirm-no-scheduled-task, shim은 예약작업/서버등록 진입점 성격 아님) 확인된 호환 shim 6건.
+- `ai_orchestrator/planner.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- ai_orchestrator/planner.py`
+- `ai_orchestrator/web_task_templates.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- ai_orchestrator/web_task_templates.py`
+- `scripts/browser_cdp_selection_gate.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/browser_cdp_selection_gate.py`
+- `scripts/browser_rpc_server.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/browser_rpc_server.py`
+- `scripts/browser_task_session.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/browser_task_session.py`
+- `scripts/cdp_tab_manager.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/cdp_tab_manager.py`
+
+## 2026-10-10 W2(flat_root_baseline 55건 재분류) 수동 삭제 2차 — 기준 커밋 `7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12`
+참조 0(①~⑤, 새 경로 오탐 제외하고 히트 내용 직접 확인)·⑥(a:schtasks 0건, c:배포설정 0건, b:Sysmon 비관리자권한으로 확인불가 — 총괄 승인(사전승인 범위) 적용) 확인된 호환 shim 8건.
+- `scripts/app_paths.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/app_paths.py`
+- `scripts/app_paths_migrate.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/app_paths_migrate.py`
+- `scripts/auth_session.py` — 참조 0(새경로 오탐 제외), 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/auth_session.py`
+- `scripts/browser_paths.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/browser_paths.py`
+- `scripts/cdp_console.py` — 참조 0(worklog 과거기록뿐), 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/cdp_console.py`
+- `scripts/cdp_db.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/cdp_db.py`
+- `scripts/cdp_force_start.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/cdp_force_start.py`
+- `scripts/cdp_lane_start.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/cdp_lane_start.py`

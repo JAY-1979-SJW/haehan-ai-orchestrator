@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from . import run as _explorer_run
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 
 __status__ = {
     "tasks": {

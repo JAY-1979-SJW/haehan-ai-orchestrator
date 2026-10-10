@@ -26,7 +26,7 @@ def browser():
 @pytest.fixture(autouse=True)
 def _no_real_preflight():
     """사이트 등록의 사전 조사(robots.txt 조회) 실행기는 운영에서만 연결한다 — 시험은 기본으로 끄고, 필요한 시험이 직접 가짜를 넣는다."""
-    from ai_orchestrator.services import site_preflight_service
+    from ai_orchestrator.site_work import site_preflight_service
 
     site_preflight_service.configure_fetcher(None)
     yield
@@ -62,3 +62,28 @@ def _no_real_cdp_daemon(monkeypatch):
             super().__init__(args, *a, **kw)
 
     monkeypatch.setattr(subprocess, "Popen", _GuardedPopen)
+def apply_basic_auth_users(mp, users_path) -> None:
+    """AUTH_ENABLED=true + HTTP_USERS_PATH 를 환경변수로 설정한다.
+
+    **호출 뒤 `ai_orchestrator.core.config` 를 `importlib.reload()` 해야 반영된다** — config 가 import
+    시점에 환경변수를 읽어 모듈 상수로 고정하기 때문이다. 환경변수 방식을 쓰는 이유: 같은 파일의 다른
+    fixture(예: 함수 범위 `_isolated_logdir`)가 독립적으로 `config` 를 reload 해도 그 reload 역시 같은
+    환경변수를 다시 읽으므로 값이 유지된다 — `monkeypatch.setattr(config, "AUTH_ENABLED", ...)` 처럼
+    속성만 바꾸면 그런 독립적인 reload 한 번에 값이 날아간다(2026-10-08 B11 이동 중 실제로 겪음).
+
+    **`tools.gates.auth` 자체는 절대 reload 하지 않는다** — `gates.auth` 는
+    `config.AUTH_ENABLED`·`config.HTTP_USERS_PATH` 를 호출마다 모듈 참조로 live 읽으므로 reload 가 필요
+    없다. `importlib.reload(tools.gates.auth)` 로 켜고 끄던 옛 방식은 두 가지를 깨뜨렸다:
+    ① reload 가 `get_current_user` 를 새 함수 객체로 만들어, 이미 import 돼 있는 라우터는 옛 객체에
+    묶인 채 남는다 — 그 뒤 시험이 새 객체로 건 `dependency_overrides` 가 라우터에 안 닿아
+    `AUTH_ENABLED=False` 의 고정 owner 로 통과한 것처럼 보였다. ② reload 가 `register_bearer_resolver`
+    로 등록된 Bearer 토큰 검증기(`_bearer_resolver`)를 `None` 으로 되돌리는데, 등록을 다시 실행하는
+    `ai_orchestrator.auth.user_auth_router` 는 보통 같이 reload 되지 않아 등록이 복구되지 않았다 —
+    이후 세션의 모든 Bearer JWT 인증이 401 로 깨졌다(한 세션에서 재현: 새 시험 하나 +
+    `test_console_api_contract_*.py` 조합으로 57건 무더기 실패).
+
+    `mp` 는 함수 범위 `monkeypatch` fixture 또는 모듈 범위 fixture 안에서 직접 만든
+    `pytest.MonkeyPatch()` 인스턴스(끝에 `.undo()` 로 직접 해제) 둘 다 받는다.
+    """
+    mp.setenv("AUTH_ENABLED", "true")
+    mp.setenv("HTTP_USERS_PATH", str(users_path))

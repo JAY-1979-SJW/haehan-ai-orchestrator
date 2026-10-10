@@ -14,17 +14,18 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts import local_user_secret_store
-from scripts.app_paths import repo_root
-from scripts.gates.secret_action_gate import build_secret_action_policy, normalize_secret_action_mode
-from scripts.gates.work_mode_gate import build_google_work_mode_policy
-from security_utils import safe_preview
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.auth import local_user_secret_store
+from scripts.common.app_paths import repo_root
+from scripts.common.gates.secret_action_gate import build_secret_action_policy, normalize_secret_action_mode
+from scripts.common.gates.work_mode_gate import build_google_work_mode_policy
+from ai_orchestrator.core.security_utils import safe_preview
 
 ROOT = repo_root()
-REPORT_DIR = ROOT / "data" / "youtube_oauth_reports"
-TOKEN_DIR = ROOT / "data" / "secrets"
-LATEST_AUTH_PLAN = ROOT / "data" / "youtube_oauth_auth_plan_latest.json"
-LATEST_TOKEN_RESULT = ROOT / "data" / "youtube_oauth_token_result_latest.json"
+REPORT_DIR = data_dir() / "youtube_oauth_reports"
+TOKEN_DIR = data_dir() / "secrets"
+LATEST_AUTH_PLAN = data_dir() / "youtube_oauth_auth_plan_latest.json"
+LATEST_TOKEN_RESULT = data_dir() / "youtube_oauth_token_result_latest.json"
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 DEFAULT_REDIRECT_URI = "http://127.0.0.1:8765/oauth2callback"
@@ -437,20 +438,20 @@ def build_server_preapproval(values: dict[str, str] | None = None) -> tuple[dict
             "YOUTUBE_OAUTH_CALLBACK_EXCHANGE_ENABLED": "true",
         },
         "local_secret_commands": [
-            "python scripts/local_user_secret_store.py put-file youtube oauth_client_json <downloaded_oauth_client_json>",
-            "python scripts/local_user_secret_store.py status youtube oauth_client_json",
+            "python scripts/auth/local_user_secret_store.py put-file youtube oauth_client_json <downloaded_oauth_client_json>",
+            "python scripts/auth/local_user_secret_store.py status youtube oauth_client_json",
         ],
         "post_approval_commands": [
             (
-                "python scripts/cdp_client.py youtube oauth start "
+                "python scripts/entry/cdp_cli.py youtube oauth start "
                 f"scope=force-ssl client_file={client_file} redirect_uri={redirect_uri}"
             ),
             (
-                "python scripts/cdp_client.py youtube oauth exchange "
+                "python scripts/entry/cdp_cli.py youtube oauth exchange "
                 f"code=<returned_code> client_file={client_file} redirect_uri={redirect_uri} output={token_file}"
             ),
             (
-                "python scripts/cdp_client.py youtube research caption-list "
+                "python scripts/entry/cdp_cli.py youtube research caption-list "
                 f"video_id=<owned_or_authorized_video_id> token_file={token_file}"
             ),
         ],

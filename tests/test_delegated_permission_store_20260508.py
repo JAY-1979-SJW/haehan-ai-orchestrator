@@ -2,13 +2,23 @@
 사용자 위임 권한 저장소 테스트
 """
 import pytest
-from ai_orchestrator.local_agent.delegated_permission_store import (
-    grant_permission, get_permission, revoke, use_permission,
-    list_active_permissions, clear_all,
+
+from core.agent_runtime.runtime.permission.delegated_permission_policy import (
+    CHECK_ALLOWED,
+    CHECK_EXHAUSTED,
+    CHECK_EXPIRED,
+    CHECK_REVOKED,
+    CHECK_SCOPE_EXCEEDED,
+    PERM_ACTIVE,
+    PERM_REVOKED,
 )
-from ai_orchestrator.local_agent.delegated_permission_policy import (
-    CHECK_ALLOWED, CHECK_REVOKED, CHECK_EXHAUSTED,
-    CHECK_SCOPE_EXCEEDED, CHECK_EXPIRED, PERM_ACTIVE, PERM_REVOKED,
+from core.agent_runtime.runtime.permission.delegated_permission_store import (
+    clear_all,
+    get_permission,
+    grant_permission,
+    list_active_permissions,
+    revoke,
+    use_permission,
 )
 
 
@@ -96,7 +106,7 @@ class TestUsePermission:
         assert result["result"] == CHECK_SCOPE_EXCEEDED
 
     def test_nonexistent_permission_required(self):
-        from ai_orchestrator.local_agent.delegated_permission_policy import CHECK_PERMISSION_REQUIRED
+        from core.agent_runtime.runtime.permission.delegated_permission_policy import CHECK_PERMISSION_REQUIRED
         result = use_permission("no-such-id", "blog_publish", "blog.naver.com")
         assert result["result"] == CHECK_PERMISSION_REQUIRED
 

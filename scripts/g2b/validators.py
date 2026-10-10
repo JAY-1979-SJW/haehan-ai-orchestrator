@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from scripts.g2b.profile import ALL_KNOWN_ACTIONS, BLOCKED_ACTIONS
+from scripts.g2b.site_profile import ALL_KNOWN_ACTIONS, BLOCKED_ACTIONS
 
 # ── 상수 ─────────────────────────────────────────────────────────────
 
@@ -119,20 +119,20 @@ def validate_attachment_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return _make_ok()
 
 
-def validate_bid_analysis_draft_payload(payload: dict[str, Any]) -> dict[str, Any]:
+def _validate_bid_no_draft_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """비밀값·세션 없음 + 입찰공고번호(bid_ntce_no/bidNtceNo) 필수 — 분석 초안·제출 초안 공용 검증."""
     secret_check = validate_g2b_no_secret_session_payload(payload)
     if not secret_check["valid"]:
         return secret_check
     if not _has_dual(payload, "bid_ntce_no", "bidNtceNo"):
         return _make_error("bidNtceNo", "입찰공고번호 필요")
     return _make_ok()
+
+
+def validate_bid_analysis_draft_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    return _validate_bid_no_draft_payload(payload)
 
 
 def validate_submit_draft_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    secret_check = validate_g2b_no_secret_session_payload(payload)
-    if not secret_check["valid"]:
-        return secret_check
     # submit draft 자체 검증 허용, 최종 제출은 gate에서 차단
-    if not _has_dual(payload, "bid_ntce_no", "bidNtceNo"):
-        return _make_error("bidNtceNo", "입찰공고번호 필요")
-    return _make_ok()
+    return _validate_bid_no_draft_payload(payload)

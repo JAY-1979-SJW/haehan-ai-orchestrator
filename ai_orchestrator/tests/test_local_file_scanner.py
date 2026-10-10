@@ -1,4 +1,4 @@
-"""local_agent.file_scanner 검증 (read-only Stage 1).
+"""core.agent_runtime.tools.file_scanner 검증 (read-only Stage 1).
 
 테스트는 pytest tmp_path 만 사용한다. 실제 사용자 폴더 / OneDrive / Downloads /
 C:/Users 등은 절대 스캔하지 않는다.
@@ -54,7 +54,7 @@ def sample_tree(tmp_path: Path) -> Path:
 
 
 def test_basic_scan_returns_expected_shape(sample_tree: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     report = scan_file_tree(str(sample_tree))
     assert report["ok"] is True
@@ -67,7 +67,7 @@ def test_basic_scan_returns_expected_shape(sample_tree: Path) -> None:
 
 
 def test_items_contain_no_absolute_path(sample_tree: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     report = scan_file_tree(str(sample_tree))
     for item in report["items"]:
@@ -85,7 +85,7 @@ def test_items_contain_no_absolute_path(sample_tree: Path) -> None:
 
 
 def test_max_depth_limit(tmp_path: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     root = tmp_path / "deep"
     cur = root
@@ -109,7 +109,7 @@ def test_max_depth_limit(tmp_path: Path) -> None:
 
 
 def test_max_files_limit(tmp_path: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     root = tmp_path / "many"
     root.mkdir()
@@ -126,7 +126,7 @@ def test_max_files_limit(tmp_path: Path) -> None:
 
 
 def test_excluded_directories(sample_tree: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     report = scan_file_tree(str(sample_tree))
     rels = {i["relative_path"] for i in report["items"]}
@@ -141,7 +141,7 @@ def test_excluded_directories(sample_tree: Path) -> None:
 
 
 def test_preserve_by_extension(sample_tree: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     report = scan_file_tree(str(sample_tree))
     by_name = {i["file_name"]: i for i in report["items"]}
@@ -152,7 +152,7 @@ def test_preserve_by_extension(sample_tree: Path) -> None:
 
 
 def test_preserve_by_keyword(tmp_path: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     root = tmp_path / "kwd"
     root.mkdir()
@@ -175,7 +175,7 @@ def test_preserve_by_keyword(tmp_path: Path) -> None:
 
 
 def test_candidate_delete_categories(sample_tree: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     report = scan_file_tree(str(sample_tree))
     cats = {i["file_name"]: i["category"] for i in report["items"]}
@@ -189,7 +189,7 @@ def test_candidate_delete_categories(sample_tree: Path) -> None:
 
 
 def test_preserve_priority_over_candidate_delete(tmp_path: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     root = tmp_path / "prio"
     root.mkdir()
@@ -208,7 +208,7 @@ def test_preserve_priority_over_candidate_delete(tmp_path: Path) -> None:
 
 
 def test_strong_duplicate_same_name_and_size(tmp_path: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     root = tmp_path / "dup"
     root.mkdir()
@@ -226,7 +226,7 @@ def test_strong_duplicate_same_name_and_size(tmp_path: Path) -> None:
 
 
 def test_weak_duplicate_same_ext_and_size(tmp_path: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     root = tmp_path / "dup_weak"
     root.mkdir()
@@ -248,7 +248,7 @@ def test_weak_duplicate_same_ext_and_size(tmp_path: Path) -> None:
 
 
 def test_hash_absent_by_default(sample_tree: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     report = scan_file_tree(str(sample_tree))
     for item in report["items"]:
@@ -258,7 +258,7 @@ def test_hash_absent_by_default(sample_tree: Path) -> None:
 def test_hash_present_when_enabled(tmp_path: Path) -> None:
     import hashlib
 
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     root = tmp_path / "h"
     root.mkdir()
@@ -271,7 +271,7 @@ def test_hash_present_when_enabled(tmp_path: Path) -> None:
 
 
 def test_hash_skipped_for_large_file(tmp_path: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     root = tmp_path / "big"
     root.mkdir()
@@ -289,7 +289,7 @@ def test_hash_skipped_for_large_file(tmp_path: Path) -> None:
 
 
 def test_missing_root_returns_safe_error(tmp_path: Path) -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     report = scan_file_tree(str(tmp_path / "does_not_exist"))
     assert report["ok"] is False
@@ -298,7 +298,7 @@ def test_missing_root_returns_safe_error(tmp_path: Path) -> None:
 
 
 def test_drive_root_blocked() -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     for raw in ("C:/", "C:\\", "D:/", "c:"):
         report = scan_file_tree(raw)
@@ -307,7 +307,7 @@ def test_drive_root_blocked() -> None:
 
 
 def test_system_folder_blocked() -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     for raw in ("C:/Windows", "C:/Windows/System32", "c:/programdata", "C:\\Program Files"):
         report = scan_file_tree(raw)
@@ -316,18 +316,18 @@ def test_system_folder_blocked() -> None:
 
 
 def test_empty_root_path_rejected() -> None:
-    from local_agent.file_scanner import scan_file_tree
+    from core.agent_runtime.tools.file_scanner import scan_file_tree
 
     report = scan_file_tree("")
     assert report["ok"] is False
     assert report["error_code"] == "ROOT_INVALID"
 
 
-# ─── local_agent.actions 통합 ──────────────────────────────────────────────
+# ─── core.agent_runtime.connection.actions 통합 ──────────────────────────────────────────────
 
 
 def test_execute_action_scan_file_tree(sample_tree: Path) -> None:
-    from local_agent.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action("scan_file_tree", {"root_path": str(sample_tree)})
     assert result.success is True
@@ -338,7 +338,7 @@ def test_execute_action_scan_file_tree(sample_tree: Path) -> None:
 
 
 def test_execute_action_scan_file_tree_missing_root() -> None:
-    from local_agent.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action("scan_file_tree", {})
     assert result.success is False
@@ -346,7 +346,7 @@ def test_execute_action_scan_file_tree_missing_root() -> None:
 
 
 def test_execute_action_scan_file_tree_blocks_drive_root() -> None:
-    from local_agent.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action("scan_file_tree", {"root_path": "C:/"})
     assert result.success is False
@@ -360,10 +360,10 @@ def test_no_forbidden_mutation_apis_in_new_code() -> None:
     """새 코드에서 파일 변형/삭제/이동 API 호출 문자열이 전혀 없는지 검사."""
     from pathlib import Path as _P
 
-    import local_agent.file_scanner as fs
+    import core.agent_runtime.tools.file_scanner as fs
 
     scanner_src = _P(fs.__file__).read_text(encoding="utf-8")
-    action_src = (_P(fs.__file__).parent / "actions.py").read_text(encoding="utf-8")
+    action_src = (_P(fs.__file__).parent.parent / "connection" / "actions.py").read_text(encoding="utf-8")
 
     forbidden_tokens = (
         "os.remove",

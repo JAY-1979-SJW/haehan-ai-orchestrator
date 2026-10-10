@@ -12,8 +12,10 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import atomic_write_text, data_dir
+
 ROOT = Path(__file__).resolve().parents[2]
-_CFG = ROOT / "data" / "community" / "notify_config.json"
+_CFG = data_dir() / "community" / "notify_config.json"
 _TG = "https://api.telegram.org/bot{token}/{method}"
 
 
@@ -28,7 +30,7 @@ def load_config() -> dict:
 
 def save_config(cfg: dict) -> None:
     _CFG.parent.mkdir(parents=True, exist_ok=True)
-    _CFG.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+    atomic_write_text(_CFG, json.dumps(cfg, ensure_ascii=False, indent=2))
 
 
 def public_config() -> dict:

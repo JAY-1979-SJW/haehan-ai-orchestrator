@@ -7,16 +7,17 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from orchestrator_v1.core.security_utils import safe_preview
-from scripts.app_paths import repo_root
-from scripts.publish_guard import guarded
-from scripts.realtime_audit import emit_event
+from ai_orchestrator.core.security_utils import safe_preview
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.app_paths import repo_root
+from scripts.common.publish_guard import guarded
+from scripts.common.realtime_audit import emit_event
 
 ROOT = repo_root()
-PLAN_DIR = ROOT / "data" / "youtube_upload_plans"
-RESULT_DIR = ROOT / "data" / "youtube_upload_results"
-LATEST_PLAN = ROOT / "data" / "youtube_upload_plan_latest.json"
-LATEST_RESULT = ROOT / "data" / "youtube_upload_result_latest.json"
+PLAN_DIR = data_dir() / "youtube_upload_plans"
+RESULT_DIR = data_dir() / "youtube_upload_results"
+LATEST_PLAN = data_dir() / "youtube_upload_plan_latest.json"
+LATEST_RESULT = data_dir() / "youtube_upload_result_latest.json"
 APPROVAL_PHRASE = "YOUTUBE_APPROVED_UPLOAD"
 ALLOWED_PRIVACY = {"private", "unlisted", "public"}
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm", ".avi"}
@@ -211,7 +212,7 @@ def execute_upload_plan(
         result.update({"status": "dry_run_ok", "reason": "dry_run_no_upload"})
     else:
         # 실제 업로드 직전 공통 게이트(승인 문구 대조 + 감사 기록). 문구는 사용자가 입력한 confirm 값이다.
-        from scripts.gate import require_side_effect
+        from scripts.common.gate import require_side_effect
 
         require_side_effect("youtube_upload", approval=confirm, expected=APPROVAL_PHRASE, plan=str(plan_path))
         upload = _upload_with_official_api(plan)

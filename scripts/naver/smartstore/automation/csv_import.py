@@ -8,7 +8,7 @@
   event_text|이벤트문구
 
 사용:
-  from scripts.naver.automation.csv_import import CSVImporter
+  from scripts.naver.smartstore.automation.csv_import import CSVImporter
   ci = CSVImporter(page)
   result = ci.import_csv("data/products.csv", save_after=False)
   result = ci.import_excel("data/products.xlsx")
@@ -21,8 +21,8 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -63,7 +63,7 @@ def normalize_row(row: dict) -> dict:
         if key in ("price", "stock"):
             try:
                 v = int(str(v).replace(",", "").strip())
-            except ValueError, TypeError:
+            except (ValueError, TypeError):
                 continue
         elif key == "minor_purchase":
             v = str(v).strip().lower() in ("true", "1", "y", "yes", "가능")

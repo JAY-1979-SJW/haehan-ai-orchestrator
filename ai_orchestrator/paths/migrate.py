@@ -39,8 +39,10 @@ _SKIP_SUFFIXES = {".pyc", ".tmp"}
 _SKIP_NAMES = {".gitkeep", ".gitignore"}
 
 
-def _copy_tree(src: Path, dst: Path, errors: list[str]) -> tuple[int, int]:
-    """src → dst 로 없는 파일만 복사. (복사 수, 이미 있어 건너뛴 수)."""
+def _copy_tree(src: Path, dst: Path, errors: list[str], defer: frozenset[str] = frozenset()) -> tuple[int, int]:
+    """src → dst 로 없는 파일만 복사. (복사 수, 이미 있어 건너뛴 수).
+
+    defer: 이번 호출에서 건너뛸 최상위 파일 이름(예: users.db) — 호출자가 나중에 따로 복사한다."""
     copied = skipped = 0
     if not src.is_dir():
         return 0, 0
@@ -50,19 +52,28 @@ def _copy_tree(src: Path, dst: Path, errors: list[str]) -> tuple[int, int]:
         for name in files:
             if name in _SKIP_NAMES or Path(name).suffix in _SKIP_SUFFIXES:
                 continue
+            if rel == Path(".") and name in defer:
+                continue
             target = dst / rel / name
             if target.exists():
                 skipped += 1
                 continue
-            try:
-                target.parent.mkdir(parents=True, exist_ok=True)
-                tmp = target.with_name(target.name + ".migrating")
-                shutil.copy2(Path(root) / name, tmp)
-                tmp.replace(target)  # 반쯤 복사된 파일이 정식 이름으로 남지 않게 원자적 교체
+            if _copy_file(Path(root) / name, target, errors):
                 copied += 1
-            except OSError as exc:
-                errors.append(f"{Path(root, name)}: {type(exc).__name__}: {exc}")
     return copied, skipped
+
+
+def _copy_file(source: Path, target: Path, errors: list[str]) -> bool:
+    """파일 하나를 복사(이미 있으면 호출자가 걸러야 한다). 실패하면 errors 에 쌓고 False."""
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        tmp = target.with_name(target.name + ".migrating")
+        shutil.copy2(source, tmp)
+        tmp.replace(target)  # 반쯤 복사된 파일이 정식 이름으로 남지 않게 원자적 교체
+        return True
+    except OSError as exc:
+        errors.append(f"{source}: {type(exc).__name__}: {exc}")
+        return False
 
 
 def _same(a: Path, b: Path) -> bool:
@@ -101,7 +112,7 @@ def _migrate() -> dict:  # noqa: C901 - 이행 전제 조건(환경·번들 여�
     if marker.is_file():
         try:
             prior = json.loads(marker.read_text(encoding="utf-8"))
-        except OSError, ValueError:
+        except (OSError, ValueError):
             prior = {}
         if prior.get("complete") is True:
             return {"status": "already_done", "migrated_at": prior.get("migrated_at")}

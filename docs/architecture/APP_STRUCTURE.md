@@ -59,7 +59,7 @@ It must not:
 |---|---|---|---|
 | Server app/API | `ai_orchestrator/` | Authentication, authorization, approval, task queue, state, audit, safe APIs | Run local browser/tool work directly |
 | Common runtime | `ai_orchestrator/local_agent/common_tool_runtime.py` | Shared task/result/risk/approval contract | Execute tools directly or accept unsafe fields |
-| Common engine/site policy | `scripts/site_engine/`, `scripts/sites/` | Profiles, gates, execution planning, validation | Duplicate policy in site routers |
+| Common engine/site policy | `scripts/site_engine/` | Profiles, gates, execution planning, validation | Duplicate policy in site routers |
 | Site/tool adapters | `scripts/google/`, `scripts/naver/`, `scripts/smartstore/`, `scripts/hiworks/`, `scripts/gabia/`, `scripts/youtube/` | Thin site-specific workflows and adapters | Bypass approval or user-direct gates |
 | Local agent | `local_agent/` | Authenticated PC-side execution for server-dispatched tasks | Accept raw user work outside server task contract |
 | Desktop runtime | `desktop/main_launcher.py`, `desktop/local_server.py` | Local UI/runtime hub subordinate to server | Own server state, approval, policy, or audit history |
@@ -97,7 +97,7 @@ The module boundary map remains the ownership source for parallel work:
 ```text
 configs/module_boundaries.json
 docs/architecture/module_boundary_map_20260523.md
-scripts/ops/audit_module_boundaries.py
+tools/audits/app/audit_module_boundaries.py
 ```
 
 Parallel work is not allowed for live deploy, server restart, process kill,
@@ -234,9 +234,9 @@ screens, connection screens, or control-surface behavior changes, update:
 Minimum structure verification:
 
 ```text
-python scripts/ops/audit_app_development_standard.py
-python scripts/ops/audit_app_structure_contract.py
-python scripts/ops/audit_standard_workflow_contract.py
+python tools/audits/app/audit_app_development_standard.py
+python tools/audits/app/audit_app_structure_contract.py
+python tools/audits/app/audit_standard_workflow_contract.py
 python -m pytest tests/test_app_development_standard.py -q
 python -m pytest tests/test_app_structure_contract.py -q
 python -m pytest tests/test_standard_workflow_contract.py -q

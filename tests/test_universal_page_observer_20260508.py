@@ -1,6 +1,6 @@
 """tests/test_universal_page_observer_20260508.py"""
 
-from ai_orchestrator.local_agent.universal_page_observer import (
+from core.agent_runtime.runtime.universal.universal_page_observer import (
     observe_page_from_dict,
     observe_page_mock,
 )

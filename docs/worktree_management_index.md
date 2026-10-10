@@ -56,8 +56,8 @@ Reference pack:
 | Login/session integrity before live work | `docs/common_login_session_safety_policy_20260513.md` |
 | Full business workflow development | `docs/business_workflow_full_development_policy_20260513.md` |
 | Pre-change dry-run before code update | `docs/pre_change_dry_run_policy_20260513.md` |
-| Commit gate failure | `scripts/quality_gate.py` |
-| Deploy-related change | `scripts/deploy_dry_run.py` |
+| Commit gate failure | `tools/quality/quality_gate.py` |
+| Deploy-related change | `tools/deploy/deploy_dry_run.py` |
 
 ## Review Categories
 
@@ -113,7 +113,7 @@ For the current large worktree, use this order:
 2. Treat `runtime_artifact` as local evidence by default.
 3. Site work must include a site logic reference or completion report once it reaches `complete_baseline`.
 4. Existing active code changes are blocked by the quality gate unless explicitly approved with `--allow-existing-code-change`.
-5. Deploy-related changes require `scripts\deploy_dry_run.py` evidence before commit or deployment.
+5. Deploy-related changes require `scripts\ops\deploy_dry_run.py` evidence before commit or deployment.
 
 ## Current Operating Flow
 

@@ -25,9 +25,9 @@
 | CI | ubuntu(secrets·frontend) + windows-latest(verify, Python 3.14) | 제약 파일은 CI 에 아직 연결하지 않음(다음 단계 제안) |
 
 ## 3. 처리 (이번 범위, 모두 추가·교정이며 동작을 넓히지 않는다)
-1. **`scripts/ops/preflight.py`** — 설치·실행 환경 점검(비밀 값은 읽지도 출력하지도 않음). 파이썬 버전·필수 패키지 버전·Chrome 존재와 버전·CDP 프로필이 비표준 폴더인지(136 규칙)·포트 상태(내 브라우저/다른 프로그램 구분)·쓰기 가능한 데이터 폴더·훅이 쓰는 인터프리터 존재·Node/admin-web 의존성·git 훅 설치·선택 도구(audit-kit, mypy)를 PASS/WARN/FAIL 로 보고. 종료코드 0/1. 시험은 가짜 환경으로.
+1. **`tools/verify/preflight.py`** — 설치·실행 환경 점검(비밀 값은 읽지도 출력하지도 않음). 파이썬 버전·필수 패키지 버전·Chrome 존재와 버전·CDP 프로필이 비표준 폴더인지(136 규칙)·포트 상태(내 브라우저/다른 프로그램 구분)·쓰기 가능한 데이터 폴더·훅이 쓰는 인터프리터 존재·Node/admin-web 의존성·git 훅 설치·선택 도구(audit-kit, mypy)를 PASS/WARN/FAIL 로 보고. 종료코드 0/1. 시험은 가짜 환경으로.
 2. **훅 인터프리터** — `.claude/settings.json` 의 `py -3.14` → `py -3`(최소 버전은 preflight 가 검사). 이 PC 는 3.14 가 최신이라 동작 동일.
-3. **`constraints.txt`** — 검증된(시험이 도는) 환경의 전체 버전 집합을 `scripts/ops/make_constraints.py` 로 **재생성 가능하게** 만든다(손으로 쓰지 않음). 설치: `pip install -r requirements.txt -c constraints.txt`.
+3. **`constraints.txt`** — 검증된(시험이 도는) 환경의 전체 버전 집합을 `tools/devflow/make_constraints.py` 로 **재생성 가능하게** 만든다(손으로 쓰지 않음). 설치: `pip install -r requirements.txt -c constraints.txt`.
 4. **탐색 실행기 탭 열기** — `ctx.new_page()+goto` → `cdp_tabs.open_tab`(HTTP 생성 + 도착 확인) 기반으로 교체, 만든 탭만 닫는다.
 5. **이식성 시험** — 훅 명령에 마이너 버전 고정·사용자 홈 절대경로가 다시 들어오면 실패.
 6. (제안, 이번에 하지 않음) CI 에서 `-c constraints.txt` 사용, 중복 Chrome 경로(`naver/browser_gate.py`)를 `browser_paths` 로 통합, 포트 9222 를 설정값으로.
@@ -41,7 +41,7 @@
 | 항목 | 결과 |
 |---|---|
 | preflight / constraints.txt / 훅 `py -3` / 탭 열기 교정 / 이식성 시험 | 완료(§3 1~5). 새 설치 해석 시험: 109개 패키지 충돌 없음 |
-| `core.hooksPath` | **원인 규명 후 근본 수정**: 세션 시작마다 도는 `scripts/ops/install_git_hooks.py` 가 훅 *파일*만 쓰고 *설정*은 하지 않아, 새로 복제한 저장소·다른 PC 에서 훅이 "설치됨"으로 출력되면서 실제로는 git 이 실행하지 않았다. 이제 `ensure_hooks_path()` 가 비어 있으면 `.githooks` 로 설정하고, 이미 다른 값이면 덮어쓰지 않고 알린다. 시험 4건 |
+| `core.hooksPath` | **원인 규명 후 근본 수정**: 세션 시작마다 도는 `tools/hooks/install_git_hooks.py` 가 훅 *파일*만 쓰고 *설정*은 하지 않아, 새로 복제한 저장소·다른 PC 에서 훅이 "설치됨"으로 출력되면서 실제로는 git 이 실행하지 않았다. 이제 `ensure_hooks_path()` 가 비어 있으면 `.githooks` 로 설정하고, 이미 다른 값이면 덮어쓰지 않고 알린다. 시험 4건 |
 | Chrome 경로 중복 | `scripts/naver/browser_gate.py` 의 복사본을 `browser_paths.find_chrome()` 단일 정본 호출로 교체. 비표준 위치 설치 PC 를 위해 환경변수 `HAEHAN_CHROME_PATH` 를 최우선으로 인식(없는 경로면 기본 탐색으로 복귀). 기존 시험 155건 통과 |
 | CI | `verify` 잡(windows-latest, Python 3.14 — 제약 파일을 만든 환경과 같음)이 `-c constraints.txt` 로 설치. 푸시 후 수동 실행으로 확인 |
 | `.githooks` 의 `py -3.14` | 변경하지 않음 — `py -3.14` 가 없으면 다른 파이썬으로 **스스로 대체**하는 구조라 안전하게 저하된다(주석에 이유 기록). settings.json 훅은 대체 경로가 없어 교정했다 |

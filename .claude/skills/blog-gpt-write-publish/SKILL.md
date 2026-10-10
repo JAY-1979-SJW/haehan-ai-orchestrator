@@ -22,7 +22,7 @@ topics = get_researched_topics()          # 3중 검증 결과(제품 관련만 
 
 ### 2. GPT 초안 요청
 ```python
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 from scripts.naver.blog.marketing.gpt_writer import generate_draft
 
 cdp = CDP(port=9222)

@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]  # repo root (2026-08-14: [4]는 저장소 밖 C:\work 를 가리켰음)
 sys.path.insert(0, str(ROOT))
 
-from scripts.gate import check  # noqa: E402  (sys.path 설정 후 import)
+from scripts.common.gate import check  # noqa: E402  (sys.path 설정 후 import)
 
 
 def dashboard_summary() -> dict:

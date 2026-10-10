@@ -8,7 +8,7 @@ _RESULT_DATA_ALLOWED_KEYS, _sanitize_url_for_storage, _strip_result_data
 
 def test_sensitive_keys_defined():
     """_SENSITIVE_KEYS가 정의되어 있고 필수 키를 포함한다."""
-    from ai_orchestrator.local_agent_redaction import _SENSITIVE_KEYS
+    from ai_orchestrator.agent_hub.redaction import _SENSITIVE_KEYS
 
     assert isinstance(_SENSITIVE_KEYS, frozenset)
     assert len(_SENSITIVE_KEYS) > 0
@@ -41,7 +41,7 @@ def test_sensitive_keys_defined():
 
 def test_strip_sensitive_removes_keys():
     """_strip_sensitive가 민감 키를 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_sensitive
+    from ai_orchestrator.agent_hub.redaction import _strip_sensitive
 
     params = {
         "url": "http://example.com",
@@ -59,7 +59,7 @@ def test_strip_sensitive_removes_keys():
 
 def test_strip_sensitive_case_insensitive():
     """_strip_sensitive는 대소문자 구분 없이 민감 키를 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_sensitive
+    from ai_orchestrator.agent_hub.redaction import _strip_sensitive
 
     params = {
         "PASSWORD": "secret",
@@ -77,7 +77,7 @@ def test_strip_sensitive_case_insensitive():
 
 def test_strip_sensitive_empty_dict():
     """_strip_sensitive가 빈 dict를 처리한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_sensitive
+    from ai_orchestrator.agent_hub.redaction import _strip_sensitive
 
     result = _strip_sensitive({})
     assert result == {}
@@ -88,7 +88,7 @@ def test_strip_sensitive_empty_dict():
 
 def test_result_data_allowed_keys_defined():
     """_RESULT_DATA_ALLOWED_KEYS가 정의되어 있고 필수 키를 포함한다."""
-    from ai_orchestrator.local_agent_redaction import _RESULT_DATA_ALLOWED_KEYS
+    from ai_orchestrator.agent_hub.redaction import _RESULT_DATA_ALLOWED_KEYS
 
     assert isinstance(_RESULT_DATA_ALLOWED_KEYS, frozenset)
     assert len(_RESULT_DATA_ALLOWED_KEYS) > 0
@@ -113,7 +113,7 @@ def test_result_data_allowed_keys_defined():
 
 def test_sanitize_url_removes_query_string():
     """_sanitize_url_for_storage가 쿼리 문자열을 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _sanitize_url_for_storage
+    from ai_orchestrator.agent_hub.redaction import _sanitize_url_for_storage
 
     url = "https://example.com/path?token=secret&param=value"
     result = _sanitize_url_for_storage(url)
@@ -126,7 +126,7 @@ def test_sanitize_url_removes_query_string():
 
 def test_sanitize_url_keeps_fragment():
     """_sanitize_url_for_storage가 fragment를 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _sanitize_url_for_storage
+    from ai_orchestrator.agent_hub.redaction import _sanitize_url_for_storage
 
     url = "https://example.com/path#section"
     result = _sanitize_url_for_storage(url)
@@ -137,7 +137,7 @@ def test_sanitize_url_keeps_fragment():
 
 def test_sanitize_url_handles_invalid():
     """_sanitize_url_for_storage가 잘못된 URL을 안전하게 처리한다."""
-    from ai_orchestrator.local_agent_redaction import _sanitize_url_for_storage
+    from ai_orchestrator.agent_hub.redaction import _sanitize_url_for_storage
 
     # 파일 경로처럼 보이지만 스키마 없는 경우 - path로 해석됨
     result = _sanitize_url_for_storage("not a url")
@@ -147,7 +147,7 @@ def test_sanitize_url_handles_invalid():
 
 def test_strip_result_data_allows_safe_keys():
     """_strip_result_data가 허용된 키만 저장한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "ping",
@@ -165,7 +165,7 @@ def test_strip_result_data_allows_safe_keys():
 
 def test_strip_result_data_sanitizes_url():
     """_strip_result_data가 normalized_url의 쿼리를 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "open_url",
@@ -179,7 +179,7 @@ def test_strip_result_data_sanitizes_url():
 
 def test_strip_result_data_none_returns_none():
     """_strip_result_data가 None/empty를 처리한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     assert _strip_result_data(None) is None
     assert _strip_result_data({}) is None
@@ -188,7 +188,7 @@ def test_strip_result_data_none_returns_none():
 
 def test_strip_result_data_long_strings_truncated():
     """_strip_result_data가 긴 문자열을 500자로 제한한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     long_string = "x" * 1000
     data = {
@@ -201,7 +201,7 @@ def test_strip_result_data_long_strings_truncated():
 
 def test_strip_result_data_preserves_bool_int_float():
     """_strip_result_data가 bool/int/float를 그대로 저장한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "executed": True,
@@ -220,7 +220,7 @@ def test_strip_result_data_preserves_bool_int_float():
 
 def test_registry_uses_strip_sensitive():
     """registry의 enqueue_task가 _strip_sensitive를 사용한다."""
-    from ai_orchestrator.local_agent_registry import enqueue_task
+    from ai_orchestrator.agent_hub.registry.facade import enqueue_task
 
     task = enqueue_task(
         agent_id="test-agent",
@@ -236,7 +236,7 @@ def test_registry_uses_strip_sensitive():
 
 def test_registry_uses_strip_result_data():
     """registry의 apply_result가 _strip_result_data를 사용한다."""
-    from ai_orchestrator.local_agent_registry import (
+    from ai_orchestrator.agent_hub.registry.facade import (
         apply_result,
         enqueue_task,
         mark_approved,
@@ -272,7 +272,7 @@ def test_registry_uses_strip_result_data():
     )
 
     # task.result_data에 password가 없어야 함
-    from ai_orchestrator.local_agent_registry import get_task
+    from ai_orchestrator.agent_hub.registry.facade import get_task
 
     updated_task = get_task(task.agent_id, task.task_id)
     assert updated_task is not None
@@ -284,7 +284,7 @@ def test_registry_uses_strip_result_data():
 
 def test_strip_capabilities_allows_bool_values():
     """_strip_capabilities가 bool 값을 유지한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_capabilities
+    from ai_orchestrator.agent_hub.redaction import _strip_capabilities
 
     capabilities = {
         "browser_supported": True,
@@ -301,7 +301,7 @@ def test_strip_capabilities_allows_bool_values():
 
 def test_strip_capabilities_removes_non_bool():
     """_strip_capabilities가 bool이 아닌 값을 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_capabilities
+    from ai_orchestrator.agent_hub.redaction import _strip_capabilities
 
     capabilities = {
         "browser_supported": True,
@@ -320,7 +320,7 @@ def test_strip_capabilities_removes_non_bool():
 
 def test_strip_capabilities_removes_unknown_keys():
     """_strip_capabilities가 미승인 key를 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_capabilities
+    from ai_orchestrator.agent_hub.redaction import _strip_capabilities
 
     capabilities = {
         "browser_supported": True,
@@ -339,7 +339,7 @@ def test_strip_capabilities_removes_unknown_keys():
 
 def test_strip_capabilities_empty_dict_returns_none():
     """_strip_capabilities가 빈 dict를 None으로 반환한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_capabilities
+    from ai_orchestrator.agent_hub.redaction import _strip_capabilities
 
     result = _strip_capabilities({})
     assert result is None
@@ -350,7 +350,7 @@ def test_strip_capabilities_empty_dict_returns_none():
 
 def test_strip_capabilities_non_dict_returns_none():
     """_strip_capabilities가 dict가 아니면 None을 반환한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_capabilities
+    from ai_orchestrator.agent_hub.redaction import _strip_capabilities
 
     assert _strip_capabilities(None) is None
     assert _strip_capabilities("string") is None
@@ -360,7 +360,7 @@ def test_strip_capabilities_non_dict_returns_none():
 
 def test_strip_result_data_preserves_capabilities():
     """_strip_result_data가 capabilities를 nested allowlist로 저장한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "safe_desktop_capability",
@@ -384,7 +384,7 @@ def test_strip_result_data_preserves_capabilities():
 
 def test_strip_result_data_filters_unsafe_capabilities():
     """_strip_result_data가 capabilities의 민감값/미승인값을 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "safe_desktop_capability",
@@ -411,7 +411,7 @@ def test_strip_result_data_filters_unsafe_capabilities():
 
 def test_strip_result_data_removes_empty_capabilities():
     """_strip_result_data가 빈 capabilities를 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "test",
@@ -427,7 +427,7 @@ def test_strip_result_data_removes_empty_capabilities():
 
 def test_strip_result_data_preserves_safe_echo():
     """_strip_result_data가 safe_echo result를 정상 처리한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "safe_echo",
@@ -442,7 +442,7 @@ def test_strip_result_data_preserves_safe_echo():
 
 def test_strip_capabilities_case_insensitive():
     """_strip_capabilities가 대소문자 구분 없이 allowed keys를 인식한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_capabilities
+    from ai_orchestrator.agent_hub.redaction import _strip_capabilities
 
     # mixed case input
     capabilities = {
@@ -461,7 +461,7 @@ def test_strip_capabilities_case_insensitive():
 
 def test_strip_apps_allows_valid_items():
     """_strip_apps가 valid app items를 유지한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_apps
+    from ai_orchestrator.agent_hub.redaction import _strip_apps
 
     apps = [
         {"app_id": "browser", "supported": True},
@@ -482,7 +482,7 @@ def test_strip_apps_allows_valid_items():
 
 def test_strip_apps_removes_non_bool_supported():
     """_strip_apps가 bool이 아닌 supported 값을 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_apps
+    from ai_orchestrator.agent_hub.redaction import _strip_apps
 
     apps = [
         {"app_id": "browser", "supported": True},
@@ -498,7 +498,7 @@ def test_strip_apps_removes_non_bool_supported():
 
 def test_strip_apps_removes_non_string_app_id():
     """_strip_apps가 string이 아닌 app_id를 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_apps
+    from ai_orchestrator.agent_hub.redaction import _strip_apps
 
     apps = [
         {"app_id": "browser", "supported": True},
@@ -514,7 +514,7 @@ def test_strip_apps_removes_non_string_app_id():
 
 def test_strip_apps_removes_unknown_keys():
     """_strip_apps가 app_id/supported 외의 key를 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_apps
+    from ai_orchestrator.agent_hub.redaction import _strip_apps
 
     apps = [
         {
@@ -535,7 +535,7 @@ def test_strip_apps_removes_unknown_keys():
 
 def test_strip_apps_skips_non_dict_items():
     """_strip_apps가 dict가 아닌 항목을 skip한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_apps
+    from ai_orchestrator.agent_hub.redaction import _strip_apps
 
     apps = [
         {"app_id": "browser", "supported": True},
@@ -554,7 +554,7 @@ def test_strip_apps_skips_non_dict_items():
 
 def test_strip_apps_non_list_returns_none():
     """_strip_apps가 list가 아니면 None을 반환한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_apps
+    from ai_orchestrator.agent_hub.redaction import _strip_apps
 
     assert _strip_apps(None) is None
     assert _strip_apps("not_a_list") is None
@@ -564,7 +564,7 @@ def test_strip_apps_non_list_returns_none():
 
 def test_strip_apps_empty_list_returns_none():
     """_strip_apps가 빈 list를 None으로 반환한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_apps
+    from ai_orchestrator.agent_hub.redaction import _strip_apps
 
     result = _strip_apps([])
     assert result is None
@@ -572,7 +572,7 @@ def test_strip_apps_empty_list_returns_none():
 
 def test_strip_apps_all_invalid_items_returns_none():
     """_strip_apps가 모든 항목이 invalid이면 None을 반환한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_apps
+    from ai_orchestrator.agent_hub.redaction import _strip_apps
 
     apps = [
         "not_dict",
@@ -585,7 +585,7 @@ def test_strip_apps_all_invalid_items_returns_none():
 
 def test_strip_result_data_preserves_apps():
     """_strip_result_data가 apps를 nested allowlist로 저장한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "safe_app_presence_known_paths",
@@ -613,7 +613,7 @@ def test_strip_result_data_preserves_apps():
 
 def test_strip_result_data_filters_unsafe_apps():
     """_strip_result_data가 apps의 민감값/미승인값을 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "safe_app_presence_known_paths",
@@ -640,7 +640,7 @@ def test_strip_result_data_filters_unsafe_apps():
 
 def test_strip_result_data_removes_empty_apps():
     """_strip_result_data가 빈 apps를 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "test",
@@ -659,7 +659,7 @@ def test_strip_result_data_removes_empty_apps():
 
 def test_strip_result_data_preserves_browser_inspect():
     """_strip_result_data가 browser.inspect 결과를 보존한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "browser.inspect",
@@ -701,7 +701,7 @@ def test_strip_result_data_preserves_browser_inspect():
 
 def test_strip_result_data_filters_invalid_inspection_mode():
     """_strip_result_data가 잘못된 inspection_mode를 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "browser.inspect",
@@ -717,7 +717,7 @@ def test_strip_result_data_filters_invalid_inspection_mode():
 
 def test_strip_result_data_allows_safe_fields_for_browser_inspect():
     """_strip_result_data는 browser.inspect의 안전 필드를 허용한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     # selector는 allowlist에 있으므로 허용되지만, browser.inspect 핸들러는 반환하지 않음
     data = {
@@ -741,7 +741,7 @@ def test_strip_result_data_allows_safe_fields_for_browser_inspect():
 
 def test_strip_result_data_blocks_sensitive_fields_not_in_allowlist():
     """_strip_result_data는 allowlist에 없는 민감 필드를 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "browser.inspect",
@@ -772,7 +772,7 @@ def test_strip_result_data_blocks_sensitive_fields_not_in_allowlist():
 
 def test_strip_browser_nested_allowlist():
     """_strip_browser가 browser nested allowlist를 올바르게 처리한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_browser
+    from ai_orchestrator.agent_hub.redaction import _strip_browser
 
     # valid browser dict
     browser_data = {
@@ -792,7 +792,7 @@ def test_strip_browser_nested_allowlist():
 
 def test_strip_browser_filters_non_bool():
     """_strip_browser가 non-boolean 값을 제거한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_browser
+    from ai_orchestrator.agent_hub.redaction import _strip_browser
 
     browser_data = {
         "isolated_context": True,
@@ -812,7 +812,7 @@ def test_strip_browser_filters_non_bool():
 
 def test_strip_browser_rejects_non_dict():
     """_strip_browser는 dict가 아니면 None을 반환한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_browser
+    from ai_orchestrator.agent_hub.redaction import _strip_browser
 
     assert _strip_browser("not a dict") is None
     assert _strip_browser([1, 2, 3]) is None
@@ -821,7 +821,7 @@ def test_strip_browser_rejects_non_dict():
 
 def test_strip_result_data_preserves_browser_open_url_controlled():
     """_strip_result_data는 browser.open_url_controlled 데이터를 올바르게 처리한다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "browser.open_url_controlled",
@@ -869,7 +869,7 @@ def test_strip_result_data_removes_raw_url_from_browser_open_url_controlled():
     allowlist에 없는 필드만 제거된다.
     allowlist에 있지만 handler가 반환하지 않는 필드도 있음 (policy는 allowlist, handler 책임).
     """
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     data = {
         "action": "browser.open_url_controlled",
@@ -914,7 +914,7 @@ def _fake(prefix: str, n: int) -> str:
 
 def test_strip_result_data_masks_secret_values_in_result_full():
     """result_full 본문에 섞인 sk-/AIza/Bearer/KEY= 값이 저장 전에 가려진다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     sk = _fake("s" + "k-", 30)
     aiza = _fake("AI" + "za", 35)
@@ -934,7 +934,7 @@ def test_strip_result_data_masks_secret_values_in_result_full():
 
 def test_strip_result_data_mask_happens_before_truncation():
     """상한 경계에 걸친 비밀도 일부가 남지 않는다(자르기 전에 마스킹)."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     sk = _fake("s" + "k-", 40)
     text = "x" * 489 + " " + sk  # 비밀이 500자 경계에 걸침
@@ -946,7 +946,7 @@ def test_strip_result_data_mask_happens_before_truncation():
 
 def test_strip_result_data_does_not_overmask_plain_text():
     """일반 문장·짧은 값·소문자 변수는 건드리지 않는다."""
-    from ai_orchestrator.local_agent_redaction import _strip_result_data
+    from ai_orchestrator.agent_hub.redaction import _strip_result_data
 
     text = "task-id sk-short, key=value, token: required, MAX_TOKENS=4096, Bearer short"
     out = _strip_result_data({"result_full": text})["result_full"]

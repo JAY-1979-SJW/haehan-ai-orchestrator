@@ -9,7 +9,7 @@
 ## Phase 0 — Mixin 골격 생성 (1회)
 
 ```
-ai_orchestrator/local_agent/browser/mixins/mail_mixin.py 신규 작성.
+scripts/naver/mail/mail_mixin.py 신규 작성.
 
 내용:
 - from __future__ import annotations
@@ -23,7 +23,7 @@ agent.py 에서 BrowserAgent(CafeMixin, BlogMixin, MailMixin) 으로 변경.
 cdp_session_manager.py LOGIN_MARKERS 에 추가:
   "mail.naver.com": ["NID_AUT", "NID_SES"]
 
-검증: python -c "from ai_orchestrator.local_agent.browser.agent import BrowserAgent; print('ok')"
+검증: python -c "from scripts.browser.agent.agent import BrowserAgent; print('ok')"
 ```
 
 ---

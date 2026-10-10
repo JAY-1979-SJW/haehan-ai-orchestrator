@@ -600,9 +600,9 @@ dispatch until they are promoted by a baseline update and audit.
 Minimum verification for app work:
 
 ```text
-python scripts/ops/audit_app_development_standard.py
-python scripts/ops/audit_app_structure_contract.py
-python scripts/ops/audit_standard_workflow_contract.py
+python tools/audits/app/audit_app_development_standard.py
+python tools/audits/app/audit_app_structure_contract.py
+python tools/audits/app/audit_standard_workflow_contract.py
 python -m pytest tests/test_app_development_standard.py -q
 ```
 

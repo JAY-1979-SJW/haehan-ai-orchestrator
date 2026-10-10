@@ -19,7 +19,7 @@
 | 적대적 검증 A | `498e78fc` | **`--allowedTools` 는 도구를 제한하지 않는다**(실측: Read/Grep/Glob 만 허용해도 Bash 실행됨, 프로젝트 설정 `bypassPermissions`). → `run_claude_agent` 에 `restricted=True`(`--restricted --strict-mcp-config --tools`). 분배의 모든 호출에 적용. 앞선 결과는 "신뢰할 수 없는 데이터"로 구분 |
 | 적대적 검증 B | `e1b8b2cb` | 취소↔tick 락, 조건부 갱신, 시작 선점(`starting`)으로 이중 큐잉 방지, 서버 시작 시 러너 재개, 러너 DB 오류 내성, 분배 전체 시간 초과(2시간) |
 | 적대적 검증 C | `4661d514` | 전역 직렬 작업은 읽기 전용 작업과도 동시에 안 돎, 경로 정규화(표기 우회 차단·판정 불가는 전역 직렬) |
-| 종단 시험 하니스 | (이 커밋) | `scripts/ops/agent_dispatch_e2e.py` — 실제 Claude Code 로 계획→병렬 조사→종합 실행(비용 약 $0.15) |
+| 종단 시험 하니스 | (이 커밋) | `tools/smoke/agent_dispatch_e2e.py` — 실제 Claude Code 로 계획→병렬 조사→종합 실행(비용 약 $0.15) |
 
 **푸시 완료**: `feat/login-state-by-element` (`1b6291be..4661d514` 및 이후 이 문서 커밋). **master 병합·운영 배포는 안 됨**(아래 창 A).
 **서버(8401)는 옛 코드 실행 중** — P1·P3·채팅 수정은 재시작 전까지 이 PC 앱에 반영 안 됨.
@@ -28,12 +28,12 @@
 - 분배 관련 시험 132개 통과(`tests/test_agent_{parallel_p1,dispatch_policy,dispatch_paths,dispatch_service,dispatch_router,dispatch_races}.py` 등). 영향 시험 1,689개 중 실패 113개는 **기존 실패**(기준 커밋과 동일, 새 실패 0).
 - 실제 Claude Code 종단 시험 통과(동시 2개, 46초, 약 $0.12). 제한 모드에서 Bash·MCP·Write 차단 / Read 정상을 실제로 확인.
 - 독립 리뷰어 3명 적대적 검증 → 치명 1·높음 2 수정 완료. **미수정 잔여는 아래 창 D·E.**
-- 라우트 수 기준값 `EXPECTED_RUNTIME_ROUTES = 380`(`scripts/ops/audit_backend_runtime_contract.py`). 이전 369 는 HEAD 실측 375 보다 6개 뒤처져 있었음.
+- 라우트 수 기준값 `EXPECTED_RUNTIME_ROUTES = 380`(`tools/audits/backend/audit_backend_runtime_contract.py`). 이전 369 는 HEAD 실측 375 보다 6개 뒤처져 있었음.
 
 ### 반드시 기억할 교훈
 1. `--allowedTools` ≠ 제한. 읽기 전용 보장은 `restricted=True`. 프로젝트 설정이 `bypassPermissions` 라서 허용 목록 밖 도구도 실행된다.
 2. 서버 `_strip_result_data` 가 문자열 값을 500자로 자른다 → 긴 결과는 `result_full` 키로만 통과(20000).
-3. 가짜 큐 시험으로는 위 두 가지를 못 잡았다 → 새 단계는 반드시 `scripts/ops/agent_dispatch_e2e.py` 로 실제 호출 확인.
+3. 가짜 큐 시험으로는 위 두 가지를 못 잡았다 → 새 단계는 반드시 `tools/smoke/agent_dispatch_e2e.py` 로 실제 호출 확인.
 4. 이 PC 는 메모리 사용률 90%+(여유 1~1.5GB). 분배는 여유 1500MB 미만이면 시작 보류(`AGENT_DISPATCH_MIN_FREE_MB` 로 조정). `verify_change`(145커밋)는 메모리 부족으로 중단됨.
 5. 에이전트/서버/keyring 은 공유 자원 — 격리 인스턴스로 에이전트를 새로 등록하면 기존 자격증명을 덮어쓸 위험. 시험은 스레드 큐 대역(하니스)으로.
 
@@ -56,8 +56,8 @@
 | A 배포 | 코드 없음(git·PR·서버 운영) | 전부 |
 | B P4 쓰기 격리 | `local_agent/actions.py`(cwd 파라미터), `services/agent_dispatch_service.py`, 신규 `workflows/agent_dispatch_worktree.py`, `gates/agent_dispatch_policy.py` | `local_agent/websocket_client.py`, `admin-web/` |
 | C P5 화면 | `admin-web/src/**`(신규 컴포넌트 위주) | 백엔드 전부 |
-| D 병렬 보강 | `local_agent/websocket_client.py`, `local_agent/config.py`, `ai_orchestrator/local_agent_router_ws.py`, `local_agent_registry_agent.py` | 분배 서비스·화면 |
-| E 결과 필터 보강 | `ai_orchestrator/local_agent_redaction.py`, `admin-web/.../UniversalChat.tsx`(한 줄), 상수 통합 | 분배 서비스 로직 |
+| D 병렬 보강 | `local_agent/websocket_client.py`, `local_agent/config.py`, `ai_orchestrator/agent_hub/router/ws.py`, `local_agent_registry_agent.py` | 분배 서비스·화면 |
+| E 결과 필터 보강 | `ai_orchestrator/agent_hub/redaction.py`, `admin-web/.../UniversalChat.tsx`(한 줄), 상수 통합 | 분배 서비스 로직 |
 
 권장 진행 순서: **A(승인 필요, 먼저)** → B·C·D·E 는 서로 독립이라 동시 진행 가능. B 는 C 의 "구현 역할" 화면 문구와 `WRITE_ISOLATION_READY` 값만 맞추면 된다.
 
@@ -71,7 +71,7 @@
 - 이 브랜치는 master 보다 145+커밋 앞서고 **다른 세션 작업(CDP 칸 분리, 스마트스토어 조사, 하이웍스 문서, 건설업 공무 문서 등)이 섞여 있다.** PR 은 그것까지 포함 — 병합 범위를 사용자가 정해야 한다(필요하면 이 작업만 따로 추려 새 브랜치로 PR).
 - `merge_stage.py` 는 master 체크아웃이 필요 → 공유 폴더에서 브랜치 전환 금지. PR 병합이 정식 경로.
 - 로컬 `verify_change.py --base origin/master --head <sha>` 는 145커밋 규모에서 **메모리 부족으로 중단**됨 → GitHub `verify` 결과로 대체.
-- 운영 배포: 서버는 `origin/master` 만 pull(`scripts/ops/server_deploy.py`). webhook 자동배포는 끊긴 것으로 추정(`defect_index #6`) → 운영 서버에서 직접 실행해야 하며 **서버 접근 방법·별도 승인 필요**.
+- 운영 배포: 서버는 `origin/master` 만 pull(`tools/server_deploy.py`). webhook 자동배포는 끊긴 것으로 추정(`defect_index #6`) → 운영 서버에서 직접 실행해야 하며 **서버 접근 방법·별도 승인 필요**.
 **할 일(승인 후)**: ① PR #57 확인(초안 해제 여부 포함) → ② GitHub 검사 3개 결과 확인 → ③ 병합 범위 결정(다른 세션 작업 포함 여부) → ④ 병합 → ⑤ 운영 서버 `server_deploy.py` → ⑥ 로컬 서버(8401) 재시작(앱 안 쓸 때) + 실제 채팅 긴 답변·`/ai-agent/dispatch` 확인 → ⑦ 임시 worktree·`verify_base_*` 정리(사용자 확인 후).
 **시작 문구**: "docs/specs/HANDOFF_2026-10-02_agent-dispatch.md 의 창 A 를 이어서 해줘. 승인 없이 master 병합·서버 재시작·운영 배포는 하지 마."
 
@@ -83,7 +83,7 @@
 2. `workflows/agent_dispatch_worktree.py`: 짧은 경로 `C:\hhwt-<id>`, 임시 브랜치 생성·정리, 충돌 시험(임시 저장소로, 실제 프로젝트 브랜치 미접촉). git 은 서버 PC 로컬만.
 3. implement 도구 집합: `Read,Grep,Glob,Edit,Write` + 제한 모드(셸·MCP 없음). 병합 승인 API/상태(`merge_pending`) 추가, 병합은 직렬·사람 승인.
 4. 심볼릭 링크/정션은 이름으로 판별 불가 → worktree 격리로 보완(기준서 §4 명시됨).
-5. 시험 + `scripts/ops/agent_dispatch_e2e.py` 로 실제 호출 확인(쓰기 목표는 임시 저장소에서만).
+5. 시험 + `tools/smoke/agent_dispatch_e2e.py` 로 실제 호출 확인(쓰기 목표는 임시 저장소에서만).
 **시작 문구**: "docs/specs/HANDOFF_2026-10-02_agent-dispatch.md 의 창 B(P4) 를 해줘. 기준서 갱신→드라이런→승인 순서로."
 
 ### 창 C — P5 화면(AI 콘솔 "작업 분배" 패널)

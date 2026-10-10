@@ -14,7 +14,7 @@ if _REPO_ROOT not in sys.path:
 # 스크립트 모듈 import (모듈로 로드 가능해야 함)
 import importlib.util  # noqa: E402
 
-_SCRIPT_PATH = Path(_REPO_ROOT) / "scripts" / "smoke" / "local_agent_public_external_readonly_live_smoke.py"
+_SCRIPT_PATH = Path(_REPO_ROOT) / "tools" / "smoke" / "local_agent_public_external_readonly_live_smoke.py"
 _spec = importlib.util.spec_from_file_location("_lp_smoke", str(_SCRIPT_PATH))
 assert _spec is not None and _spec.loader is not None, "모듈 spec 로드 실패: local_agent_public_external_readonly_live_smoke.py"
 _smoke = importlib.util.module_from_spec(_spec)

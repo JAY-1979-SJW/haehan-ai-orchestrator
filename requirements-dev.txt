@@ -3,10 +3,22 @@
 # 왜 필요한가(2026-10-07): CI 러너에는 이 도구들이 설치돼 있지 않았다.
 #  - ruff: tests/test_shim_contract.py(생성된 shim 이 프로젝트 ruff 를 통과하는지)가 `python -m ruff` 를 부른다.
 #          verify_change 의 '바뀐 파일 ruff' 검사도 같은 방식인데, 예전에는 ruff 가 없어도 조용히 0건으로 통과했다(함께 수정).
-#  - pytest-timeout: scripts/ops/run_impacted_tests.py 가 `--timeout` 으로 pytest 를 부른다(tests/test_move_guardrails.py).
+#  - pytest-timeout: tools/devflow/run_impacted_tests.py 가 `--timeout` 으로 pytest 를 부른다(tests/test_move_guardrails.py).
 #  - mypy: tests/test_audit_kit_gate_rename.py 가 sys.executable 의 mypy 로 '편집 전 대비 새 오류'를 실제로 잰다(CI 러너에 없어 6건 실패, 시험 skip 대신 설치).
 #          audit_kit_gate 는 audit-kit 가상환경이 없으면 mypy 를 생략('실행 못 함', 비차단)한다. 버전은 로컬 audit-kit 과 같다.
+#  - pytest-xdist: verify_change 가 영향 시험을 최대 4개 병렬로 돌린다(PR #160 에서 직렬 실행이 90분을 넘김).
 # 버전은 검증된 개발 PC(Windows, Python 3.14)와 맞춘다. 올릴 때는 이 파일만 고친다.
 ruff==0.16.10
 pytest-timeout==2.4.0
 mypy==2.4.0
+pytest-xdist==3.8.0
+# 표준 도구 채택 1단계(2026-10-08 대표님 승인) — 기존 게이트와 '나란히' 도는 추가 도구. 기존 게이트를 대체하지 않는다.
+#  - import-linter: .importlinter 계약(tools/repo_gates/import_contracts_gen.py 가 정본 설정에서 생성)을 CI 비차단 단계로 잰다.
+#  - pytest-xdist: 병렬 실행 측정용(CI 는 아직 직렬). 설치만으로는 동작이 바뀌지 않는다(-n 을 줄 때만 병렬).
+#  - pip-audit·bandit: 취약 의존성·보안 패턴 측정용(CI 단계 도입 계획: C:\work\_coordination\STD_TOOLS_REPORT.md). 아직 CI 에서 돌리지 않는다.
+import-linter==2.15
+pip-audit==2.10.1
+bandit==1.9.4
+#  - pytest-timeout: scripts/ops/run_impacted_tests.py 가 `--timeout` 으로 pytest 를 부른다(tests/quality_gates/test_move_guardrails.py).
+#  - mypy: tests/quality_gates/test_audit_kit_gate_rename.py 가 sys.executable 의 mypy 로 '편집 전 대비 새 오류'를 실제로 잰다(CI 러너에 없어 6건 실패, 시험 skip 대신 설치).
+#  - import-linter: .importlinter 계약(scripts/ops/import_contracts_gen.py 가 정본 설정에서 생성)을 CI 비차단 단계로 잰다.

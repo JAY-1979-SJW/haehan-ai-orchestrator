@@ -10,7 +10,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','install_git_hooks.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','install_git_hooks.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "git hook 설치 중 (ruff + AI 검수)..."
           }
         ]
@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','prewrite_capability_check.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','prewrite_capability_check.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "기존 구현 조회 중 (capability-gate)..."
           }
         ]
@@ -32,22 +32,22 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','guard_openai_call.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','guard_openai_call.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "외부 유료 AI API 호출 여부 검사 중..."
           },
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','guard_cdp_new_tab.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','guard_cdp_new_tab.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "CDP 새 탭 생성 여부 검사 중..."
           },
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','guard_instagram_publish.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','instagram','guard_instagram_publish.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "인스타그램 실제 발행 여부 검사 중..."
           },
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','guard_youtube_upload.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','guard_youtube_upload.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "유튜브 업로드/채널 확인 여부 검사 중..."
           }
         ]
@@ -57,7 +57,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','guard_force_cdp.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','guard_force_cdp.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "claude-in-chrome 사용 금지, CDP 강제 전환 중..."
           }
         ]
@@ -67,7 +67,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','pre_edit_dup_check.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','pre_edit_dup_check.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "중복 구현 가능성 검사 중..."
           }
         ]
@@ -79,7 +79,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','log_code_change.py')],stdin=sys.stdin).returncode)\""
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','quality','log_code_change.py')],stdin=sys.stdin).returncode)\""
           }
         ]
       },
@@ -88,7 +88,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','post_edit_fast_gate.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','post_edit_fast_gate.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "빠른 게이트(ruff+영향테스트) 실행 중..."
           }
         ]
@@ -98,7 +98,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hook_check_a4.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','hook_check_a4.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "A4 서식 자동 검사 + AI 품질 검증 중..."
           }
         ]
@@ -108,7 +108,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','audit_kit_gate.py'),'--post-edit'],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','audit_kit_gate.py'),'--post-edit'],stdin=sys.stdin).returncode)\"",
             "statusMessage": "audit-kit 개발 기준서 검사 중..."
           }
         ]
@@ -119,7 +119,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','behavior_gate.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','behavior_gate.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "행동 게이트 검사 중..."
           }
         ]
@@ -128,7 +128,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','stop_fast_verify.py')],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','stop_fast_verify.py')],stdin=sys.stdin).returncode)\"",
             "statusMessage": "세션 변경분 최종 게이트 확인 중..."
           }
         ]
@@ -137,7 +137,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','audit_kit_gate.py'),'--stop'],stdin=sys.stdin).returncode)\"",
+            "command": "py -3 -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','hooks','audit_kit_gate.py'),'--stop'],stdin=sys.stdin).returncode)\"",
             "statusMessage": "audit-kit 세션 변경분 검사 중..."
           }
         ]

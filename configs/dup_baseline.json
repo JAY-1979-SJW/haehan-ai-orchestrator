@@ -1,399 +1,127 @@
 {
- "generated_by": "scripts/ops/dup_gate.py build-baseline",
- "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, scripts/ops/_dup_structure_hash.py)",
+ "generated_by": "tools/repo_gates/dup_gate.py build-baseline",
+ "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, tools/repo_gates/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 81,
+ "hash_count": 25,
  "hashes": {
-  "0375546e7217dda427468b770a6de139d41462c6": [
-   "ai_orchestrator/services/gongmu_service.py:_read_rows",
-   "ai_orchestrator/services/mail_bulk_service.py:_read_rows"
-  ],
-  "088ada4c32833480504cc02bbb5e071313f817b4": [
-   "scripts/google/drive.py:_task_delete",
-   "scripts/google/sheets.py:_task_delete"
-  ],
-  "12f815d0a03c48ff8494bf6fd69a1488f3dd8a85": [
-   "ai_orchestrator/local_agent_redaction.py:_strip_browser",
-   "ai_orchestrator/local_agent_redaction.py:_strip_capabilities",
-   "ai_orchestrator/local_agent_redaction.py:_strip_cleanup",
-   "ai_orchestrator/local_agent_redaction.py:_strip_lifecycle"
-  ],
-  "1c3787c65ac5010655eec0046e605c8bce5cf100": [
-   "orchestrator_v1/inbox/notice_radar/browser_collector.py:_find_near_date",
-   "orchestrator_v1/inbox/notice_radar/collector.py:_find_near_date"
-  ],
-  "1c9a38fe45966559f5b897e707d0abe17ac69d49": [
-   "scripts/google/cloud/live_console_explorer.py:save_cloud_console_live_report",
-   "scripts/google/live_surface_explorer.py:save_google_surface_live_report"
-  ],
-  "1ef00fb0baa2bafa918c4723022025c791761c39": [
-   "scripts/naver/blog/marketing/gpt_images.py:_send_prompt",
-   "scripts/naver/blog/marketing/gpt_writer.py:_send_prompt"
-  ],
-  "201281acaa36cddabef875967927d644c788db1e": [
-   "ai_orchestrator/browser_tool/approval_record_store.py:read_approval_records",
-   "ai_orchestrator/browser_tool/workflow_audit_writer.py:read_audit_records"
-  ],
-  "26fd0276d37b3180a48d40698f192f91873f1f91": [
-   "scripts/google/live_inputs_fill.py:_cdp_click_first_selector",
-   "scripts/google/live_inputs_fill.py:_cdp_click_text"
-  ],
-  "2a0bc07fed0bb29addd33d965fa691dbbb0dc275": [
-   "scripts/gabia/auth.py:login",
-   "scripts/kakao/auth.py:login"
-  ],
   "2a680e0f94b41e4cb814b289c9104964760a160e": [
-   "scripts/youtube/oauth.py:_write_report",
-   "scripts/youtube/research_common.py:_write_report"
-  ],
-  "2bc87d002245021e496c951eebabbff968c07c32": [
-   "scripts/ops/audit_backend_premium_api_contract.py:main",
-   "scripts/ops/audit_backend_premium_audit_evidence.py:main",
-   "scripts/ops/audit_backend_premium_domain_core.py:main",
-   "scripts/ops/audit_backend_premium_endpoint_inventory.py:main",
-   "scripts/ops/audit_backend_premium_external_app_bridge.py:main",
-   "scripts/ops/audit_backend_premium_policy_layer.py:main",
-   "scripts/ops/audit_backend_premium_security_boundary.py:main",
-   "scripts/ops/audit_backend_premium_service_layer.py:main"
-  ],
-  "2f788045f55b2d0e39cbb3db38fce3ca8ee42330": [
-   "scripts/hanafax/export_kras_fax_pdf.py:_fit_merged_wrap_rows",
-   "scripts/hanafax/send_kras_final_campaign.py:_fit_merged_wrap_rows"
-  ],
-  "31fa23bfadf551f200985458c2095c5626ae0d58": [
-   "scripts/google/docs.py:_task_search",
-   "scripts/google/drive.py:_task_search",
-   "scripts/google/sheets.py:_task_search"
+   "scripts/common/youtube_api_common.py:_write_report",
+   "scripts/youtube/oauth.py:_write_report"
   ],
   "3a1616afa4db701703834b6ec3b4e30bee779c3a": [
-   "ai_orchestrator/local_agent_redaction.py:_strip_click_target",
-   "ai_orchestrator/local_agent_redaction.py:_strip_url_info"
+   "ai_orchestrator/agent_hub/redaction.py:_strip_click_target",
+   "ai_orchestrator/agent_hub/redaction.py:_strip_url_info"
   ],
   "3a206e750dedc94764bb59afad4ef3ad988fab6d": [
    "scripts/google/vision_usage_gate.py:save_vision_monthly_free_gate",
    "scripts/youtube/browser_transcript.py:_write_report"
   ],
-  "3b98604be243aa0b1973738181e9aa36acaded45": [
-   "local_agent/site_mapper.py:_is_sensitive_name",
-   "local_agent/web_reader.py:_is_sensitive_name"
-  ],
   "3bd89a273c4d15fb3674b39da45fd8f10666602f": [
-   "scripts/ops/audit_app_api_contract_endpoints_prep.py:AuditReport.summary",
-   "scripts/ops/audit_app_api_readonly_endpoints_implementation_plan.py:AuditReport.summary",
-   "scripts/ops/audit_app_foundation_mvp_design.py:AuditReport.summary",
-   "scripts/ops/audit_app_foundation_mvp_prep.py:AuditReport.summary",
-   "scripts/ops/audit_app_ui_readonly_backend_status_cards.py:AuditReport.summary",
-   "scripts/ops/audit_app_ui_shell_readonly_api_wiring.py:AuditReport.summary",
-   "scripts/ops/audit_app_ui_shell_skeleton.py:AuditReport.summary"
+   "tools/audits/app/audit_app_api_contract_endpoints_prep.py:AuditReport.summary",
+   "tools/audits/app/audit_app_api_readonly_endpoints_implementation_plan.py:AuditReport.summary",
+   "tools/audits/app/audit_app_foundation_mvp_design.py:AuditReport.summary",
+   "tools/audits/app/audit_app_foundation_mvp_prep.py:AuditReport.summary",
+   "tools/audits/app/audit_app_ui_readonly_backend_status_cards.py:AuditReport.summary",
+   "tools/audits/app/audit_app_ui_shell_readonly_api_wiring.py:AuditReport.summary",
+   "tools/audits/app/audit_app_ui_shell_skeleton.py:AuditReport.summary"
   ],
   "3c36397accb3a079b3594dbc4618397788646787": [
    "scripts/naver/smartstore/product/page_builder.py:render_detail",
    "scripts/naver/smartstore/product/page_builder.py:render_notice"
   ],
-  "3ce118397eab18dd5384132301bce7b0c332d45f": [
-   "scripts/ops/audit_app_baseline_contract.py:main",
-   "scripts/ops/audit_app_development_standard.py:main",
-   "scripts/ops/audit_app_structure_contract.py:main",
-   "scripts/ops/audit_approval_flow_baseline_contract.py:main",
-   "scripts/ops/audit_backend_core_baseline_contract.py:main",
-   "scripts/ops/audit_common_tool_runtime_baseline_contract.py:main",
-   "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py:main",
-   "scripts/ops/audit_google_automation_baseline_contract.py:main",
-   "scripts/ops/audit_google_cloud_module_baseline_contract.py:main",
-   "scripts/ops/audit_google_cloud_router_compatibility.py:main",
-   "scripts/ops/audit_google_gmail_function_contract.py:main",
-   "scripts/ops/audit_google_workspace_module_baseline_contract.py:main",
-   "scripts/ops/audit_google_workspace_router_compatibility.py:main",
-   "scripts/ops/audit_local_agent_e2e_baseline_contract.py:main",
-   "scripts/ops/audit_local_agent_e2e_flow_contract.py:main",
-   "scripts/ops/audit_module_baseline_contract.py:main",
-   "scripts/ops/audit_playwright_ai_baseline_contract.py:main",
-   "scripts/ops/audit_site_sso_subdomain_runtime_baseline.py:main",
-   "scripts/ops/audit_site_work_function_baseline.py:main",
-   "scripts/ops/audit_standard_workflow_contract.py:main"
-  ],
-  "3cf3fdb28abca552f265574e179191dc68812fb9": [
-   "scripts/ops/smoke_app_ui_shell_browser.py:check_dry_run_notice_used",
-   "scripts/ops/smoke_app_ui_shell_browser.py:check_forbidden_banner_used"
-  ],
-  "46249a05f1d9f085cf8724f1a7f169a1096929b4": [
-   "scripts/instagram/overlay.py:_wrap",
-   "scripts/instagram/reel_overlay.py:_wrap"
-  ],
   "46785cd7ccaaac6c3a0302940c709ed092ec10ea": [
-   "scripts/ops/live_parallel_task_dispatch_smoke.py:_start_worker",
-   "scripts/verify/verify_live_browser_readonly_dispatch.py:_start_worker",
-   "scripts/verify/verify_live_task_dispatch.py:_start_worker"
-  ],
-  "49dee0d8de6e96167b552d0fd60bb495efd7a171": [
-   "scripts/site_engine/action_planner.py:_is_credential_extraction",
-   "scripts/site_engine/execution_gate.py:block_for_sensitive_credential_action"
-  ],
-  "4e7fe5d86076c92f3fdaeaeacd67600594583620": [
-   "scripts/g2b/validators.py:validate_bid_analysis_draft_payload",
-   "scripts/g2b/validators.py:validate_submit_draft_payload"
+   "tools/smoke/live_parallel_task_dispatch_smoke.py:_start_worker",
+   "tools/verify/verify_live_browser_readonly_dispatch.py:_start_worker",
+   "tools/verify/verify_live_task_dispatch.py:_start_worker"
   ],
   "513080ea99ea2367a1df1e1017113a7d956ef2a2": [
-   "scripts/ops/audit_authed_local_agent_dispatch_dry_run.py:main",
-   "scripts/ops/dry_run_approved_browser_instruction_api.py:main",
-   "scripts/ops/dry_run_local_agent_cdp_attach.py:main",
-   "scripts/ops/dry_run_manual_local_agent_browser_smoke.py:main"
+   "tools/audits/agent/audit_authed_local_agent_dispatch_dry_run.py:main",
+   "tools/verify/dry_run_approved_browser_instruction_api.py:main",
+   "tools/verify/dry_run_local_agent_cdp_attach.py:main",
+   "tools/verify/dry_run_manual_local_agent_browser_smoke.py:main"
   ],
   "52a2e667f624dc6fae7152016dfa24097b3df7a5": [
-   "scripts/ops/audit_app_api_contract_endpoints_prep.py:run_audit",
-   "scripts/ops/audit_app_api_readonly_endpoints_implementation_plan.py:run_audit",
-   "scripts/ops/audit_app_foundation_mvp_prep.py:run_audit",
-   "scripts/ops/audit_app_ui_shell_readonly_api_wiring.py:run_audit"
+   "tools/audits/app/audit_app_api_contract_endpoints_prep.py:run_audit",
+   "tools/audits/app/audit_app_api_readonly_endpoints_implementation_plan.py:run_audit",
+   "tools/audits/app/audit_app_foundation_mvp_prep.py:run_audit",
+   "tools/audits/app/audit_app_ui_shell_readonly_api_wiring.py:run_audit"
   ],
   "563afd3b20d392f9574923fdde0c953cfaafbf92": [
-   "scripts/ops/live_parallel_task_dispatch_smoke.py:_register_temp_agent",
-   "scripts/verify/verify_live_task_dispatch.py:_register_temp_agent"
+   "tools/smoke/live_parallel_task_dispatch_smoke.py:_register_temp_agent",
+   "tools/verify/verify_live_task_dispatch.py:_register_temp_agent"
   ],
   "56e7112793c4c286372377961b955a5f2e5c1bfd": [
-   "ai_orchestrator/connectors/instagram_dm_db.py:_schema_v1",
-   "ai_orchestrator/persistence/fax_authorization_store.py:_schema_v1",
-   "ai_orchestrator/persistence/mail_bulk_store.py:_schema_v1"
-  ],
-  "59dd4afcce19e06253c40ea945ed5c1dd32b420b": [
-   "scripts/ops/audit_app_api_readonly_endpoints_browser_smoke.py:print_report",
-   "scripts/ops/audit_app_task_queue_readonly_list_polish.py:print_report",
-   "scripts/ops/audit_app_test_baseline_current_contract_sync.py:print_report",
-   "scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py:print_report"
+   "ai_orchestrator/connectors/hanafax/authorization_store.py:_schema_v1",
+   "ai_orchestrator/connectors/instagram/instagram_dm_db.py:_schema_v1",
+   "ai_orchestrator/connectors/naver_mail/bulk_store.py:_schema_v1"
   ],
   "632774467f6ef61fea21bd5fa6c830236bbe8fad": [
    "scripts/naver/smartstore/navigation/sidebar_v3.py:_refresh_dashboard",
    "scripts/naver/smartstore/registration/general_full_analyze.py:_enter_dashboard"
   ],
-  "643849f1cfb8f7a6f57647e3ead6b85444bdf781": [
-   "scripts/ops/audit_5050_legacy_characterization.py:main",
-   "scripts/ops/audit_5050_phase1_8400_contract_freeze.py:main",
-   "scripts/ops/audit_5050_phase1b_adapter_contract_detail.py:main",
-   "scripts/ops/audit_5050_phase1d_adapter_dry_run_compat.py:main",
-   "scripts/ops/audit_web_project_provisioning_factory.py:main"
-  ],
-  "65ec1a903e7c4d29911e7ff388bae95e6542b527": [
-   "scripts/naver/mybox.py:NaverMyBox.open",
-   "scripts/naver/talk.py:NaverTalk.open"
-  ],
   "6d1a5ce95e8f3c3f8d97ffa1240713c858e8731b": [
-   "scripts/local_agent/g2b/run_readonly_local_e2e.py:_save_report",
-   "scripts/local_agent/run_naver_cafe_to_blog_workflow.py:_save_report"
-  ],
-  "710cc7b7c16a77349fcb79e5d3fb53ee9e40cd2f": [
-   "scripts/naver/blog/marketing/multichannel.py:generate_community_answer",
-   "scripts/naver/blog/marketing/multichannel.py:generate_youtube_script"
+   "scripts/g2b/run_readonly_local_e2e.py:_save_report",
+   "scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py:_save_report"
   ],
   "76a31dc5575f6481b80fa19eec4be8d386273459": [
-   "scripts/ops/live_parallel_task_dispatch_smoke.py:_request_json",
-   "scripts/verify/verify_live_task_dispatch.py:_request_json"
-  ],
-  "77f4d8c54d71a79d80a2dcf29f4c21a3dcfaa0c1": [
-   "scripts/hiworks/actions.py:print_prepare_plan_summary",
-   "scripts/naver/content.py:print_action_summary"
-  ],
-  "7977b42cf3bf386ad6ca7c4479c72ddb04dcbae0": [
-   "orchestrator_v1/inbox/inbox_store.py:_load_all",
-   "orchestrator_v1/tasks/candidate_store.py:_load_all",
-   "orchestrator_v1/tasks/email_task_store.py:_load_all"
-  ],
-  "8051340d49f4053a369da34c66a976ee564c8609": [
-   "scripts/ops/audit_app_ui_readonly_backend_status_cards.py:_route_page",
-   "scripts/ops/audit_app_ui_shell_readonly_api_wiring.py:_route_page"
-  ],
-  "868ec792308a6cdbf36cf5225c08ec121f06cf19": [
-   "scripts/google/live_inputs_coverage.py:save_live_input_coverage",
-   "scripts/google/surfaces.py:save_surface_catalog",
-   "scripts/google/workflows_catalog.py:save_action_catalog",
-   "scripts/google/workflows_catalog.py:save_adapter_catalog",
-   "scripts/google/workflows_catalog.py:save_undeveloped_report"
+   "tools/smoke/live_parallel_task_dispatch_smoke.py:_request_json",
+   "tools/verify/verify_live_task_dispatch.py:_request_json"
   ],
   "936fbd68ef6ce7fbb209475fabbec4b2765e9f2d": [
-   "ai_orchestrator/persistence/agent_dispatch_store.py:_conn",
-   "ai_orchestrator/persistence/fax_authorization_store.py:_conn",
-   "ai_orchestrator/persistence/mail_bulk_store.py:_conn",
-   "ai_orchestrator/persistence/naver_mail_draft_store.py:_conn",
-   "ai_orchestrator/persistence/scheduled_job_store.py:_conn"
-  ],
-  "944d93c8f5c11f0e919b657379711f7dd622fc47": [
-   "scripts/google/android_app_dev_report.py:save_android_app_dev_report",
-   "scripts/google/domain_taxonomy.py:save_google_domain_taxonomy"
-  ],
-  "9842698e9a64e7b185f921f4134572d8aa0577a9": [
-   "scripts/fetch_nts_interpretations.py:_latest_html_after",
-   "scripts/fetch_tax_precedent_summary.py:_latest_html_after"
+   "ai_orchestrator/agent_dispatch/agent_dispatch_store.py:_conn",
+   "ai_orchestrator/connectors/hanafax/authorization_store.py:_conn",
+   "ai_orchestrator/connectors/naver_mail/bulk_store.py:_conn",
+   "ai_orchestrator/connectors/naver_mail/draft_store.py:_conn",
+   "ai_orchestrator/scheduler/scheduled_job_store.py:_conn"
   ],
   "9952c264a61e7ccf171f823d0d6aa163c53dccf1": [
-   "ai_orchestrator/gates/fax_send_policy.py:_recipient_skip_reason",
-   "ai_orchestrator/gates/mail_bulk_policy.py:_recipient_skip_reason"
+   "ai_orchestrator/connectors/hanafax/send_policy.py:_recipient_skip_reason",
+   "ai_orchestrator/connectors/naver_mail/bulk_policy.py:_recipient_skip_reason"
   ],
   "9a8ace6d278478f72b563b199bed5df9c065204a": [
-   "scripts/ops/audit_ai_agent_app_structure_design_baseline.py:main",
-   "scripts/ops/audit_ai_agent_ui_structure_blueprint.py:main",
-   "scripts/ops/audit_ai_work_session_gate.py:main",
-   "scripts/ops/audit_mcp_gateway_baseline.py:main"
+   "tools/audits/agent/audit_mcp_gateway_baseline.py:main",
+   "tools/audits/app/audit_ai_agent_app_structure_design_baseline.py:main",
+   "tools/audits/app/audit_ai_agent_ui_structure_blueprint.py:main",
+   "tools/audits/app/audit_ai_work_session_gate.py:main"
   ],
   "9b552a1faf8f83ef33ab2239c494f722e4226b02": [
    "scripts/naver/cafe/analysis/organizer.py:_load_classified",
    "scripts/naver/cafe/analysis/pipeline.py:_load_raw"
   ],
-  "9be482078c50a5f5280a77565e966263886a9ef6": [
-   "scripts/g2b/router.py:_cmd_analysis_draft",
-   "scripts/g2b/router.py:_cmd_submit_draft"
-  ],
   "9c61ce44dc64466f3098f9f13841854e81e5aa35": [
-   "ai_orchestrator/local_agent/naver_content_safe_result.py:validate_naver_result",
-   "ai_orchestrator/local_agent/universal_safe_result.py:validate_universal_result"
-  ],
-  "9cb75156eea54eb3e9293fc251ec4602a93db2fe": [
-   "scripts/ops/audit_approval_flow_baseline_contract.py:audit",
-   "scripts/ops/audit_backend_core_baseline_contract.py:audit",
-   "scripts/ops/audit_common_tool_runtime_baseline_contract.py:audit",
-   "scripts/ops/audit_desktop_auth_runtime_baseline_contract.py:audit",
-   "scripts/ops/audit_local_agent_e2e_baseline_contract.py:audit",
-   "scripts/ops/audit_playwright_ai_baseline_contract.py:audit"
+   "core/agent_runtime/runtime/universal/universal_safe_result.py:validate_universal_result",
+   "scripts/naver/blog/naver_content_safe_result.py:validate_naver_result"
   ],
   "a02b6be2b26f8d575820935f909cd473dc775f38": [
-   "scripts/youtube/oauth.py:parse_kv_args",
-   "scripts/youtube/research_common.py:parse_kv_args"
-  ],
-  "a380d0b5c797e708fb4d43618fe561a5f5027412": [
-   "scripts/google/android_app_dev_report.py:print_android_app_dev_summary",
-   "scripts/google/domain_taxonomy.py:print_google_domain_taxonomy_summary"
-  ],
-  "a6c86fa3be510ada0dc1bac8e6de485c3b3439fc": [
-   "scripts/naver/blog/cli/research_blog_topics.py:_search_volume",
-   "scripts/naver/blog/cli/research_blog_topics_lighting.py:_search_volume"
-  ],
-  "b079ef93b4262c5749c8d82af8b3a280b65c0972": [
-   "scripts/eum/deregistration.py:_selector_from_field",
-   "scripts/eum/registration.py:_selector_from_field"
-  ],
-  "b1fd589b4a7eeb68d40ccc93a4ab99789faa99db": [
-   "scripts/hiworks/actions.py:load_action_catalog",
-   "scripts/naver/smartstore/api/actions.py:load_action_catalog"
-  ],
-  "b2075a26f2925d0b5b2321cc6c7a2e76bb91aba0": [
-   "scripts/eum/deregistration.py:_analyzed_field_selectors",
-   "scripts/eum/registration.py:_analyzed_field_selectors"
-  ],
-  "b26ae391e3d034e06090d085411a5b5784ecfbf7": [
-   "scripts/ops/audit_common_engine_commercialization_baseline.py:main",
-   "scripts/ops/audit_google_cloud_action_policy_baseline_contract.py:main",
-   "scripts/ops/audit_google_cloud_readonly_local_browser_dryrun.py:main",
-   "scripts/ops/audit_local_agent_connection_recovery_baseline.py:main"
-  ],
-  "ba665f84640df9dd3554b9932745245b116b3eee": [
-   "scripts/google/docs.py:_task_recent",
-   "scripts/google/sheets.py:_task_recent"
-  ],
-  "c1eb1bfad2e951956dc956e12f9a206e7b92ba72": [
-   "ai_orchestrator/connectors/naver_search_router.py:api_run_blog_search",
-   "ai_orchestrator/connectors/naver_search_router.py:api_run_shopping_search"
-  ],
-  "c851f72bc9531ab2d10bc702bfaf0044d675d11c": [
-   "scripts/google/router.py:_work_live_fill",
-   "scripts/google/router.py:_youtube_upload_live_fill"
-  ],
-  "c9053131b7a1ac351e1d64f38d457a20e05a5774": [
-   "scripts/naver/automation/platform/error_recovery.py:_init_db",
-   "scripts/naver/smartstore/product/bulk.py:_init_db"
+   "scripts/common/youtube_api_common.py:parse_kv_args",
+   "scripts/youtube/oauth.py:parse_kv_args"
   ],
   "cb29e64dc5c280b2a6a807e3bc8796e25ccd01fe": [
-   "local_agent/browser_login_probe.py:_normalize_str_list",
-   "local_agent/site_mapper.py:_normalize_hints"
-  ],
-  "cb41120f3ab1168c59cbafcf68a552ecf495f3f2": [
-   "scripts/gabia/validators.py:validate_gabia_action_plan",
-   "scripts/google/validators.py:validate_google_action_plan",
-   "scripts/hiworks/validators.py:validate_hiworks_action_plan",
-   "scripts/youtube/validators.py:validate_youtube_action_plan"
-  ],
-  "cf8971bf73cf0cca56b729d1a669437da54f0683": [
-   "scripts/naver/company_seo.py:save_diagnosis",
-   "scripts/naver/company_seo.py:save_plan",
-   "scripts/naver/keyword_tools.py:save_payload",
-   "scripts/naver/shopping_competitor.py:save_competitor_report"
-  ],
-  "d4e3c4acd6b77cfecc179cdeedcc937f52670de8": [
-   "scripts/naver/blog/management/analytics.py:_init_db",
-   "scripts/naver/blog/management/schedule.py:_init_db",
-   "scripts/naver/smartstore/automation/analytics_dashboard.py:_init_db",
-   "scripts/naver/smartstore/automation/competitor_analysis.py:_init_db"
+   "core/agent_runtime/browser/browser_login_probe.py:_normalize_str_list",
+   "core/agent_runtime/browser/site_mapper.py:_normalize_hints"
   ],
   "d8f965a8b038841763a0099900bd491ad0d0a20e": [
-   "scripts/popup_monitor.py:ChromeUIWatcher.start",
-   "scripts/popup_monitor.py:PopupMonitor.start"
-  ],
-  "da69dd83b6ef3b8ce85e3d20c35cc3fcd4a8b16f": [
-   "scripts/instagram/overlay.py:_fit_cover",
-   "scripts/instagram/reel_overlay.py:_fit_cover"
-  ],
-  "dd98391254fcf8260de1b0c71e2290212b22ff73": [
-   "scripts/naver/calendar.py:NaverCalendar.open",
-   "scripts/naver/place.py:NaverPlace.open"
-  ],
-  "e36c0e76b7b2bf132fe345aaf357a99cfb41a76e": [
-   "scripts/eum/deregistration.py:_analysis_entries",
-   "scripts/eum/registration.py:_analysis_entries"
+   "scripts/browser/navigator/popup_monitor.py:ChromeUIWatcher.start",
+   "scripts/browser/navigator/popup_monitor.py:PopupMonitor.start"
   ],
   "e52edc3fccea138286e4ee989420aca94771e83d": [
-   "scripts/ops/audit_app_ui_readonly_status_cards_api_bind.py:_route_file",
-   "scripts/ops/smoke_app_ui_shell_browser.py:_page"
-  ],
-  "e53b6c96e67ad5ce8bb56b8fc41422ae9b2f71ab": [
-   "scripts/eum/labor_test.py:main",
-   "scripts/eum/site_devices.py:main"
+   "tools/audits/app/audit_app_ui_readonly_status_cards_api_bind.py:_route_file",
+   "tools/audits/app/smoke_app_ui_shell_browser.py:_page"
   ],
   "e55f06f8e61437d0e4a448891d63f8c86d52f388": [
-   "scripts/cdp_helper.py:CDP.shot",
+   "scripts/browser/cdp/cdp_helper.py:CDP.shot",
    "scripts/video/_cdp_tab.py:TabCDP.shot"
   ],
-  "ea67e9101017d3eceedb5e96ea8b995ef1198941": [
-   "scripts/google/cloud/registry.py:cloud_summary",
-   "scripts/google/workspace/registry.py:workspace_summary"
-  ],
-  "eb7cf87f373448f055bff847c9b254e910e4ace5": [
-   "scripts/eum/deregistration.py:_selector_from_button",
-   "scripts/eum/registration.py:_selector_from_button"
-  ],
-  "eb823f7ed71cf0ea1e0b3486ac9ea08e12bfe3dc": [
-   "scripts/gabia/router.py:_cmd_login",
-   "scripts/gabia/router.py:_cmd_payment"
-  ],
-  "edd17d31e34dd59870fa0dfdac45a102043317b3": [
-   "scripts/eum/access_explorer.py:save_accessible_pages",
-   "scripts/eum/workspace.py:save_work_index"
-  ],
   "ee97c78137c675a6f7e2e4ffb03f989607ac408b": [
-   "scripts/ops/audit_post_tasks_dry_run_flag_implementation.py:_verify_no_http_import",
-   "scripts/ops/audit_post_tasks_medium_approve_gate_preflight.py:_verify_no_http_import",
-   "scripts/ops/audit_post_tasks_medium_isolation_smoke.py:_verify_no_http_import",
-   "scripts/ops/audit_post_tasks_side_effect_gate_design.py:_verify_no_http_import"
-  ],
-  "eeb59bcdb5e380b91e70a74770441c60e0699e16": [
-   "scripts/google/docs.py:_task_new",
-   "scripts/google/sheets.py:_task_new"
-  ],
-  "ef7fe454c93d0a29914ccee0d6e53ac1cdd068e1": [
-   "scripts/google/youtube/search_common.py:_should_retry_without_proxy",
-   "scripts/youtube/youtube_http_client.py:_should_retry_without_proxy"
-  ],
-  "f2dd54c583d5f6e43808f5917d535acd830fa502": [
-   "scripts/naver/automation/platform/scheduler.py:Scheduler.remove_task",
-   "scripts/naver/blog/management/schedule.py:BlogSchedule.cancel"
-  ],
-  "f568a5f5be82c5fa8429969099bc76c6122861f9": [
-   "scripts/hiworks/service_explorer.py:selected_targets",
-   "scripts/naver/content.py:select_targets"
-  ],
-  "fa2262ce66ecd05aed741ed73da86d8b0690aed7": [
-   "scripts/module_quality_gate_common.py:redact",
-   "scripts/required_quality_gate.py:redact"
+   "tools/audits/backend/audit_post_tasks_dry_run_flag_implementation.py:_verify_no_http_import",
+   "tools/audits/backend/audit_post_tasks_medium_approve_gate_preflight.py:_verify_no_http_import",
+   "tools/audits/backend/audit_post_tasks_medium_isolation_smoke.py:_verify_no_http_import",
+   "tools/audits/backend/audit_post_tasks_side_effect_gate_design.py:_verify_no_http_import"
   ],
   "fcc9673f9a46bea4053b07a2b608145f7ffdd247": [
-   "ai_orchestrator/local_agent/installer_folder_presenter.py:_result",
-   "ai_orchestrator/local_agent/security_program_install_completion_detector.py:_result",
-   "ai_orchestrator/local_agent/user_assisted_installer.py:_safe_result"
+   "core/agent_runtime/runtime/security_program/installer_folder_presenter.py:_result",
+   "core/agent_runtime/runtime/security_program/security_program_install_completion_detector.py:_result",
+   "core/agent_runtime/runtime/security_program/user_assisted_installer.py:_safe_result"
   ]
  }
 }

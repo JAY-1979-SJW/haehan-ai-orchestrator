@@ -58,13 +58,13 @@
 ### Step B — 자동 탭 열기 + 로그인 감지
 
 ```python
-from ai_orchestrator.local_agent.browser.cdp_launcher import open_and_wait_login
+from scripts.browser.agent.cdp_launcher import open_and_wait_login
 result = open_and_wait_login("<url>", timeout=300)
 ```
 
 또는 CLI:
 ```
-python -m ai_orchestrator.local_agent.browser.cdp_launcher <url> --wait-login [domain] [timeout_s]
+python -m scripts.browser.agent.cdp_launcher <url> --wait-login [domain] [timeout_s]
 ```
 
 ### Step C — 결과 분기
@@ -100,7 +100,7 @@ python -m ai_orchestrator.local_agent.browser.cdp_launcher <url> --wait-login [d
 ### Step B — BrowserAgent 사용
 
 ```python
-from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+from scripts.browser.agent.agent import BrowserAgent
 with BrowserAgent() as agent:
     agent.go("<url>")
     # CafeMixin / BlogMixin 메서드 활용
@@ -144,7 +144,7 @@ L2 `WRITE_INTENT` 감사 이벤트 자동 기록.
 새 도메인의 인증 쿠키를 `LOGIN_MARKERS`에 등록:
 
 ```python
-# ai_orchestrator/local_agent/browser/cdp_session_manager.py
+# scripts/browser/agent/cdp_session_manager.py
 LOGIN_MARKERS = {
     ...,
     "<new_domain>": ["<auth_cookie_1>", "<auth_cookie_2>"],
@@ -153,7 +153,7 @@ LOGIN_MARKERS = {
 
 쿠키명을 모르면 1회 로그인 후 `get_cdp_cookies()`로 확인:
 ```python
-from ai_orchestrator.local_agent.browser.cdp_session_manager import get_cdp_cookies
+from scripts.browser.agent.cdp_session_manager import get_cdp_cookies
 cookies = [c for c in get_cdp_cookies() if "<new_domain>" in c.get("domain","")]
 print([c["name"] for c in cookies])
 ```
@@ -243,12 +243,12 @@ data/audit/L2_audit/<파일> — <N>건 이벤트
 
 | 목적 | 명령 |
 |---|---|
-| 사이트 자동 열기 | `python -m ai_orchestrator.local_agent.browser.cdp_launcher <url>` |
-| 사이트 + 로그인 감지 | `python -m ai_orchestrator.local_agent.browser.cdp_launcher <url> --wait-login <domain> <timeout>` |
-| CDP 살아있나 | `python -c "from ai_orchestrator.local_agent.browser.cdp_launcher import probe_cdp; print(probe_cdp())"` |
-| 로그인 도메인 보기 | `python -c "from ai_orchestrator.local_agent.browser.cdp_session_manager import get_logged_in_sites; print(get_logged_in_sites())"` |
+| 사이트 자동 열기 | `python -m scripts.browser.agent.cdp_launcher <url>` |
+| 사이트 + 로그인 감지 | `python -m scripts.browser.agent.cdp_launcher <url> --wait-login <domain> <timeout>` |
+| CDP 살아있나 | `python -c "from scripts.browser.agent.cdp_launcher import probe_cdp; print(probe_cdp())"` |
+| 로그인 도메인 보기 | `python -c "from scripts.browser.agent.cdp_session_manager import get_logged_in_sites; print(get_logged_in_sites())"` |
 | Task 재기동 | `schtasks /run /tn HaehanCdpChrome` |
-| 감사 로그 회전 | `python -c "from ai_orchestrator.local_agent.browser.cdp_audit import rotate; print(rotate())"` |
+| 감사 로그 회전 | `python -c "from scripts.common.cdp_audit import rotate; print(rotate())"` |
 
 ---
 

@@ -43,7 +43,7 @@
 |---|---|---|
 | 셀렉터 안정성 점수 | 없음(`selector_health/core.py` 는 존재·가시성만) | **새로 작성** |
 | 요소 역할 분류(버튼/링크) | 입력칸 전용 `scripts/form/discovery.py::_ROLE_KEYWORDS`(L1), 버튼 전용 없음 | **새로 작성**, 키워드 구조는 참고 |
-| 위험 버튼 분류 | `ai_orchestrator/local_agent/generic_selector_discovery.py::_RISK_BUTTON_KEYWORDS`(L4, 14개 항목: 결제·서명·입찰·송금·이체·계약 제출·최종 제출·삭제) | **재사용(import)**. 없는 범주(발행·전송·탈퇴)는 이 목록을 확장하지 않고 우리 쪽에서 **추가 키워드로 덧붙임**(기존 모듈 수정 없음) |
+| 위험 버튼 분류 | `local_agent/runtime/generic_selector_discovery.py::_RISK_BUTTON_KEYWORDS`(L4, 14개 항목: 결제·서명·입찰·송금·이체·계약 제출·최종 제출·삭제) | **재사용(import)**. 없는 범주(발행·전송·탈퇴)는 이 목록을 확장하지 않고 우리 쪽에서 **추가 키워드로 덧붙임**(기존 모듈 수정 없음) |
 | 로그인/캡차 상태 판정 | `local_agent/login_state_detector.py::classify(url, title, body_sample, ...)` — 순수 함수, LOGIN_REQUIRED·CHALLENGE_REQUIRED·LOGGED_IN·SESSION_EXPIRED·POPUP_WAITING 등 판정 (**L10**) | 아래 레이어 문제로 **직접 import 불가** → 아래 결정 |
 | 권한 없음(permission_denied) | 없음 | **새로 작성** |
 | 팝업 판정 | `scripts/popup_detector.py`(페이지 필요), 우리는 스냅샷 기반 | 새로 작성(스냅샷 입력) |
@@ -64,7 +64,7 @@ L4 인 `scripts/explorer/page_analysis.py` 가 직접 import 하면 역방향 im
 
 | 파일 | 변경 |
 |---|---|
-| `scripts/explorer/page_analysis.py` (신규) | 스냅샷 dict → 분석 dict. **순수 함수**(브라우저·네트워크·파일 쓰기 없음). import: `ai_orchestrator.local_agent.generic_selector_discovery._RISK_BUTTON_KEYWORDS`(L4→L4, 허용) |
+| `scripts/explorer/page_analysis.py` (신규) | 스냅샷 dict → 분석 dict. **순수 함수**(브라우저·네트워크·파일 쓰기 없음). import: `local_agent.runtime.generic_selector_discovery._RISK_BUTTON_KEYWORDS`(L4→L4, 허용) |
 | `tests/test_page_analysis.py` (신규) | 합성 스냅샷과 실제 깨진 셀렉터 사례로 검증. 브라우저 불필요 |
 | `configs/module_registry.json` | 신규 파일 등록(게이트 요구) |
 

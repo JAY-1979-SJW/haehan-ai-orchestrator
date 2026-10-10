@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
-
-from .router_common import (
+from scripts.common.gate import check as gate_check
+from scripts.naver.common.router_common import (
     _flag,
     _int_option,
     _option_phrase,
@@ -15,7 +14,8 @@ from .router_common import (
 
 
 def _cmd_content(sub: str, args: list[str]) -> None:
-    from scripts.naver.content import (
+    from scripts.browser.cdp.connection import get_page
+    from scripts.naver.common.content import (
         build_action_catalog,
         print_action_summary,
         print_surface_summary,
@@ -24,8 +24,7 @@ def _cmd_content(sub: str, args: list[str]) -> None:
         scan_target,
         select_targets,
     )
-    from scripts.naver.live_safety import before_live_navigation
-    from scripts.web_connector import get_page
+    from scripts.naver.common.live_safety import before_live_navigation
 
     name = args[0] if args and not str(args[0]).startswith("--") else "all"
     limit = int(_option_value(args, "--limit=") or "80")
@@ -53,7 +52,7 @@ def _cmd_content(sub: str, args: list[str]) -> None:
         print_action_summary(catalog, path)
     else:
         print(
-            "usage: python scripts/cdp_client.py naver content [explore|actions] [blog|blog_admin|cafe|all] [--limit=80]"
+            "usage: python scripts/entry/cdp_cli.py naver content [explore|actions] [blog|blog_admin|cafe|all] [--limit=80]"
         )
 
 
@@ -267,7 +266,7 @@ def _cmd_seo(sub: str, args: list[str]) -> None:
         return
 
     print(
-        "usage: python scripts/cdp_client.py naver seo [entrypoints|plan|assets|ownership|exposure|submit-plan|monitor|full|diagnose|submit] --site=https://haehan-ai.kr"
+        "usage: python scripts/entry/cdp_cli.py naver seo [entrypoints|plan|assets|ownership|exposure|submit-plan|monitor|full|diagnose|submit] --site=https://haehan-ai.kr"
     )
 
 
@@ -278,7 +277,7 @@ def _cmd_developers(sub: str, args: list[str]) -> None:
 
     gate_check("scan_page")
     if sub not in ("entrypoints", "plan", "apps"):
-        print("usage: python scripts/cdp_client.py naver developers [entrypoints|plan]")
+        print("usage: python scripts/entry/cdp_cli.py naver developers [entrypoints|plan]")
         return
     payload = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
@@ -302,7 +301,7 @@ def _cmd_shopping(sub: str, args: list[str]) -> None:
     from datetime import datetime
 
     from scripts.naver.company_seo import OFFICIAL_ENTRYPOINTS
-    from scripts.naver.shopping_competitor import (
+    from scripts.naver.shopping.competitor_report import (
         collect_openapi_competitors,
         print_competitor_summary,
         save_competitor_report,
@@ -327,7 +326,7 @@ def _cmd_shopping(sub: str, args: list[str]) -> None:
 
     if sub not in ("competitors", "competitor", "search"):
         print(
-            "usage: python scripts/cdp_client.py naver shopping competitors --query=KEYWORD [--display=20] [--my-price=N]"
+            "usage: python scripts/entry/cdp_cli.py naver shopping competitors --query=KEYWORD [--display=20] [--my-price=N]"
         )
         return
 
@@ -349,7 +348,7 @@ def _cmd_excel(sub: str, args: list[str]) -> None:
     from scripts.naver.excel_reports import build_excel_report, print_excel_summary
 
     if sub not in ("report", "build", "latest"):
-        print("usage: python scripts/cdp_client.py naver excel report [--output=PATH]")
+        print("usage: python scripts/entry/cdp_cli.py naver excel report [--output=PATH]")
         return
     gate_check("file_write")
     output = _option_value(args, "--output=")
@@ -385,5 +384,5 @@ def _cmd_keyword_tools(sub: str, args: list[str]) -> None:
         return
 
     print(
-        "usage: python scripts/cdp_client.py naver keyword-tools [catalog|plan|datalab|shopping|searchad-plan|paid-blocks] --query=..."
+        "usage: python scripts/entry/cdp_cli.py naver keyword-tools [catalog|plan|datalab|shopping|searchad-plan|paid-blocks] --query=..."
     )

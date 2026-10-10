@@ -4,9 +4,9 @@
 원본 파일은 보존 — 이 패키지는 라우터 진입점만 추가.
 
 사용:
-    python scripts/cdp_client.py eum extract
-    python scripts/cdp_client.py eum dashboard
-    python scripts/cdp_client.py eum mail
-    python scripts/cdp_client.py eum new-sites
+    python scripts/entry/cdp_cli.py eum extract
+    python scripts/entry/cdp_cli.py eum dashboard
+    python scripts/entry/cdp_cli.py eum mail
+    python scripts/entry/cdp_cli.py eum new-sites
 """
 from __future__ import annotations

@@ -178,9 +178,9 @@ Electron 셸만 복원됐고(사용자가 "AI 에이전트+브라우저 CDP 자�
   들어가게 방어적으로 막아 뒀다(`DESKTOP_RUNTIME_AUDIT.md` D1/D3).
 - `local-agent.spec`: 진입점·hidden_imports(smartstore 경로) 전부 유효, 변경 없음.
 - `mcp-server.spec`: OpenAI 제거(2026-09-24) 이후 `mcp_server.py`가 더 안 쓰는
-  `gpt_description_writer`·`scripts.critical_logger`·`scripts.logger`를 hidden_imports
+  `gpt_description_writer`·`scripts.common.critical_logger`·`scripts.common.logger`를 hidden_imports
   에서 뺐고, 실제로 동적 import하는 `scripts.naver.smartstore.*`·`scripts.naver.cafe.*`·
-  `ai_orchestrator.local_agent.browser.*`로 갱신.
+  `scripts.browser.agent.*`로 갱신.
 
 ## build-info.json 형식 (W4 합의)
 

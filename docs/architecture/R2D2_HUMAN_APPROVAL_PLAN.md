@@ -136,16 +136,16 @@ R2d-1까지 구현된 것과 조사에서 확인된 사실이다.
 
 **목적**: `ai_orchestrator/gates ↔ scripts` 순환(verify_change 80→81)을 구조로 해결한다. import를 함수 안으로 숨기는 방식은 쓰지 않는다.
 
-**원인**: 게이트 핵심 `scripts/gate.py`가 scripts 패키지에 있고, `ai_orchestrator`와 `scripts`가 서로를 쓴다. 게이트 핵심은 `scripts.logger`, `scripts.schemas`(`GateResult`, `GateVerdict`, `RiskLevel`), `scripts.op_log`(함수 안 import)에 의존한다.
+**원인**: 게이트 핵심 `scripts/common/gate.py`가 scripts 패키지에 있고, `ai_orchestrator`와 `scripts`가 서로를 쓴다. 게이트 핵심은 `scripts.common.logger`, `scripts.common.schemas`(`GateResult`, `GateVerdict`, `RiskLevel`), `scripts.common.op_log`(함수 안 import)에 의존한다.
 
 **계획**
-1. `ai_orchestrator/gates/gate_core.py`를 만들어 게이트 핵심(`check`, `require_side_effect`, `require_approved`, 수신거부 목록, 승인 소진)을 옮긴다. 층은 같은 L2.
-2. **`gate_core`는 `scripts`를 import하지 않는다.** 필요한 타입(`GateResult`/`GateVerdict`/`RiskLevel`)은 `gate_core`에 정의하고, `scripts/schemas.py`가 거기서 재수출한다(의존 방향을 뒤집음). 로깅은 표준 `logging`, 감사 기록은 **싱크 등록**(`gate_core.set_audit_sink(fn)`)으로 주입하고 `scripts/op_log.py`가 import 시점에 등록한다.
-3. `scripts/gate.py`는 **shim**으로 남긴다. 저장소의 분리 shim과 같은 방식(`sys.modules[__name__] = import_module("ai_orchestrator.gates.gate_core")`). 모듈 전역 상태(`_RISK_REGISTRY`, `force_approved`의 thread-local)는 한 객체로 공유되므로 동작이 같다.
+1. `tools/gates/gate_core.py`를 만들어 게이트 핵심(`check`, `require_side_effect`, `require_approved`, 수신거부 목록, 승인 소진)을 옮긴다. 층은 같은 L2.
+2. **`gate_core`는 `scripts`를 import하지 않는다.** 필요한 타입(`GateResult`/`GateVerdict`/`RiskLevel`)은 `gate_core`에 정의하고, `scripts/common/schemas.py`가 거기서 재수출한다(의존 방향을 뒤집음). 로깅은 표준 `logging`, 감사 기록은 **싱크 등록**(`gate_core.set_audit_sink(fn)`)으로 주입하고 `scripts/common/op_log.py`가 import 시점에 등록한다.
+3. `scripts/common/gate.py`는 **shim**으로 남긴다. 저장소의 분리 shim과 같은 방식(`sys.modules[__name__] = import_module("tools.gates.gate_core")`). 모듈 전역 상태(`_RISK_REGISTRY`, `force_approved`의 thread-local)는 한 객체로 공유되므로 동작이 같다.
 4. `ai_orchestrator` 쪽 호출자(`send_approval.py`, 라우터들)는 새 경로를 직접 import한다. `scripts` 쪽 호출자는 shim을 그대로 쓰다 점진 이전한다(R2 커버리지 테스트의 `GUARDS` 이름은 유지).
 5. 검증: `verify_change`의 순환 수가 80으로 돌아오는지 확인한다. 돌아오지 않으면 남은 `gates → scripts` 간선을 목록으로 보고하고 알려진 항목으로 기록한다.
 
-**주의**: mypy는 `sys.modules` 치환 shim을 정적으로 따라가지 못하므로(R-split 경험), 이전된 모듈 간 import는 새 경로로 쓴다. `scripts/gate.py`를 import하는 29곳은 shim으로 계속 동작한다.
+**주의**: mypy는 `sys.modules` 치환 shim을 정적으로 따라가지 못하므로(R-split 경험), 이전된 모듈 간 import는 새 경로로 쓴다. `scripts/common/gate.py`를 import하는 29곳은 shim으로 계속 동작한다.
 
 ## 5. 승인 화면(UI)
 
@@ -233,5 +233,5 @@ R2d-1까지 구현된 것과 조사에서 확인된 사실이다.
 ## 12. 범위와 비범위
 
 - **이번 문서**: 설계만. 구현은 대표님 승인 후 단계별 커밋(P0부터).
-- **범위 밖**: `apps/ig-comment-dm-bot`·`apps/marketing-standalone`(별도 앱), 개발 등록 승인(`dev_reg_approval`), `scripts/google/drive.py` CLI 업로드, 네이버 대량메일·하나팩스 대량의 자체 상한 정책(승인 행위만 통합).
+- **범위 밖**: `apps/ig-comment-dm-bot`·`apps/marketing-standalone`(별도 앱), 개발 등록 승인(`dev_reg_approval`), `scripts/google/common/drive.py` CLI 업로드, 네이버 대량메일·하나팩스 대량의 자체 상한 정책(승인 행위만 통합).
 - **의존**: W4의 Bearer·`OWNER_EMAILS`·`HttpOnly` 쿠키 전환 및 `auth_method` 표지. W2의 `marketing_ops_router`는 P3에서 합류.

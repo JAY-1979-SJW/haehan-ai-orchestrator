@@ -1,4 +1,4 @@
-"""local_agent.browser_reader 검증 (Stage 2 read-only 브라우저 페이지 읽기).
+"""core.agent_runtime.browser.browser_reader 검증 (Stage 2 read-only 브라우저 페이지 읽기).
 
 실제 외부 웹사이트 접속 금지. 실제 브라우저 실행 금지. 모든 테스트는 fake
 Playwright 팩토리(아래 ``_FakePlaywrightContext``) 를 ``_playwright_factory``
@@ -204,7 +204,7 @@ def _make_fake_factory(
     ],
 )
 def test_open_url_blocks_dangerous_schemes(url: str) -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     # 팩토리 호출조차 되면 안 됨 — 차단되더라도 fake 을 전달하지 않는다.
     r = open_url_readonly(url)
@@ -228,7 +228,7 @@ def test_open_url_blocks_dangerous_schemes(url: str) -> None:
     ],
 )
 def test_open_url_blocks_private_network_by_default(url: str) -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     r = open_url_readonly(url)
     assert r["ok"] is False
@@ -237,7 +237,7 @@ def test_open_url_blocks_private_network_by_default(url: str) -> None:
 
 def test_open_url_private_network_never_reaches_factory() -> None:
     """차단된 URL 은 팩토리까지 도달하지 않아야 한다."""
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     factory, log = _make_fake_factory()
     r = open_url_readonly("http://127.0.0.1/", _playwright_factory=factory)
@@ -249,7 +249,7 @@ def test_open_url_private_network_never_reaches_factory() -> None:
 
 
 def test_browser_dependency_missing_returns_error_code() -> None:
-    from local_agent.browser_reader import (
+    from core.agent_runtime.browser.browser_reader import (
         BrowserDependencyMissing,
         open_url_readonly,
     )
@@ -270,7 +270,7 @@ def test_browser_dependency_missing_returns_error_code() -> None:
 
 
 def test_basic_title_current_url_and_content_collected() -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     factory, log = _make_fake_factory(
         html="<html><head><title>Home</title></head><body><h1>Hi</h1><a href='/x'>x</a></body></html>",
@@ -295,7 +295,7 @@ def test_basic_title_current_url_and_content_collected() -> None:
 
 
 def test_visible_browser_option_launches_headed() -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     factory, log = _make_fake_factory()
     r = open_url_readonly(
@@ -312,7 +312,7 @@ def test_visible_browser_option_launches_headed() -> None:
 
 
 def test_browser_channel_option_uses_real_browser_channel() -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     factory, log = _make_fake_factory()
     r = open_url_readonly(
@@ -328,7 +328,7 @@ def test_browser_channel_option_uses_real_browser_channel() -> None:
 
 
 def test_analyze_html_structure_is_wired_in() -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     factory, _log = _make_fake_factory(
         html=(
@@ -355,7 +355,7 @@ def test_analyze_html_structure_is_wired_in() -> None:
 
 
 def test_html_length_truncation() -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     big_html = "<html><body>" + ("A" * 2000) + "</body></html>"
     factory, _log = _make_fake_factory(
@@ -376,7 +376,7 @@ def test_html_length_truncation() -> None:
 
 
 def test_login_password_input_detected() -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     html = "<html><body><form><input name='user' type='text'><input name='pw' type='password'></form></body></html>"
     factory, _log = _make_fake_factory(
@@ -394,7 +394,7 @@ def test_login_password_input_detected() -> None:
 
 
 def test_login_keyword_detected() -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     html = "<html><head><title>회원 로그인</title></head><body><h1>로그인</h1></body></html>"
     factory, _log = _make_fake_factory(
@@ -412,7 +412,7 @@ def test_login_keyword_detected() -> None:
 
 
 def test_no_login_detection_for_plain_page() -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     html = "<html><body><h1>Welcome</h1><p>Hello</p></body></html>"
     factory, _log = _make_fake_factory(
@@ -433,7 +433,7 @@ def test_no_login_detection_for_plain_page() -> None:
 
 
 def test_modal_candidates_detected() -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     html = (
         "<html><body>"
@@ -464,7 +464,7 @@ def test_modal_candidates_detected() -> None:
 
 
 def test_modal_detection_handles_empty_html() -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     factory, _log = _make_fake_factory(
         html="",
@@ -483,7 +483,7 @@ def test_modal_detection_handles_empty_html() -> None:
 
 
 def test_result_contains_no_sensitive_tokens_or_full_html() -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     unique_marker = "UNIQUE_BODY_MARKER_ABCDEF_12345"
     html = (
@@ -525,7 +525,7 @@ def test_result_contains_no_sensitive_tokens_or_full_html() -> None:
 
 
 def test_page_context_browser_all_closed() -> None:
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     factory, log = _make_fake_factory()
     r = open_url_readonly(
@@ -544,7 +544,7 @@ def test_page_context_browser_all_closed() -> None:
 
 def test_close_chain_called_even_on_goto_failure() -> None:
     """goto 가 예외를 던져도 close 3종이 모두 호출된다."""
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     factory, log = _make_fake_factory()
     # goto 를 강제로 실패시킨다 — 페이지 객체는 같은 log 를 공유하므로
@@ -593,7 +593,7 @@ def test_no_forbidden_interaction_methods_invoked_on_fakes() -> None:
     기본 실행 경로가 성공적으로 완료된다는 것 자체가 클릭/입력/제출/쿠키
     수집 등 위반 API 를 호출하지 않았다는 강한 증거이다.
     """
-    from local_agent.browser_reader import open_url_readonly
+    from core.agent_runtime.browser.browser_reader import open_url_readonly
 
     factory, _log = _make_fake_factory(
         html="<html><body><form><input type='password'></form></body></html>",
@@ -611,7 +611,7 @@ def test_browser_reader_source_has_no_mutating_calls() -> None:
     """browser_reader.py 에 read-only 위반 API 호출 패턴이 실제로 없어야 한다."""
     from pathlib import Path
 
-    import local_agent.browser_reader as br
+    import core.agent_runtime.browser.browser_reader as br
 
     src = Path(br.__file__).read_text(encoding="utf-8")
 
@@ -639,8 +639,8 @@ def test_browser_reader_source_has_no_mutating_calls() -> None:
 
 
 def test_action_web_open_url_readonly_happy_path(monkeypatch) -> None:
-    from local_agent import browser_reader
-    from local_agent.actions import execute_action
+    from core.agent_runtime.browser import browser_reader
+    from core.agent_runtime.connection.actions import execute_action
 
     captured: list[dict] = []
 
@@ -689,8 +689,8 @@ def test_action_web_open_url_readonly_happy_path(monkeypatch) -> None:
 
 
 def test_action_default_allow_private_network_false(monkeypatch) -> None:
-    from local_agent import browser_reader
-    from local_agent.actions import execute_action
+    from core.agent_runtime.browser import browser_reader
+    from core.agent_runtime.connection.actions import execute_action
 
     captured: list[dict] = []
 
@@ -721,8 +721,8 @@ def test_action_default_allow_private_network_false(monkeypatch) -> None:
 
 
 def test_action_web_open_url_readonly_background_requires_approval(monkeypatch) -> None:
-    from local_agent import browser_reader
-    from local_agent.actions import execute_action
+    from core.agent_runtime.browser import browser_reader
+    from core.agent_runtime.connection.actions import execute_action
 
     def fake_open(**_kwargs):
         raise AssertionError("browser should not open without background approval")
@@ -738,8 +738,8 @@ def test_action_web_open_url_readonly_background_requires_approval(monkeypatch) 
 
 
 def test_action_web_open_url_readonly_background_with_approval(monkeypatch) -> None:
-    from local_agent import browser_reader
-    from local_agent.actions import execute_action
+    from core.agent_runtime.browser import browser_reader
+    from core.agent_runtime.connection.actions import execute_action
 
     captured: list[dict] = []
 
@@ -775,7 +775,7 @@ def test_action_web_open_url_readonly_background_with_approval(monkeypatch) -> N
 
 
 def test_action_web_open_url_readonly_missing_url() -> None:
-    from local_agent.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     r = execute_action("web_open_url_readonly", {})
     assert r.success is False
@@ -783,8 +783,8 @@ def test_action_web_open_url_readonly_missing_url() -> None:
 
 
 def test_action_web_open_url_readonly_propagates_error_code(monkeypatch) -> None:
-    from local_agent import browser_reader
-    from local_agent.actions import execute_action
+    from core.agent_runtime.browser import browser_reader
+    from core.agent_runtime.connection.actions import execute_action
 
     def fake_open(**_kwargs):
         return {

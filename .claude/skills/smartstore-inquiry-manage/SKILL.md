@@ -11,13 +11,13 @@ description: 네이버 스마트스토어센터(반딧불 아뜰리에) CDP 상�
 ## 0. 전제 — CDP 연결
 
 `cdp-browser-automation` 스킬로 CDP 확인/시작 후, 스마트스토어센터 접속·로그인
-상태를 `scripts.cdp_helper.CDP(port=9222)`로 조작한다. 로그인 세션은 보존
+상태를 `scripts.browser.cdp.cdp_helper.CDP(port=9222)`로 조작한다. 로그인 세션은 보존
 원칙(쿠키 삭제/로그아웃 금지) 그대로 적용.
 
 ## 1. 상시 감시 — 클릭할 때마다 자동 분류
 
 ```bash
-python scripts/ops/cdp_click_watch.py --interval 1.5
+python tools/runtime/cdp_click_watch.py --interval 1.5
 ```
 
 Monitor 도구로 백그라운드 실행하면 화면 이동 시마다 아래 형식으로 이벤트가 온다:
@@ -27,7 +27,7 @@ Monitor 도구로 백그라운드 실행하면 화면 이동 시마다 아래 �
 [watch:counts] category=주문관리 발송기한 초과=0 신규주문(발주 전)=0 ...
 ```
 
-### 항목별 지원 현황 (`scripts/ops/cdp_click_watch.py::CATEGORY_RULES`/`COUNT_LABELS`)
+### 항목별 지원 현황 (`tools/runtime/cdp_click_watch.py::CATEGORY_RULES`/`COUNT_LABELS`)
 
 | 카테고리 | 화면 분류 | 숫자 카운트 자동 추출 | 비고 |
 |---|---|---|---|
@@ -48,7 +48,7 @@ href가 안 바뀌는 한 계속 재시도한다(`counts_reported_for` 로직). 
 반드시 기간을 넓혀 재확인한다:
 
 ```python
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 from scripts.naver.smartstore.inquiry_workflow import set_date_range, dismiss_notice_popup
 
 cdp = CDP(port=9222)

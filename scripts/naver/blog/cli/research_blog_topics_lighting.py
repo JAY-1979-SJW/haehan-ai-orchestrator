@@ -19,7 +19,7 @@
 3. 네이버 검색광고 키워드도구로 실제 월간 검색량 조회 (scripts.naver.searchad,
    건설 파이프라인과 동일 함수 재사용)
 4. 검색량 상위 키워드로 지식iN 실제 질문 조회
-   (ai_orchestrator.connectors.naver_kin_client, 동일 함수 재사용)
+   (scripts.naver.shopping.kin_client, 동일 함수 재사용)
 
 출력: data/blog_topic_research_lighting_latest.json
 
@@ -45,7 +45,7 @@ if str(_ROOT) not in sys.path:
 from dotenv import load_dotenv  # noqa: E402
 
 from scripts.community.sites.ohou import search_community  # noqa: E402
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 
 load_dotenv(_ROOT / ".env", encoding="utf-8")
 
@@ -219,38 +219,13 @@ def _top_keyword_candidates(posts: list[dict], top_n: int = 40) -> list[tuple[st
 
 
 def _search_volume(candidates: list[tuple[str, int]]) -> list[dict]:
-    from scripts.naver.searchad import get_keyword_stats
+    from scripts.naver.searchad.keyword_tool import keyword_search_volume
 
-    keywords = [w for w, _ in candidates]
-    stats = get_keyword_stats(keywords)
-
-    by_kw = {}
-    for s in stats:
-        for orig in keywords:
-            if orig.replace(" ", "") == s["keyword"]:
-                by_kw[orig] = s
-
-    rows = []
-    for w, freq in candidates:
-        s = by_kw.get(w)
-        if not s:
-            continue
-        rows.append(
-            {
-                "keyword": w,
-                "ohou_freq": freq,
-                "pc": s["pc_count"],
-                "mobile": s["mobile_count"],
-                "total_search": s["pc_count"] + s["mobile_count"],
-                "competition": s["competition"],
-            }
-        )
-    rows.sort(key=lambda r: -r["total_search"])
-    return rows
+    return keyword_search_volume(candidates, "ohou_freq")
 
 
 def _real_questions(keyword_rows: list[dict]) -> list[dict]:
-    from ai_orchestrator.connectors.naver_kin_client import search_kin_questions
+    from scripts.naver.shopping.kin_client import search_kin_questions
 
     topics = []
     for row in keyword_rows[:_TOP_KEYWORD_COUNT]:

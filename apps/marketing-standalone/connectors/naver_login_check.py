@@ -1,7 +1,7 @@
 """네이버 로그인 상태 확인 — 독립 앱 전용 (자동 로그인/비밀번호 저장 없음).
 
-원본(scripts/naver/auth.py::ensure_naver_login)은 회사 계정 여러 개를 자동
-전환하기 위해 scripts.credentials(암호화 저장된 비밀번호)로 자동 재로그인까지
+원본(scripts/naver/common/auth.py::ensure_naver_login)은 회사 계정 여러 개를 자동
+전환하기 위해 scripts.auth.credentials(암호화 저장된 비밀번호)로 자동 재로그인까지
 한다. 이 독립 앱은 **고객의 네이버 비밀번호를 절대 저장하지 않는다**는 설계
 원칙이라(setup_gui.py의 "네이버 로그인 열기" 버튼으로 고객이 직접 로그인),
 자동 로그인 로직 자체를 포팅하지 않는다 — 로그인 여부만 확인하고, 안 됐으면

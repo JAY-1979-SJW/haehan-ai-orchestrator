@@ -7,8 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import policy
-from .backends import mock_backend
+from . import backend_policy, mock_backend
 from .schemas import BrowserResult, BrowserTask
 
 
@@ -25,7 +24,7 @@ def route_browser_task(task: BrowserTask) -> BrowserResult:
     params = task.params or {}
 
     # Check policy for this action
-    action_policy = policy.get_action_policy(action)
+    action_policy = backend_policy.get_action_policy(action)
 
     # Unknown action
     if action_policy is None:
@@ -39,8 +38,8 @@ def route_browser_task(task: BrowserTask) -> BrowserResult:
         )
 
     # Action is blocked
-    if policy.is_action_blocked(action):
-        reason = policy.get_block_reason(action)
+    if backend_policy.is_action_blocked(action):
+        reason = backend_policy.get_block_reason(action)
         return BrowserResult(
             success=False,
             action=action,
@@ -59,7 +58,7 @@ def route_browser_task(task: BrowserTask) -> BrowserResult:
 
     if selected_backend == "worker":
         # Route to Browser Worker backend (HTTP)
-        from .backends.worker_backend import BrowserWorkerBackend  # lazy import
+        from .worker_backend import BrowserWorkerBackend  # lazy import
 
         worker_backend = BrowserWorkerBackend()
         url = params.get("url", "about:blank")

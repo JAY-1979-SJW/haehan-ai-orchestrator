@@ -2,7 +2,7 @@
 
 사용:
   from scripts.naver.cafe import NaverCafe
-  from scripts.web_connector import get_page
+  from scripts.browser.cdp.connection import get_page
 
   c = NaverCafe(get_page())
   c.open_my_cafes()                # 내 카페 목록
@@ -18,10 +18,10 @@ import time
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
-from scripts.naver.auth import ensure_naver_login
-from scripts.popup_detector import handle_page_popups
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
+from scripts.naver.common.auth import ensure_naver_login
+from scripts.browser.popup.popup_detector import handle_page_popups
 
 _log = get_logger(__name__)
 

@@ -35,7 +35,7 @@ def _synthetic_report_and_checksums(tmp_path, monkeypatch):
     """report.json / checksums.json 은 .gitignore(data/**/*.json) 로 미추적 — 합성본을 tmp 에 만들어 경로만 돌린다."""
     import hashlib
 
-    from scripts.ops import audit_local_agent_user_field_test as audit
+    from tools.audits.agent import audit_local_agent_user_field_test as audit
 
     steps = {k: {"ok": True} for k in _STEP_KEYS}
     steps["06_credential_manager_storage"]["credential_value_in_report"] = False
@@ -233,13 +233,13 @@ def test_runbook_warns_against_secret_leak():
 
 
 def test_audit_module_imports():
-    from scripts.ops import audit_local_agent_user_field_test as a
+    from tools.audits.agent import audit_local_agent_user_field_test as a
 
     assert hasattr(a, "judge_field_test")
 
 
 def test_audit_warn_same_machine():
-    from scripts.ops import audit_local_agent_user_field_test as a
+    from tools.audits.agent import audit_local_agent_user_field_test as a
 
     v = a.judge_field_test(desktop_ui_unchanged_signal=True)
     # 본 환경 외부 PC 미사용 → WARN_SAME_MACHINE_TEST_ONLY 가 정상
@@ -247,14 +247,14 @@ def test_audit_warn_same_machine():
 
 
 def test_audit_fail_desktop_ui_touched():
-    from scripts.ops import audit_local_agent_user_field_test as a
+    from tools.audits.agent import audit_local_agent_user_field_test as a
 
     v = a.judge_field_test(desktop_ui_unchanged_signal=False)
     assert v.code == "FAIL_DESKTOP_UI_TOUCHED"
 
 
 def test_audit_fail_report_missing(tmp_path):
-    from scripts.ops import audit_local_agent_user_field_test as a
+    from tools.audits.agent import audit_local_agent_user_field_test as a
 
     v = a.judge_field_test(report_path=tmp_path / "missing.json")
     assert v.code == "FAIL_REPORT_MISSING"

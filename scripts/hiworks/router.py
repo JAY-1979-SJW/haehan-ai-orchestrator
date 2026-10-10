@@ -230,7 +230,7 @@ def _cmd_submit_section(sub: str | None, args: list[str]) -> None:
     control_id = args[0] if args else ""
     if not service or not control_id:
         raise SystemExit(
-            "usage: python scripts/cdp_client.py hiworks submit-section <service> <control_id> "
+            "usage: python scripts/entry/cdp_cli.py hiworks submit-section <service> <control_id> "
             "[--approved --confirm=<승인 문구(직접 입력)>] [--dry-run] [--approved-by=name]"
         )
     approved = "--approved" in args

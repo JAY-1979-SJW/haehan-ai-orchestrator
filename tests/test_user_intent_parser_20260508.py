@@ -1,6 +1,6 @@
 """tests/test_user_intent_parser_20260508.py"""
 
-from ai_orchestrator.local_agent.user_intent_parser import (
+from core.agent_runtime.runtime.universal.user_intent_parser import (
     INTENT_DELETE_POST,
     INTENT_DOWNLOAD_ATTACHMENTS,
     INTENT_FIND_NOTICE,

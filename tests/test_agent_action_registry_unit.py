@@ -1,6 +1,6 @@
 """Unit tests for agent_action_registry — data structure only, no COM/external calls."""
 
-import ai_orchestrator.browser_tool.agent_action_registry as reg
+import ai_orchestrator.browser_tool.preflight.agent_action_registry as reg
 
 
 def test_risk_constants_exist():

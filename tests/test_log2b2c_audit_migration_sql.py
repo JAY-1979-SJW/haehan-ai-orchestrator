@@ -10,7 +10,7 @@ import re
 import unittest
 from pathlib import Path
 
-from local_agent.browser_audit_contract import (
+from core.agent_runtime.browser.approval.browser_audit_contract import (
     REQUIRED_AUDIT_COLUMNS,
     BrowserAuditEventType,
 )

@@ -12,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.site_engine.catalog_helpers import load_or_build_catalog
+
 ROOT = Path(__file__).resolve().parents[4]
 
 
@@ -219,12 +221,7 @@ def save_action_catalog(catalog: dict[str, Any] | None = None, output: str | Pat
 
 
 def load_action_catalog(path: str | Path | None = None) -> dict[str, Any]:
-    source = Path(path) if path else LATEST_ACTION_CATALOG_PATH
-    if source.exists():
-        return json.loads(source.read_text(encoding="utf-8"))
-    catalog = build_action_catalog()
-    save_action_catalog(catalog, source)
-    return catalog
+    return load_or_build_catalog(path, LATEST_ACTION_CATALOG_PATH, build_action_catalog, save_action_catalog)
 
 
 def _all_actions(catalog: dict[str, Any]) -> list[dict[str, Any]]:
@@ -332,7 +329,7 @@ def save_submit_record(record: dict[str, Any], output: str | Path | None = None)
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     LATEST_SUBMIT_RECORD_PATH.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     try:
-        from scripts.realtime_audit import emit_event
+        from scripts.common.realtime_audit import emit_event
 
         emit_event(
             "SMARTSTORE_SUBMIT_EXECUTED" if record.get("submit_executed") else "SMARTSTORE_DRY_RUN",

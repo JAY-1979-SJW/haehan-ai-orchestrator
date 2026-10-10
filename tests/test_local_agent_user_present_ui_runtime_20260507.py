@@ -2,8 +2,8 @@
 로컬 Agent 사용자 직접 인증 UI 런타임 테스트 (2026-05-07)
 
 테스트 대상:
-- local_agent/user_present_state_store.py
-- local_agent/user_present_ui_server.py
+- core/agent_runtime/user_present/user_present_state_store.py
+- core/agent_runtime/user_present/user_present_ui_server.py
 
 정책:
 - safe_to_execute 항상 False
@@ -21,7 +21,7 @@ import pathlib
 import pytest
 
 # ── state store import ───────────────────────────────────────────────────────
-from local_agent.user_present_state_store import (
+from core.agent_runtime.user_present.user_present_state_store import (
     _USER_FORBIDDEN_KEYS,
     STATE_BLOCKED,
     STATE_CANCELLED,
@@ -37,7 +37,12 @@ from local_agent.user_present_state_store import (
 try:
     from fastapi.testclient import TestClient
 
-    from local_agent.user_present_ui_server import DEFAULT_HOST, DEFAULT_PORT, create_app, run_server
+    from core.agent_runtime.user_present.user_present_ui_server import (
+        DEFAULT_HOST,
+        DEFAULT_PORT,
+        create_app,
+        run_server,
+    )
 
     _UI_AVAILABLE = True
 except ImportError:
@@ -410,8 +415,8 @@ class TestSourceCodePolicy:
     """소스 코드 내 금지 패턴 부재 검증."""
 
     SOURCE_FILES = [
-        pathlib.Path(__file__).parent.parent / "local_agent" / "user_present_state_store.py",
-        pathlib.Path(__file__).parent.parent / "local_agent" / "user_present_ui_server.py",
+        pathlib.Path(__file__).parent.parent / "core" / "agent_runtime" / "user_present" / "user_present_state_store.py",
+        pathlib.Path(__file__).parent.parent / "core" / "agent_runtime" / "user_present" / "user_present_ui_server.py",
     ]
 
     def _read_all_source(self):

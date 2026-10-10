@@ -6,7 +6,7 @@ get_launch_options()의 정책 분기와 BROWSER_POLICY 상수를 검증한다.
 
 from __future__ import annotations
 
-from ai_orchestrator.local_agent.playwright_bootstrap import (
+from core.agent_runtime.runtime.playwright.playwright_bootstrap import (
     BROWSER_POLICY,
     get_launch_options,
 )

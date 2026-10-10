@@ -3,7 +3,7 @@
 실제 유튜브/구글 접속 금지. 실제 Playwright 실행 금지. 모든 테스트는
 fake Playwright 팩토리 + fake time 모듈을 주입해 deterministic 하게 수행.
 
-기존 ``local_agent.browser_login_probe.probe_manual_login_flow`` 를 재사용
+기존 ``core.agent_runtime.browser.browser_login_probe.probe_manual_login_flow`` 를 재사용
 하므로, 본 테스트는 유튜브 smoke 스크립트 경로 (허용 호스트 / 완료 감지)
 를 중심으로 검증한다.
 """
@@ -244,7 +244,7 @@ _STUDIO_HOME_HTML = (
     ],
 )
 def test_allowed_hosts_reach_factory(url):
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     factory, log, _ = _make_probe_factory(
         [
@@ -277,7 +277,7 @@ def test_allowed_hosts_reach_factory(url):
     ],
 )
 def test_outside_allowed_hosts_blocked(url):
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     factory, log, _ = _make_probe_factory(
         [
@@ -312,7 +312,7 @@ def test_outside_allowed_hosts_blocked(url):
     ],
 )
 def test_dangerous_scheme_blocked(url):
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     factory, log, _ = _make_probe_factory(
         [
@@ -349,7 +349,7 @@ def test_dangerous_scheme_blocked(url):
     ],
 )
 def test_private_host_blocked(url):
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     factory, log, _ = _make_probe_factory(
         [
@@ -373,7 +373,7 @@ def test_private_host_blocked(url):
 
 
 def test_initial_login_required_hint_detected():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     # Google 로그인 화면 (password input + "Sign in" 제목).
     script = [
@@ -405,7 +405,7 @@ def test_initial_login_required_hint_detected():
 
 
 def test_google_to_youtube_redirect_marks_completed():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {
@@ -433,7 +433,7 @@ def test_google_to_youtube_redirect_marks_completed():
 
 
 def test_google_to_studio_redirect_marks_completed():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {
@@ -465,7 +465,7 @@ def test_google_to_studio_redirect_marks_completed():
 
 
 def test_password_disappeared_completes():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "Sign in", "url": "https://accounts.google.com/v3/signin/identifier", "html": _GOOGLE_LOGIN_HTML},
@@ -494,7 +494,7 @@ def test_password_disappeared_completes():
 
 
 def test_success_url_contains_match():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://accounts.google.com/signin", "html": "<html><body></body></html>"},
@@ -519,7 +519,7 @@ def test_success_url_contains_match():
 
 
 def test_success_text_hints_match():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://www.youtube.com/", "html": "<html><body></body></html>"},
@@ -548,7 +548,7 @@ def test_success_text_hints_match():
 
 
 def test_timeout_returns_login_timeout():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "Sign in", "url": "https://accounts.google.com/ServiceLogin", "html": _GOOGLE_LOGIN_HTML},
@@ -571,7 +571,7 @@ def test_timeout_returns_login_timeout():
 
 
 def test_result_has_no_password_value():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     html = (
         "<html><body><form>"
@@ -598,7 +598,7 @@ def test_result_has_no_password_value():
 
 
 def test_result_has_no_hidden_value():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     html = (
         "<html><body><form>"
@@ -625,7 +625,7 @@ def test_result_has_no_hidden_value():
 
 
 def test_no_cookie_or_storage_calls_in_log():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
@@ -651,7 +651,7 @@ def test_no_cookie_or_storage_calls_in_log():
 
 
 def test_no_interaction_methods_called():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
@@ -689,7 +689,7 @@ def test_no_interaction_methods_called():
 
 
 def test_no_session_state_api_calls():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
@@ -717,7 +717,7 @@ def test_no_session_state_api_calls():
 
 
 def test_close_methods_called():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://www.youtube.com/", "html": _YT_HOME_HTML},
@@ -815,7 +815,7 @@ class _RecordingInput:
 
 
 def test_yt_success_url_match_alone_does_not_mark_completed():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     # 초기부터 youtube.com 에 있고 password 없음 → 완료 단정 금지.
     script = [
@@ -840,7 +840,7 @@ def test_yt_success_url_match_alone_does_not_mark_completed():
 
 
 def test_yt_google_to_youtube_transition_is_completion_candidate():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {
@@ -879,7 +879,7 @@ def test_yt_google_to_youtube_transition_is_completion_candidate():
 
 
 def test_yt_user_confirmed_login_adds_reason():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=[""])
     script = [
@@ -908,7 +908,7 @@ def test_yt_user_confirmed_login_adds_reason():
 
 
 def test_yt_already_logged_in_state():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "YouTube", "url": "https://www.youtube.com/", "html": "<html><body><h1>홈</h1></body></html>"},
@@ -932,7 +932,7 @@ def test_yt_already_logged_in_state():
 
 
 def test_yt_password_disappeared_is_completion_candidate():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {
@@ -965,7 +965,7 @@ def test_yt_password_disappeared_is_completion_candidate():
 
 
 def test_yt_require_visible_confirm_blocks_polling():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(raise_on=[0])
     clock = _FakeTime()
@@ -992,7 +992,7 @@ def test_yt_require_visible_confirm_blocks_polling():
 
 
 def test_yt_keep_open_prompts_before_close():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=[""])
     script = [
@@ -1020,7 +1020,7 @@ def test_yt_keep_open_prompts_before_close():
 
 
 def test_yt_no_auto_login_or_cookies_with_new_options():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=["", "", ""])
     script = [

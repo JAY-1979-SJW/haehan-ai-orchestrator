@@ -24,7 +24,7 @@ docker 호출 스크립트의 repo 커밋을 차단 → 배포 스크립트를 r
 ## 2. 해결 방향: Scoped Exception (정책을 콕 집어 수정)
 
 게이트를 끄지 않고, **단 하나의 지정된 서버 배포 스크립트에만** docker 허용.
-나머지 전체는 docker 금지 유지. (게이트는 이미 `scripts/quality_gate.py`를 예외 처리하는
+나머지 전체는 docker 금지 유지. (게이트는 이미 `tools/quality/quality_gate.py`를 예외 처리하는
 선례가 있음 — `quality_gate.py:151`)
 
 ---
@@ -34,10 +34,10 @@ docker 호출 스크립트의 repo 커밋을 차단 → 배포 스크립트를 r
 ### 3-1. `configs/quality_gate.json` (L2 정책 설정)
 ```json
 "no_local_docker_cli": true,
-"no_local_docker_cli_allow_paths": ["scripts/ops/server_deploy.py"]   // 신규
+"no_local_docker_cli_allow_paths": ["tools/server_deploy.py"]   // 신규
 ```
 
-### 3-2. `scripts/quality_gate.py` (L2 게이트)
+### 3-2. `tools/quality/quality_gate.py` (L2 게이트)
 `_has_local_docker_cli()` 에 예외 경로 체크 추가 (기존 quality_gate.py 예외와 동일 패턴):
 ```python
 allow = config.get("no_local_docker_cli_allow_paths", [])  # 호출부에서 전달
@@ -46,7 +46,7 @@ if path in allow:
 ```
 - 변경 최소화: 예외 목록에 포함된 경로면 docker 검사 skip.
 
-### 3-3. `scripts/ops/server_deploy.py` (신규, L2/운영)
+### 3-3. `tools/server_deploy.py` (신규, L2/운영)
 서버 전용 배포 스크립트. **로컬 PC 오작동 방지 가드 필수:**
 ```python
 # 가드: docker 없으면(=로컬 PC) 즉시 중단

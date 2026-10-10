@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
 from ._helpers import audit, duration_ms
 
@@ -28,12 +28,12 @@ def _cdp_call(fn, *, reason: str = "google-tools-action"):
     Playwright 내부 타겟 핸드셰이크 단계에서 반복적으로 정확히 180000ms(고정값)
     멈추는 현상을 확인(원시 CDP HTTP /json 은 항상 0.5초 이내 응답 — 브라우저
     자체는 정상, "매 호출마다 새로 연결"하는 방식 자체가 문제). Gmail(gmail_cdp_
-    reader.py)은 처음부터 scripts.web_connector 의 공유·캐시된 단일 연결
+    reader.py)은 처음부터 scripts.browser.page.web_connector 의 공유·캐시된 단일 연결
     (run_on_browser_thread, 프로세스 생애주기 동안 1회만 connect_over_cdp)을
     써서 이 세션 내내 이 문제를 한 번도 겪지 않았다 — 동일 패턴으로 통일.
     (CLAUDE.md '반복 실수' 참고.)
     """
-    from scripts.web_connector import open_page, run_on_browser_thread
+    from scripts.browser.cdp.connection import open_page, run_on_browser_thread
 
     def _work():
         page = open_page(allow_new_tab=True, reason=reason)
@@ -98,7 +98,7 @@ def get_gmail_inbox(
 
     # gmail_reader(OAuth) 우선 시도
     try:
-        from ai_orchestrator.sites.gmail_reader import fetch_recent_emails
+        from ai_orchestrator.connectors.google.gmail_reader import fetch_recent_emails
 
         items = fetch_recent_emails(max_results=limit, hours=72)
         if items:
@@ -110,7 +110,7 @@ def get_gmail_inbox(
 
     # CDP 폴백
     def _fn(page):
-        from scripts.google.gmail_api import GmailAPI
+        from scripts.google.common.gmail_api import GmailAPI
 
         return GmailAPI(page).list_inbox(limit=limit)
 
@@ -131,7 +131,7 @@ def search_gmail(
     t0 = time.monotonic()
 
     def _fn(page):
-        from scripts.google.gmail_api import GmailAPI
+        from scripts.google.common.gmail_api import GmailAPI
 
         return GmailAPI(page).search(query=query, limit=limit)
 
@@ -156,7 +156,7 @@ def get_calendar_today(
 
     if source == "api":
         try:
-            from ai_orchestrator.sites.calendar_reader import list_today
+            from ai_orchestrator.connectors.google.calendar_reader import list_today
 
             events = list_today()
         except Exception as e:  # noqa: BLE001 - Google 서비스 CDP/API 공용 헬퍼 - 연결/액션 실패 시 error 메시지 반환, 인증 우회 없음
@@ -186,7 +186,7 @@ def get_calendar_week(
 
     if source == "api":
         try:
-            from ai_orchestrator.sites.calendar_reader import list_week
+            from ai_orchestrator.connectors.google.calendar_reader import list_week
 
             events = list_week()
         except Exception as e:  # noqa: BLE001 - Google 서비스 CDP/API 공용 헬퍼 - 연결/액션 실패 시 error 메시지 반환, 인증 우회 없음
@@ -254,7 +254,7 @@ def get_drive_recent(
 
     if source == "api":
         try:
-            from ai_orchestrator.sites.drive_reader import list_recent
+            from ai_orchestrator.connectors.google.drive_reader import list_recent
 
             files = list_recent(limit=limit)
         except Exception as e:  # noqa: BLE001 - Google 서비스 CDP/API 공용 헬퍼 - 연결/액션 실패 시 error 메시지 반환, 인증 우회 없음
@@ -310,7 +310,7 @@ def get_docs_recent(
 
     if source == "api":
         try:
-            from ai_orchestrator.sites.drive_reader import list_recent_docs
+            from ai_orchestrator.connectors.google.drive_reader import list_recent_docs
 
             docs = list_recent_docs(limit=limit)
         except Exception as e:  # noqa: BLE001 - Google 서비스 CDP/API 공용 헬퍼 - 연결/액션 실패 시 error 메시지 반환, 인증 우회 없음
@@ -344,7 +344,7 @@ def get_sheets_recent(
 
     if source == "api":
         try:
-            from ai_orchestrator.sites.drive_reader import list_recent_sheets
+            from ai_orchestrator.connectors.google.drive_reader import list_recent_sheets
 
             sheets = list_recent_sheets(limit=limit)
         except Exception as e:  # noqa: BLE001 - Google 서비스 CDP/API 공용 헬퍼 - 연결/액션 실패 시 error 메시지 반환, 인증 우회 없음

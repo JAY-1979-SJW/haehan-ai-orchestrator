@@ -22,8 +22,10 @@ from typing import TYPE_CHECKING, Any
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
+from scripts.common.sqlite_helpers import init_sqlite_schema
 from scripts.naver.smartstore.product.models import (
     GeneralProductData,
     GroupProductData,
@@ -40,13 +42,15 @@ _log = get_logger(__name__)
 ROOT = (
     Path(__file__).resolve().parents[4]
 )  # 2026-09-29 defect_index #39: 이 파일만 [3]으로 남아있었음(같은 폴더의 다른 파일 전부 [4] — product/ 하위로 이동 후 미반영, DB_PATH 가 scripts/data/ 로 잘못 계산되던 실버그)
-DB_PATH = ROOT / "data" / "cdp.db"
+DB_PATH = data_dir() / "cdp.db"
 
 
 def _init_db() -> None:
     """등록 이력 테이블 초기화."""
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.execute("""
+    init_sqlite_schema(
+        DB_PATH,
+        (
+            """
         CREATE TABLE IF NOT EXISTS smartstore_register_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ts TEXT NOT NULL,
@@ -60,11 +64,11 @@ def _init_db() -> None:
             data TEXT,
             steps TEXT
         )
-    """)
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_ssreg_ts ON smartstore_register_log(ts)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_ssreg_ok ON smartstore_register_log(ok)")
-    conn.commit()
-    conn.close()
+    """,
+            "CREATE INDEX IF NOT EXISTS idx_ssreg_ts ON smartstore_register_log(ts)",
+            "CREATE INDEX IF NOT EXISTS idx_ssreg_ok ON smartstore_register_log(ok)",
+        ),
+    )
 
 
 def _save_log(result: RegisterResult, data: dict) -> None:

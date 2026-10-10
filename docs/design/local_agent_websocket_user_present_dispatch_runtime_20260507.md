@@ -10,7 +10,7 @@ routing dry-run 결과가 `DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED`일
 
 ## 신규 모듈
 
-`ai_orchestrator/browser_tool/local_agent_user_present_dispatcher.py`
+`ai_orchestrator/agent_hub/user_present_dispatcher.py`
 
 ### 핵심 함수
 
@@ -32,8 +32,8 @@ routing dry-run 결과가 `DRYRUN_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED`일
 
 ## 수정 모듈
 
-- `ai_orchestrator/local_agent_router.py`: dryrun 응답 후 user-present push 경로 추가
-- `local_agent/websocket_client.py`: `user_present_task_push` message_type 확인
+- `ai_orchestrator/agent_hub/router/root.py`: dryrun 응답 후 user-present push 경로 추가
+- `core/agent_runtime/connection/websocket_client.py`: `user_present_task_push` message_type 확인
 
 ## 보안 원칙
 

@@ -9,16 +9,16 @@
 
 | workflow | 명령 | 위험 | 완료 기준 |
 | --- | --- | --- | --- |
-| `dashboard` | `python scripts/cdp_client.py hiworks dashboard` | `read` | 대시보드 열기와 앱 후보 출력 |
-| `apps` | `python scripts/cdp_client.py hiworks apps` | `read` | 앱 목록을 `data/hiworks_apps_latest.json`에 저장 |
-| `mail` | `python scripts/cdp_client.py hiworks mail` | `read` | 메일 화면 열기와 보이는 동작 목록 출력 |
-| `compose` | `python scripts/cdp_client.py hiworks compose` | `read` | 작성 화면 진입 후보와 입력 요소 요약 저장 |
-| `service_scan` | `python scripts/cdp_client.py hiworks service all --limit=60` | `read` | 하이웍스 주요 업무 서비스 17개 표면 구조 저장 |
-| `action_catalog` | `python scripts/cdp_client.py hiworks actions all` | `read` | 17개 섹션의 입력 필드와 버튼을 prepare/read/submit_gated로 분류 |
-| `prepare_section` | `python scripts/cdp_client.py hiworks prepare-section all --dry-run` | `prepare` | 모든 섹션의 입력 가능 필드와 버튼 게이트 계획 저장 |
-| `prepare_sales_mail` | `python scripts/cdp_client.py hiworks prepare-sales-mail <index>` | `prepare` | 큐의 1건을 작성창에 채우고 발송하지 않음 |
-| `send_batch_plan` | `python scripts/cdp_client.py hiworks send-batch <limit> --dry-run` | `prepare` | 1인 1통 발송 계획만 생성하고 실제 발송하지 않음 |
-| `submit_section` | `python scripts/cdp_client.py hiworks submit-section <service> <control_id> --approved --confirm=HIWORKS_APPROVED_SUBMIT` | `send` | 승인과 확인문구가 모두 있을 때 해당 버튼 1회 실행 |
+| `dashboard` | `python scripts/entry/cdp_cli.py hiworks dashboard` | `read` | 대시보드 열기와 앱 후보 출력 |
+| `apps` | `python scripts/entry/cdp_cli.py hiworks apps` | `read` | 앱 목록을 `data/hiworks_apps_latest.json`에 저장 |
+| `mail` | `python scripts/entry/cdp_cli.py hiworks mail` | `read` | 메일 화면 열기와 보이는 동작 목록 출력 |
+| `compose` | `python scripts/entry/cdp_cli.py hiworks compose` | `read` | 작성 화면 진입 후보와 입력 요소 요약 저장 |
+| `service_scan` | `python scripts/entry/cdp_cli.py hiworks service all --limit=60` | `read` | 하이웍스 주요 업무 서비스 17개 표면 구조 저장 |
+| `action_catalog` | `python scripts/entry/cdp_cli.py hiworks actions all` | `read` | 17개 섹션의 입력 필드와 버튼을 prepare/read/submit_gated로 분류 |
+| `prepare_section` | `python scripts/entry/cdp_cli.py hiworks prepare-section all --dry-run` | `prepare` | 모든 섹션의 입력 가능 필드와 버튼 게이트 계획 저장 |
+| `prepare_sales_mail` | `python scripts/entry/cdp_cli.py hiworks prepare-sales-mail <index>` | `prepare` | 큐의 1건을 작성창에 채우고 발송하지 않음 |
+| `send_batch_plan` | `python scripts/entry/cdp_cli.py hiworks send-batch <limit> --dry-run` | `prepare` | 1인 1통 발송 계획만 생성하고 실제 발송하지 않음 |
+| `submit_section` | `python scripts/entry/cdp_cli.py hiworks submit-section <service> <control_id> --approved --confirm=HIWORKS_APPROVED_SUBMIT` | `send` | 승인과 확인문구가 모두 있을 때 해당 버튼 1회 실행 |
 
 전체 탐색 보고: `docs/reports/hiworks_full_exploration_report_20260513.md`
 

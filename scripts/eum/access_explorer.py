@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
+from scripts.eum.report_io import save_json
 
 ROOT = repo_root()
 
@@ -108,10 +108,7 @@ def explore_accessible_pages(page, *, max_pages: int | None = None, partial_path
 
 
 def save_accessible_pages(result: dict[str, Any], path: Path | None = None) -> Path:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    out = path or DATA_DIR / "eum_accessible_pages.json"
-    out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-    return out
+    return save_json(result, DATA_DIR, "eum_accessible_pages.json", path)
 
 
 def print_summary(result: dict[str, Any], path: Path | None = None) -> None:

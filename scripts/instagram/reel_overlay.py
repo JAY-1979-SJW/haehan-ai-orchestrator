@@ -10,42 +10,18 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+from scripts.instagram.overlay import fit_cover, wrap_text
+
 FONT_BOLD = r"C:\Windows\Fonts\malgunbd.ttf"
 FONT_REG = r"C:\Windows\Fonts\malgun.ttf"
 W, H = 1080, 1920
 
 
 def _fit_cover(img: Image.Image) -> Image.Image:
-    src_ratio = img.width / img.height
-    dst_ratio = W / H
-    if src_ratio > dst_ratio:
-        nh = H
-        nw = int(nh * src_ratio)
-    else:
-        nw = W
-        nh = int(nw / src_ratio)
-    img = img.resize((nw, nh), Image.Resampling.LANCZOS)
-    left = (nw - W) // 2
-    top = (nh - H) // 2
-    return img.crop((left, top, left + W, top + H))
+    return fit_cover(img, W, H)
 
 
-def _wrap(draw, text: str, font, max_w: int) -> list[str]:
-    lines, cur = [], ""
-    for ch in text:
-        if ch == "\n":
-            lines.append(cur)
-            cur = ""
-            continue
-        test = cur + ch
-        if draw.textlength(test, font=font) > max_w and cur:
-            lines.append(cur)
-            cur = ch
-        else:
-            cur = test
-    if cur:
-        lines.append(cur)
-    return lines
+_wrap = wrap_text
 
 
 def render_reel_slide(src: Path, dst: Path, text: str) -> Path:

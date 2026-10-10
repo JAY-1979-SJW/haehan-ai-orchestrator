@@ -1,17 +1,17 @@
 """tests/test_universal_task_planner_20260508.py"""
 
-from ai_orchestrator.local_agent.site_capability_matrix import (
+from core.agent_runtime.runtime.site_profile.site_capability_matrix import (
     GRADE_AUTO_ALLOWED,
     GRADE_USER_DELEGATED,
     GRADE_USER_DIRECT,
 )
-from ai_orchestrator.local_agent.universal_task_planner import (
+from core.agent_runtime.runtime.universal.universal_task_planner import (
     create_plan,
     get_auto_only_plan,
     plan_has_blocked,
     plan_needs_permission,
 )
-from ai_orchestrator.local_agent.user_intent_parser import parse_intent
+from core.agent_runtime.runtime.universal.user_intent_parser import parse_intent
 
 
 def _make_plan(instruction, host="unknown.example.com", text="", buttons=None, risk_signals=None, has_permissions=None):

@@ -31,7 +31,7 @@ Before new work:
 | --- | --- | --- |
 | Worktree index | New work, error triage, before commit | `python scripts\ops\worktree_change_index.py` |
 | Pre-change dry-run | Code or deploy behavior change | `python scripts\ops\pre_change_dry_run.py --scope <scope> --reason "<why>" -- <command>` |
-| Quality gate | Before commit/deploy when active code changed | `python scripts\quality_gate.py` |
+| Quality gate | Before commit/deploy when active code changed | `python tools\quality\quality_gate.py` |
 | Approval gate | Send, submit, publish, upload, delete, billing, IAM, deploy | Site-specific `--approved` and `--confirm` token |
 
 ## Risk Tiers

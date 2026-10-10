@@ -55,7 +55,6 @@
       "hiworks",
       "kakao",
       "naver",
-      "naver_mail",
       "smartstore",
       "youtube"
     ],
@@ -89,7 +88,19 @@
         "scripts/eum"
       ],
       "tests": [
-        "tests/test_eum_surface_imports.py"
+        "tests/eum/test_eum_access_explorer.py",
+        "tests/eum/test_eum_action_prepare.py",
+        "tests/eum/test_eum_auth_selectors.py",
+        "tests/eum/test_eum_capabilities.py",
+        "tests/eum/test_eum_menu_actions.py",
+        "tests/eum/test_eum_navigation.py",
+        "tests/eum/test_eum_router_submit_result.py",
+        "tests/eum/test_eum_router_work.py",
+        "tests/eum/test_eum_run_log.py",
+        "tests/eum/test_eum_sales_mail.py",
+        "tests/eum/test_eum_send_mail_batch_dedupe.py",
+        "tests/eum/test_eum_work_plan.py",
+        "tests/eum/test_eum_workspace.py"
       ],
       "owner_module": "scripts/eum",
       "notes": [
@@ -125,7 +136,7 @@
         "scripts/g2b"
       ],
       "tests": [
-        "tests/test_g2b_site_engine_skeleton.py"
+        "tests/g2b/test_g2b_site_engine_skeleton.py"
       ],
       "owner_module": "scripts/g2b",
       "notes": [
@@ -156,8 +167,8 @@
         "scripts/gabia"
       ],
       "tests": [
-        "tests/test_gabia_site_engine.py",
-        "tests/test_gabia_site_settings_canonical_registry_20260517.py"
+        "tests/gabia/test_gabia_site_engine.py",
+        "tests/gabia/test_gabia_site_settings_canonical_registry_20260517.py"
       ],
       "owner_module": "scripts/gabia",
       "notes": [
@@ -190,10 +201,10 @@
         "ai_orchestrator/connectors/google/gmail_router.py"
       ],
       "tests": [
-        "tests/test_google_site_engine.py",
-        "tests/test_google_surfaces.py",
-        "tests/test_google_workflows.py",
-        "tests/test_google_user_present_session_auth.py"
+        "tests/google/test_google_site_engine.py",
+        "tests/google/test_google_surfaces.py",
+        "tests/google/test_google_workflows.py",
+        "tests/google/test_google_user_present_session_auth.py"
       ],
       "owner_module": "scripts/google",
       "notes": [
@@ -225,7 +236,12 @@
         "scripts/hiworks"
       ],
       "tests": [
-        "tests/test_hiworks_surface_imports.py"
+        "tests/hiworks/test_hiworks_actions.py",
+        "tests/hiworks/test_hiworks_mail_batch.py",
+        "tests/hiworks/test_hiworks_profile_validators.py",
+        "tests/hiworks/test_hiworks_run_log.py",
+        "tests/hiworks/test_hiworks_service_explorer.py",
+        "tests/hiworks/test_hiworks_workflows.py"
       ],
       "owner_module": "scripts/hiworks",
       "notes": [
@@ -257,7 +273,7 @@
         "configs/common_operations_index.json"
       ],
       "tests": [
-        "tests/test_common_operations_index.py"
+        "tests/quality_gates/test_common_operations_index.py"
       ],
       "owner_module": "configs/common_operations_index.json",
       "notes": [
@@ -311,13 +327,12 @@
         "scripts/naver/cafe",
         "scripts/naver/keyword_tools.py",
         "scripts/naver/service_catalog.py",
-        "scripts/browser_cdp_selection_gate.py"
+        "scripts/browser/session/browser_cdp_selection_gate.py"
       ],
       "tests": [
-        "tests/test_naver_site_engine.py",
-        "tests/test_naver_service_router.py",
-        "tests/test_naver_cafe_list_collector.py",
-        "tests/test_browser_cdp_selection_gate.py"
+        "tests/server_features/test_naver_service_router.py",
+        "tests/naver_cafe/test_naver_cafe_list_collector.py",
+        "tests/browser/test_browser_cdp_selection_gate.py"
       ],
       "owner_module": "scripts/naver",
       "notes": [
@@ -358,18 +373,17 @@
       "login_policy": "user_present_only",
       "risk_level": "high",
       "tools": [
-        "scripts/naver_mail",
-        "scripts/naver_mail/background_runner.py",
-        "scripts/naver_mail/settings_panel.py",
+        "scripts/naver/mail",
+        "scripts/naver/mail/collection/background_runner.py",
+        "scripts/naver/mail/utilities/settings_panel.py",
         "scripts/naver/mail/read",
         "ai_orchestrator/connectors/naver"
       ],
       "tests": [
-        "tests/test_naver_mail_tools.py",
-        "tests/test_naver_mail_background_runner.py",
-        "tests/test_naver_mail_settings_panel.py"
+        "tests/naver_mail/test_naver_mail_background_runner.py",
+        "tests/naver_mail/test_naver_mail_settings_panel.py"
       ],
-      "owner_module": "scripts/naver_mail",
+      "owner_module": "scripts/naver/mail",
       "notes": [
         "Private mail data must be redacted in logs.",
         "Read and compose/prepare are allowed after gates; send, delete, move, and settings save require approval.",
@@ -403,7 +417,10 @@
         "scripts/smartstore"
       ],
       "tests": [
-        "tests/test_smartstore_surface_imports.py"
+        "tests/smartstore/test_smartstore_actions.py",
+        "tests/smartstore/test_smartstore_category_fixes.py",
+        "tests/smartstore/test_smartstore_verify_and_abort.py",
+        "tests/smartstore/test_split_smartstore_automation.py"
       ],
       "owner_module": "scripts/smartstore",
       "notes": [
@@ -434,7 +451,7 @@
         "scripts/youtube"
       ],
       "tests": [
-        "tests/test_youtube_site_engine.py"
+        "tests/youtube/test_youtube_site_engine.py"
       ],
       "owner_module": "scripts/youtube",
       "notes": [
@@ -460,7 +477,7 @@
         "ai_orchestrator/external_sites/provider_registry.py"
       ],
       "tests": [
-        "tests/test_external_site_canonical_registry_20260517.py"
+        "tests/app_contracts/test_external_site_canonical_registry_20260517.py"
       ],
       "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
       "notes": [
@@ -486,7 +503,7 @@
         "ai_orchestrator/external_sites/provider_registry.py"
       ],
       "tests": [
-        "tests/test_external_site_canonical_registry_20260517.py"
+        "tests/app_contracts/test_external_site_canonical_registry_20260517.py"
       ],
       "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
       "notes": [
@@ -510,10 +527,10 @@
       "risk_level": "critical",
       "tools": [
         "ai_orchestrator/external_sites/provider_registry.py",
-        "scripts/local_agent/gov"
+        "scripts/sites"
       ],
       "tests": [
-        "tests/test_external_site_canonical_registry_20260517.py"
+        "tests/app_contracts/test_external_site_canonical_registry_20260517.py"
       ],
       "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
       "notes": [
@@ -537,7 +554,7 @@
         "ai_orchestrator/external_sites/provider_registry.py"
       ],
       "tests": [
-        "tests/test_external_site_canonical_registry_20260517.py"
+        "tests/app_contracts/test_external_site_canonical_registry_20260517.py"
       ],
       "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
       "notes": [
@@ -561,7 +578,7 @@
         "ai_orchestrator/external_sites/provider_registry.py"
       ],
       "tests": [
-        "tests/test_external_site_canonical_registry_20260517.py"
+        "tests/app_contracts/test_external_site_canonical_registry_20260517.py"
       ],
       "owner_module": "ai_orchestrator/external_sites/provider_registry.py",
       "notes": [

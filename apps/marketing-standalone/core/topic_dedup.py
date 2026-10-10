@@ -2,7 +2,7 @@
 
 원본: scripts/naver/blog/marketing/topics.py 의 캐시 관리 부분만 추출.
 원본 파일 전체를 가져오지 않은 이유: 모듈 최상단에서
-`scripts.naver.automation.ai_responder.AIResponder`(GPT 호출, 차단됨)를
+`scripts.naver.automation.integration.ai_responder.AIResponder`(GPT 호출, 차단됨)를
 import하기 때문에, 캐시 함수만 쓰려 해도 그 의존이 따라온다. 여기서는
 캐시 관리(load/save/dedup)만 떼어냈다.
 """
@@ -15,7 +15,7 @@ import sys as _sys
 from pathlib import Path as _Path
 
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
-from connectors.blog_accounts import get_account
+from core.blog_accounts import get_account
 
 
 def _cache_path(blog_id: str | None = None) -> _Path:

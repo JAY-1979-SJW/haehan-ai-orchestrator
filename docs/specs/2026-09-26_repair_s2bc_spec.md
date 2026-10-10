@@ -17,7 +17,7 @@ allowed_deps: L1→{L1} / L2→{1,2,3,7} / L3→{1,3} / L4→{1,2,3,4,7} / L5→
 |---|---|---|---|---|---|
 | C1 | site_engine/validators → workflow_runner | validators.py:13 `from ...workflow_runner import WorkflowRunPlan`. 쓰임 = :107 타입 주석 1곳뿐(`from __future__ annotations` 있음, 런타임 사용 0) | `if TYPE_CHECKING:` 안으로 이동(1줄 이동+import 1줄). **동시에 validators·action_planner 를 L2 로 라벨**(C1 해소 + 아래 A-3 의 planner→gate L1→L2 해소) | scanner 가 TYPE_CHECKING import 도 엣지로 세면: `WorkflowRunPlan` 대신 Protocol(`definition`,`steps` 속성만) 을 types.py(L1)에 두고 주석만 교체 | scanner 동작은 실측 필요(worktree 에서 build.py 후 확인). 런타임 영향 0 |
 | C2 | local_agent_models → local_agent_registry | models.py:36 `LocalAgent.to_safe()` 안에서 `importlib.import_module("ai_orchestrator.local_agent_registry")` 로 `get_agent_status`/`get_active_task_count` 호출(순환 회피용 late binding) | 의존 주입: models 에 `_registry_hooks` 모듈변수 + `bind_registry(status_fn, active_fn)`; registry 가 import 시점에 `bind_registry(...)` 호출. to_safe 는 hook 사용(미바인딩 시 "unknown"/0 폴백) | to_safe 계산부를 registry_agent 의 `agent_to_safe(rec)` 로 이동 → 호출부 3곳(registry_agent:64, router_registration:172, registration_code_store:712) 교체(더 큼) | 직접 테스트 ai_orchestrator/tests/test_local_agent.py(to_safe), test_local_agent_router_guards.py. 간접 72건. registry 를 안 거치고 models 만 import 하는 경로에서 상태가 폴백값으로 나옴 → 폴백 테스트 필요 |
-| C3·C4 | blog_mixin_write → naver/blog selectors, core/writer | :21 `from scripts.naver.blog.selectors import (...)`(모듈 top-level), :51·:70 함수 안 lazy import `write_post`/`BlogWriter` | **selectors.py → L1 라벨**(pure 상수, out 0, in = mixin(L4)+writer(L5) → C3 해소, 코드 0). writer 는 L5 유지(out=naver/auth·tag_suggester L5 라 L4 불가): mixin 에 `set_blog_writer_provider(write_post, BlogWriter)` 훅 추가, 부팅 시 L5 쪽(예: scripts/naver/blog/core/__init__ 아닌 local_agent 조립 지점)에서 주입 | blog_mixin_write+blog_mixin(집계) 를 L5 로 라벨하고 상위 조립을 L5/L6 으로 — 상위 importer 가 L4 라 신규 위반 유발(비추) | 직접 테스트: tests/test_module_separation_gate.py(mixin 참조), 간접 114건. 주입 누락 시 blog_write_post 가 실패 → 훅 미주입 예외를 명시 메시지로 |
+| C3·C4 | blog_mixin_write → naver/blog selectors, core/writer | :21 `from scripts.naver.blog.page_selectors import (...)`(모듈 top-level), :51·:70 함수 안 lazy import `write_post`/`BlogWriter` | **selectors.py → L1 라벨**(pure 상수, out 0, in = mixin(L4)+writer(L5) → C3 해소, 코드 0). writer 는 L5 유지(out=naver/auth·tag_suggester L5 라 L4 불가): mixin 에 `set_blog_writer_provider(write_post, BlogWriter)` 훅 추가, 부팅 시 L5 쪽(예: scripts/naver/blog/core/__init__ 아닌 local_agent 조립 지점)에서 주입 | blog_mixin_write+blog_mixin(집계) 를 L5 로 라벨하고 상위 조립을 L5/L6 으로 — 상위 importer 가 L4 라 신규 위반 유발(비추) | 직접 테스트: tests/test_module_separation_gate.py(mixin 참조), 간접 114건. 주입 누락 시 blog_write_post 가 실패 → 훅 미주입 예외를 명시 메시지로 |
 | C5 | cdp_client → gabia_login_watch | cdp_client.py:582 CLI 분기 `gabia login-watch` 안 lazy import. 사용처 = 이 CLI 한 곳뿐(gabia_login_watch.py 는 자체 argparse `__main__` 보유) | **gabia_login_watch.py → L4 라벨**(out 2 모두 L4 이하, in=cdp_client L4 뿐 → 신규 위반 0, 코드 0) | cdp_client 를 L5 라벨(CLI 디스패처, in=L5 1개) 또는 분기 제거 후 도움말에 `python scripts/gabia_login_watch.py` 안내 | 직접 테스트 tests/test_eum_action_prepare.py, test_eum_router_work.py(둘 다 cdp_client 간접). CLI 문서 문구 유지 |
 | C6 | gonobi/db → gonobi/classifier | db.py:144 `reclassify_untagged()` 안 lazy `from .classifier import classify_post`. 호출자 = ai_orchestrator/connectors/gonobi_router.py:124 하나 | **classifier.py → L1 라벨**(순수 키워드 규칙, out 0, in = db L7 + 라우터 L6 → 신규 위반 0, 코드 0) | `reclassify_untagged(conn, limit, classify=None)` 로 분류 함수 주입 후 router 가 넘김(시그니처 확장) | 직접 테스트 없음(gonobi 전용 테스트 미발견) → 라벨 방식이 안전. 간접 34건 |
 
@@ -51,7 +51,7 @@ C 를 라벨로 푸는 게 정당한가: C3(selectors)·C5(gabia_login_watch)·C
 2. local_agent_models → registry (C2, 코드 주입)
 3. validators → workflow_runner (C1, TYPE_CHECKING)
 4. site_access(L4) → site_registry(L5) — 결정 필요(아래 D1)
-5. scripts/local_agent.py(L4) → smartstore form_runner(L6) — 결정 필요(D2)
+5. core/agent_runtime/runtime/local_agent.py(L4) → smartstore form_runner(L6) — 결정 필요(D2)
 
 삭제 후보(**삭제하지 않음, 목록만**): scripts/_tmp_full_html.py, _tmp_html_consts2.py, _tmp_master.py, scripts/temp_oauth_revoke.py(s2a 에서 L6 선언됨), 참고: scripts/execution_gate.py(in 0·out 0, 사용처 없음 — 사용 여부 별도 확인).
 
@@ -78,6 +78,6 @@ C 를 라벨로 푸는 게 정당한가: C3(selectors)·C5(gabia_login_watch)·C
 
 ## 사용자 결정 필요
 - D1: site_access(L4)→site_registry(L5). 선택: (a) site_access 를 L5 로(in: L4 site_crawler 1 신규) (b) site_registry 의 auth 호출을 지연 주입으로 바꿔 L1 유지(코드) — 추천 (a)+site_crawler L5.
-- D2: scripts/local_agent.py(L4)→form_runner(L6) (스마트스토어 로컬 에이전트 진입점). 선택: local_agent.py 를 L6(in: L4 login_session 1·L5 다수 신규 위반 가능) vs form_runner 호출을 주입. 별도 조사 필요 → 이번 범위 밖 권장.
+- D2: core/agent_runtime/runtime/local_agent.py(L4)→form_runner(L6) (스마트스토어 로컬 에이전트 진입점). 선택: local_agent.py 를 L6(in: L4 login_session 1·L5 다수 신규 위반 가능) vs form_runner 호출을 주입. 별도 조사 필요 → 이번 범위 밖 권장.
 - D3: C5 를 gabia_login_watch L4 라벨(추천) vs cdp_client L5 vs 분기 삭제.
 - D4: _tmp_* 3개·temp_oauth_revoke 삭제 승인(`[allow-delete]`, 태그·백업 후).

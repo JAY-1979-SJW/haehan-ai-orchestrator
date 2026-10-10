@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
-from scripts.gate import require_side_effect
+from scripts.common.gate import check as gate_check
+from scripts.common.gate import require_side_effect
 from scripts.site_engine.execution_gate import (
     ExecutionGateInput,
     ExecutionGateResult,
     evaluate_execution_gate,
 )
-from scripts.site_engine.types import SiteCapability
+from scripts.site_engine.site_types import SiteCapability
 
 
 def check_read() -> None:

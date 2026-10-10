@@ -106,4 +106,4 @@ HaehanAI-Desktop.exe
 - `git stash@{0}` (pre-whoami-route-session-leftover)
 - `dist/HaehanAI-Desktop-20260521.zip` (이전 패키지 보존)
 
-CDP 운영 인프라(`scripts/cdp_daemon.py`, `scripts/cdp_client.py popup-monitor`, `scripts/chrome_ui_monitor.py`, `chrome.exe --remote-debugging-port=9222`) 는 본 baseline 작업 범위 밖이며 종료/조작 금지.
+CDP 운영 인프라(`scripts/browser/cdp/cdp_daemon.py`, `scripts/entry/cdp_cli.py popup-monitor`, `scripts/chrome_ui_monitor.py`, `chrome.exe --remote-debugging-port=9222`) 는 본 baseline 작업 범위 밖이며 종료/조작 금지.

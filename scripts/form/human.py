@@ -1,4 +1,4 @@
-"""휴먼 행동 강화 — scripts.human_input 확장.
+"""휴먼 행동 강화 — scripts.browser.page.human_input 확장.
 
 추가 동작 (사람과 동일):
   - scroll_into_view + 짧은 응시 시간
@@ -8,7 +8,7 @@
   - 가끔 backspace + 재입력 (오타 시뮬레이션, 옵션)
   - tab 또는 click으로 다음 필드 이동
 
-scripts.human_input.safe_human_input 은 그대로 유지 (단순/안정적 진입점).
+scripts.browser.page.human_input.safe_human_input 은 그대로 유지 (단순/안정적 진입점).
 여기는 회원가입처럼 더 자연스러워야 할 때 사용.
 """
 
@@ -19,8 +19,8 @@ import random
 import time
 
 from scripts.form.events import wait_field_ready, wait_value_settled
-from scripts.human_input import safe_human_input as _safe_basic  # noqa: F401
-from scripts.logger import get_logger
+from scripts.browser.page.human_input import safe_human_input as _safe_basic  # noqa: F401
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 

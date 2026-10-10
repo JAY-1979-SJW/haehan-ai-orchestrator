@@ -21,7 +21,7 @@
 | Local Agent / Browser Execution | L9 | agent/, local_agent/, ai_orchestrator/local_agent/ | 사용자 PC 실행 필요 작업만. 서버 사이드 금지. |
 | Repository / Storage | L10 | ai_orchestrator/storage/, storage/ | 저장소 접근만. 업무 로직 없음. |
 | Audit / Report / Evidence | L11 | docs/reports/, data/audit/, data/logs/ | 증거·결과 기록만. 실행 없음. |
-| Test / Gate | L12 | tests/, scripts/ops/codebase_layer_audit.py | 구조 위반 차단. |
+| Test / Gate | L12 | tests/, tools/repo_gates/codebase_layer_audit.py | 구조 위반 차단. |
 
 ---
 

@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from ai_orchestrator.local_agent.task_client import poll_and_run_once
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     STATUS_BLOCKED,
     STATUS_COMPLETED,
 )
 from ai_orchestrator.server.local_agent_task_api import create_local_browser_task
 from ai_orchestrator.server.task_queue_schema import clear_store
+from core.agent_runtime.runtime.task_client import poll_and_run_once
 
 
 def _dummy_runner_ok(task):
-    from ai_orchestrator.local_agent.task_protocol import STATUS_COMPLETED, build_result
+    from ai_orchestrator.contracts.local_task_protocol import STATUS_COMPLETED, build_result
 
     return build_result(
         task_id=task["task_id"],

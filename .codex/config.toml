@@ -2,9 +2,9 @@
 command = "python"
 args = [
     "-m",
-    "ai_orchestrator.mcp_server",
+    "ai_orchestrator.server.mcp_server",
 ]
 
 [mcp_servers.pc-inventory]
 command = "python"
-args = ["scripts/local/pc_inventory_mcp.py"]
+args = ["tools/pc_inventory_mcp.py"]

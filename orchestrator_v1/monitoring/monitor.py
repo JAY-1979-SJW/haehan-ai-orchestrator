@@ -121,7 +121,7 @@ def _parse_ops(line: str) -> dict | None:
 def _parse_audit(line: str) -> dict | None:
     try:
         return json.loads(line)
-    except json.JSONDecodeError, ValueError:
+    except (json.JSONDecodeError, ValueError):
         return None
 
 

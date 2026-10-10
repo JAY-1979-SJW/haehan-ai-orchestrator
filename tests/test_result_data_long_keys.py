@@ -1,6 +1,6 @@
 """서버 결과 필터: result_full 만 긴 문자열을 허용하고 나머지 문자열은 기존처럼 500자로 자른다."""
 
-from ai_orchestrator.local_agent_redaction import _RESULT_DATA_LONG_KEYS, _strip_result_data
+from ai_orchestrator.agent_hub.redaction import _RESULT_DATA_LONG_KEYS, _strip_result_data
 
 
 def test_result_full_passes_long_but_others_stay_500():

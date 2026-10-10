@@ -22,7 +22,7 @@
 |---|---|
 | 오픈클로(OpenClaw) 비교 | CDP 기반이지만 사이트별 코드 없이 동작하는 이유는 **접근성 트리(AXTree) 스냅샷 → ref 기반 act** 패턴 때문. 이 저장소의 현재 자동화(`scripts/naver/*` 등)는 사이트별 CSS 셀렉터 하드코딩이라 이 패턴이 없음 — 이게 실제 기술 격차 |
 | MCP 트리거의 구조적 한계 | MCP 공식 스펙(2026-07-28 개정)상 서버(앱)가 유휴 상태의 클라이언트(Claude)를 능동적으로 깨우는 프리미티브는 없음(sampling조차 deprecated). "버튼→즉시 에이전트 작업"은 MCP 밖의 별도 경로(WS 큐 + 헤드리스 `claude -p` 실행)로 구현 |
-| 재사용 가능한 기존 인프라 | 드라이런에서는 신규 `scripts/claude_runner_agent.py`를 상정했으나, 실제로는 **기존 `local_agent/agent.py` + `local_agent/actions.py` 액션 레지스트리**가 이미 이 용도에 정확히 맞는 인프라였음(§5.1 "드라이런 대비 변경" 참고) — 신규 스크립트도, 신규 REST 엔드포인트도 필요 없었음 |
+| 재사용 가능한 기존 인프라 | 드라이런에서는 신규 `scripts/claude_runner_agent.py`를 상정했으나, 실제로는 **기존 `core/agent_runtime/agent.py` + `local_agent/actions.py` 액션 레지스트리**가 이미 이 용도에 정확히 맞는 인프라였음(§5.1 "드라이런 대비 변경" 참고) — 신규 스크립트도, 신규 REST 엔드포인트도 필요 없었음 |
 | 구현 중 실측으로 발견·수정한 버그 2건 | (1) Electron webview용 CDP 세션의 `detach()`가 공유 websocket을 진짜로 닫아버림(§5.4), (2) 헤드리스 `claude -p`의 `--allowedTools`가 뒤따르는 토큰을 계속 삼키는 greedy 옵션이라 `--` 구분자 없이 prompt를 이어 붙이면 "prompt 없음" 오류(§5.1) — 둘 다 실행 기반 검증(ERR-04)으로만 발견 가능했던 것들 |
 
 ## 1. 요구사항
@@ -79,14 +79,14 @@
 
 | 자산 | 역할 | 처리 |
 |---|---|---|
-| `ai_orchestrator/local_agent/browser/cdp.py` (`open_cdp_session`/`CDPSession.new_tab`) | 사용자 Chrome에 Playwright로 CDP 연결, 새 탭 관리 | 그대로 재사용 — 신규 계층의 진입점 |
-| `ai_orchestrator/local_agent_registry_task_queue.py` / `local_agent_registry_task_lifecycle.py` | 작업 큐 상태전이(`queued→delivered→running→completed/failed`), 이미 구현·테스트됨 | 그대로 재사용 — 버튼 트리거의 큐로 사용 |
-| **`local_agent/agent.py` + `local_agent/actions.py`**(드라이런 대비 변경 — 아래 §5.1 참고) | device_token 인증 + 포맬한 액션 레지스트리로 이미 `/api/v1/local-agents/ws`에 접속하는 상시 클라이언트 | **신규 스크립트 대신 이걸 그대로 재사용.** `run_claude_agent` 액션 1개만 추가 |
+| `scripts/browser/agent/cdp.py` (`open_cdp_session`/`CDPSession.new_tab`) | 사용자 Chrome에 Playwright로 CDP 연결, 새 탭 관리 | 그대로 재사용 — 신규 계층의 진입점 |
+| `ai_orchestrator/agent_hub/registry/task_queue.py` / `local_agent_registry_task_lifecycle.py` | 작업 큐 상태전이(`queued→delivered→running→completed/failed`), 이미 구현·테스트됨 | 그대로 재사용 — 버튼 트리거의 큐로 사용 |
+| **`core/agent_runtime/agent.py` + `local_agent/actions.py`**(드라이런 대비 변경 — 아래 §5.1 참고) | device_token 인증 + 포맬한 액션 레지스트리로 이미 `/api/v1/local-agents/ws`에 접속하는 상시 클라이언트 | **신규 스크립트 대신 이걸 그대로 재사용.** `run_claude_agent` 액션 1개만 추가 |
 | `POST /api/v1/local-agents/{agent_id}/tasks`(기존, 신규 아님 — 드라이런에서는 신규로 오판) | 특정 에이전트에 작업 적재 | 그대로 재사용 — `action: "run_claude_agent"`로 호출 |
-| `ai_orchestrator/mcp_server.py`의 `list_api_endpoints`/`call_api` | 앱 API 전체를 MCP 도구로 범용 노출하는 기존 패턴 | 패턴 재사용 — `snapshot_page`/`act_on_page`/`navigate_page` 3종 추가 |
+| `ai_orchestrator/server/mcp_server.py`의 `list_api_endpoints`/`call_api` | 앱 API 전체를 MCP 도구로 범용 노출하는 기존 패턴 | 패턴 재사용 — `snapshot_page`/`act_on_page`/`navigate_page` 3종 추가 |
 | `gates/approval.py` + `services/web_task_approval_service.py` | 쓰기 작업(발행/발송/삭제 등) 승인 플로우 | 그대로 유지 — 무인 파이프라인이어도 승인 없이 우회 금지 |
 | Playwright(`page.goto`/`page.keyboard`/`page.mouse`/`page.screenshot`) | 이미 사이트 모듈 20개 이상이 쓰는 브라우저 제어 기반 | 그대로 재사용(웹사이트 대상). Electron webview 대상은 §5.4의 raw CDP 어댑터가 같은 인터페이스를 흉내 냄 |
-| `scripts/ops/capability_check.py` | "이 도메인에 기존 구현이 있는가" 확인(CLAUDE.md 필수 절차) | 그대로 재사용 — 기존 사이트 모듈/범용 계층 분기점으로 그대로 씀 |
+| `tools/hooks/capability_check.py` | "이 도메인에 기존 구현이 있는가" 확인(CLAUDE.md 필수 절차) | 그대로 재사용 — 기존 사이트 모듈/범용 계층 분기점으로 그대로 씀 |
 
 **명시적으로 확장하지 않은 것**: `scripts/cdp_helper.py`(및 `apps/marketing-standalone/connectors/cdp_helper.py`
 중복본) — raw-websocket 레거시 경로. 이 두 파일의 중복 자체(DUP-02 조사에서 발견)는 이 기준서와 별개의
@@ -101,18 +101,18 @@
         ▼
 [작업 큐] ── local_agent_registry_task_queue.py (queued)
         │ 3중 게이트 통과 필요(실기로 발견): ACTION_RISK(local_agent_risk_policy.py) +
-        │ AUTO_EXECUTE_VIA_AGENT(ai_orchestrator/local_agent_actions.py) +
+        │ AUTO_EXECUTE_VIA_AGENT(ai_orchestrator/contracts/local_agent_actions.py) +
         │ _ACTIONS 레지스트리(local_agent/actions.py) — 셋 중 하나라도 빠지면
         │ UNKNOWN_ACTION 또는 ACTION_NOT_AUTO_EXECUTABLE로 즉시 실패
         ▼ WS 푸시 (local_agent_router_ws.py 채널)
-[local_agent/agent.py]  (기존 상시 클라이언트, 신규 스크립트 아님)
+[core/agent_runtime/agent.py]  (기존 상시 클라이언트, 신규 스크립트 아님)
         │ action_run_claude_agent(params) 실행 → delivered→running
         ▼
 [claude -p --mcp-config .mcp.json --output-format json --max-budget-usd N
           [--allowedTools "mcp__haehan-orchestrator__snapshot_page,..."] -- "<prompt>"]
         │ Claude Code가 MCP 클라이언트로 haehan-orchestrator에 접속
         ▼
-[ai_orchestrator/mcp_server.py]
+[ai_orchestrator/server/mcp_server.py]
         ├─ 기존 도구 / list_api_endpoints / call_api
         └─ snapshot_page / act_on_page / navigate_page (target: "website" | "app")
                 │                                              │
@@ -133,7 +133,7 @@
 
 **드라이런 대비 변경**: 당초 `scripts/claude_runner_agent.py`(신규 스크립트)와
 `POST /api/v1/agent-tasks`(신규 라우터)를 상정했으나, 구현 착수 시 더 깊이 조사한 결과
-`local_agent/agent.py` + `local_agent/actions.py`가 이미 device_token 인증·포맬한 액션 레지스트리로
+`core/agent_runtime/agent.py` + `local_agent/actions.py`가 이미 device_token 인증·포맬한 액션 레지스트리로
 `/api/v1/local-agents/ws`에 접속하고 있었고, `POST /api/v1/local-agents/{agent_id}/tasks`도 이미
 존재했다. 신규 스크립트도 신규 REST 엔드포인트도 만들지 않고 **액션 1개(`run_claude_agent`)만
 추가**하는 것으로 끝났다 — 최초 계획 대비 더 단순해진 정정 사례.
@@ -153,12 +153,12 @@
   골라 넣어야 한다. `--dangerously-skip-permissions`(전체 우회)는 이 프로젝트의 승인 원칙에 맞지
   않아 채택하지 않음.
 - **3중 게이트**(전부 있어야 작업이 실제로 실행됨, 실기 테스트로 하나씩 발견):
-  1. `ai_orchestrator/local_agent_risk_policy.py::ACTION_RISK["run_claude_agent"] = "medium"` —
+  1. `ai_orchestrator/agent_hub/policy/risk_policy.py::ACTION_RISK["run_claude_agent"] = "medium"` —
      없으면 `enqueue_task()`가 `UnknownActionError`
-  2. `ai_orchestrator/local_agent_actions.py::AUTO_EXECUTE_VIA_AGENT`에 `"run_claude_agent"` 포함 —
+  2. `ai_orchestrator/contracts/local_agent_actions.py::AUTO_EXECUTE_VIA_AGENT`에 `"run_claude_agent"` 포함 —
      없으면 `ACTION_NOT_AUTO_EXECUTABLE`로 실패
   3. `local_agent/actions.py::_ACTIONS["run_claude_agent"]` — 실제 실행기 매핑
-- **종단 실측 검증**(모킹 없음): 작업 큐 적재 → WS 전달 → `local_agent/agent.py` 실행 →
+- **종단 실측 검증**(모킹 없음): 작업 큐 적재 → WS 전달 → `core/agent_runtime/agent.py` 실행 →
   `claude -p` 서브프로세스 → 결과 보고까지 실제 인프라로 확인. 첫 테스트("숫자 1만 답해")는
   `allowed_tools` 없이 15초 내 `"1"` 반환. 이어서 `allowed_tools=["mcp__haehan-orchestrator__snapshot_page"]`로
   `target=app` snapshot_page를 실제 호출해 `permission_denials: []`, `result: "40개"`(Electron
@@ -166,7 +166,7 @@
 - 회귀 테스트: `tests/test_local_agent_actions_run_claude_agent.py`(5개, `--allowedTools`/`--`
   구성 자체를 subprocess 모킹으로 검사 — 그리디 옵션 버그 재발 방지).
 
-### 5.2 범용 CDP 액션 계층: `ai_orchestrator/local_agent/browser/universal_actions.py`
+### 5.2 범용 CDP 액션 계층: `scripts/browser/agent/universal_actions.py`
 
 드라이런 설계대로 구현됨. `cdp.py`의 형제 모듈(같은 L4 Browser Engine 계층).
 
@@ -190,7 +190,7 @@
 - 단위 테스트: `tests/test_local_agent_browser_universal_actions.py`(10개, FakeCDPSession 등으로
   필터링/클릭 좌표 계산/에러 케이스까지 커버).
 
-### 5.3 MCP 신규 도구 3종 (`ai_orchestrator/mcp_server.py`)
+### 5.3 MCP 신규 도구 3종 (`ai_orchestrator/server/mcp_server.py`)
 
 `snapshot_page` / `act_on_page` / `navigate_page` — `list_api_endpoints`/`call_api` 바로 옆에 추가.
 
@@ -209,9 +209,9 @@
 
 - `admin-web/electron/main.js`: `app.whenReady()` 이전에
   `app.commandLine.appendSwitch("remote-debugging-port", "9333")` 추가. 사용자 Chrome이 쓰는
-  9222(§5.2, `scripts/local_agent/start_chrome_with_cdp.py`)와 겹치지 않게 별도 포트 사용 —
+  9222(§5.2, `scripts/browser/cdp/start_chrome_with_cdp.py`)와 겹치지 않게 별도 포트 사용 —
   "웹사이트 자동화"와 "앱 자체 자동화"를 완전히 분리.
-- `ai_orchestrator/local_agent/browser/electron_target.py`(신규):
+- `scripts/browser/agent/electron_target.py`(신규):
   - `list_electron_targets(port)` — `GET http://127.0.0.1:9333/json/list`
   - `_find_target()` — `type == "webview"`(admin-web 콘텐츠) 우선, 없으면 `type == "page"`로 폴백
   - `_RawCDPSession` — `websocket.create_connection(..., enable_multithread=True)`(공식 문서 확인,
@@ -244,7 +244,7 @@
   `services/web_task_approval_service.py`(텔레그램 승인)를 그대로 거친다 — 이 저장소 CLAUDE.md의
   "외부 공개 발행/메일 전송/결제/삭제는 매번 재확인" 규칙을 무인 실행이라고 건너뛰지 않는다.
   헤드리스 Claude 실행은 "요청 생성"까지만 자동, 최종 확정은 지금처럼 사람이 승인.
-- `run_claude_agent`은 기존 device_token 인증(`local_agent/agent.py`) 재사용 — 신규 인증 경로 없음.
+- `run_claude_agent`은 기존 device_token 인증(`core/agent_runtime/agent.py`) 재사용 — 신규 인증 경로 없음.
 - MCP 도구 허용은 `allowed_tools` 화이트리스트 방식(§5.1) — `--dangerously-skip-permissions` 같은
   전체 우회는 쓰지 않는다. 이 액션 자체는 작업 큐의 `risk_level=medium` 게이트를 통과해야 실행되고,
   실제 쓰기 작업(발행/삭제 등)은 그 안에서 다시 §6 첫 항목의 승인 플로우를 거친다 — 이중 게이트.
@@ -267,7 +267,7 @@
 열려 있어야 하고 유휴 폴링 비용이 계속 든다는 점에서 "버튼 누르면"이라는 요구와 거리가 있다. (c)는
 검증된 인프라(local_agent WS 큐/상태전이/device_token)를 100% 재사용했고, 실제 구현해보니 드라이런
 예상(§7 "구현 난이도: 중간(새 프로세스 1개)")보다도 더 단순하게 끝났다 — 새 프로세스조차 안 만들고
-기존 `local_agent/agent.py`에 액션 1개만 얹었다.
+기존 `core/agent_runtime/agent.py`에 액션 1개만 얹었다.
 
 ## 8. 실행 결과 (드라이런 → 실측 검증으로 갱신)
 
@@ -275,7 +275,7 @@
   텍스트 트리 반환 → Claude가 텍스트만 보고 ref로 클릭/입력 → 실제 사이트 반응 확인.
 - 트리거: 드라이런에서 예상한 `claude_runner_agent.py`는 만들지 않음(§5.1). 대신 작업 큐에
   `{"action": "run_claude_agent", "params": {"prompt": "...", "allowed_tools": [...]}}` 적재 →
-  `local_agent/agent.py`가 수신 → `claude -p` 실행 → stdout JSON 파싱 → `completed`로 상태 갱신,
+  `core/agent_runtime/agent.py`가 수신 → `claude -p` 실행 → stdout JSON 파싱 → `completed`로 상태 갱신,
   실측 그대로 확인.
 - 기존 `scripts/naver/*` 사이트 모듈은 이번 구현으로 전혀 수정되지 않음 — `capability_check.py`가
   도메인을 인식하면 지금처럼 그 모듈이 우선 실행됨(변경 없음, 재확인만 함).
@@ -318,13 +318,13 @@
      (b) `scripts/web_connector.py`의 `_connect_browser()`가 `connect_over_cdp()` 실패 시
      Playwright 인스턴스를 정리 안 해 전용 브라우저 스레드가 영구 오염되는 버그 — 별도 커밋으로
      이미 수정(defect_index #91).
-   - **남은 것**: `python -m local_agent.agent --run`을 사람이 별도로 기동해둬야 하며(Electron이
-     자동 스폰하는 건 별개의 구 스마트스토어 에이전트, `scripts/local_agent.py`), FastAPI 서버가
+   - **남은 것**: `python -m core.agent_runtime.agent --run`을 사람이 별도로 기동해둬야 하며(Electron이
+     자동 스폰하는 건 별개의 구 스마트스토어 에이전트, `core/agent_runtime/runtime/local_agent.py`), FastAPI 서버가
      재시작되면 인메모리 레지스트리가 초기화돼 재등록(`--register-with-code`)이 필요함 — 상시
      자동 기동·영속화는 다음 세션 후보로 남김(§10에 신규 항목 4로 추가).
-4. ~~로컬 에이전트(`local_agent/agent.py --run`)를 Electron 앱이 자동 스폰하지 않음~~
+4. ~~로컬 에이전트(`core/agent_runtime/agent.py --run`)를 Electron 앱이 자동 스폰하지 않음~~
    **2026-09-29 완료.** 사용자 요청("자동으로 연결이 되게 해야 하고")으로 착수·완료:
-   - **서버 쪽 영속화**: `ai_orchestrator/local_agent_registry_common.py`에
+   - **서버 쪽 영속화**: `ai_orchestrator/agent_hub/registry/common.py`에
      `_save_agents_to_disk()`/`_load_agents_from_disk()` 추가 — 등록 정체성(agent_id/
      token_hash 등, device_token 원문 제외)을 `data/local_agent_registry_state.json`에
      저장. FastAPI 프로세스가 재시작돼도(이 세션에서 여러 번 발생) 인메모리 레지스트리가
@@ -333,15 +333,15 @@
      tasks()`가 이미 `_lock`을 쥔 채 호출하고 있어 그대로 락을 추가하면 교착이 났을 것(비
      재진입 `threading.Lock`) — 함수 자체가 짧게 락을 잡아 스냅샷만 뜨고 파일 I/O는 락 밖에서
      수행하도록 재설계, 호출부도 락 블록 밖으로 이동.
-   - **클라이언트 쪽 자동 등록**: `local_agent/agent.py`에 `--auto-connect` 플래그 추가 —
+   - **클라이언트 쪽 자동 등록**: `core/agent_runtime/agent.py`에 `--auto-connect` 플래그 추가 —
      미등록(keyring에 device_token 없음)이면 `POST /api/v1/local-agents/registration-codes`를
-     인증 없이 호출해(AUTH_ENABLED=False 로컬 개발 서버 전제, `ai_orchestrator/gates/auth.py`
+     인증 없이 호출해(AUTH_ENABLED=False 로컬 개발 서버 전제, `tools/gates/auth.py`
      `get_current_user` 확인) 코드를 자동 발급받고 `--register-with-code`로 등록, 이미
      등록돼 있으면 바로 `--run`과 동일하게 연결. 운영(AUTH_ENABLED=True) 서버에서는 자동
      발급이 401로 실패하고 안내 메시지만 출력 — 안전하게 수동 등록으로 폴백.
    - **Electron 자동 기동**: `admin-web/electron/lib/agent.js`에 `startMcpAgent()`/
      `stopMcpAgent()` 추가 — 기존 `startAgent()`(스마트스토어 전용 구 에이전트,
-     `/smartstore/agent/ws`)와 완전히 별개 프로세스로 `local_agent.agent --auto-connect`
+     `/smartstore/agent/ws`)와 완전히 별개 프로세스로 `core.agent_runtime.agent --auto-connect`
      (`/local-agents/ws`)를 `HAEHAN_AGENT_WS_ENABLED=true`로 스폰. 패키징 빌드는 아직
      미지원(별도 exe 번들 파이프라인 필요 — 개발 모드에서만 자동 기동, 로그로 명시).
    - **실측 검증**: (1) 격리된 config 경로(`HAEHAN_AGENT_DESKTOP_CONFIG`)로 "완전 미등록"

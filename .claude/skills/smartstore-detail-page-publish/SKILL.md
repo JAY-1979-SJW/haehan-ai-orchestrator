@@ -27,7 +27,7 @@ from scripts.naver.smartstore.cli.blog_publish_manual import ... # (예시 아�
 (OTP/캡차는 사용자만 처리 가능, CLAUDE.md 로그인 세션 보존 원칙). 매 작업 전:
 
 ```python
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 cdp = CDP(port=9222)
 cdp.navigate("https://sell.smartstore.naver.com/#/home/dashboard", wait=3)
 txt = cdp.js("document.body.innerText")

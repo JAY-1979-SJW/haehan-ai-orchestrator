@@ -17,8 +17,10 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import data_dir
+
 ROOT = Path(__file__).resolve().parents[3]  # repo root (2026-08-14: [4]는 저장소 밖 C:\work 를 가리켰음)
-DB_PATH = ROOT / "data" / "shopping_competitor_v2.db"
+DB_PATH = data_dir() / "shopping_competitor_v2.db"
 
 # ── JS: 네이버쇼핑 상품 카드 추출 ────────────────────────────────────
 # 실측(2026-08-14): 검색결과 페이지는 **가상 스크롤(windowing)** 이라 화면에 보이는

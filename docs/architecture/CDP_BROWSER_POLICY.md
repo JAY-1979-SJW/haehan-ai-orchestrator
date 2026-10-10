@@ -1,9 +1,9 @@
-# CDP 데몬 브라우저 정책 (단일 출처: `scripts/config.py` 의 `CDP_BROWSER_POLICY`)
+# CDP 데몬 브라우저 정책 (단일 출처: `scripts/common/config.py` 의 `CDP_BROWSER_POLICY`)
 
 L12 문서 · 2026-10-05 · 근거 실험과 상세: `docs/specs/2026-10-05_cdp_clean_start_login_retention.md`
 
 9222 데몬 Chrome(프로필 `data/cdp_profile/ai_chrome`)을 **깨끗하게 시작하고 로그인(세션 쿠키)은 유지**하기 위한 정책이다.
-`cdp_daemon.py`·`cdp_force_start.py` 는 이 값만 읽는다(값이 코드에 흩어지지 않는다). 구현은 `scripts/browser_lifecycle.py`(L4).
+`cdp_daemon.py`·`cdp_force_start.py` 는 이 값만 읽는다(값이 코드에 흩어지지 않는다). 구현은 `scripts/browser/session/browser_lifecycle.py`(L4).
 
 | 키 | 값 | 뜻·근거 |
 |---|---|---|
@@ -17,7 +17,7 @@ L12 문서 · 2026-10-05 · 근거 실험과 상세: `docs/specs/2026-10-05_cdp_
 - 세 불리언(`restore_last_session`·`clean_start`·`graceful_stop_first`)은 끄지 않는다 — `browser_lifecycle.validate_policy` 와 `tests/test_browser_lifecycle.py::test_central_policy_is_valid_and_guardrails_are_on` 이 막는다.
 - 실행 인자에 `--restore-last-session=값` 형태를 쓰지 않는다 — `tests/test_chrome_launch_flags.py`.
 - 원격 디버깅 포트는 반드시 별도 `--user-data-dir` 과 함께(Chrome 136+ 는 기본 프로필에서 포트를 무시한다, developer.chrome.com/blog/remote-debugging-port).
-- 데몬 재시작은 `python scripts/cdp_daemon.py restart`(정상 종료 경로)로만 한다. 프로세스 강제 종료·`taskkill /F`·전원 차단은 로그인을 잃는다.
+- 데몬 재시작은 `python scripts/browser/cdp/cdp_daemon.py restart`(정상 종료 경로)로만 한다. 프로세스 강제 종료·`taskkill /F`·전원 차단은 로그인을 잃는다.
 - 로그인 여부는 쿠키 **이름 존재 여부(참/거짓)** 로만 확인한다(NID_AUT/NID_SES, SID/SAPISID). 값은 읽지 않는다.
 
 ## 데몬 브라우저를 건드리는 시험 금지

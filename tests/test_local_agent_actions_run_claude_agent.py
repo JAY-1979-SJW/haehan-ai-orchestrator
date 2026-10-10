@@ -1,4 +1,4 @@
-"""local_agent/actions.py의 action_run_claude_agent 회귀 테스트.
+"""core/agent_runtime/connection/actions.py의 action_run_claude_agent 회귀 테스트.
 
 실기 검증(2026-09-28): --allowedTools 는 공식 --help상 "<tools...>" 로 표기된
 greedy 옵션이라, 구분자 없이 prompt를 바로 이어 붙이면 prompt까지 도구 이름으로
@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from unittest.mock import patch
 
-from local_agent.actions import action_run_claude_agent
+from core.agent_runtime.connection.actions import action_run_claude_agent
 
 
 class _FakeCompletedProcess:
@@ -29,7 +29,7 @@ def _ok_payload(result: str = "1") -> str:
 
 
 def test_missing_prompt_short_circuits_without_subprocess() -> None:
-    with patch("local_agent.actions.subprocess.run") as run:
+    with patch("core.agent_runtime.connection.actions.subprocess.run") as run:
         result = action_run_claude_agent({})
     run.assert_not_called()
     assert result.success is False
@@ -44,7 +44,7 @@ def test_cmd_has_no_allowed_tools_flag_when_not_requested() -> None:
         captured["cmd"] = cmd
         return _FakeCompletedProcess(_ok_payload("1"))
 
-    with patch("local_agent.actions.subprocess.run", side_effect=fake_run):
+    with patch("core.agent_runtime.connection.actions.subprocess.run", side_effect=fake_run):
         result = action_run_claude_agent({"prompt": "숫자 1만 답해"})
 
     assert result.success is True
@@ -64,7 +64,7 @@ def test_cmd_joins_allowed_tools_and_terminates_options_before_prompt() -> None:
         captured["cmd"] = cmd
         return _FakeCompletedProcess(_ok_payload("40"))
 
-    with patch("local_agent.actions.subprocess.run", side_effect=fake_run):
+    with patch("core.agent_runtime.connection.actions.subprocess.run", side_effect=fake_run):
         result = action_run_claude_agent(
             {
                 "prompt": "스냅샷 노드 개수만 답해",
@@ -92,7 +92,7 @@ def test_single_string_allowed_tools_is_normalized_to_list() -> None:
         captured["cmd"] = cmd
         return _FakeCompletedProcess(_ok_payload("1"))
 
-    with patch("local_agent.actions.subprocess.run", side_effect=fake_run):
+    with patch("core.agent_runtime.connection.actions.subprocess.run", side_effect=fake_run):
         action_run_claude_agent({"prompt": "p", "allowed_tools": "mcp__haehan-orchestrator__snapshot_page"})
 
     cmd = captured["cmd"]
@@ -101,7 +101,7 @@ def test_single_string_allowed_tools_is_normalized_to_list() -> None:
 
 
 def test_claude_cli_not_found_returns_error_code() -> None:
-    with patch("local_agent.actions.subprocess.run", side_effect=FileNotFoundError):
+    with patch("core.agent_runtime.connection.actions.subprocess.run", side_effect=FileNotFoundError):
         result = action_run_claude_agent({"prompt": "p"})
     assert result.success is False
     assert result.error_code == "CLAUDE_CLI_NOT_FOUND"
@@ -114,7 +114,7 @@ def test_result_full_is_opt_in_and_default_behavior_unchanged() -> None:
     def fake_run(cmd, **kwargs):
         return _FakeCompletedProcess(_ok_payload(long_text))
 
-    with patch("local_agent.actions.subprocess.run", side_effect=fake_run):
+    with patch("core.agent_runtime.connection.actions.subprocess.run", side_effect=fake_run):
         default = action_run_claude_agent({"prompt": "x"})
         wanted = action_run_claude_agent({"prompt": "x", "result_max_chars": 4000})
         capped = action_run_claude_agent({"prompt": "x", "result_max_chars": 10**9})
@@ -133,7 +133,7 @@ def _capture_cmd(params: dict) -> list[str]:
         captured["cmd"] = cmd
         return _FakeCompletedProcess(_ok_payload("1"))
 
-    with patch("local_agent.actions.subprocess.run", side_effect=fake_run):
+    with patch("core.agent_runtime.connection.actions.subprocess.run", side_effect=fake_run):
         action_run_claude_agent({"prompt": "조사해", **params})
     return captured["cmd"]
 
@@ -174,7 +174,7 @@ def test_stdin_is_devnull_so_claude_does_not_wait_for_input() -> None:
         captured["kwargs"] = kwargs
         return _FakeCompletedProcess(_ok_payload("1"))
 
-    with patch("local_agent.actions.subprocess.run", side_effect=fake_run):
+    with patch("core.agent_runtime.connection.actions.subprocess.run", side_effect=fake_run):
         action_run_claude_agent({"prompt": "숫자 1만 답해"})
 
     assert captured["kwargs"].get("stdin") is subprocess.DEVNULL

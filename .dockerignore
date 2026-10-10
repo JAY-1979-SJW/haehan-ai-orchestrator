@@ -3,7 +3,7 @@ scripts/
 !scripts/
 !scripts/youtube/
 !scripts/youtube/**
-!scripts/local_user_secret_store.py
+!scripts/auth/local_user_secret_store.py
 data/
 tmp/
 local_agent/

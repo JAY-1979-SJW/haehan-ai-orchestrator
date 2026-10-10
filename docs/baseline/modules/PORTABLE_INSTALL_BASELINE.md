@@ -144,8 +144,8 @@ Baseline and gate work may modify:
 docs/baseline/modules/PORTABLE_INSTALL_BASELINE.md
 docs/baseline/MODULE_BASELINE.md
 scripts/ops/audit_portable_install_baseline_contract.py
-scripts/module_quality_gate.py
-scripts/required_quality_gate.py
+tools/quality/module_quality_gate.py
+tools/quality/required_quality_gate.py
 tests/test_portable_install_baseline_contract.py
 tests/test_module_quality_gate.py
 tests/test_required_quality_gate.py
@@ -163,9 +163,9 @@ python -m pytest tests/test_portable_install_baseline_contract.py -q
 Runtime/static verification:
 
 ```text
-python scripts/module_quality_gate.py --module portable_install
-python scripts/module_quality_gate.py --module repo_guard
-python scripts/required_quality_gate.py
+python tools/quality/module_quality_gate.py --module portable_install
+python tools/quality/module_quality_gate.py --module repo_guard
+python tools/quality/required_quality_gate.py
 ```
 
 Actual portable zip creation is separate and requires explicit approval.

@@ -62,7 +62,7 @@
 - local-agent register endpoint가 `require_role("admin", "owner")`로 보호되는지
 - registration-code endpoint와 register-with-code endpoint가 존재하는지
 - `web_open_url_readonly`가 local-agent 자동 실행 목록과 low-risk 정책에 등록되어 있는지
-- `local_agent/websocket_client.py`가 `process_task`를 event loop 밖에서 실행하는지
+- `core/agent_runtime/connection/websocket_client.py`가 `process_task`를 event loop 밖에서 실행하는지
 - live 검증 스크립트가 token 원문을 출력하지 않고 agent id를 masking하는지
 - 금지 명령이 dry-run 스크립트 안에 없는지
 

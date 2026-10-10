@@ -12,15 +12,27 @@ blog/marketing 파이프라인(topics.py/content.py)이 만드는 블로그 글�
 
 from __future__ import annotations
 
-from scripts.logger import get_logger
-from scripts.naver.automation.ai_responder import AIResponder
+from scripts.common.logger import get_logger
+from scripts.naver.automation.integration.ai_responder import AIResponder
 
 _log = get_logger(__name__)
 
 
-def generate_youtube_script(topic: str, angle: str = "") -> dict:
+def _draft(key: str, system: str, prompt: str, max_tokens: int) -> dict:
+    """AIResponder 로 초안 1개 생성 — 실패면 {"ok": False}, 성공이면 {"ok": True, key: 앞뒤 공백 뺀 본문}.
+
+    채널별 generate_* 4개가 같은 호출·결과 포장을 복사해 쓰던 본문을 한 곳으로 모았다(문구·키는 각자 넘김).
+    """
     ai = AIResponder()
-    r = ai._call(
+    r = ai._call(system, prompt, max_tokens=max_tokens)
+    if not r.get("ok"):
+        return {"ok": False}
+    return {"ok": True, key: r["text"].strip()}
+
+
+def generate_youtube_script(topic: str, angle: str = "") -> dict:
+    return _draft(
+        "script",
         "조명·인테리어 전문 유튜브 채널 작가. 실제 시공 경험을 근거로 친절하고 "
         "신뢰감 있게 설명하되 광고 문구는 쓰지 않는다.",
         f"""주제: {topic}
@@ -45,14 +57,11 @@ def generate_youtube_script(topic: str, angle: str = "") -> dict:
 AI 생성 이미지는 보조 자료로만 쓰라고 표시하세요.""",
         max_tokens=3000,
     )
-    if not r.get("ok"):
-        return {"ok": False}
-    return {"ok": True, "script": r["text"].strip()}
 
 
 def generate_shorts_scripts(topic: str, count: int = 3) -> dict:
-    ai = AIResponder()
-    r = ai._call(
+    return _draft(
+        "scripts",
         "조명·인테리어 숏폼 콘텐츠 작가. 15~30초 안에 훅-정보-마무리가 끝나야 한다.",
         f"""주제: {topic}
 이 주제에서 파생되는 서로 다른 앵글의 쇼츠(15~30초) {count}개를 기획하세요.
@@ -66,14 +75,11 @@ def generate_shorts_scripts(topic: str, count: int = 3) -> dict:
 """,
         max_tokens=1500,
     )
-    if not r.get("ok"):
-        return {"ok": False}
-    return {"ok": True, "scripts": r["text"].strip()}
 
 
 def generate_instagram_caption(topic: str, cta_url: str = "https://haehan-ai.kr") -> dict:
-    ai = AIResponder()
-    r = ai._call(
+    return _draft(
+        "caption",
         "인테리어 브랜드 인스타그램 운영자. 감성적이되 과장 광고 문구는 피한다.",
         f"""주제: {topic}
 릴스(15~30초, Before/After 구성)용 캡션을 작성하세요.
@@ -83,9 +89,6 @@ def generate_instagram_caption(topic: str, cta_url: str = "https://haehan-ai.kr"
 - 마지막 줄: 자연스러운 CTA (문의는 {cta_url})""",
         max_tokens=600,
     )
-    if not r.get("ok"):
-        return {"ok": False}
-    return {"ok": True, "caption": r["text"].strip()}
 
 
 def generate_community_answer(question: str, question_context: str = "") -> dict:
@@ -93,8 +96,8 @@ def generate_community_answer(question: str, question_context: str = "") -> dict
 
     자동 게시 금지(기준서 원칙) — 사람이 검토 후 직접 답한다.
     """
-    ai = AIResponder()
-    r = ai._call(
+    return _draft(
+        "answer",
         "조명·인테리어 실무 경험자. 커뮤니티에서 진짜 도움이 되는 답변을 쓴다. "
         "절대 홍보·광고 문구를 넣지 않는다 — 정보 제공이 유일한 목적.",
         f"""질문: {question}
@@ -103,9 +106,6 @@ def generate_community_answer(question: str, question_context: str = "") -> dict
 2~4문단. 마지막에 광고 문구("저희 업체 이용하세요" 등)는 절대 넣지 마세요.""",
         max_tokens=800,
     )
-    if not r.get("ok"):
-        return {"ok": False}
-    return {"ok": True, "answer": r["text"].strip()}
 
 
 def generate_content_package(topic: str, angle: str = "") -> dict:

@@ -18,7 +18,7 @@ sys.path.insert(0, str(REPO))
 
 FIXTURE_PATH = REPO / "tests" / "fixtures" / "local_agent_ws_status_auto_send_20260507.json"
 
-from local_agent.user_present_state_store import (  # noqa: E402
+from core.agent_runtime.user_present.user_present_state_store import (  # noqa: E402
     STATE_BLOCKED,
     STATE_CANCELLED,
     STATE_FAILED,
@@ -26,7 +26,7 @@ from local_agent.user_present_state_store import (  # noqa: E402
     STATE_WAITING_FOR_USER,
     UserPresentStateStore,
 )
-from local_agent.user_present_status_sender import (  # noqa: E402
+from core.agent_runtime.user_present.user_present_status_sender import (  # noqa: E402
     _FORBIDDEN_EVENT_FIELDS,
     _sent_statuses,
     collect_pending_user_present_status_events,
@@ -331,14 +331,14 @@ class TestRunSendOnce(unittest.TestCase):
 class TestSecurityPolicy(unittest.TestCase):
     def test_14_heartbeat_path_coexists(self):
         """_STATUS_SENDER_AVAILABLE import 경로 확인."""
-        from local_agent import websocket_client
+        from core.agent_runtime.connection import websocket_client
 
         self.assertTrue(hasattr(websocket_client, "_STATUS_SENDER_AVAILABLE"))
         self.assertTrue(websocket_client._STATUS_SENDER_AVAILABLE)
 
     def test_15_existing_task_receive_path_unchanged(self):
         """process_user_present_task 기존 경로 여전히 작동."""
-        from local_agent.websocket_client import process_user_present_task
+        from core.agent_runtime.connection.websocket_client import process_user_present_task
 
         msg = {
             "message_type": "USER_PRESENT_TASK",
@@ -363,7 +363,7 @@ class TestSecurityPolicy(unittest.TestCase):
 
     def test_17_general_task_path_unchanged(self):
         """process_task 기존 경로 여전히 작동 (forbidden action)."""
-        from local_agent.websocket_client import process_task
+        from core.agent_runtime.connection.websocket_client import process_task
 
         task = {"task_id": "t-001", "action": "delete_file", "params": {}}
         result = process_task(task)
@@ -371,7 +371,7 @@ class TestSecurityPolicy(unittest.TestCase):
 
     def test_18_no_real_websocket_connection(self):
         """실제 WS 연결 없음 — websockets.connect 호출 없음."""
-        import local_agent.user_present_status_sender as sender
+        import core.agent_runtime.user_present.user_present_status_sender as sender
 
         src = Path(sender.__file__).read_text(encoding="utf-8")
         self.assertNotIn("websockets.connect", src)
@@ -379,7 +379,7 @@ class TestSecurityPolicy(unittest.TestCase):
 
     def test_19_no_browser_execution(self):
         """브라우저 실행 코드 없음."""
-        import local_agent.user_present_status_sender as sender
+        import core.agent_runtime.user_present.user_present_status_sender as sender
 
         src = Path(sender.__file__).read_text(encoding="utf-8")
         forbidden = ["playwright", "execute_click", "execute_type", "browser_worker", "ai_orchestrator.browser_tool.worker"]
@@ -388,7 +388,7 @@ class TestSecurityPolicy(unittest.TestCase):
 
     def test_20_no_click_type_fill_submit(self):
         """click/type/fill/submit 호출 없음."""
-        import local_agent.user_present_status_sender as sender
+        import core.agent_runtime.user_present.user_present_status_sender as sender
 
         src = Path(sender.__file__).read_text(encoding="utf-8")
         for kw in [".click(", ".type(", ".fill(", ".submit("]:
@@ -396,7 +396,7 @@ class TestSecurityPolicy(unittest.TestCase):
 
     def test_21_no_task_executor_browser_worker(self):
         """task_executor/browser_worker 호출 없음."""
-        import local_agent.user_present_status_sender as sender
+        import core.agent_runtime.user_present.user_present_status_sender as sender
 
         src = Path(sender.__file__).read_text(encoding="utf-8")
         for kw in ["task_executor", "browser_worker", "ai_orchestrator.browser_tool.worker"]:
@@ -404,7 +404,7 @@ class TestSecurityPolicy(unittest.TestCase):
 
     def test_22_no_db_write(self):
         """DB write 없음 — sqlite/sqlalchemy 없음."""
-        import local_agent.user_present_status_sender as sender
+        import core.agent_runtime.user_present.user_present_status_sender as sender
 
         src = Path(sender.__file__).read_text(encoding="utf-8")
         for kw in ["sqlite3", "sqlalchemy", ".execute(", ".commit("]:
@@ -412,7 +412,7 @@ class TestSecurityPolicy(unittest.TestCase):
 
     def test_23_no_credential_output(self):
         """registration_code/device_token 출력(print/log) 없음."""
-        import local_agent.user_present_status_sender as sender
+        import core.agent_runtime.user_present.user_present_status_sender as sender
 
         src = Path(sender.__file__).read_text(encoding="utf-8")
         # print/logger 출력 라인에 registration_code 포함 금지

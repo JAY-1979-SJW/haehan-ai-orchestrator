@@ -1,4 +1,4 @@
-from scripts.ops import dry_run_local_agent_cdp_attach as gate
+from tools.verify import dry_run_local_agent_cdp_attach as gate
 
 
 def test_dry_run_local_agent_cdp_attach_passes_static_contract():
@@ -12,7 +12,7 @@ def test_staged_paths_normalizes_out_of_scope_paths():
     staged = gate.staged_paths(
         [
             "M  scripts\\ops\\check_naver_mail.py",
-            " M local_agent\\cdp_attach.py",
+            " M core\\agent_runtime\\browser\\cdp_attach.py",
             "?? tests\\test_local_agent_cdp_attach.py",
         ]
     )

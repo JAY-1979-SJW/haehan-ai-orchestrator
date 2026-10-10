@@ -15,7 +15,7 @@
 
 사용 예:
     from scripts.naver.blog.writer_pro import BlogWriterPro
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     page = get_page()
     pro = BlogWriterPro(page)
@@ -42,13 +42,14 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 from scripts.naver.blog.core.writer import BlogWriter
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[3]
-DRAFT_DIR = ROOT / "data" / "blog_drafts"
+DRAFT_DIR = data_dir() / "blog_drafts"  # ROOT(parents[3])는 저장소 루트가 아니라 scripts/naver 였다 — naver_blog_router 의 DRAFTS_DIR 과 같은 위치로
 
 # ── 템플릿 (intro / outro / CTA) ─────────────────────────────────────────
 INTRO_TEMPLATES = {
@@ -131,7 +132,7 @@ class BlogWriterPro:
 
     def ai_enhance(self, title: str, body: str, keywords: list[str] | None = None) -> dict:
         """AI로 제목 개선안 + 자동 태그 + SEO 점수."""
-        from scripts.naver.blog.seo import BlogSEO
+        from scripts.naver.blog.seo.seo import BlogSEO
 
         seo = BlogSEO(self.page)
         try:
@@ -195,7 +196,7 @@ class BlogWriterPro:
     def prepare_images_with_alt(self, images: list[str], topic: str) -> list[dict]:
         """이미지 경로 + AI ALT 텍스트 매핑."""
         try:
-            from scripts.naver.blog.seo import BlogSEO
+            from scripts.naver.blog.seo.seo import BlogSEO
 
             seo = BlogSEO(self.page)
         except Exception:  # noqa: BLE001 - 네이버 블로그 발행 도우미 - SEO 분석/이미지 alt/예약시간 계산 실패는 기본값으로 폴백, 발행 자체를 우회하지 않음
@@ -219,7 +220,7 @@ class BlogWriterPro:
         schedule_at = None
         if auto_schedule:
             try:
-                from scripts.naver.blog.seo import BlogSEO
+                from scripts.naver.blog.seo.seo import BlogSEO
 
                 bt = BlogSEO(self.page).best_publish_time()
                 today = datetime.now()
@@ -243,7 +244,7 @@ class BlogWriterPro:
         elif schedule_at:
             result = self.writer.schedule_publish(schedule_at)
         else:
-            from scripts.gate import require_approved
+            from scripts.common.gate import require_approved
 
             require_approved("blog_publish", approval, via="blog_pro_smart_publish")
             result = self.writer.publish()

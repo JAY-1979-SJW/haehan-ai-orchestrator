@@ -10,7 +10,7 @@
 - `install_dialog_recorder(page)`: JS 네이티브 alert/confirm/prompt/beforeunload 를 기록하고 안전 기본값으로 처리한다
   (alert 는 수락, 나머지는 취소). 호출자가 명시적으로 설치해야만 동작한다.
 
-기존 `scripts/popup_detector.py`(25곳에서 호출)는 수정하지 않는다.
+기존 `scripts/browser/popup/popup_detector.py`(25곳에서 호출)는 수정하지 않는다.
 """
 
 from __future__ import annotations

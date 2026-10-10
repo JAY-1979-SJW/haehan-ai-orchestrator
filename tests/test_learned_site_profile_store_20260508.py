@@ -2,7 +2,7 @@
 
 import pytest
 
-from ai_orchestrator.local_agent.learned_site_profile_store import (
+from core.agent_runtime.runtime.universal.learned_site_profile_store import (
     clear_all,
     delete_learned_profile,
     get_learned_profile,
@@ -57,7 +57,7 @@ def test_forbidden_key_raises():
     # safe_selector_candidates의 key가 아니라 top-level 저장 금지 key를 검사
     # password_value 같은 forbidden prefix가 있는 key는 _sanitize_entry에서 제거됨
     # validate_entry는 sanitize 후에 실행 — 직접 forbidden key로 entry 생성 시 테스트
-    from ai_orchestrator.local_agent.learned_site_profile_store import _validate_entry
+    from core.agent_runtime.runtime.universal.learned_site_profile_store import _validate_entry
 
     errors = _validate_entry({"password_value": "secret"})
     assert len(errors) > 0

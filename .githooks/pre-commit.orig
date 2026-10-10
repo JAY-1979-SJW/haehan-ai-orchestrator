@@ -1,6 +1,30 @@
 #!/usr/bin/env python
-import subprocess, sys
+import os, subprocess, sys
 from pathlib import Path
+
+# Windows 기본 코드페이지(cp949)에서 em-dash 등 유니코드 문자를 _run_relay 가 그대로
+# sys.stdout.write 하면 UnicodeEncodeError 로 훅 전체가 죽는 문제(2026-10-09, W3 3회+
+# 재발 — commit-msg 훅엔 이미 있던 reconfigure 가 여기엔 없었음). 이 프로세스 자신의
+# stdout/stderr 를 utf-8 로 강제하고, PYTHONUTF8/PYTHONIOENCODING 을 환경에 심어 아래
+# 비캡처(inherit stdio) 자식 프로세스(mp/th/fr/bp/fg/rc 등)에도 같은 효과가 전파되게 한다.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+os.environ.setdefault("PYTHONUTF8", "1")
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+
+
+def _run_relay(name, cmd, **kw):
+    # CREATE_NO_WINDOW + 콘솔 미상속 조합에서 자식 stdout/stderr 가 조용히 사라지는 문제(2026-10-08
+    # W2·W4 "체크리스트 PASS 뒤 무출력 exit 1") 진단용 — 캡처해서 부모 stdout/stderr 로 그대로 relay.
+    kw.pop("capture_output", None)
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", **kw)
+    if proc.stdout:
+        sys.stdout.write(proc.stdout)
+    if proc.stderr:
+        sys.stderr.write(proc.stderr)
+    if proc.returncode != 0:
+        print(f"[{name}] exit={proc.returncode}", file=sys.stderr)
+    return proc
 
 
 def _no_window():
@@ -38,6 +62,35 @@ def _pyexe():
     return [sys.executable]
 
 
+def _diff_cached_batched(files, extra_args=(), batch=200, **kw):
+    # git diff --cached -- <files> 도 같은 WinError 206 위험 — 묶음별 stdout 을
+    # 그대로 이어붙인다(각 묶음은 독립된 diff 구간이라 합쳐도 내용이 그대로 보존됨).
+    out = []
+    for i in range(0, len(files), batch):
+        chunk = files[i:i + batch]
+        _r = subprocess.run(
+            ["git", "diff", "--cached", *extra_args, "--"] + chunk,
+            cwd=str(ROOT), capture_output=True, text=True,
+            encoding="utf-8", errors="replace", **kw,
+        )
+        out.append(_r.stdout)
+    return "\n".join(out)
+
+
+def _run_batched(build_cmd, files, batch=200, **kw):
+    # Windows 명령줄 길이 제한(WinError 206, 2026-10-08 실측: 변경파일 1200개+로
+    # 한 번에 넘기면 CreateProcess 가 죽음) — files 를 batch개씩 나눠 같은 검사를
+    # 그대로 반복 실행. 한 묶음이라도 실패하면 즉시 멈추고 그 결과를 반환한다
+    # (건너뛰기·예외 없음 — 나머지 묶음은 실행되지 않을 뿐 검사를 통과한 게 아니다).
+    last = subprocess.CompletedProcess([], 0)
+    for i in range(0, len(files), batch):
+        chunk = files[i:i + batch]
+        last = subprocess.run(build_cmd(chunk), cwd=str(ROOT), **kw)
+        if last.returncode != 0:
+            return last
+    return last
+
+
 # staged .py 파일 목록
 # encoding 명시: Windows 기본 코드페이지(cp949)가 diff에 섞인 UTF-8 특수문자에서
 # reader 스레드를 죽이는 문제 방지(2026-09-28 실측 발견 — 이 문제로 훅이 크래시했었음).
@@ -65,27 +118,27 @@ if py_files:
         # 1. ruff check (자동 수정). F401 은 자동수정 제외 — 파사드의 재노출 import
         #    (mock.patch 대상·하위 호환 이름)를 '미사용'으로 지워 조용히 깨뜨린다
         #    (defect_index #33, #93, #110 에서 반복 발생).
-        subprocess.run(
-            [*_pyexe(), "-m", "ruff", "check", "--fix", "--unfixable", "F401",
-             "--config", cfg] + fix_files,
-            cwd=str(ROOT), **_no_window(),
+        _run_batched(
+            lambda chunk: [*_pyexe(), "-m", "ruff", "check", "--fix", "--unfixable", "F401",
+                           "--config", cfg] + chunk,
+            fix_files, **_no_window(),
         )
         # 2. ruff format
-        subprocess.run(
-            [*_pyexe(), "-m", "ruff", "format", "--config", cfg] + fix_files,
-            cwd=str(ROOT), **_no_window(),
+        _run_batched(
+            lambda chunk: [*_pyexe(), "-m", "ruff", "format", "--config", cfg] + chunk,
+            fix_files, **_no_window(),
         )
         # ruff 가 수정한 신규 파일을 다시 stage
-        subprocess.run(["git", "add"] + fix_files, cwd=str(ROOT), **_no_window())
+        _run_batched(lambda chunk: ["git", "add"] + chunk, fix_files, **_no_window())
     # 3. 자동수정 안 되는 나머지 위반은 "이번 커밋으로 새로 생긴 것"만 차단한다.
     #    (BLE001 같은 대규모 기존 부채가 있는 파일을 조금만 건드려도 매번 전체가
     #    막히면 사실상 개발이 정지된다 — CLAUDE.md "새 훅은 새로 생긴 오류만
     #    차단" 원칙을 실제로 구현, 2026-09-28)
     gate = ROOT / "scripts" / "ops" / "ruff_new_only_gate.py"
     if gate.exists():
-        gate_result = subprocess.run(
-            [*_pyexe(), str(gate), "--config", cfg] + py_files,
-            cwd=str(ROOT), **_no_window(),
+        gate_result = _run_batched(
+            lambda chunk: [*_pyexe(), str(gate), "--config", cfg] + chunk,
+            py_files, **_no_window(),
         )
         if gate_result.returncode != 0:
             print("[ruff] 이번 변경으로 새로 생긴 위반이 있습니다. 위 내용을 확인하고 재커밋하세요.")
@@ -97,17 +150,13 @@ if py_files:
 # (이 훅 설치 파일 자신은 패턴을 데이터로 가지므로 제외)
 _sg_files = [f for f in py_files if not f.endswith("install_git_hooks.py")]
 if _sg_files:
-    _sdiff = subprocess.run(
-        ["git", "diff", "--cached", "-U0", "--"] + _sg_files,
-        cwd=str(ROOT), capture_output=True, text=True,
-        encoding="utf-8", errors="replace", **_no_window(),
-    )
+    _sdiff_text = _diff_cached_batched(_sg_files, extra_args=["-U0"], **_no_window())
     _sess_pat = (
         "nidlogin.logout", "logout.naver", "clear_cookies", "delete_cookies",
         "deleteallcookies", "cookies.clear", "context.clear_cookies",
     )
     _sess_bad = []
-    for _ln in _sdiff.stdout.splitlines():
+    for _ln in _sdiff_text.splitlines():
         if _ln.startswith("+") and not _ln.startswith("+++"):
             _body = _ln[1:]
             if "session-ok" in _body:
@@ -162,13 +211,9 @@ if _js_staged:
     import re as _re
     _spawn_pat = _re.compile(r"\bspawn\s*\(")
     _hide_pat = _re.compile(r"windowsHide\s*:\s*true")
-    _jsdiff = subprocess.run(
-        ["git", "diff", "--cached", "-U5", "--"] + _js_staged,
-        cwd=str(ROOT), capture_output=True, text=True,
-        encoding="utf-8", errors="replace", **_no_window(),
-    )
+    _jsdiff_text = _diff_cached_batched(_js_staged, extra_args=["-U5"], **_no_window())
     _chunks, _cur = [], []
-    for _ln in _jsdiff.stdout.splitlines():
+    for _ln in _jsdiff_text.splitlines():
         if _ln.startswith("@@"):
             if _cur: _chunks.append("\n".join(_cur))
             _cur = [_ln]
@@ -195,7 +240,7 @@ if _js_staged:
 # 우회: SKELETON_GATE_SKIP_REASON="사유" 환경변수 (감사 로그 기록됨).
 _sg = ROOT / "scripts" / "ops" / "code_map" / "skeleton_gate.py"
 if _sg.exists():
-    _sg_result = subprocess.run([*_pyexe(), str(_sg)], cwd=str(ROOT), **_no_window())
+    _sg_result = _run_relay("skeleton_gate", [*_pyexe(), str(_sg)], cwd=str(ROOT), **_no_window())
     if _sg_result.returncode != 0:
         sys.exit(_sg_result.returncode)
 
@@ -203,14 +248,14 @@ if _sg.exists():
 # audit-kit 를 못 찾으면 건너뛰지만 AUDIT_KIT_REQUIRED=1 이면 커밋을 막는다.
 _ak = ROOT / "scripts" / "ops" / "audit_kit_gate.py"
 if _ak.exists():
-    _ak_result = subprocess.run([*_pyexe(), str(_ak), "--staged"], cwd=str(ROOT), **_no_window())
+    _ak_result = _run_relay("audit_kit_gate", [*_pyexe(), str(_ak), "--staged"], cwd=str(ROOT), **_no_window())
     if _ak_result.returncode != 0:
         sys.exit(_ak_result.returncode)
 
 # ── 이동 사전점검 게이트 (git mv 한 .py 의 남은 경로 로드/직접 실행 참조) ──────
 # alias 한 줄 shim 은 import 만 받는다. 파일 경로 로드·직접 실행·설정/훅 경로 참조가 새 경로로 안 고쳐졌고
 # 옛 경로에 맞는 shim 도 없으면 커밋을 막는다(2026-10-07 hiworks·dashboard 회귀).
-# 해결: python scripts/ops/make_shim.py <옛> <새> 또는 참조를 새 경로로 수정. 우회 옵션 없음.
+# 해결: python tools/devflow/make_shim.py <옛> <새> 또는 참조를 새 경로로 수정. 우회 옵션 없음.
 _mp = ROOT / "scripts" / "ops" / "move_preflight.py"
 if _mp.exists() and any(
     ln.startswith("R") and ln.split("\t")[-1].endswith(".py")
@@ -300,7 +345,7 @@ _r1_staged = [
 if _r1_staged:
     _r1 = ROOT / "scripts" / "ops" / "audit_r1_api_contract_gate.py"
     if _r1.exists():
-        _r1_result = subprocess.run([*_pyexe(), str(_r1)], cwd=str(ROOT), **_no_window())
+        _r1_result = _run_relay("r1_api_contract_gate", [*_pyexe(), str(_r1)], cwd=str(ROOT), **_no_window())
         if _r1_result.returncode != 0:
             sys.exit(_r1_result.returncode)
 
@@ -310,7 +355,9 @@ if _r1_staged:
 # 시험 파일·scripts/archive/·apps/ 는 예외. 우회 옵션 없음(기준선 재생성: build-baseline).
 _dg = ROOT / "scripts" / "ops" / "dup_gate.py"
 if _dg.exists() and py_files:
-    _dg_result = subprocess.run([*_pyexe(), str(_dg), "check", *py_files], cwd=str(ROOT))
+    _dg_result = _run_batched(
+        lambda chunk: [*_pyexe(), str(_dg), "check", *chunk], py_files,
+    )
     if _dg_result.returncode != 0:
         sys.exit(_dg_result.returncode)
 
@@ -318,8 +365,6 @@ if _dg.exists() and py_files:
 from pathlib import Path as _P
 import importlib.util, os
 gate = ROOT / "scripts" / "ops" / "quality" / "quality_gate.py"
-if not gate.exists():
-    gate = ROOT / "scripts" / "quality_gate.py"  # S2-B 이동 전 브랜치(master) 호환 — 둘 다 없으면 아래에서 건너뜀
 if gate.exists():
     # 2026-09-30 수정(defect_index #2): 이 훅이 --allow-existing-code-change 를 항상
     # 넘겨서 existing_code_change_requires_flag 안전장치가 영구 무력화돼 있었다.
@@ -344,7 +389,8 @@ if gate.exists():
     except (subprocess.CalledProcessError, OSError):
         pass  # 가시성 로그 실패는 커밋을 막지 않음
 
-    result = subprocess.run(
+    result = _run_relay(
+        "quality_gate",
         [*_pyexe(), str(gate), "--staged", "--enforce", "--allow-existing-code-change"],
         cwd=str(ROOT), **_no_window(),
     )

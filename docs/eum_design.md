@@ -40,10 +40,10 @@
 사용자
   │
   ▼
-python scripts/cdp_client.py eum <task>
+python scripts/entry/cdp_cli.py eum <task>
   │
   ▼
-scripts/router.py  → dispatch()
+scripts/site_engine/command_router.py  → dispatch()
   │
   ▼
 scripts/eum/router.py  →  run_eum(task, sub, args)
@@ -193,8 +193,8 @@ data/eum_full_site_map.txt    ← 사람이 읽기 쉬운 보고서
 
 **철거 신청 명령**:
 ```bash
-python scripts/cdp_client.py eum demolition           # 조회만
-python scripts/cdp_client.py eum demolition apply     # 신청 (승인 필요)
+python scripts/entry/cdp_cli.py eum demolition           # 조회만
+python scripts/entry/cdp_cli.py eum demolition apply     # 신청 (승인 필요)
 ```
 
 ---
@@ -234,44 +234,44 @@ data/eum_all_devices_complete.json    ← 원본 데이터 (22대)
 
 ```bash
 # 로그인
-python scripts/cdp_client.py eum login
+python scripts/entry/cdp_cli.py eum login
 
 # 전체 사이트 탐색 (최초 1회 또는 구조 변경 시)
-python scripts/cdp_client.py eum explore
+python scripts/entry/cdp_cli.py eum explore
 
 # 단말기 데이터 추출 (주 1회)
-python scripts/cdp_client.py eum extract
+python scripts/entry/cdp_cli.py eum extract
 
 # 업무 대시보드
-python scripts/cdp_client.py eum dashboard
+python scripts/entry/cdp_cli.py eum dashboard
 
 # 운용 모니터링 (통신단절/미사용/준공임박)
-python scripts/cdp_client.py eum monitor
+python scripts/entry/cdp_cli.py eum monitor
 
 # 단말기 이력 조회
-python scripts/cdp_client.py eum history
-python scripts/cdp_client.py eum history <단말기번호>
+python scripts/entry/cdp_cli.py eum history
+python scripts/entry/cdp_cli.py eum history <단말기번호>
 
 # 철거 현황 조회
-python scripts/cdp_client.py eum demolition
+python scripts/entry/cdp_cli.py eum demolition
 
 # 철거 신청 (승인 필요)
-python scripts/cdp_client.py eum demolition apply
+python scripts/entry/cdp_cli.py eum demolition apply
 
 # 신규 현장 발굴
-python scripts/cdp_client.py eum new-sites
+python scripts/entry/cdp_cli.py eum new-sites
 
 # 홍보메일 초안
-python scripts/cdp_client.py eum mail
+python scripts/entry/cdp_cli.py eum mail
 
 # 홍보메일 발송 (승인 필요)
-python scripts/cdp_client.py eum mail send
+python scripts/entry/cdp_cli.py eum mail send
 
 # 전체 파이프라인 자동 실행
-python scripts/cdp_client.py eum task-run
+python scripts/entry/cdp_cli.py eum task-run
 
 # 개발현황 확인
-python scripts/cdp_client.py status
+python scripts/entry/cdp_cli.py status
 ```
 
 ---
@@ -331,23 +331,23 @@ data/
 1. .env에 EUM_ID / EUM_PW 입력
 
 2. CDP 데몬 실행 (브라우저 세션 관리)
-   python scripts/cdp_daemon.py start
+   python scripts/browser/cdp/cdp_daemon.py start
 
 3. EUM 로그인 확인
-   python scripts/cdp_client.py eum login
+   python scripts/entry/cdp_cli.py eum login
 
 4. 전체 사이트 탐색 (구조 파악 — 최초 1회)
-   python scripts/cdp_client.py eum explore
+   python scripts/entry/cdp_cli.py eum explore
    → data/eum_full_site_map.txt 확인
 
 5. 단말기 전체 추출
-   python scripts/cdp_client.py eum extract
+   python scripts/entry/cdp_cli.py eum extract
 
 6. 업무 대시보드 확인
-   python scripts/cdp_client.py eum dashboard
+   python scripts/entry/cdp_cli.py eum dashboard
 
 7. 이후 주 1회 자동 실행
-   python scripts/cdp_client.py eum task-run
+   python scripts/entry/cdp_cli.py eum task-run
 ```
 
 ---

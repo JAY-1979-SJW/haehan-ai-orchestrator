@@ -6,8 +6,8 @@ router 역할: command dispatch, validator 호출, gate 호출, response formatt
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
-from scripts.logger import get_logger
+from scripts.common.gate import check as gate_check
+from scripts.common.logger import get_logger
 
 __status__ = {
     "tasks": {
@@ -78,7 +78,7 @@ def run_g2b(task: str | None, sub: str | None, args: list[str]) -> None:
 
 
 def _cmd_status() -> None:
-    from scripts.g2b.profile import G2B_SITE_PROFILE
+    from scripts.g2b.site_profile import G2B_SITE_PROFILE
 
     result = _build_response(
         command="status",
@@ -115,38 +115,32 @@ def _cmd_gate(args: list[str]) -> None:
     print(json.dumps(response, ensure_ascii=False, indent=2))
 
 
-def _cmd_analysis_draft(args: list[str]) -> None:
+def _print_draft_gate(action: str, command: str, next_step: str, evidence_path: str) -> None:
+    """초안 작성 명령 공용 — action gate 평가 결과를 응답 형식(JSON)으로 출력한다."""
     from scripts.g2b.gates import evaluate_g2b_action_gate
 
-    gate = evaluate_g2b_action_gate("create_bid_analysis_draft")
+    gate = evaluate_g2b_action_gate(action)
     response = _build_response(
-        command="analysis-draft",
+        command=command,
         status="ok",
         **gate,
-        next_step="초안 작성 후 사용자 검토 필요",
-        evidence_policy={"path": "data/g2b/bid_analysis/"},
+        next_step=next_step,
+        evidence_policy={"path": evidence_path},
         report_policy=None,
     )
     import json
 
     print(json.dumps(response, ensure_ascii=False, indent=2))
+
+
+def _cmd_analysis_draft(args: list[str]) -> None:
+    _print_draft_gate("create_bid_analysis_draft", "analysis-draft", "초안 작성 후 사용자 검토 필요", "data/g2b/bid_analysis/")
 
 
 def _cmd_submit_draft(args: list[str]) -> None:
-    from scripts.g2b.gates import evaluate_g2b_action_gate
-
-    gate = evaluate_g2b_action_gate("create_submit_draft")
-    response = _build_response(
-        command="submit-draft",
-        status="ok",
-        **gate,
-        next_step="초안 생성 후 실제 제출은 사용자 직접 수행 필요",
-        evidence_policy={"path": "data/g2b/submit_drafts/"},
-        report_policy=None,
+    _print_draft_gate(
+        "create_submit_draft", "submit-draft", "초안 생성 후 실제 제출은 사용자 직접 수행 필요", "data/g2b/submit_drafts/"
     )
-    import json
-
-    print(json.dumps(response, ensure_ascii=False, indent=2))
 
 
 def _build_response(  # noqa: PLR0913 - 공개 시그니처 유지(동작 불변 리팩터링 범위)
@@ -206,10 +200,10 @@ def _cmd_suite(args: list[str]) -> None:
 
 def _print_help() -> None:
     print("""G2B 사용법:
-  python scripts/cdp_client.py g2b status              세대 상태 조회
-  python scripts/cdp_client.py g2b gate <action>       gate 판정
-  python scripts/cdp_client.py g2b analysis-draft      입찰분석 초안
-  python scripts/cdp_client.py g2b submit-draft        제출 초안
-  python scripts/cdp_client.py g2b discover            공개 공고 URL 탐색
-  python scripts/cdp_client.py g2b download            첨부파일 배치 다운로드
-  python scripts/cdp_client.py g2b suite               Read-Only 라이브 스위트""")
+  python scripts/entry/cdp_cli.py g2b status              세대 상태 조회
+  python scripts/entry/cdp_cli.py g2b gate <action>       gate 판정
+  python scripts/entry/cdp_cli.py g2b analysis-draft      입찰분석 초안
+  python scripts/entry/cdp_cli.py g2b submit-draft        제출 초안
+  python scripts/entry/cdp_cli.py g2b discover            공개 공고 URL 탐색
+  python scripts/entry/cdp_cli.py g2b download            첨부파일 배치 다운로드
+  python scripts/entry/cdp_cli.py g2b suite               Read-Only 라이브 스위트""")

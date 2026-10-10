@@ -1,0 +1,11 @@
+{
+ "_comment": "폴더 순환 게이트(tools/code_map/modules.py crosscheck.module_cycles) 가 세는 목록에서 뺄 승인 예외 — '의도적 설계'로 확인된 경우만. 늘리는 변경(새 pair 추가)은 지휘창 승인 필요, 줄이는 방향(entry 삭제·실제 구조 분리로 해소)은 자유.",
+ "exceptions": [
+  {
+   "pair": ["tools/selector_health", "tools/selector_health/sites"],
+   "reason": "플러그인 레지스트리 상호의존 — tools/selector_health/__init__.py:load_specs() 가 sites/ 를 지연 import(부모→자식), sites/naver_blog.py·naver_smartstore.py 는 tools/selector_health/core.py 의 공용 타입(SelectorCheck/SiteSpec, run_site_checks() 도 쓰는 core 타입이라 sites/ 로 옮기면 안 됨)을 import(자식→부모). 끊으려면 core 를 별도 폴더로 분리해야 하는데(G16 새 폴더 승인 필요) 순환 1건 해소 비용 대비 과함 — 의도적 설계로 승인.",
+   "approved_by": "지휘창(skyjw-f8)",
+   "approved_at": "2026-10-09"
+  }
+ ]
+}

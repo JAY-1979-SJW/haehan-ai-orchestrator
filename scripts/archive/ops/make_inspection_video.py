@@ -223,8 +223,8 @@ def _first_visible_selector(page, selectors):
 # ── 메인 ─────────────────────────────────────────────────────────────────────
 def _scene_registry(page, fi, fonts, step):
     print(f"  {step(1)} 레지스트리 표시")
-    from scripts.site_registry import get_site as _gs
-    from scripts.site_registry import list_sites
+    from scripts.site_engine.site_registry import get_site as _gs
+    from scripts.site_engine.site_registry import list_sites
 
     sites = list_sites()
     rows = ""
@@ -301,7 +301,7 @@ def _scene_naver_login_page(page, fi, fonts, step, NAVER_LOGIN_URL):
 
 
 def _scene_naver_id(page, fi, fonts, step, _ID_SELECTORS, nid):
-    from scripts.human_input import safe_human_input
+    from scripts.browser.page.human_input import safe_human_input
 
     # ID 셀렉터 탐색
     id_sel = _first_visible_selector(page, _ID_SELECTORS)
@@ -355,7 +355,7 @@ def _scene_naver_id(page, fi, fonts, step, _ID_SELECTORS, nid):
 
 
 def _scene_naver_pw(page, fi, fonts, step, pw_sel, pw, mask_pw_field):  # noqa: PLR0913 - 장면 헬퍼(private), run() 상태를 그대로 전달
-    from scripts.human_input import safe_human_input
+    from scripts.browser.page.human_input import safe_human_input
 
     if pw_sel and pw:
         safe_human_input(page, pw_sel, pw, label="PW", delay_ms=80)
@@ -602,7 +602,7 @@ def _make_mask_pw_field(id_sel, pw_sel):
 def run():
     from playwright.sync_api import sync_playwright
 
-    from scripts.web_connector import _DEFAULT_CDP_HOST, _get_cdp_port
+    from scripts.browser.cdp.connection import _DEFAULT_CDP_HOST, _get_cdp_port
 
     fonts = load_fonts()
     fi = 0  # frame index
@@ -627,7 +627,7 @@ def run():
 
         # ── Scene 3: 네이버 로그인 페이지 이동 ──────────────────────────────
         print(f"  {step(3)} 네이버 로그인 페이지 이동")
-        from scripts.naver.auth import (
+        from scripts.naver.common.auth import (
             _BTN_SELECTORS,
             _ID_SELECTORS,
             _PW_SELECTORS,

@@ -1,11 +1,11 @@
 """tests/test_universal_action_verifier_20260508.py"""
 
-from ai_orchestrator.local_agent.universal_action_verifier import (
+from core.agent_runtime.runtime.universal.universal_action_verifier import (
     verify_action_result,
     verify_no_sensitive_data,
     verify_plan_execution,
 )
-from ai_orchestrator.local_agent.universal_safe_result import (
+from core.agent_runtime.runtime.universal.universal_safe_result import (
     STATUS_COMPLETED,
     build_universal_result,
 )
@@ -98,8 +98,8 @@ def test_verify_no_sensitive_data_with_violation():
 
 
 def test_verify_plan_execution():
-    from ai_orchestrator.local_agent.universal_task_planner import create_plan
-    from ai_orchestrator.local_agent.user_intent_parser import parse_intent
+    from core.agent_runtime.runtime.universal.universal_task_planner import create_plan
+    from core.agent_runtime.runtime.universal.user_intent_parser import parse_intent
 
     intent_result = parse_intent("공지사항 찾아줘")
     plan = create_plan(
@@ -124,8 +124,8 @@ def test_verify_plan_execution():
 
 
 def test_verify_plan_blocked_action_detected():
-    from ai_orchestrator.local_agent.universal_task_planner import create_plan
-    from ai_orchestrator.local_agent.user_intent_parser import parse_intent
+    from core.agent_runtime.runtime.universal.universal_task_planner import create_plan
+    from core.agent_runtime.runtime.universal.user_intent_parser import parse_intent
 
     intent_result = parse_intent("공지사항 찾아줘")
     plan = create_plan(

@@ -1,5 +1,5 @@
 {
- "_comment": "도구 집 게이트(G11) 규칙 — 정본: docs/architecture/TOOL_HOME_MAP.md. 도구 키워드(소문자 경로에 정규식)가 들어간 새 .py/.ts/.tsx 가 그 도구의 집(homes) 밖에 있으면 scripts/ops/tool_home_gate.py 가 차단한다. 기존 집 밖 파일은 configs/tool_home_baseline.json 으로 고정(늘리는 변경 금지, 줄이는 방향만). 도구는 구체적인 것이 먼저(첫 매칭이 이긴다).",
+ "_comment": "도구 집 게이트(G11) 규칙 — 정본: docs/architecture/TOOL_HOME_MAP.md. 도구 키워드(소문자 경로에 정규식)가 들어간 새 .py/.ts/.tsx 가 그 도구의 집(homes) 밖에 있으면 tools/repo_gates/tool_home_gate.py 가 차단한다. 기존 집 밖 파일은 configs/tool_home_baseline.json 으로 고정(늘리는 변경 금지, 줄이는 방향만). 도구는 구체적인 것이 먼저(첫 매칭이 이긴다).",
  "extensions": [".py", ".ts", ".tsx"],
  "tools": [
   {"name": "video", "keyword": "^scripts/video/", "homes": ["scripts/video/"]},
@@ -13,11 +13,22 @@
   {"name": "kakao", "keyword": "kakao", "homes": ["scripts/kakao/", "ai_orchestrator/connectors/kakao/"]},
   {"name": "instagram", "keyword": "instagram|ig-comment|(^|/)ig_", "homes": ["scripts/instagram/", "ai_orchestrator/connectors/instagram/"]},
   {"name": "youtube", "keyword": "youtube|yt_upload", "homes": ["scripts/youtube/", "ai_orchestrator/connectors/youtube/"]},
+  {"name": "naver_auth", "keyword": "naver_auth|naver_login|naver_session|login_pipeline", "homes": ["scripts/naver/", "ai_orchestrator/connectors/naver_auth/", "admin-web/src/app/naver/session/"]},
   {"name": "naver_cafe", "keyword": "cafe", "homes": ["scripts/naver/cafe/", "ai_orchestrator/connectors/naver_cafe/", "admin-web/src/app/naver/cafe/"]},
   {"name": "naver_mail", "keyword": "naver_mail|mailbox|mail_bulk|mail_draft|mail_imap|mail_read|naver/mail|/mail/|(^|/)mail(_|/)", "homes": ["scripts/naver/mail/", "ai_orchestrator/connectors/naver_mail/", "admin-web/src/app/mailbox/", "admin-web/src/app/mail/"]},
   {"name": "naver_blog", "keyword": "blog|gonobi", "homes": ["scripts/naver/blog/", "ai_orchestrator/connectors/naver_blog/", "admin-web/src/app/naver/blog/", "admin-web/src/app/naver/(legacy)/blog/"]},
   {"name": "naver_search", "keyword": "naver_search|naver_shopping|naver_kin|naver_news|naver_openapi|naver_public|shopping", "homes": ["scripts/naver/shopping/", "ai_orchestrator/connectors/naver_search/", "admin-web/src/app/naver/(legacy)/keywords/", "admin-web/src/app/api/naver/marketing-ops/"]},
-  {"name": "google", "keyword": "gmail|scripts/google|google_router|connectors/google", "homes": ["scripts/google/", "ai_orchestrator/connectors/google/", "admin-web/src/app/google/"]}
+  {"name": "google", "keyword": "gmail|scripts/google|google_router|connectors/google", "homes": ["scripts/google/", "ai_orchestrator/connectors/google/", "admin-web/src/app/google/"]},
+ {"name": "gongmu", "keyword": "^ai_orchestrator/(?!tests/).*gongmu", "homes": ["ai_orchestrator/gongmu/"], "before_exempt": true},
+ {"name": "scheduler", "keyword": "^ai_orchestrator/(?!tests/).*scheduled_job_(store|service|loop|router)", "homes": ["ai_orchestrator/scheduler/"], "before_exempt": true},
+ {"name": "vendor_directory", "keyword": "^ai_orchestrator/(?!tests/).*vendor_directory", "homes": ["ai_orchestrator/vendor_directory/"], "before_exempt": true},
+ {"name": "dev_reg", "keyword": "^ai_orchestrator/(?!tests/)(gates|persistence|routers|services)/.*dev_reg", "homes": ["ai_orchestrator/dev_reg/"], "before_exempt": true},
+ {"name": "web_task", "keyword": "^ai_orchestrator/(?!tests/).*web_task", "homes": ["ai_orchestrator/web_task/"], "before_exempt": true},
+ {"name": "marketing", "keyword": "^ai_orchestrator/(?!tests/).*marketing_ops", "homes": ["ai_orchestrator/marketing/"], "before_exempt": true},
+ {"name": "auth", "keyword": "^ai_orchestrator/(?!tests/)(routers/auth_router|persistence/(auth_audit|user_db|registration_code_store)|registration_codes|connectors/(desktop_session_router|user_auth_router))", "homes": ["ai_orchestrator/auth/"], "before_exempt": true},
+ {"name": "user_data", "keyword": "^ai_orchestrator/(?!tests/).*user_data_contribution", "homes": ["ai_orchestrator/user_data/"], "before_exempt": true},
+ {"name": "site_work", "keyword": "^ai_orchestrator/(?!tests/)(domain|persistence|services)/.*(site_map|site_preflight|site_registry|site_task|site_onboarding|work_record)|^ai_orchestrator/routers/ai_agent_router", "homes": ["ai_orchestrator/site_work/"], "before_exempt": true},
+ {"name": "agent_dispatch", "keyword": "^ai_orchestrator/(?!tests/).*agent_dispatch", "homes": ["ai_orchestrator/agent_dispatch/"], "before_exempt": true}
  ],
  "exempt": [
   {"regex": "(^|/)(tests?|__tests__)/|\\.(test|spec)\\.(ts|tsx)$", "reason": "시험(어느 폴더든)"},
@@ -32,17 +43,17 @@
   {"prefix": "ai_orchestrator/workflows/", "reason": "층 표준 폴더 — 워크플로"},
   {"prefix": "ai_orchestrator/domain/", "reason": "층 표준 폴더 — 도메인"},
   {"prefix": "ai_orchestrator/sites/", "reason": "층 표준 폴더 — 사이트 어댑터"},
-  {"prefix": "ai_orchestrator/gabia/", "reason": "층 표준 폴더(T0 표 기준) — 도메인 패키지"},
   {"prefix": "admin-web/src/lib/", "reason": "층 표준 폴더 — 화면 공용 라이브러리"},
   {"prefix": "orchestrator_v1/", "reason": "층 표준 폴더 — 루트 모듈 분리 결과(inbox/tasks/monitoring/core/webhooks)"},
   {"prefix": "scripts/google/youtube", "reason": "도메인 계약 소유 — YouTube 는 google 도메인의 하위 탭(module_contracts·tab_registry, skeleton_gate 'google must not import youtube domain')"},
+  {"prefix": "tools/selector_health/", "reason": "층 표준 폴더 — 여러 사이트(naver_blog·naver_smartstore 등)를 가로지르는 셀렉터 헬스체크 전용 폴더, 한 도메인 소유 아님(PR #165 tool_home 작업, 2026-10-09)"},
+  {"prefix": "tools/write_gates/", "reason": "층 표준 폴더 — 여러 사이트를 가로지르는 쓰기 안전 게이트 모음(naver_blog_safety_gate·duplicate_impl_gate·sitemap_gate 등), 한 도메인 소유 아님(PR #165 tool_home 작업, 2026-10-09)"},
+  {"prefix": "scripts/common/youtube_", "reason": "scripts/google/youtube 와 scripts/youtube 가 함께 쓰는 공용 잎 — google 도메인은 youtube 도메인을 import 할 수 없어 집(scripts/youtube/) 안에 둘 수 없음(금지 import 해소 구조, 대표님 승인 2026-10-08 00:55)"},
+  {"prefix": "admin-web/src/app/assistant/(legacy)/", "reason": "구세대 UI 보관소(cafe·deployment·external-sites·inbox·logs·news·storage·tasks 등 8개) — admin-web/src/app/naver/(legacy)/blog/ 와 같은 전례(지휘창 승인 2026-10-09). 참고: 저장소 안에서 이 경로를 가리키는 링크·참조가 전혀 없음(grep 전수 확인) — 죽은 코드일 수 있으나 직접 URL 접속용으로 일부러 살려둔 것인지 확인 필요해 삭제는 보류, 사람 확인 대기(지도만 남김)."},
   {"prefix": "ai_orchestrator/connectors/google/", "reason": "도메인 계약 소유 — google 도메인 안의 YouTube 하위 탭 라우터"},
   {"prefix": "scripts/ops/selector_health/sites/", "reason": "플러그인 레지스트리 — 공용 틀 안의 사이트별 플러그인"},
   {"prefix": "scripts/ops/write_gates/", "reason": "플러그인 레지스트리 — 쓰기 게이트 플러그인"},
-  {"prefix": "ai_orchestrator/local_agent/", "reason": "기반 연동(T4 — local_agent 3벌 통합 때 함께 정함)"},
   {"prefix": "ai_orchestrator/browser_tool/", "reason": "기반 연동(T4)"},
-  {"prefix": "local_agent/", "reason": "기반 연동(T4)"},
-  {"prefix": "scripts/local_agent/", "reason": "기반 연동(T4)"},
-  {"prefix": "scripts/ops/guard_youtube_upload.py", "reason": ".claude 훅이 이 경로를 직접 호출 — 이동 금지"}
+  {"prefix": "tools/hooks/guard_youtube_upload.py", "reason": ".claude 훅이 이 경로를 직접 호출 — 이동 금지"}
  ]
 }

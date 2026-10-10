@@ -3,8 +3,8 @@
 ASSISTANT_GABIA_BROWSER_USER_PRESENT_AUTOMATION_PLAN_01
 
 실행:
-    python scripts/ops/audit_gabia_browser_user_present_automation.py
-    python scripts/ops/audit_gabia_browser_user_present_automation.py --json
+    python scripts/archive/ops/audit_gabia_browser_user_present_automation.py
+    python scripts/archive/ops/audit_gabia_browser_user_present_automation.py --json
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ SAFE_BOUNDARY = {
 def _check_task_contract() -> dict[str, Any]:
     result: dict[str, Any] = {}
     try:
-        from ai_orchestrator.gabia.gabia_browser_task import (
+        from ai_orchestrator.connectors.gabia.browser_task import (
             make_autowork_dns_task,
         )
 
@@ -59,7 +59,7 @@ def _check_task_contract() -> dict[str, Any]:
 def _check_state_machine() -> dict[str, Any]:
     result: dict[str, Any] = {}
     try:
-        from ai_orchestrator.gabia.gabia_browser_task import (
+        from ai_orchestrator.connectors.gabia.browser_task import (
             STATE_DNS_MANAGEMENT_PAGE_READY,
             STATE_DNS_RECORD_DRAFTED,
             STATE_FINAL_APPROVAL_REQUIRED,
@@ -112,7 +112,7 @@ def _check_policies() -> dict[str, Any]:
 def _check_policy_service() -> dict[str, Any]:
     result: dict[str, Any] = {}
     try:
-        from ai_orchestrator.gabia.gabia_browser_task import (
+        from ai_orchestrator.connectors.gabia.browser_task import (
             STATE_DNS_RECORD_DRAFTED,
             STATE_FINAL_APPROVAL_REQUIRED,
             STATE_LOGIN_REQUIRED,
@@ -169,7 +169,7 @@ def _check_audit_events() -> dict[str, Any]:
 
 def _check_domain_profile() -> bool:
     try:
-        from ai_orchestrator.browser_tool.domain_profile_registry import get_domain_profile
+        from ai_orchestrator.browser_tool.policy.domain_profile_registry import get_domain_profile
 
         profile = get_domain_profile("gabia.com")
         return (

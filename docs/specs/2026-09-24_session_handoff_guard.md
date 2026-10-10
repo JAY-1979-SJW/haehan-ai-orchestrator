@@ -6,8 +6,8 @@ spec:
   status: planned
   files:
     add:
-      - scripts/ops/session_guard.py
-      - scripts/ops/session_handoff.py
+      - tools/hooks/session_guard.py
+      - tools/hooks/session_handoff.py
       - configs/session_guard.json
 ```
 

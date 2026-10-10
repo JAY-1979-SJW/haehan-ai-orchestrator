@@ -5,7 +5,7 @@
 - 관련: `docs/specs/2026-10-01_scheduler_cdp_ensure.md`(커뮤니티 스케줄러 CDP 보장)
 
 ## 1. 현황
-앱에는 예약 기능이 없다. 서버에는 고정 주기 루프 3개(커뮤니티·gonobi·네이버 검색)만 있다. 일반화된 스케줄러(`scripts/naver/automation/platform/scheduler.py`)는 저장된 문자열을 `importlib` 로 실행하고 승인·위험 검사가 없어 쓰지 않는다.
+앱에는 예약 기능이 없다. 서버에는 고정 주기 루프 3개(커뮤니티·gonobi·네이버 검색)만 있다. 일반화된 스케줄러(`scripts/naver/automation/scheduler.py`)는 저장된 문자열을 `importlib` 로 실행하고 승인·위험 검사가 없어 쓰지 않는다.
 
 ## 2. 원칙
 1. **임의 실행 금지** — 닫힌 허용 목록(`ACTIONS`)의 작업만 이름으로 실행한다. 파라미터는 작업별 검증을 통과해야 한다.

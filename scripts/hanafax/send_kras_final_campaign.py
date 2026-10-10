@@ -29,7 +29,8 @@ from pathlib import Path
 import fitz
 import win32com.client as win32
 
-from scripts.app_paths import known_folder, repo_root
+from scripts.common.app_paths import known_folder, repo_root
+from scripts.hanafax.excel_merge_fit import fit_merged_wrap_rows as _fit_merged_wrap_rows
 from scripts.hanafax.kst_date import now_kst, today_kr_str
 from scripts.hanafax.sender import send_fax
 
@@ -50,8 +51,6 @@ XL_PORTRAIT = 1
 A4_WIDTH_PT = 595.32
 A4_HEIGHT_PT = 841.92
 A4_TOLERANCE_PT = 3.0
-SCRATCH_ROW = 500
-SCRATCH_COL = 100
 
 
 def _load_log() -> dict:
@@ -60,87 +59,6 @@ def _load_log() -> dict:
 
 def _save_log(d: dict) -> None:
     SENT_LOG.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
-
-
-def _calibrate_col_width_for_points(ws, col: int, target_pts: float) -> None:
-    ws.Columns(col).ColumnWidth = 10
-    w1 = ws.Cells(1, col).Width
-    ws.Columns(col).ColumnWidth = 100
-    w2 = ws.Cells(1, col).Width
-    slope = (w2 - w1) / (100 - 10)
-    if slope == 0:
-        return
-    intercept = w1 - slope * 10
-    cw = (target_pts - intercept) / slope
-    ws.Columns(col).ColumnWidth = max(1, cw)
-
-
-def _fit_merged_wrap_rows(ws) -> None:
-    """docs/directives/kras_safety_sales_document_spec.md 기준 — 병합+줄바꿈 셀
-    실제 필요 높이 계산·적용. export_kras_fax_pdf.py 와 동일 로직(중복 정의 —
-    이 스크립트가 Excel 인스턴스를 계속 열어두고 반복 호출하는 구조라 그
-    모듈을 import해서 함수 하나만 재사용하기보다 자기완결적으로 둔다)."""
-    used = ws.UsedRange
-    r0, nrows = used.Row, used.Rows.Count
-    targets = []
-    handled: set[str] = set()
-    for r in range(r0, r0 + nrows):
-        for c in range(used.Column, used.Column + used.Columns.Count):
-            cell = ws.Cells(r, c)
-            if not cell.MergeCells:
-                continue
-            ma = cell.MergeArea
-            addr = ma.Address
-            if addr in handled:
-                continue
-            handled.add(addr)
-            if not ma.WrapText:
-                continue
-            targets.append(
-                {
-                    "row0": ma.Row,
-                    "rows": ma.Rows.Count,
-                    "col0": ma.Column,
-                    "cols": ma.Columns.Count,
-                    "value": ws.Cells(ma.Row, ma.Column).Value,
-                    "font_name": ma.Font.Name,
-                    "font_size": ma.Font.Size,
-                    "font_bold": ma.Font.Bold,
-                    "h_align": ma.HorizontalAlignment,
-                    "v_align": ma.VerticalAlignment,
-                }
-            )
-
-    for t in targets:
-        m_row0, m_rows, m_col0, m_ncols = t["row0"], t["rows"], t["col0"], t["cols"]
-        target_width_pts = ws.Range(ws.Cells(1, m_col0), ws.Cells(1, m_col0 + m_ncols - 1)).Width
-        _calibrate_col_width_for_points(ws, SCRATCH_COL, target_width_pts)
-        scratch = ws.Cells(SCRATCH_ROW, SCRATCH_COL)
-        scratch.WrapText = True
-        scratch.Font.Name = t["font_name"]
-        scratch.Font.Size = t["font_size"]
-        scratch.Font.Bold = t["font_bold"]
-        scratch.Value = t["value"]
-        ws.Rows(SCRATCH_ROW).AutoFit()
-        required_h = ws.Rows(SCRATCH_ROW).RowHeight
-        scratch.ClearContents()
-        ws.Columns(SCRATCH_COL).ColumnWidth = 8.43
-
-        target_range = ws.Range(ws.Cells(m_row0, m_col0), ws.Cells(m_row0 + m_rows - 1, m_col0 + m_ncols - 1))
-        target_range.UnMerge()
-        current_total = sum(ws.Rows(rr).RowHeight for rr in range(m_row0, m_row0 + m_rows))
-        if current_total < required_h:
-            deficit = required_h - current_total
-            last_row = m_row0 + m_rows - 1
-            ws.Rows(last_row).RowHeight = ws.Rows(last_row).RowHeight + deficit
-        target_range.Merge()
-        target_range.Value = t["value"]
-        target_range.WrapText = True
-        target_range.HorizontalAlignment = t["h_align"]
-        target_range.VerticalAlignment = t["v_align"]
-        target_range.Font.Name = t["font_name"]
-        target_range.Font.Size = t["font_size"]
-        target_range.Font.Bold = t["font_bold"]
 
 
 def _ensure_a4(src_pdf: str, out_pdf: str) -> None:

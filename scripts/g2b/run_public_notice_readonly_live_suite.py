@@ -33,7 +33,7 @@ if str(_repo_root) not in sys.path:
 
 import argparse  # noqa: E402
 
-from ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner import (  # noqa: E402
+from ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner import (  # noqa: E402
     _check_playwright_available,
     run_g2b_public_notice_fixture_live_suite,
 )

@@ -202,7 +202,7 @@ def main(argv: list[str] | None = None) -> int:
     # import 는 실행 시점에만 — pytest 가 실수로 import 만 해도 외부 접속이
     # 발생하지 않도록 한다.
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # 저장소 루트
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     allowed_hosts = list(DEFAULT_ALLOWED_HOSTS)
     for h in args.allow_additional_host or []:

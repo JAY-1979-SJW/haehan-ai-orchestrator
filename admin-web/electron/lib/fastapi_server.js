@@ -154,7 +154,7 @@ async function startFastAPIServer() {
       HAEHAN_PORT: String(FASTAPI_PORT),
       HAEHAN_HOST: "127.0.0.1",
       // 영속 데이터 경로 — userData 기준 (설치 위치와 무관), 최초 1회 seedDataDir()로 시드.
-      // HAEHAN_DATA_ROOT 가 정본(서버 ai_orchestrator.paths.runtime 과 scripts.app_paths 가 같이 본다).
+      // HAEHAN_DATA_ROOT 가 정본(서버 ai_orchestrator.paths.runtime 과 scripts.common.app_paths 가 같이 본다).
       // HAEHAN_DATA_DIR(옛 이름)은 같은 값(root/data)으로 계속 넘긴다 — 아직 그 이름만 읽는 스크립트와 MCP 호환.
       HAEHAN_DATA_ROOT: dataRoot,
       HAEHAN_DATA_DIR: path.join(dataRoot, "data"),

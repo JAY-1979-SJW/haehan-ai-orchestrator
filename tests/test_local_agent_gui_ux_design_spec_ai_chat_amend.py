@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 SPEC = Path("docs/design/local_agent_gui_ux_design_spec_ai_chat_amend_20260521.md")
 
 
@@ -176,7 +175,7 @@ def test_spec_states_desktop_ui_unchanged():
 
 
 def test_audit_warn_ai_api_deferred_on_real_spec():
-    from scripts.ops import audit_local_agent_gui_ux_design_spec_ai_chat_amend as a
+    from tools.audits.agent import audit_local_agent_gui_ux_design_spec_ai_chat_amend as a
     v = a.judge_amend(desktop_ui_unchanged=True,
                        ai_api_implementation_done=False)
     # AI API 실제 구현은 본 공정 외 → WARN_AI_API_IMPLEMENTATION_DEFERRED 가 정상
@@ -185,7 +184,7 @@ def test_audit_warn_ai_api_deferred_on_real_spec():
 
 
 def test_audit_fail_chat_missing(tmp_path):
-    from scripts.ops import audit_local_agent_gui_ux_design_spec_ai_chat_amend as a
+    from tools.audits.agent import audit_local_agent_gui_ux_design_spec_ai_chat_amend as a
     p = tmp_path / "x.md"
     p.write_text("# minimal", encoding="utf-8")
     v = a.judge_amend(spec_path=p)
@@ -193,7 +192,7 @@ def test_audit_fail_chat_missing(tmp_path):
 
 
 def test_audit_fail_desktop_ui_violation():
-    from scripts.ops import audit_local_agent_gui_ux_design_spec_ai_chat_amend as a
+    from tools.audits.agent import audit_local_agent_gui_ux_design_spec_ai_chat_amend as a
     v = a.judge_amend(desktop_ui_unchanged=False)
     assert v.code == "FAIL_DESKTOP_UI_SCOPE_VIOLATION"
 
@@ -208,11 +207,11 @@ def test_regression_prev_ux_spec_unchanged():
 
 
 def test_regression_gui_state_unchanged():
-    from local_agent import gui_state as gs
+    from core.agent_runtime.gui import gui_state as gs
     assert hasattr(gs, "GuiController")
 
 
 def test_regression_connection_diagnostics_unchanged():
-    from local_agent import connection_diagnostics as cd
+    from core.agent_runtime.connection import connection_diagnostics as cd
     assert hasattr(cd, "render_user_block")
     assert hasattr(cd, "explain_error")

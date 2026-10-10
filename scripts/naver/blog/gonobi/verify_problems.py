@@ -6,7 +6,7 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
-from ai_orchestrator.config import get_local_data_dir
+from ai_orchestrator.core.config import get_local_data_dir
 
 BASE = get_local_data_dir() / "gonobi_images_v2"
 OUT = Path("data/gonobi_problems.html")

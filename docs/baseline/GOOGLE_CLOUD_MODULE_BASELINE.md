@@ -167,9 +167,9 @@ Cloud split must proceed in this order:
 Minimum verification for Cloud changes:
 
 ```text
-python scripts/ops/audit_google_cloud_module_baseline_contract.py
-python scripts/ops/audit_google_automation_baseline_contract.py
-python scripts/module_quality_gate.py --module repo_guard
+python tools/audits/google/audit_google_cloud_module_baseline_contract.py
+python tools/audits/google/audit_google_automation_baseline_contract.py
+python tools/quality/module_quality_gate.py --module repo_guard
 ```
 
 ## 8. Known WARN

@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
-from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+from scripts.browser.agent.agent import BrowserAgent  # noqa: E402
 
 agent = BrowserAgent()
 agent.connect()

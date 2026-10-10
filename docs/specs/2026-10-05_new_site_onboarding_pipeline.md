@@ -156,7 +156,7 @@
 ### 13.3 기존 시험·API·DB 영향(없음 근거)
 - **DB·schema**: 없음 — JSON 파일만(`data/site_task_map/…`, 새 폴더 `_history`). 지도 스키마 `version` 불변, 키 추가만 → `site_task_map.load` 는 `map_rev` 가 없으면 0 으로 간주(구 지도 9개 호환).
 - **기존 응답 key**: `site_task_map_service.lookup`·`/site-map`·`/site-registry` 응답은 키 **추가만**(기존 키 이름·의미 불변) — 기존 시험이 키 존재만 확인하므로 영향 없음(구현 때 `test_site_task_map_service.py`·`test_site_task_map_router*` 재실행으로 증명).
-- **영향 받는 시험**: 라우트 수 기준 시험(`scripts/ops/audit_backend_runtime_contract.py` 의 `EXPECTED_RUNTIME_ROUTES` 와 `tests/test_app_*` 에 하드코딩된 값 — 창 E 가 조율 중인 3건과 같은 줄) — 구현 PR 에서 함께 갱신. 그 외 영향 없음.
+- **영향 받는 시험**: 라우트 수 기준 시험(`tools/audits/backend/audit_backend_runtime_contract.py` 의 `EXPECTED_RUNTIME_ROUTES` 와 `tests/test_app_*` 에 하드코딩된 값 — 창 E 가 조율 중인 3건과 같은 줄) — 구현 PR 에서 함께 갱신. 그 외 영향 없음.
 - **보안 정책**: 완화 없음 — 읽기 전용 기본, never 강화. 외부 접촉은 robots.txt/sitemap.xml 단순 GET 뿐.
 
 ### 13.4 게이트 통과 예상

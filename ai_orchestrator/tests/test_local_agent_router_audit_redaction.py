@@ -5,10 +5,11 @@ Only public_id or redacted markers are recorded.
 """
 
 from datetime import UTC, datetime
+from typing import Literal
 from unittest.mock import patch
 
-from ai_orchestrator.gates import approval
-from ai_orchestrator.models import RiskAssessment, TaskRequest
+from ai_orchestrator.core.models import RiskAssessment, TaskRequest
+from tools.gates import approval
 
 
 def _make_test_request(task_id: str) -> TaskRequest:
@@ -23,7 +24,7 @@ def _make_test_request(task_id: str) -> TaskRequest:
     )
 
 
-def _make_test_risk(risk_level: str = "high") -> RiskAssessment:
+def _make_test_risk(risk_level: Literal["low", "medium", "high", "critical"] = "high") -> RiskAssessment:
     """Create test RiskAssessment."""
     return RiskAssessment(
         risk_level=risk_level,
@@ -42,7 +43,7 @@ def test_approve_path_no_token_id_in_audit(monkeypatch):
     risk = _make_test_risk()
 
     # Patch router's log_event to capture calls
-    with patch("ai_orchestrator.local_agent_router.log_event") as mock_log:
+    with patch("ai_orchestrator.agent_hub.router.root.log_event") as mock_log:
         # Create token
         token = approval.issue_token(req, risk)
         mock_log.reset_mock()  # Reset after token creation
@@ -148,7 +149,7 @@ def test_expired_token_no_secret_exposed():
     # Create token with 0 TTL (expires immediately)
     token = approval.issue_token(req, risk, ttl_minutes=0)
 
-    with patch("ai_orchestrator.gates.approval._now") as mock_now:
+    with patch("tools.gates.approval._now") as mock_now:
         # Simulate time passing
         mock_now.return_value = datetime.now(UTC)
 

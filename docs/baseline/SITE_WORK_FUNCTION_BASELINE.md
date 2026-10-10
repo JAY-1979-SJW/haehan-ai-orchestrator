@@ -168,7 +168,7 @@ then implemented through a router, gate, test, and audit.
 A site task is accepted only when all of the following are true:
 
 - The work appears in the site work matrix.
-- The command is routed through `scripts/cdp_client.py` or a documented local
+- The command is routed through `scripts/browser/cdp/cdp_client.py` or a documented local
   module entrypoint.
 - The task has an explicit tier: `read`, `prepare`, `approval`, `user_direct`,
   or `blocked`.
@@ -181,7 +181,7 @@ site login session is missing or when only catalog/dry-run evidence exists.
 
 ### Google
 
-- Router command: `python scripts/cdp_client.py google ...`
+- Router command: `python scripts/browser/cdp/cdp_client.py google ...`
 - Required actions: 96
 - Required read actions: 50
 - Required approval actions: 46
@@ -194,7 +194,7 @@ site login session is missing or when only catalog/dry-run evidence exists.
 
 ### Naver
 
-- Router command: `python scripts/cdp_client.py naver ...`
+- Router command: `python scripts/browser/cdp/cdp_client.py naver ...`
 - Required service catalog categories:
   - `session`
   - `mail`
@@ -218,7 +218,7 @@ site login session is missing or when only catalog/dry-run evidence exists.
 
 ### SmartStore
 
-- Router command: `python scripts/cdp_client.py smartstore ...`
+- Router command: `python scripts/browser/cdp/cdp_client.py smartstore ...`
 - Required action catalog counts:
   - read total: 8
   - prepare total: 3
@@ -231,7 +231,7 @@ site login session is missing or when only catalog/dry-run evidence exists.
 
 ### Hiworks
 
-- Router command: `python scripts/cdp_client.py hiworks ...`
+- Router command: `python scripts/browser/cdp/cdp_client.py hiworks ...`
 - Required action catalog minimum services: 17
 - Required boundaries:
   - dashboard, apps, mail, compose, sales-mail prepare, service scan, action
@@ -241,7 +241,7 @@ site login session is missing or when only catalog/dry-run evidence exists.
 
 ### Gabia
 
-- Router command: `python scripts/cdp_client.py gabia ...`
+- Router command: `python scripts/browser/cdp/cdp_client.py gabia ...`
 - Required routed tasks:
   - `status`
   - `dns`
@@ -258,8 +258,8 @@ site login session is missing or when only catalog/dry-run evidence exists.
 
 ### YouTube
 
-- Router command: `python scripts/cdp_client.py youtube ...`
-- Market research command: `python scripts/cdp_client.py google youtube topic ...`
+- Router command: `python scripts/browser/cdp/cdp_client.py youtube ...`
+- Market research command: `python scripts/browser/cdp/cdp_client.py google youtube topic ...`
 - Required routed tasks:
   - `record prepare`
   - `record execute`
@@ -280,8 +280,8 @@ The following checks must pass before claiming the site work baseline is ready:
 - Python compile for routers and audit script.
 - Unit tests for Google, Naver, SmartStore, Hiworks, Gabia, YouTube, and SSO
   runtime contracts.
-- `scripts/ops/audit_site_work_function_baseline.py`
-- `scripts/module_quality_gate.py --module repo_guard`
+- `tools/audits/app/audit_site_work_function_baseline.py`
+- `tools/quality/module_quality_gate.py --module repo_guard`
 
 Live browser checks are useful evidence, but they are not required by this
 static baseline because they depend on local login state.

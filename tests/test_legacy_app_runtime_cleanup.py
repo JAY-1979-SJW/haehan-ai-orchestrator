@@ -1,4 +1,4 @@
-from scripts.ops import audit_legacy_app_runtime_cleanup as audit
+from tools.audits.backend import audit_legacy_app_runtime_cleanup as audit
 
 
 def test_legacy_app_runtime_cleanup_passes_current_tree():
@@ -18,7 +18,7 @@ def test_scheduler_is_cleanup_only():
 
 
 def test_cdp_chrome_task_helper_is_cleanup_only():
-    script = audit._read("scripts/local_agent/install_cdp_chrome_task.ps1")
+    script = audit._read("scripts/browser/cdp/install_cdp_chrome_task.ps1")
     assert "Unregister-ScheduledTask" in script
     assert "New-ScheduledTaskTrigger" not in script
     assert "-AtLogOn" not in script

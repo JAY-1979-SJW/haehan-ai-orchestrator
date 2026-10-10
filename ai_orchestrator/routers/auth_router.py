@@ -1,31 +1,15 @@
-"""auth/me endpoint.
-
-현재 인증된 사용자의 actor와 role만 반환한다.
-비밀번호·hash·token·session·cookie는 절대 반환하지 않는다.
-"""
-
-from __future__ import annotations
-
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
-
-from ai_orchestrator.gates.auth import get_current_user
-
-auth_router = APIRouter(prefix="/auth", tags=["auth"])
+# haehan-shim: ai_orchestrator.auth.auth_router
+# 호환 shim: 실제 모듈은 ai_orchestrator.auth.auth_router 로 이동했다 (ai_orchestrator/auth/auth_router.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
 
-class CurrentUserResponse(BaseModel):
-    actor: str
-    role: str
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-@auth_router.get("/me", response_model=CurrentUserResponse)
-def get_me(user: dict = Depends(get_current_user)) -> CurrentUserResponse:
-    """현재 인증된 사용자의 actor와 role을 반환한다.
-
-    - AUTH_ENABLED=False 환경: {actor: "system", role: "owner"}
-    - AUTH_ENABLED=True 환경: Basic 인증 성공 시 해당 사용자의 actor/role
-    - 인증 실패 시 401
-    반환 필드는 actor, role만이며 password·hash·token 등은 포함하지 않는다.
-    """
-    return CurrentUserResponse(actor=user["actor"], role=user["role"])
+_install(_il.import_module("ai_orchestrator.auth.auth_router"), globals(), _sys.modules)

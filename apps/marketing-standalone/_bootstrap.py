@@ -2,7 +2,7 @@
 
 디렉터리명(`marketing-standalone`)에 하이픈이 있어 `apps.marketing-standalone.*`
 형태의 점(dot) import가 불가능하다. 대신 이 폴더 자체를 sys.path에 추가해
-`core.xxx` / `connectors.xxx` 형태로 임포트한다. scripts.logger 등 원본
+`core.xxx` / `connectors.xxx` 형태로 임포트한다. scripts.common.logger 등 원본
 저장소에도 의존하지 않는다 — 이 앱은 통째로 다른 저장소로 옮겨져도 동작해야
 한다.
 """

@@ -10,12 +10,13 @@ from __future__ import annotations
 import inspect
 import logging
 import re
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # 파괴적 동작만 차단: 발송·결제·삭제·투찰·입찰·팩스·환불 등 되돌릴 수 없는 외부 영향
 # 2026-09-29 defect_index #39 확장: build_manifest() 가 FastAPI _IncludedRouter 버그로
-# 계속 빈 리스트를 반환해(수정 완료) tests/test_app_action_coverage.py 의
+# 계속 빈 리스트를 반환해(수정 완료) tests/app_contracts/test_app_action_coverage.py 의
 # test_destructive_actions_never_auto_safe 가 그동안 공허하게(비교 대상 0건) 통과하고
 # 있었음 — 실제 데이터로 처음 돌려보니 register/upload/setup/reset/publish 계열이
 # 전부 SAFE로 새는 게 드러남(디바이스 토큰 발급, 실제 발행 가능한 blog write-to-naver
@@ -33,10 +34,15 @@ def _classify(blob: str) -> str:
     return "DESTRUCTIVE" if _DESTRUCTIVE.search(blob) else "SAFE"
 
 
-def _get_app():
-    from ai_orchestrator.asgi import app
+_app_ref: list[Any] = [None]  # 앱 시작점(asgi)이 주입한다 — 라우터가 asgi 를 거꾸로 import 하지 않게(층 역참조 제거)
 
-    return app
+
+def configure_app(app: Any) -> None:
+    _app_ref[0] = app
+
+
+def _get_app():
+    return _app_ref[0]
 
 
 def _post_routes() -> list[tuple]:
@@ -107,7 +113,7 @@ def _build_call_kwargs(ep, params: dict, user: dict) -> dict | None:
 
 def run_action(path: str, params: dict | None, user: dict, confirmed: bool = False) -> dict:
     """동작 1개 실행. DESTRUCTIVE 만 차단, 나머지는 즉시 실행."""
-    from scripts.web_connector import run_on_browser_thread
+    from scripts.browser.cdp.connection import run_on_browser_thread
 
     params = params or {}
     target = next(((ep, name) for p, ep, name in _post_routes() if p == path), None)

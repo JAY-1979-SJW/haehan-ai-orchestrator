@@ -10,8 +10,10 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+from ai_orchestrator.paths.runtime import atomic_write_text, data_dir
+
 ROOT = Path(__file__).resolve().parents[2]
-_SITES_FILE = ROOT / "data" / "community" / "sites.json"
+_SITES_FILE = data_dir() / "community" / "sites.json"
 
 
 def _load() -> list[dict]:
@@ -25,7 +27,7 @@ def _load() -> list[dict]:
 
 def _save(sites: list[dict]) -> None:
     _SITES_FILE.parent.mkdir(parents=True, exist_ok=True)
-    _SITES_FILE.write_text(json.dumps(sites, ensure_ascii=False, indent=2), encoding="utf-8")
+    atomic_write_text(_SITES_FILE, json.dumps(sites, ensure_ascii=False, indent=2))
 
 
 def list_sites() -> list[dict]:

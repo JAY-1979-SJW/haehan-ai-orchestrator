@@ -8,11 +8,11 @@
       "layer": "L2",
       "paths": [
         ".githooks/",
-        "scripts/required_quality_gate.py",
-        "scripts/module_quality_gate.py",
-        "scripts/install_git_hooks.py",
-        "tests/test_required_quality_gate.py",
-        "tests/test_module_quality_gate.py"
+        "tools/quality/required_quality_gate.py",
+        "tools/quality/module_quality_gate.py",
+        "tools/quality/install_git_hooks.py",
+        "tests/quality_gates/test_required_quality_gate.py",
+        "tests/quality_gates/test_module_quality_gate.py"
       ],
       "required_gate": "required_local_gate_wiring"
     },
@@ -21,10 +21,10 @@
       "owner": "local-agent",
       "layer": "L4",
       "paths": [
-        "local_agent/cdp_attach.py",
+        "core/agent_runtime/browser/cdp_attach.py",
         "scripts/archive/misc/chrome_ui_monitor.py",
-        "scripts/cdp_client.py",
-        "scripts/ops/dry_run_local_agent_cdp_attach.py",
+        "scripts/browser/cdp_client.py",
+        "tools/verify/dry_run_local_agent_cdp_attach.py",
         "docs/architecture/local_agent_browser_runtime_operating_rules_20260523.md",
         "tests/test_local_agent_browser_runtime_operating_rules.py",
         "tests/test_local_agent_cdp_attach.py",
@@ -37,8 +37,8 @@
       "owner": "desktop",
       "layer": "L10",
       "paths": [
-        "scripts/verify/verify_local_runtime_dry_run.py",
-        "scripts/verify/verify_agent_ws_auth.py"
+        "tools/verify/verify_local_runtime_dry_run.py",
+        "tools/verify/verify_agent_ws_auth.py"
       ],
       "required_gate": "desktop_auth_runtime"
     },
@@ -54,22 +54,13 @@
       "required_gate": "release_preflight"
     },
     {
-      "name": "portable_install",
-      "owner": "release",
-      "layer": "L10",
-      "paths": [
-        "README_실행방법.txt"
-      ],
-      "required_gate": "portable_install"
-    },
-    {
       "name": "server_api",
       "owner": "backend",
       "layer": "L8",
       "paths": [
         "ai_orchestrator/",
-        "scripts/verify/verify_live_agent_smoke.py",
-        "scripts/verify/verify_live_task_dispatch.py"
+        "tools/verify/verify_live_agent_smoke.py",
+        "tools/verify/verify_live_task_dispatch.py"
       ],
       "required_gate": "live_agent"
     },
@@ -93,7 +84,6 @@
       "layer": "L12",
       "paths": [
         "app.py",
-        "dashboard.py",
         "orchestrator_v1/core/audit_logger.py",
         "orchestrator_v1/tasks/approval_manager.py",
         "orchestrator_v1/tasks/executor.py"

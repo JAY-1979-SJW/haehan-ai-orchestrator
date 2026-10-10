@@ -72,7 +72,7 @@ def save_test_workers(records: list[dict[str, Any]]) -> Path:
 
 
 def main() -> None:
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     page = get_page()
     records = fetch_test_workers(page)

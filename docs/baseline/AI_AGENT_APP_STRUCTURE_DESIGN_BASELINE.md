@@ -149,13 +149,13 @@ Tool modules currently discovered in the repo:
 
 | Tool Area | Main Entrypoints | UI Target | Boundary |
 | --- | --- | --- | --- |
-| Market Research / YouTube Research | `scripts/cdp_client.py google youtube research-run`, `scripts/google/youtube/search.py` | `/market-research` | read/prepare; bounded UI execution; no hidden transcript scraping |
-| YouTube Owner/Research Tools | `scripts/cdp_client.py youtube research ...`, `scripts/youtube/research.py` | Market Research / YouTube Tools | public metadata/comments via official API; uploads/recording approval-gated |
-| Google Tools | `scripts/cdp_client.py google ...`, `scripts/google/*` | Google Tools | Google Home entry, work-mode gate, writes/keys/billing approval-gated |
-| Naver Tools | `scripts/cdp_client.py naver ...`, `scripts/naver/*`, `scripts/naver_mail/*` | Naver Tools | user-present login; send/publish/upload/save approval-gated |
-| SmartStore Tools | `scripts/cdp_client.py smartstore ...`, `scripts/smartstore/*`, `scripts/naver/smartstore/*` | SmartStore Tools | product save approval-gated; live gaps remain explicit |
-| Hiworks Tools | `scripts/cdp_client.py hiworks ...`, `scripts/hiworks/*` | Work/External Tools | send/submit approval-gated |
-| Gabia Tools | `scripts/cdp_client.py gabia ...`, `scripts/gabia/*` | Domain/Ops Tools | DNS/domain/hosting changes approval-gated; login/payment user-direct |
+| Market Research / YouTube Research | `scripts/browser/cdp/cdp_client.py google youtube research-run`, `scripts/google/youtube/search.py` | `/market-research` | read/prepare; bounded UI execution; no hidden transcript scraping |
+| YouTube Owner/Research Tools | `scripts/browser/cdp/cdp_client.py youtube research ...`, `scripts/youtube/research.py` | Market Research / YouTube Tools | public metadata/comments via official API; uploads/recording approval-gated |
+| Google Tools | `scripts/browser/cdp/cdp_client.py google ...`, `scripts/google/*` | Google Tools | Google Home entry, work-mode gate, writes/keys/billing approval-gated |
+| Naver Tools | `scripts/browser/cdp/cdp_client.py naver ...`, `scripts/naver/*`, `scripts/naver_mail/*` | Naver Tools | user-present login; send/publish/upload/save approval-gated |
+| SmartStore Tools | `scripts/browser/cdp/cdp_client.py smartstore ...`, `scripts/smartstore/*`, `scripts/naver/smartstore/*` | SmartStore Tools | product save approval-gated; live gaps remain explicit |
+| Hiworks Tools | `scripts/browser/cdp/cdp_client.py hiworks ...`, `scripts/hiworks/*` | Work/External Tools | send/submit approval-gated |
+| Gabia Tools | `scripts/browser/cdp/cdp_client.py gabia ...`, `scripts/gabia/*` | Domain/Ops Tools | DNS/domain/hosting changes approval-gated; login/payment user-direct |
 | CAD Tools | `scripts/cad/*`, `admin-web/src/app/cad` | `/cad` | local/desktop workflow boundary |
 | File Map Tools | `admin-web/src/app/file-map`, `admin-web/src/app/api/file-map/*` | `/file-map` | cleanup execution approval-gated |
 | Ops / Runtime Tools | `scripts/ops/*`, `admin-web/src/app/ops` | `/ops` | deploy/drift/runtime actions gated by ops policy |
@@ -181,7 +181,7 @@ The MCP Gateway surface is retired and is not exposed on the home screen. After
 the home rewrite (commit 855d595a, "single AI console") the home is a single AI
 console, not a dashboard; the registry and its disabled-by-default rules above
 remain as backend/config policy only. MCP Gateway readiness is not shown on home.
-`scripts/ops/audit_mcp_gateway_baseline.py` enforces this: the home page must not
+`tools/audits/agent/audit_mcp_gateway_baseline.py` enforces this: the home page must not
 contain the retired MCP Gateway strings.
 
 ### Previous baseline (retired, kept for history)
@@ -262,7 +262,7 @@ A new tool is accepted only when all items are complete:
 - State-changing work is approval-gated or user-direct.
 - Reports are stored under `data/` or `docs/reports/` with secrets masked.
 - Tests or audit assertions cover the route, gate, and output policy.
-- `python scripts/required_quality_gate.py` passes.
+- `python tools/quality/required_quality_gate.py` passes.
 
 ## Required Verification
 
@@ -271,9 +271,9 @@ Before claiming the AI agent app structure is ready:
 ```powershell
 npm run typecheck
 npm run build
-python scripts/ops/audit_app_structure_contract.py
-python scripts/ops/audit_site_work_function_baseline.py
-python scripts/required_quality_gate.py
+python tools/audits/app/audit_app_structure_contract.py
+python tools/audits/app/audit_site_work_function_baseline.py
+python tools/quality/required_quality_gate.py
 ```
 
 `npm` commands run from `admin-web/`. Python commands run from the repo root.

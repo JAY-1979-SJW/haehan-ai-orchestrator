@@ -83,12 +83,12 @@
 
 | 기능 | 현재 위치 | 통합 후 단일 위치 |
 |------|-----------|------------------|
-| 등록 (register-with-code) | `local_agent.registration_client` + `desktop.local_server._handle_register` | **local_agent.registration_client** (서버는 호출만) |
-| device_token 저장 | `local_agent.token_store` + `desktop` keyring 별도 | **local_agent.token_store** |
-| 서버 WS heartbeat | `local_agent.websocket_client` + `desktop.local_server._connect_to_server_ws` | **local_agent.websocket_client** (desktop에서 spawn) |
+| 등록 (register-with-code) | `core.agent_runtime.connection.registration_client` + `desktop.local_server._handle_register` | **core.agent_runtime.connection.registration_client** (서버는 호출만) |
+| device_token 저장 | `core.agent_runtime.connection.token_store` + `desktop` keyring 별도 | **core.agent_runtime.connection.token_store** |
+| 서버 WS heartbeat | `core.agent_runtime.connection.websocket_client` + `desktop.local_server._connect_to_server_ws` | **core.agent_runtime.connection.websocket_client** (desktop에서 spawn) |
 | 트레이 아이콘 | `local_agent.gui_tray` + `desktop.tray_app` | **local_agent.gui_tray** |
-| 로그 redaction | `local_agent.redaction` + `desktop` ad-hoc | **local_agent.redaction** |
-| 진단 텍스트 | `local_agent.connection_diagnostics` + `desktop` 패널 | **local_agent.connection_diagnostics** |
+| 로그 redaction | `core.agent_runtime.common.redaction` + `desktop` ad-hoc | **core.agent_runtime.common.redaction** |
+| 진단 텍스트 | `core.agent_runtime.connection.connection_diagnostics` + `desktop` 패널 | **core.agent_runtime.connection.connection_diagnostics** |
 
 ### 2.4 유지 (각 라인 고유)
 
@@ -329,9 +329,9 @@ HaehanAI.exe 실행
 4. dev key (`openai_key_store`)는 test mode에서만 사용
 5. admin UI는 role guard 통과 후에만 노출
 6. Chrome profile cookie / set-cookie 헤더 원문 출력 금지
-7. 로그/리포트 redaction 필수 (`local_agent.redaction`)
+7. 로그/리포트 redaction 필수 (`core.agent_runtime.common.redaction`)
 
-### 8.2 redaction 패턴 (통합 source = `local_agent.redaction`)
+### 8.2 redaction 패턴 (통합 source = `core.agent_runtime.common.redaction`)
 
 - `device_token=...` → `[REDACTED]`
 - `registration_code=...` → `[REDACTED]`
@@ -398,7 +398,7 @@ HaehanAI.exe 실행
 - [x] 보안 정책 (§8)
 - [x] 위험 분석 (§9)
 - [x] 단계별 구현 계획 (§10)
-- [x] audit 스크립트 (`scripts/ops/audit_haehan_single_exe_mode_consolidation_spec.py`)
+- [x] audit 스크립트 (`tools/audits/agent/audit_haehan_single_exe_mode_consolidation_spec.py`)
 - [x] 테스트 (`tests/test_haehan_single_exe_mode_consolidation_spec.py`)
 
 ---
@@ -422,10 +422,10 @@ HaehanAI.exe 실행
 본 설계서는 **설계만** 수행한다. 다음은 별도 cleanup 공정 (HAEHAN_AGENT_EXE_CLEANUP_01)에서 처리:
 
 - `local_agent/gui_app.py` 4탭 코드 정리
-- `local_agent/gui_log_buffer.py` 제거
+- `core/agent_runtime/gui/gui_log_buffer.py` 제거
 - `HaehanAI-Agent.spec` 삭제
 - `scripts/build_desktop_agent_windows.py` 삭제
-- `local_agent/gui_chat_state.py` (CTk) 제거
+- `core/agent_runtime/gui/gui_chat_state.py` (CTk) 제거
 - Agent.exe 설치 문서 archive 이동
 
 본 공정에서는 위 항목 **분류만** 한다 (§2 통합 처분 표).

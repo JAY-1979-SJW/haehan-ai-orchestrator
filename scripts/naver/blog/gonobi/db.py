@@ -12,7 +12,9 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-_DEFAULT_DB = Path(__file__).resolve().parents[5] / "data" / "gonobi.db"
+from ai_orchestrator.paths.runtime import data_dir
+
+_DEFAULT_DB = data_dir() / "gonobi.db"  # 예전 parents[5] 는 저장소 밖(상위 폴더)이었다 — 번들·데스크톱에서 data_dir 로
 
 DDL_POSTS = """
 CREATE TABLE IF NOT EXISTS gonobi_posts (

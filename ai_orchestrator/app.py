@@ -5,21 +5,21 @@ import sys
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-from ai_orchestrator.audit_logger import log_event, read_recent_logs  # noqa: E402 — sys.stdout 재설정 뒤 import
-from ai_orchestrator.executor import execute  # noqa: E402 — sys.stdout 재설정 뒤 import
-from ai_orchestrator.gates.approval import (  # noqa: E402 — sys.stdout 재설정 뒤 import
+from ai_orchestrator.audit.audit_logger import log_event, read_recent_logs  # noqa: E402, I001 — sys.stdout 재설정 뒤 import
+from ai_orchestrator.tasks.executor import execute  # noqa: E402 — sys.stdout 재설정 뒤 import
+from tools.gates.approval import (  # noqa: E402 — sys.stdout 재설정 뒤 import
     approve_token,
     issue_token,
     validate_token,
 )
-from ai_orchestrator.logging_setup import setup_logging  # noqa: E402 — sys.stdout 재설정 뒤 import
-from ai_orchestrator.models import TaskRequest  # noqa: E402 — sys.stdout 재설정 뒤 import
-from ai_orchestrator.openai_client import (  # noqa: E402 — sys.stdout 재설정 뒤 import
+from ai_orchestrator.core.logging_setup import setup_logging  # noqa: E402 — sys.stdout 재설정 뒤 import
+from ai_orchestrator.core.models import TaskRequest  # noqa: E402 — sys.stdout 재설정 뒤 import
+from ai_orchestrator.llm.openai_client import (  # noqa: E402 — sys.stdout 재설정 뒤 import
     generate_approval_reason,
     generate_task_summary,
     is_mock_mode,
 )
-from ai_orchestrator.planner import plan  # noqa: E402 — sys.stdout 재설정 뒤 import
+from ai_orchestrator.llm.planner import plan  # noqa: E402 — sys.stdout 재설정 뒤 import
 
 setup_logging()
 logger = logging.getLogger(__name__)

@@ -78,12 +78,10 @@ def save_site_devices(records: list[dict[str, Any]]) -> Path:
 
 
 def main() -> None:
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
+    from scripts.eum.menu_actions import fetch_save_print
 
-    page = get_page()
-    records = fetch_site_devices(page)
-    path = save_site_devices(records)
-    print(f"현장별단말기목록: {len(records)}건 조회 → {path}")
+    fetch_save_print(get_page(), fetch_site_devices, save_site_devices, "현장별단말기목록")
 
 
 if __name__ == "__main__":

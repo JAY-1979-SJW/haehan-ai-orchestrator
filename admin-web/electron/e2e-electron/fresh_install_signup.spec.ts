@@ -3,7 +3,7 @@ import type { Page } from "@playwright/test";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { launchApp } from "./launch_helper";
+import { launchApp, getUiPage } from "./launch_helper";
 
 // 새 PC 첫 설치 시나리오(데스크톱, B안 — 대표님 결정 2026-10-07):
 // 데스크톱은 비밀번호 로그인 화면이 없다. 첫 실행 때 /setup에서 이름·이메일만
@@ -47,18 +47,6 @@ test.describe("새 PC 첫 설치 — 데스크톱 자동 로그인(B안)", () =>
   test.afterEach(() => {
     fs.rmSync(tmpUserData, { recursive: true, force: true });
   });
-
-  async function getUiPage(app: any): Promise<Page> {
-    for (let i = 0; i < 90; i++) {
-      for (const p of app.windows() as Page[]) {
-        let u = "";
-        try { u = p.url(); } catch { /* */ }
-        if (/(localhost|127\.0\.0\.1):3000/.test(u)) return p;
-      }
-      await new Promise((r) => setTimeout(r, 1000));
-    }
-    throw new Error("webview(Next UI) 페이지를 찾지 못함");
-  }
 
   test(
     "1. 첫 실행 → /setup에서 이름·이메일만 입력 → 바로 메인 화면(로그인 화면 없음) [대기]",

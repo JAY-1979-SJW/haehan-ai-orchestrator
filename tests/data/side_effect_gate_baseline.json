@@ -1,15 +1,16 @@
 [
- "ai_orchestrator/local_agent/browser/mixins/blog_mixin_write.py::BlogWriteMixin.blog_write_post",
- "ai_orchestrator/routers/naver_mailbox_router.py::send_draft",
+ "ai_orchestrator/connectors/hanafax/auto_sender.py::build_sender._send",
+ "ai_orchestrator/connectors/naver_mail/mailbox_flow.py::confirm_send",
+ "ai_orchestrator/connectors/naver_mail/mailbox_router.py::send_draft",
+ "scripts/naver/agent_mixins/blog_mixin_write.py::BlogWriteMixin.blog_write_post",
  "ai_orchestrator/services/scheduled_job_actions.py::_run_blog_publish.job",
  "ai_orchestrator/services/scheduled_job_actions.py::_run_naver_mail_send",
- "ai_orchestrator/sites/hanafax_auto_sender.py::build_sender._send",
- "ai_orchestrator/workflows/naver_mailbox_flow.py::confirm_send",
  "scripts/hanafax/batch.py::execute_batch",
  "scripts/hanafax/send_kras_campaign.py::main",
  "scripts/hanafax/send_kras_final_campaign.py::main",
  "scripts/instagram/api_publish.py::publish",
- "scripts/naver/automation/integration/workflow.py::Workflow.new_orders_to_alerts",
+ "scripts/instagram/guard_instagram_publish.py::main",
+ "scripts/instagram/ig_batch.py::main",
  "scripts/naver/blog/_runner.py::_task_confirm",
  "scripts/naver/blog/_runner.py::_task_write",
  "scripts/naver/blog/core/writer.py::confirm_publish",
@@ -19,5 +20,6 @@
  "scripts/naver/cafe/__init__.py::NaverCafe.write_post",
  "scripts/naver/cafe/_runner.py::_task_confirm",
  "scripts/naver/cafe/_runner.py::_task_write",
+ "scripts/naver/workflow.py::Workflow.new_orders_to_alerts",
  "scripts/youtube/uploader.py::_upload_with_official_api"
 ]

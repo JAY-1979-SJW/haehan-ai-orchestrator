@@ -2,7 +2,7 @@
 
 화면은 Next.js 라우트 그룹 `app/assistant/(legacy)/<화면>/page.tsx` 로 옮겨졌고, URL 은 그대로다.
 시험이 `app/assistant/<화면>/page.tsx` 를 직접 조합하면 파일을 못 찾으므로, 직접 경로를 먼저 보고
-없으면 `(legacy)` 안을 본다(`scripts/ops/audit_app_ui_shell_readonly_api_wiring.py::_route_page` 와 같은 규칙).
+없으면 `(legacy)` 안을 본다(`tools/audits/app/audit_app_ui_shell_readonly_api_wiring.py::_route_page` 와 같은 규칙).
 저장소 루트는 이 파일 위치 기준 상대 계산 — 절대경로·계정명 하드코딩 없음.
 """
 

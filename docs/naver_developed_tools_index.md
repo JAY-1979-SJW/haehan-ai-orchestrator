@@ -10,7 +10,7 @@ be checked before adding more Naver automation.
 
 - Use existing CDP sessions only; do not launch, restart, or close browsers.
 - Use the common tab-isolation gate for browser work:
-  `scripts/browser_cdp_selection_gate.py:create_isolated_target`.
+  `scripts/browser/session/browser_cdp_selection_gate.py:create_isolated_target`.
 - Read and prepare workflows may run after session/live-safety checks.
 - Final submit, send, publish, delete, move, save, join submit, upload, billing,
   API key issue, and ad publish actions require explicit approval or are blocked.
@@ -21,19 +21,19 @@ be checked before adding more Naver automation.
 
 | Area | Command | Risk | Status | Main Files | Output |
 | --- | --- | --- | --- | --- | --- |
-| Service catalog | `python scripts\cdp_client.py naver catalog` | read | implemented | `scripts/naver/service_catalog.py` | `data/naver_service_action_catalog_latest.json` |
-| Login/session | `python scripts\cdp_client.py naver login`, `session-check` | prepare/read | implemented | `scripts/naver/router.py`, `scripts/naver/browser_gate.py` | console status |
-| Keyword tools | `python scripts\cdp_client.py naver keyword-tools catalog` | read | implemented | `scripts/naver/keyword_tools.py`, `scripts/naver/router.py` | `data/naver_keyword_tools_latest.json` |
-| Keyword research plan | `python scripts\cdp_client.py naver keyword-tools plan --query=...` | read | implemented | `scripts/naver/keyword_tools.py` | `data/naver_keyword_tools_latest.json` |
-| Keyword paid policy | `python scripts\cdp_client.py naver keyword-tools paid-blocks` | blocked-policy | implemented | `scripts/naver/keyword_tools.py`, `scripts/gate.py` | `data/naver_keyword_tools_latest.json` |
-| Cafe list | `python scripts\cdp_client.py naver cafe list` | read | verified | `scripts/naver/cafe/list_collector.py`, `scripts/naver/cafe/list_background_runner.py` | `data/naver_cafes_latest.json` |
-| Cafe main/home | `python scripts\cdp_client.py naver cafe home` | read | implemented | `scripts/naver/cafe/main_page.py` | `data/naver_cafe_main_latest.json` |
-| Cafe topic search | `python scripts\cdp_client.py naver cafe topic-search --query=...` | read | verified | `scripts/naver/cafe/topic_search.py` | `data/naver_cafe_topic_search_latest.json` |
-| Cafe join request | `python scripts\cdp_client.py naver cafe join-request --cafe-url=...` | prepare | verified | `scripts/naver/cafe/join_request.py` | `data/naver_cafe_<cafe>_join_request_latest.json` |
-| Cafe join submit gate | `python scripts\cdp_client.py naver cafe join-submit --approved --confirm=NAVER_APPROVED_CAFE_JOIN` | approval | implemented gate only | `scripts/naver/cafe/join_request.py`, `scripts/naver/router.py` | `data/naver_cafe_<cafe>_join_submit_latest.json` |
-| Joined cafe home collect | `python scripts\cdp_client.py naver cafe collect --cafe-url=...` | read | verified | `scripts/naver/cafe/member_collect.py` | `data/naver_cafe_<cafe>_collect_latest.json` |
-| Joined cafe board collect | `python scripts\cdp_client.py naver cafe boards --cafe-url=...` | read | verified | `scripts/naver/cafe/member_collect.py` | `data/naver_cafe_<cafe>_boards_latest.json` |
-| Cafe post list/read/write/publish | `python scripts\cdp_client.py naver cafe posts/read/write/publish` | read/prepare/approval | existing | `scripts/naver/cafe.py`, `scripts/naver/router.py` | `data/naver_cafe_*_latest.json` |
+| Service catalog | `python scripts\entry\cdp_cli.py naver catalog` | read | implemented | `scripts/naver/service_catalog.py` | `data/naver_service_action_catalog_latest.json` |
+| Login/session | `python scripts\entry\cdp_cli.py naver login`, `session-check` | prepare/read | implemented | `scripts/naver/router.py`, `scripts/naver/browser_gate.py` | console status |
+| Keyword tools | `python scripts\entry\cdp_cli.py naver keyword-tools catalog` | read | implemented | `scripts/naver/keyword_tools.py`, `scripts/naver/router.py` | `data/naver_keyword_tools_latest.json` |
+| Keyword research plan | `python scripts\entry\cdp_cli.py naver keyword-tools plan --query=...` | read | implemented | `scripts/naver/keyword_tools.py` | `data/naver_keyword_tools_latest.json` |
+| Keyword paid policy | `python scripts\entry\cdp_cli.py naver keyword-tools paid-blocks` | blocked-policy | implemented | `scripts/naver/keyword_tools.py`, `scripts/common/gate.py` | `data/naver_keyword_tools_latest.json` |
+| Cafe list | `python scripts\entry\cdp_cli.py naver cafe list` | read | verified | `scripts/naver/cafe/list_collector.py`, `scripts/naver/cafe/list_background_runner.py` | `data/naver_cafes_latest.json` |
+| Cafe main/home | `python scripts\entry\cdp_cli.py naver cafe home` | read | implemented | `scripts/naver/cafe/main_page.py` | `data/naver_cafe_main_latest.json` |
+| Cafe topic search | `python scripts\entry\cdp_cli.py naver cafe topic-search --query=...` | read | verified | `scripts/naver/cafe/topic_search.py` | `data/naver_cafe_topic_search_latest.json` |
+| Cafe join request | `python scripts\entry\cdp_cli.py naver cafe join-request --cafe-url=...` | prepare | verified | `scripts/naver/cafe/join_request.py` | `data/naver_cafe_<cafe>_join_request_latest.json` |
+| Cafe join submit gate | `python scripts\entry\cdp_cli.py naver cafe join-submit --approved --confirm=NAVER_APPROVED_CAFE_JOIN` | approval | implemented gate only | `scripts/naver/cafe/join_request.py`, `scripts/naver/router.py` | `data/naver_cafe_<cafe>_join_submit_latest.json` |
+| Joined cafe home collect | `python scripts\entry\cdp_cli.py naver cafe collect --cafe-url=...` | read | verified | `scripts/naver/cafe/member_collect.py` | `data/naver_cafe_<cafe>_collect_latest.json` |
+| Joined cafe board collect | `python scripts\entry\cdp_cli.py naver cafe boards --cafe-url=...` | read | verified | `scripts/naver/cafe/member_collect.py` | `data/naver_cafe_<cafe>_boards_latest.json` |
+| Cafe post list/read/write/publish | `python scripts\entry\cdp_cli.py naver cafe posts/read/write/publish` | read/prepare/approval | existing | `scripts/naver/cafe.py`, `scripts/naver/router.py` | `data/naver_cafe_*_latest.json` |
 | Naver mail background | `scripts/naver_mail/background_runner.py` | read | verified | `scripts/naver_mail/background_runner.py`, `scripts/naver/mail_read/*` | report JSON from runner |
 | Naver mail settings panel | settings inspection modules | read/approval for save | implemented | `scripts/naver_mail/settings_panel.py` | settings menu records |
 

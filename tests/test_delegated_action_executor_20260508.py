@@ -2,18 +2,25 @@
 사용자 위임 권한 실행기 테스트
 """
 import pytest
-from ai_orchestrator.local_agent.delegated_action_executor import (
+
+from core.agent_runtime.runtime.permission.approval_audit_log import (
+    clear_log,
+    get_log_for_permission,
+)
+from core.agent_runtime.runtime.permission.delegated_action_executor import (
+    EXEC_ALLOWED,
+    EXEC_BLOCKED,
+    EXEC_CONTENT_REJECTED,
+    EXEC_NEED_PERMISSION,
+    EXEC_USER_DIRECT,
     execute_delegated_action,
-    EXEC_ALLOWED, EXEC_BLOCKED, EXEC_NEED_PERMISSION,
-    EXEC_USER_DIRECT, EXEC_CONTENT_REJECTED,
 )
-from ai_orchestrator.local_agent.delegated_permission_store import (
-    grant_permission, revoke, clear_all,
+from core.agent_runtime.runtime.permission.delegated_permission_store import (
+    clear_all,
+    grant_permission,
+    revoke,
 )
-from ai_orchestrator.local_agent.approval_audit_log import (
-    clear_log, get_log_for_permission,
-)
-from ai_orchestrator.local_agent.safe_write_result_sanitizer import validate_write_result
+from core.agent_runtime.runtime.safe_write_result_sanitizer import validate_write_result
 
 
 @pytest.fixture(autouse=True)
@@ -157,14 +164,17 @@ class TestAuditLog:
         assert len(logs) >= 2  # STARTED + COMPLETED
 
     def test_blocked_execution_creates_audit_log(self):
-        from ai_orchestrator.local_agent.approval_audit_log import get_log, EVENT_EXECUTION_BLOCKED
+        from core.agent_runtime.runtime.permission.approval_audit_log import (
+            EVENT_EXECUTION_BLOCKED,
+            get_log,
+        )
         execute_delegated_action("password_save", "example.com", None)
         log = get_log()
         blocked_entries = [e for e in log if e["event"] == EVENT_EXECUTION_BLOCKED]
         assert len(blocked_entries) >= 1
 
     def test_audit_log_has_no_sensitive_data(self):
-        from ai_orchestrator.local_agent.approval_audit_log import get_log, has_sensitive_data
+        from core.agent_runtime.runtime.permission.approval_audit_log import get_log, has_sensitive_data
         perm = grant_permission("blog_publish", "blog.naver.com")
         execute_delegated_action(
             "blog_publish", "blog.naver.com", perm["permission_id"],

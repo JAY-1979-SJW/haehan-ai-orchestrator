@@ -9,9 +9,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
-from .. import chat_sessions as store
+from ..tasks import chat_sessions as store
 
 chat_router = APIRouter(prefix="/chat/sessions", tags=["chat"])
 

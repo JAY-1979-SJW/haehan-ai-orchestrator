@@ -16,8 +16,8 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -121,7 +121,7 @@ class DriveAPI:
 
     def share_link(self, file_index: int = 0, role: str = "viewer", approval: str | None = None) -> dict:
         """N번째 파일 공유 링크 생성 + 복사. approval: 사용자가 직접 입력한 승인 문구(없으면 GateBlocked)."""
-        from scripts.gate import require_approved
+        from scripts.common.gate import require_approved
 
         require_approved("drive_share", approval, via="drive_share_link", file_index=file_index)
         try:

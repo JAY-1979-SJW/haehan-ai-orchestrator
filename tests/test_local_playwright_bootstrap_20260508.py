@@ -5,29 +5,30 @@ playwright_bootstrap.py의 상태 진단, 정책 상수, 옵션 반환을 검증
 """
 from __future__ import annotations
 
-import pytest
 import types
-import ai_orchestrator.local_agent.playwright_bootstrap as bootstrap
-from ai_orchestrator.local_agent.playwright_bootstrap import (
-    PLAYWRIGHT_READY,
-    PLAYWRIGHT_PACKAGE_MISSING,
-    PLAYWRIGHT_BROWSER_MISSING,
-    PLAYWRIGHT_INSTALL_REQUIRED,
-    PLAYWRIGHT_INSTALL_FAILED,
-    PLAYWRIGHT_LAUNCH_FAILED,
-    NETWORK_BLOCKED,
-    PERMISSION_DENIED,
-    UNKNOWN_ERROR,
+
+import pytest
+
+import core.agent_runtime.runtime.playwright.playwright_bootstrap as bootstrap
+from core.agent_runtime.runtime.playwright.playwright_bootstrap import (
     _ALL_STATES,
     BROWSER_POLICY,
-    check_playwright_status,
-    ensure_playwright_ready,
-    get_launch_options,
+    NETWORK_BLOCKED,
+    PERMISSION_DENIED,
+    PLAYWRIGHT_BROWSER_MISSING,
+    PLAYWRIGHT_INSTALL_FAILED,
+    PLAYWRIGHT_INSTALL_REQUIRED,
+    PLAYWRIGHT_LAUNCH_FAILED,
+    PLAYWRIGHT_PACKAGE_MISSING,
+    PLAYWRIGHT_READY,
+    UNKNOWN_ERROR,
     _classify_launch_error,
     _get_playwright_version,
     _try_launch_chromium,
+    check_playwright_status,
+    ensure_playwright_ready,
+    get_launch_options,
 )
-
 
 # ── 1. 상태 상수 완전성 ──────────────────────────────────────────────────────────
 

@@ -11,6 +11,6 @@
 CDP 포트는 자동화 Chrome 9222 고정. user_browser_session 정책 준수.
 """
 
-from . import body_reader, classify, entry, list_collector, pipeline
+from scripts.naver.mail.read import body_reader, classify, entry, list_collector, pipeline
 
 __all__ = ["body_reader", "classify", "entry", "list_collector", "pipeline"]

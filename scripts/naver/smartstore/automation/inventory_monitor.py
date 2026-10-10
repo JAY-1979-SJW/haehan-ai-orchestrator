@@ -13,8 +13,8 @@ import re
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -94,15 +94,17 @@ class InventoryMonitor:
             body += f"\n\n... 외 {check['low_count'] - 20}개"
 
         results = []
-        from scripts.naver import NaverServices
-
-        n = NaverServices(self.page)
-
+        # NaverServices(부모 진입점) 대신 쓰는 서비스만 직접 만든다 — smartstore → scripts/naver 역방향 제거.
         if mail_to:
-            r = n.mail.compose(mail_to, f"[재고 부족] {check['low_count']}건", body, send=send)
+            # scripts.naver.mail 은 읽기전용이라 NaverMail(발송 클래스)이 존재한 적이 없다 — 예전엔
+            # NaverServices.mail 접근에서 ImportError 로 죽었다(defect_index #38 과 같은 원인).
+            # notification_hub.send_email 과 같은 {"ok": False, "error": ...} 계약으로 명확히 실패시킨다.
+            r = {"ok": False, "error": "naver_mail_send_not_implemented"}
             results.append({"type": "mail", "result": r})
         if talk_partner:
-            r = n.talk.send_message(talk_partner, body[:500], confirm=send)
+            from scripts.naver.common.talk import NaverTalk
+
+            r = NaverTalk(self.page).send_message(talk_partner, body[:500], confirm=send)
             results.append({"type": "talk", "result": r})
 
         log_critical("OTHER", f"재고 알림 발송: {check['low_count']}개", send=send, mode="inventory_alert")

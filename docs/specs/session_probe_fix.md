@@ -15,7 +15,7 @@
 
 | 파일 | 변경 |
 |------|------|
-| `scripts/ops/session_probe.py` **(신규)** | Playwright `connect_over_cdp(9222)` → 9개 사이트 게이트 URL을 **임시 탭으로 접속** → 최종 URL의 로그인 리다이렉트/비밀번호 폼으로 판정 → `data/login_session_monitor_latest.json`(기존 포맷) 기록 |
+| `tools/runtime/session_probe.py` **(신규)** | Playwright `connect_over_cdp(9222)` → 9개 사이트 게이트 URL을 **임시 탭으로 접속** → 최종 URL의 로그인 리다이렉트/비밀번호 폼으로 판정 → `data/login_session_monitor_latest.json`(기존 포맷) 기록 |
 | `ai_orchestrator/connectors/session_status_router.py` | `/refresh`: subprocess 대신 `session_probe.probe_all()` **in-process** 호출(frozen-safe). 파일 못 읽으면 기존 동작 폴백 |
 
 - **보존**: `login_session_monitor.py`(실시간 감시 루프)는 그대로 둠. 새 프로버는 on-demand 점검용 별도 모듈.

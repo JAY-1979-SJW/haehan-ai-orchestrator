@@ -182,17 +182,21 @@ def test_playwright_sync_and_async_wrappers(calls):
 
 
 def test_real_cdp_skip_list_nodeids_exist():
-    """skip 목록의 nodeid 가 실제 시험 함수로 존재하는지 — 파일을 실행하지 않고 ast 로만 확인."""
+    """skip 목록의 파일명::시험명 키가 실제 시험 함수로 존재하는지 — 파일을 실행하지 않고 ast 로만 확인.
+
+    키가 폴더 무관(파일명 기준)이라 tests/ 아래 어디에 있어도 찾는다(B0-a: tests/<기능>/ 이동 대비)."""
     import ast
     from pathlib import Path
 
     root = Path(__file__).resolve().parent.parent
     assert guard.REAL_CDP_TESTS
-    for nodeid in guard.REAL_CDP_TESTS:
-        rel, func = nodeid.split("::")
-        tree = ast.parse((root / rel).read_text(encoding="utf-8"))
+    for key in guard.REAL_CDP_TESTS:
+        filename, func = key.split("::")
+        matches = list(root.rglob(filename))
+        assert matches, f"{filename} 을 tests/ 아래에서 찾지 못함 ({key})"
+        tree = ast.parse(matches[0].read_text(encoding="utf-8"))
         names = {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
-        assert func in names, nodeid
+        assert func in names, key
 
 
 def test_apply_real_cdp_skips_marks_only_listed(monkeypatch):
@@ -205,7 +209,8 @@ def test_apply_real_cdp_skips_marks_only_listed(monkeypatch):
             self.marks.append(m)
 
     listed = next(iter(guard.REAL_CDP_TESTS))
-    items = [Item(listed), Item("tests/other.py::test_x")]
+    # 폴더가 있어도(이동 후 nodeid 형태) 파일명::시험명만 보고 매칭되는지 확인.
+    items = [Item(f"tests/some_feature_folder/{listed}"), Item("tests/other.py::test_x")]
     monkeypatch.delenv(guard.ALLOW_ENV, raising=False)
     assert guard.apply_real_cdp_skips(items, "M") == 1
     assert items[0].marks == ["M"]

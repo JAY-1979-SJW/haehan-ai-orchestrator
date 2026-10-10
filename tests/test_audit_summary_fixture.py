@@ -4,7 +4,7 @@ PC local audit.jsonl 원문은 절대 저장/반환하지 않는다.
 audit_summary는 allowlist 방식으로 필드를 필터링한다.
 """
 
-from ai_orchestrator import local_agent_registry as reg
+from ai_orchestrator.agent_hub.registry import facade as reg
 
 
 class TestAuditSummaryBasic:
@@ -562,7 +562,7 @@ class TestLocalAgentAuditSummaryBuilder:
 
     def test_audit_summary_ok_status(self):
         """OK 상태 audit_summary 생성"""
-        from local_agent import actions
+        from core.agent_runtime.connection import actions
 
         result = actions._build_audit_summary("about_blank", "ok")
 
@@ -574,7 +574,7 @@ class TestLocalAgentAuditSummaryBuilder:
 
     def test_audit_summary_blocked_status(self):
         """Blocked 상태 audit_summary 생성"""
-        from local_agent import actions
+        from core.agent_runtime.connection import actions
 
         result = actions._build_audit_summary("public_https", "blocked")
 
@@ -586,7 +586,7 @@ class TestLocalAgentAuditSummaryBuilder:
 
     def test_audit_summary_error_status(self):
         """Error 상태 audit_summary 생성"""
-        from local_agent import actions
+        from core.agent_runtime.connection import actions
 
         result = actions._build_audit_summary("internal_test", "error", "TIMEOUT")
 
@@ -597,7 +597,7 @@ class TestLocalAgentAuditSummaryBuilder:
 
     def test_audit_summary_denied_status(self):
         """Denied 상태 audit_summary 생성"""
-        from local_agent import actions
+        from core.agent_runtime.connection import actions
 
         result = actions._build_audit_summary("about_blank", "denied")
 
@@ -606,7 +606,7 @@ class TestLocalAgentAuditSummaryBuilder:
 
     def test_audit_summary_has_required_fields(self):
         """Required 필드 포함 확인"""
-        from local_agent import actions
+        from core.agent_runtime.connection import actions
 
         result = actions._build_audit_summary("about_blank", "ok")
 
@@ -621,7 +621,7 @@ class TestLocalAgentAuditSummaryBuilder:
 
     def test_audit_summary_no_forbidden_fields(self):
         """금지 필드 미포함 확인"""
-        from local_agent import actions
+        from core.agent_runtime.connection import actions
 
         result = actions._build_audit_summary("about_blank", "ok")
 
@@ -647,7 +647,7 @@ class TestLocalAgentAuditSummaryBuilder:
 
     def test_audit_summary_target_kind_counts(self):
         """Target kind counts 반영"""
-        from local_agent import actions
+        from core.agent_runtime.connection import actions
 
         result = actions._build_audit_summary("public_http", "ok")
 
@@ -656,7 +656,7 @@ class TestLocalAgentAuditSummaryBuilder:
 
     def test_audit_summary_timestamp_format(self):
         """Timestamp ISO 형식 확인"""
-        from local_agent import actions
+        from core.agent_runtime.connection import actions
 
         result = actions._build_audit_summary("about_blank", "ok")
         timestamp = result["audit_summary_generated_at"]
@@ -673,9 +673,9 @@ class TestActionWebOpenUrlReadonlyAuditSummary:
         """ActionResult data에 audit_summary 포함"""
         from unittest.mock import patch
 
-        from local_agent import actions
+        from core.agent_runtime.connection import actions
 
-        with patch("local_agent.browser_reader.open_url_readonly") as mock_open:
+        with patch("core.agent_runtime.browser.browser_reader.open_url_readonly") as mock_open:
             mock_open.return_value = {
                 "ok": True,
                 "url": "http://127.0.0.1:8000",
@@ -700,9 +700,9 @@ class TestActionWebOpenUrlReadonlyAuditSummary:
         """audit_summary와 observe_summary 분리 확인"""
         from unittest.mock import patch
 
-        from local_agent import actions
+        from core.agent_runtime.connection import actions
 
-        with patch("local_agent.browser_reader.open_url_readonly") as mock_open:
+        with patch("core.agent_runtime.browser.browser_reader.open_url_readonly") as mock_open:
             mock_open.return_value = {
                 "ok": True,
                 "url": "http://127.0.0.1:8000",

@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:  # 단독 실행 시에도 scripts 패키지를 import 할 수 있게
     sys.path.insert(0, str(ROOT))
-from scripts.app_paths import resolve_external, sibling_project  # noqa: E402
+from scripts.common.app_paths import resolve_external, sibling_project  # noqa: E402
 
 G2B_BASE = resolve_external("HAEHAN_FAX_EXPORT_DIR", "exports", "개별팩스", base=sibling_project("05. g2b"))
 FAX_FILE = G2B_BASE / "fax_common_v3.xlsx"
@@ -332,7 +332,7 @@ def main() -> None:
 
     uid, pwd = _get_creds()
     if not uid or not pwd:
-        print("ERROR: 하나팩스 자격증명 없음. python scripts/cdp_client.py cred set hanafax")
+        print("ERROR: 하나팩스 자격증명 없음. python scripts/entry/cdp_cli.py cred set hanafax")
         sys.exit(1)
 
     batches_to_run: list[int] = []

@@ -9,7 +9,7 @@ model: sonnet
 
 ## 점검 항목
 1. **중복 구현** — 이 변경이 추가한 함수/클래스가 저장소 다른 곳에 이미 있는 기능을
-   다시 짠 것인가. `scripts/ops/capability_check.py`, `scripts/ops/duplicate_code_check.py`
+   다시 짠 것인가. `tools/hooks/capability_check.py`, `tools/hooks/duplicate_code_check.py`
    결과를 참고해 확인한다.
 2. **테스트 존재/동작 검증** — 이 변경에 대응하는 테스트가 있는가. 없다면 "테스트 없음"으로
    명시한다. 있다면 실제로 실행해 통과하는지 확인한다(주장만 보지 않는다).

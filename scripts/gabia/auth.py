@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -89,28 +89,20 @@ def is_logged_in(page) -> bool:
     return False
 
 
+def _open_login_page(page) -> None:
+    """gabia 로그인 페이지로 이동한다 — 실패해도 경고 로그만 남기고 수동 로그인 대기로 진행한다."""
+    try:
+        page.goto(GABIA_LOGIN_URL, timeout=30000)
+    except Exception as e:  # noqa: BLE001 - 가비아 로그인 상태 확인(is_logged_in) — 가비아는 OTP/2FA 필수라 자동 로그인 자체가 불가능한 구조이며, 모든 except가 '미로그인'(보수적) 방향으로 폴백해 인증 우회가 아님. login()은 사용자 수동 로그인을 안내할 뿐 자동 인증을 시도하지 않음.
+        log.warning("gabia: 로그인 페이지 이동 실패: %s", e)
+
+
 def login(page) -> dict:
     """가비아 로그인 — 사용자 직접 수행, monitor_for_login으로 감지.
 
     OTP/2FA 필수이므로 자동 로그인 불가.
     브라우저를 가비아 로그인 페이지로 이동 후 사용자가 로그인하면 감지한다.
     """
-    from scripts.login_detector import monitor_for_login
+    from scripts.auth.login_detector import manual_only_login
 
-    if is_logged_in(page):
-        log.info("gabia: 이미 로그인됨")
-        return {"ok": True, "reason": "기존 세션 재사용", "user": "", "needs_manual": False}
-
-    try:
-        page.goto(GABIA_LOGIN_URL, timeout=30000)
-    except Exception as e:  # noqa: BLE001 - 가비아 로그인 상태 확인(is_logged_in) — 가비아는 OTP/2FA 필수라 자동 로그인 자체가 불가능한 구조이며, 모든 except가 '미로그인'(보수적) 방향으로 폴백해 인증 우회가 아님. login()은 사용자 수동 로그인을 안내할 뿐 자동 인증을 시도하지 않음.
-        log.warning("gabia: 로그인 페이지 이동 실패: %s", e)
-
-    log.info("gabia: 수동 로그인 대기 (최대 5분)")
-    return {
-        "ok": False,
-        "reason": "manual_login_required",
-        "user": "",
-        "needs_manual": True,
-        "monitor": monitor_for_login,
-    }
+    return manual_only_login(page, site="gabia", is_logged_in=is_logged_in, open_login_page=_open_login_page, log=log)

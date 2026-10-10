@@ -23,12 +23,13 @@ import json
 import time
 from pathlib import Path
 
-from scripts.logger import get_logger
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 
 ROOT = Path(__file__).resolve().parents[4]
-CACHE_PATH = ROOT / "data" / "smartstore" / "categories.json"
+CACHE_PATH = data_dir() / "smartstore" / "categories.json"
 
 
 # ══════════════════════════════════════════════════════════════════════════════

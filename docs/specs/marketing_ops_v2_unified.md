@@ -166,7 +166,7 @@ API 응답 key 변경 없음 · DB schema 변경 없음 · 기존 함수 시그�
 ## 8. 검증
 
 ```bash
-python scripts/ops/codebase_layer_audit.py
+python tools/repo_gates/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
 python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
 ```

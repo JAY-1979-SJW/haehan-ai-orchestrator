@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from ai_orchestrator.local_agent.generic_selector_discovery import _RISK_BUTTON_KEYWORDS  # noqa: E402
+from core.agent_runtime.runtime.universal.generic_selector_discovery import _RISK_BUTTON_KEYWORDS  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

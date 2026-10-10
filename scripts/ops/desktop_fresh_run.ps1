@@ -25,8 +25,10 @@
   Claude 연결 점검용. 임시 userData 는 그대로 쓰되 동의 창을 막지 않는다 → [연결]을 누르면 실제 Claude 설정이 바뀐다.
   실행 전에 claude_desktop_config.json 과 ~\.claude.json 을 <WorkDir>\backup 에 복사하고 백업 경로·복원 명령을 출력한다.
 .PARAMETER ImportFromOldApp
-  예전 앱 설치 폴더(예: C:\Users\skyjw\Haehan AI). 그 안의 서버 저장소(storage·data)를 임시 userData 로 **복사**(덮어쓰기 없음,
-  원본은 읽기만)해 '예전 데이터가 있는 PC' 시나리오(이행 DB → 설정 화면 없이 자동 로그인)를 임시 폴더에서 시험한다.
+  예전 앱 설치 폴더(예: C:\Users\skyjw\Haehan AI). 새 앱의 **자동 가져오기**(paths/legacy_import.py)가 이 폴더의 storage 를 임시
+  userData 로 **복사**(덮어쓰기 없음, 원본 읽기만)하도록 HAEHAN_LEGACY_INSTALL_DIRS 로 알려 준다 → '예전 데이터가 있는 PC' 시나리오
+  (이행된 계정 → "사용자 정보" 화면 없이 자동 로그인)를 임시 폴더에서 시험한다. 이 옵션이 없으면 격리 실행은 예전 앱 폴더를
+  **탐색하지 않게** 막는다(빈 PC 시나리오 9번이 대표님의 실제 예전 계정으로 오염되지 않도록). 예전 앱은 먼저 종료해야 한다.
 .PARAMETER Cleanup
   요약을 출력한 뒤 임시 작업 폴더를 지운다(기본은 남겨 둔다 — 직접 열어 보기 위해).
 
@@ -159,6 +161,11 @@ function Show-Summary([string]$userData) {
         Write-Host "  .bundle-migration.json  (예전 위치 → 새 위치 이행 표시)"
         Get-Content -LiteralPath $mig -Raw -Encoding UTF8 | ForEach-Object { $_.Trim() } | ForEach-Object { Write-Host "    $_" }
     } else { Write-Host "  .bundle-migration.json             없음 (이행할 예전 데이터가 없었거나 아직 실행 전)" }
+    $leg = Join-Path $userData ".legacy-import.json"
+    if (Test-Path -LiteralPath $leg) {
+        Write-Host "  .legacy-import.json  (예전 설치 폴더 자동 가져오기 완료 표식)"
+        Get-Content -LiteralPath $leg -Raw -Encoding UTF8 | ForEach-Object { $_.Trim() } | ForEach-Object { Write-Host "    $_" }
+    } else { Write-Host "  .legacy-import.json                없음 (예전 설치 폴더 가져오기를 하지 않았거나 건너뜀 — logs\fastapi.log 의 [legacy-import] 확인)" }
     Write-Host ""
     $mcp = Join-Path $userData "mcp"
     Write-Host "  mcp (Claude 연결용 고정 폴더)"
@@ -176,6 +183,11 @@ function Show-Summary([string]$userData) {
     $corrupt = @(Get-ChildItem -LiteralPath $userData -Filter "config.json.corrupt-*" -ErrorAction SilentlyContinue)
     Write-Host ("  config.json.corrupt-*              {0}" -f $(if ($corrupt.Count) { "⚠ 있음: " + ($corrupt.Name -join ", ") } else { "없음" }))
     Write-Host ""
+    $lp0 = Join-Path $userData "logs\fastapi.log"
+    if (Test-Path -LiteralPath $lp0) {
+        $li = @(Select-String -LiteralPath $lp0 -Pattern "\[legacy-import\]" -ErrorAction SilentlyContinue)
+        if ($li.Count) { Write-Host "  [legacy-import] 로그:"; $li | Select-Object -Last 3 | ForEach-Object { Write-Host ("      " + $_.Line.Trim()) } }
+    }
     foreach ($log in @("fastapi.log", "nextjs.log")) {
         $lp = Join-Path $userData "logs\$log"
         if (Test-Path -LiteralPath $lp) {
@@ -230,7 +242,8 @@ Write-Host "  앱(exe)        : $ExePath"
 Write-Host "  임시 userData  : $userData $(if ($resume) { '(기존 폴더 재사용 — 데이터 유지)' } else { '(새로 만듦 — 빈 PC)' })"
 Write-Host "  실제 데이터    : $realUserData  ← 건드리지 않음"
 Write-Host "  Claude 연결    : $(if ($RealClaude) { '⚠ 실제 Claude 설정을 바꿀 수 있음(-RealClaude)' } else { '막음(동의 창 미표시) — 14·15번은 -RealClaude 로 따로' })"
-if ($ImportFromOldApp) { Write-Host "  예전 앱 가져오기: $ImportFromOldApp → 임시 userData 로 복사(원본 읽기 전용)" }
+if ($ImportFromOldApp) { Write-Host "  예전 앱 가져오기: $ImportFromOldApp → 새 앱이 첫 실행 때 임시 userData 로 자동 복사(원본 읽기 전용, 예전 앱은 먼저 종료)" }
+else { Write-Host "  예전 앱 가져오기: 막음(빈 PC 시나리오) — 새 앱의 자동 가져오기가 실제 예전 설치 폴더를 보지 않게 함" }
 Write-Host "  실행 명령      : `"$ExePath`" --user-data-dir=`"$userData`""
 
 $busy = @(); foreach ($p in $Ports) { if (Test-PortListening $p) { $busy += "$p ← $(Get-PortOwner $p)" } }
@@ -251,26 +264,12 @@ if (-not $RealClaude -and -not (Test-Path -LiteralPath $cfgPath)) {
     '{"claude_mcp":{"prompted":true}}' | Set-Content -LiteralPath $cfgPath -Encoding UTF8
     Write-Host "  임시 config.json 에 claude_mcp.prompted=true 를 넣어 동의 창을 막았습니다."
 }
+# 새 앱의 자동 가져오기(예전 설치 폴더 탐색)는 환경변수 HAEHAN_LEGACY_INSTALL_DIRS 로 탐색 위치를 바꿀 수 있다(앱 → 서버로 상속).
 if ($ImportFromOldApp) {
-    $internal = Join-Path $ImportFromOldApp "resources\server\haehan-server\_internal"
-    $pairs = @(
-        @{ Src = (Join-Path $internal "ai_orchestrator\storage"); Dst = (Join-Path $userData "storage") },
-        @{ Src = (Join-Path $internal "data"); Dst = (Join-Path $userData "data") }
-    )
-    foreach ($pair in $pairs) {
-        if (-not (Test-Path -LiteralPath $pair.Src)) { Write-Host "  (가져올 폴더 없음: $($pair.Src))"; continue }
-        $copied = 0; $skipped = 0
-        foreach ($f in Get-ChildItem -LiteralPath $pair.Src -Recurse -File -ErrorAction SilentlyContinue) {
-            if ($f.Name -in @(".gitkeep", ".gitignore") -or $f.FullName -like "*\__pycache__\*") { continue }
-            $rel = $f.FullName.Substring($pair.Src.Length).TrimStart('\')
-            $dest = Join-Path $pair.Dst $rel
-            if (Test-Path -LiteralPath $dest) { $skipped++; continue }
-            New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
-            Copy-Item -LiteralPath $f.FullName -Destination $dest
-            $copied++
-        }
-        Write-Host "  가져오기: $($pair.Src) → 복사 $copied · 이미 있어 건너뜀 $skipped"
-    }
+    if (-not (Test-Path -LiteralPath $ImportFromOldApp)) { throw "-ImportFromOldApp 폴더를 찾을 수 없습니다: $ImportFromOldApp" }
+    $env:HAEHAN_LEGACY_INSTALL_DIRS = (Resolve-Path -LiteralPath $ImportFromOldApp).Path
+} else {
+    $env:HAEHAN_LEGACY_INSTALL_DIRS = (Join-Path $WorkDir "no-legacy-install")   # 존재하지 않는 폴더 = 가져오기 대상 없음
 }
 if ($RealClaude) {
     $backup = Join-Path $WorkDir "backup"

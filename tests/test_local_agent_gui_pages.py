@@ -6,7 +6,7 @@ from __future__ import annotations
 
 
 def test_log_redact_device_token_kv():
-    from local_agent.gui_log_buffer import redact
+    from core.agent_runtime.gui.gui_log_buffer import redact
 
     r = redact("device_token=ABCDEFGH12345678 hello")
     assert "ABCDEFGH12345678" not in r
@@ -14,21 +14,21 @@ def test_log_redact_device_token_kv():
 
 
 def test_log_redact_registration_code_kv():
-    from local_agent.gui_log_buffer import redact
+    from core.agent_runtime.gui.gui_log_buffer import redact
 
     r = redact("registration_code=XYZ987abc world")
     assert "XYZ987abc" not in r
 
 
 def test_log_redact_authorization_bearer():
-    from local_agent.gui_log_buffer import redact
+    from core.agent_runtime.gui.gui_log_buffer import redact
 
     r = redact("Authorization: Bearer abc123def456ghi789")
     assert "abc123def456ghi789" not in r
 
 
 def test_log_redact_json_form():
-    from local_agent.gui_log_buffer import redact
+    from core.agent_runtime.gui.gui_log_buffer import redact
 
     r = redact('{"device_token": "RAW_LONG_TOKEN_VALUE_HERE"}')
     assert "RAW_LONG_TOKEN_VALUE_HERE" not in r
@@ -36,7 +36,7 @@ def test_log_redact_json_form():
 
 
 def test_log_buffer_stores_redacted_only():
-    from local_agent.gui_log_buffer import LogBuffer
+    from core.agent_runtime.gui.gui_log_buffer import LogBuffer
 
     b = LogBuffer()
     b.info("device_token=SECRET_VALUE_8plus stored")
@@ -46,7 +46,7 @@ def test_log_buffer_stores_redacted_only():
 
 
 def test_log_buffer_export_redacts(tmp_path):
-    from local_agent.gui_log_buffer import LogBuffer
+    from core.agent_runtime.gui.gui_log_buffer import LogBuffer
 
     b = LogBuffer()
     b.info("device_token=RAW_TOKEN_VALUE_22ch and more text")
@@ -59,7 +59,7 @@ def test_log_buffer_export_redacts(tmp_path):
 
 
 def test_log_buffer_filter_by_level():
-    from local_agent.gui_log_buffer import LogBuffer
+    from core.agent_runtime.gui.gui_log_buffer import LogBuffer
 
     b = LogBuffer()
     b.info("info msg")
@@ -70,7 +70,7 @@ def test_log_buffer_filter_by_level():
 
 
 def test_log_buffer_ring_maxlen():
-    from local_agent.gui_log_buffer import LogBuffer
+    from core.agent_runtime.gui.gui_log_buffer import LogBuffer
 
     b = LogBuffer(maxlen=10)
     for i in range(25):
@@ -82,14 +82,14 @@ def test_log_buffer_ring_maxlen():
 
 
 def test_sidebar_icons_present():
-    from local_agent.gui_icons import SIDEBAR_ICONS
+    from core.agent_runtime.gui.gui_icons import SIDEBAR_ICONS
 
     for k in ("dashboard", "registration", "logs", "settings"):
         assert k in SIDEBAR_ICONS
 
 
 def test_make_sparkline_returns_image():
-    from local_agent.gui_icons import make_sparkline
+    from core.agent_runtime.gui.gui_icons import make_sparkline
 
     img = make_sparkline([0.1, 0.5, 0.8, 0.3, 0.9])
     assert img is not None
@@ -97,7 +97,7 @@ def test_make_sparkline_returns_image():
 
 
 def test_make_dot_returns_image():
-    from local_agent.gui_icons import make_dot
+    from core.agent_runtime.gui.gui_icons import make_dot
 
     img = make_dot("#10B981")
     assert img is not None
@@ -107,14 +107,14 @@ def test_make_dot_returns_image():
 
 
 def test_regression_gui_state_unchanged():
-    from local_agent import gui_state as gs
+    from core.agent_runtime.gui import gui_state as gs
 
     for s in ("GuiController", "GuiModel", "transition", "STATE_CONNECTED"):
         assert hasattr(gs, s)
 
 
 def test_regression_connection_diagnostics_unchanged():
-    from local_agent import connection_diagnostics as cd
+    from core.agent_runtime.connection import connection_diagnostics as cd
 
     for s in ("normalize_ws_url", "mask_agent_id", "explain_error", "find_token_leaks"):
         assert hasattr(cd, s)

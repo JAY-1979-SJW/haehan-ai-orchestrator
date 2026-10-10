@@ -6,69 +6,80 @@ from dataclasses import asdict as _asdict
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from ai_orchestrator.agent_dispatch.agent_dispatch_router import agent_dispatch_router
+from ai_orchestrator.agent_dispatch.agent_dispatch_router import resume_on_startup as _resume_agent_dispatch
+from ai_orchestrator.auth.auth_router import auth_router
+from ai_orchestrator.browser_tool.approval.approval_record_router import approval_record_router
+from ai_orchestrator.connectors.google.gmail_reader import collect_to_inbox as _collect_gmail
+from ai_orchestrator.connectors.naver_auth.session_router import router as naver_session_router
+from ai_orchestrator.connectors.naver_blog.automation_router import blog_automation_router
+from ai_orchestrator.connectors.naver_mail.bulk_router import naver_mail_bulk_router
+from ai_orchestrator.connectors.naver_mail.mailbox_router import naver_mailbox_router
+from ai_orchestrator.dev_reg.dev_reg_approval_read_router import dev_reg_approval_read_router
+from ai_orchestrator.gongmu.gongmu_router import gongmu_router
 from ai_orchestrator.routers.action_router import action_router
 from ai_orchestrator.routers.admin_ui_router import admin_ui_router
-from ai_orchestrator.routers.agent_dispatch_router import agent_dispatch_router
-from ai_orchestrator.routers.ai_agent_router import ai_agent_router
 from ai_orchestrator.routers.app_status_router import app_status_router
-from ai_orchestrator.routers.auth_router import auth_router
-from ai_orchestrator.routers.blog_automation_router import blog_automation_router
 from ai_orchestrator.routers.chat_router import chat_router
 from ai_orchestrator.routers.config_router import config_router
-from ai_orchestrator.routers.dev_reg_approval_read_router import dev_reg_approval_read_router
-from ai_orchestrator.routers.gongmu_router import gongmu_router
-from ai_orchestrator.routers.naver_mail_bulk_router import naver_mail_bulk_router
-from ai_orchestrator.routers.naver_mailbox_router import naver_mailbox_router
 from ai_orchestrator.routers.ops_router import ops_router
-from ai_orchestrator.routers.scheduled_job_router import scheduled_job_router
-from ai_orchestrator.routers.site_onboarding_router import site_onboarding_router
-from ai_orchestrator.routers.site_task_map_router import site_task_map_router
-from ai_orchestrator.routers.user_data_contribution_router import user_data_contribution_router
-from ai_orchestrator.routers.vendor_directory_router import vendor_directory_router
-from ai_orchestrator.routers.web_task_router import web_task_router
-from ai_orchestrator.sites.gmail_reader import collect_to_inbox as _collect_gmail
+from ai_orchestrator.scheduler.scheduled_job_router import scheduled_job_router
+from ai_orchestrator.site_work import site_preflight_service as _site_preflight
+from ai_orchestrator.site_work import site_task_map_explore_service as _site_explore
+from ai_orchestrator.site_work import site_task_map_service as _site_map_service
+from ai_orchestrator.site_work.ai_agent_router import ai_agent_router
+from ai_orchestrator.site_work.site_onboarding_router import site_onboarding_router
+from ai_orchestrator.site_work.site_task_map_router import site_task_map_router
+from ai_orchestrator.user_data.user_data_contribution_router import user_data_contribution_router
+from ai_orchestrator.vendor_directory.vendor_directory_router import vendor_directory_router
+from ai_orchestrator.web_task.web_task_router import web_task_router
+from scripts.entry import site_login_registry
+from scripts.explorer import preflight_fetch, task_mapper, task_runner
 
-from ..audit_logger import log_event, read_recent_logs
-from ..browser_tool.approval_record_router import approval_record_router
+from ..agent_hub.router.root import local_agent_router
+from ..audit.audit_logger import log_event, read_recent_logs
+from ..auth.desktop_session_router import desktop_session_router
+from ..auth.user_auth_router import get_jwt_user, user_auth_router
 from ..connectors.cdp_screen_router import cdp_screen_router
 from ..connectors.community_router import community_router
-from ..connectors.desktop_session_router import desktop_session_router
 from ..connectors.eum.router import eum_router
 from ..connectors.gabia.router import gabia_router
 from ..connectors.google.gmail_router import gmail_router
-from ..connectors.gonobi_router import gonobi_router
-from ..connectors.google_router import google_router
+from ..connectors.google.router import google_router
 from ..connectors.hanafax.router import hanafax_router
 from ..connectors.hiworks.mail_router import hiworks_mail_router
 from ..connectors.inquiry_router import inquiry_router
-from ..connectors.instagram_dm_router import instagram_dm_router
+from ..connectors.instagram.instagram_dm_router import instagram_dm_router
 from ..connectors.kakao.setup_router import kakao_setup_router
 from ..connectors.kakao.skill_router import kakao_skill_router
-from ..connectors.naver_blog_router import naver_blog_router
-from ..connectors.naver_cafe_router import naver_cafe_router
-from ..connectors.naver_mail_router import naver_mail_router
-from ..connectors.naver_news_router import naver_news_router
-from ..connectors.naver_openapi_setup_router import naver_openapi_setup_router
-from ..connectors.naver_search_router import naver_search_router
-from ..connectors.naver_session_router import router as naver_session_router
+from ..connectors.naver_blog.gonobi_router import gonobi_router
+from ..connectors.naver_blog.naver_blog_router import naver_blog_router
+from ..connectors.naver_cafe.naver_cafe_router import naver_cafe_router
+from ..connectors.naver_mail.naver_mail_router import naver_mail_router
+from ..connectors.naver_search.naver_news_router import naver_news_router
+from ..connectors.naver_search.naver_openapi_setup_router import naver_openapi_setup_router
+from ..connectors.naver_search.naver_search_router import naver_search_router
 from ..connectors.public_media_router import public_media_router
 from ..connectors.session_status_router import session_status_router
-from ..connectors.smartstore_router import smartstore_router
-from ..connectors.user_auth_router import get_jwt_user, user_auth_router
-from ..connectors.youtube_router import youtube_router
-from ..executor import execute
-from ..gates.approval import approve_token, issue_token, reject_token
-from ..gates.auth import require_role
-from ..inbox import get_inbox_item as _get_inbox_item
-from ..inbox import read_recent_inbox
-from ..local_agent_router import local_agent_router
-from ..models import TaskRequest
-from ..planner import plan
-from .marketing_ops_router import marketing_ops_router
+from ..connectors.smartstore.router import smartstore_router
+from ..connectors.youtube.router import youtube_router
+from ..core.models import TaskRequest
+from tools.gates.approval import approve_token, issue_token, reject_token
+from tools.gates.auth import require_role
+from ..llm.planner import plan
+from ..marketing.marketing_ops_router import marketing_ops_router
+from ..notify.telegram_webhook import handle_telegram_update, handle_telegram_webhook
 from ..sites.router import sites_router
-from ..telegram_webhook import handle_telegram_update, handle_telegram_webhook
+from ..tasks.executor import execute
+from ..tasks.inbox import get_inbox_item as _get_inbox_item
+from ..tasks.inbox import read_recent_inbox
 
 logger = logging.getLogger(__name__)
+
+
+def resume_agent_dispatch_on_startup() -> bool:
+    """서버 시작 시 승인된 채 끝나지 않은 AI 작업 분배가 있으면 러너를 다시 띄운다(asgi 가 이 모듈을 거쳐 부른다)."""
+    return _resume_agent_dispatch()
 
 # ── Phase 1-R: feature flag OFF constants (default: disabled) ────────────
 LEGACY_5050_ROUTER_TOUCH_PHASE = "PHASE_1R"
@@ -91,6 +102,12 @@ def _legacy_5050_should_use_route_wiring(route_id: str) -> bool:
     }
     return _flags.get(route_id, False)
 
+
+# 사이트 업무(site_work)의 실행기 연결 — 조합 루트에서만 scripts.explorer 와 이어 준다(site_work 는 scripts 를 import 하지 않는다)
+_site_explore.configure(task_mapper.run_request)  # 승인된 탐색의 실행기(브라우저 모듈은 실행 시점에만 불러온다)
+_site_map_service.configure_runner(task_runner.run_task_in_browser)  # 지도 기반 업무 실행기(조회 업무 전용)
+_site_preflight.configure_fetcher(preflight_fetch.fetch_text)  # 사전 조사 실행기(브라우저 없음)
+site_login_registry.install()  # 사이트 로그인 등록표 — 서버 경로의 open_site(eum 커넥터 등)가 쓴다
 
 router = APIRouter(prefix="/api/v1", tags=["orchestrator"])
 router.include_router(auth_router)

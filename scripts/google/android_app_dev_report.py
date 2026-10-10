@@ -1,13 +1,13 @@
 """Android app development verification report from Google evidence."""
 from __future__ import annotations
 
-import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from scripts.google.android_app_dev_labels import build_android_app_dev_labels, label_for_surface
 from scripts.google.precision_report import build_google_precision_report
+from scripts.google.common.report_io import print_report_summary, save_json_md_report
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_REPORT_DIR = ROOT / "data" / "google_android_app_dev_reports"
@@ -74,15 +74,9 @@ def build_android_app_dev_report() -> dict[str, Any]:
 
 def save_android_app_dev_report(report: dict[str, Any] | None = None) -> tuple[dict[str, Any], Path, Path]:
     report = report or build_android_app_dev_report()
-    DATA_REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    DOC_REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    json_path = DATA_REPORT_DIR / f"google_android_app_dev_report_{timestamp}.json"
-    md_path = DOC_REPORT_DIR / f"google_android_app_dev_report_{timestamp}.md"
-    text = json.dumps(report, ensure_ascii=False, indent=2)
-    json_path.write_text(text, encoding="utf-8")
-    LATEST_REPORT.write_text(text, encoding="utf-8")
-    md_path.write_text(_render_markdown(report), encoding="utf-8")
+    json_path, md_path = save_json_md_report(
+        report, DATA_REPORT_DIR, DOC_REPORT_DIR, LATEST_REPORT, "google_android_app_dev_report", _render_markdown
+    )
     return report, json_path, md_path
 
 
@@ -126,18 +120,10 @@ def _render_markdown(report: dict[str, Any]) -> str:
 
 
 def print_android_app_dev_summary(report: dict[str, Any], json_path: Path, md_path: Path) -> None:
-    print("=" * 60)
-    print("Google Android app development report")
-    print("=" * 60)
-    print(f"surfaces: {report['counts']['surfaces']}")
-    print(f"live_verified: {report['counts']['live_verified']}")
-    print(f"pass: {report['counts']['pass']}")
-    print(f"warn: {report['counts']['warn']}")
-    print(f"fail: {report['counts']['fail']}")
-    print(f"final_clicked: {report['counts']['final_clicked']}")
-    print(f"json: {json_path}")
-    print(f"markdown: {md_path}")
-    print(f"latest: {LATEST_REPORT}")
+    fields = [(key, key) for key in ("surfaces", "live_verified", "pass", "warn", "fail", "final_clicked")]
+    print_report_summary(
+        "Google Android app development report", report["counts"], fields, json_path, md_path, LATEST_REPORT
+    )
 
 
 def main() -> int:

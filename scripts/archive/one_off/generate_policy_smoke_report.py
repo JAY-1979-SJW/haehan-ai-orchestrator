@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ai_orchestrator.local_agent.browser_allowlist_expansion_preflight import (
+from core.agent_runtime.runtime.site_profile.browser_allowlist_expansion_preflight import (
     VERDICT_ALLOW,
     VERDICT_BLOCKED,
     VERDICT_REVIEW,

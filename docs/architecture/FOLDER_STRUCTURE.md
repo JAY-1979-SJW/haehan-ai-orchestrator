@@ -81,7 +81,17 @@
 - 순환 증가 0(감소 목표), G11·G12·G15 PASS, 빌드 산출물 E2E PASS
 
 ## 5. 관련 문서·게이트
-- 도구별 집(구현·API·화면): [TOOL_HOME_MAP.md](TOOL_HOME_MAP.md) — G11 도구 집 게이트(`scripts/ops/tool_home_gate.py`)로 강제
+- 도구별 집(구현·API·화면): [TOOL_HOME_MAP.md](TOOL_HOME_MAP.md) — G11 도구 집 게이트(`tools/repo_gates/tool_home_gate.py`)로 강제
 - 앱 전체 구조: [APP_STRUCTURE.md](APP_STRUCTURE.md)
-- 최상위 평면 금지: G15 게이트 `scripts/ops/flat_root_gate.py` — 규칙 `configs/flat_root_gate.json`, 기준선 `configs/flat_root_baseline.json`(줄이기만). pre-commit `--staged`, CI `--check-all`
-- 폴더 승인(G16): `scripts/ops/folder_gate.py` — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더는 `configs/folder_registry.json` 에 승인돼 있어야 한다(하위 폴더도 각각). 새 폴더는 작업 창 → 지휘창 '새 폴더 요청'(경로·목적·왜 기존 폴더로 안 되는지) → 대표님 승인 → 목록 추가 → PR 라벨 `folder-approved`(지휘창만 붙임). pre-commit `--staged`, CI `--check-all` + `--check-approval`(목록 추가 시 라벨 확인). 삭제는 승인 불필요.
+- 최상위 평면 금지: G15 게이트 `tools/repo_gates/flat_root_gate.py` — 규칙 `configs/flat_root_gate.json`, 기준선 `configs/flat_root_baseline.json`(줄이기만). pre-commit `--staged`, CI `--check-all`
+- 폴더 승인(G16): `tools/repo_gates/folder_gate.py` — 코드(.py·.ts·.tsx·.js)가 든 모든 폴더는 `configs/folder_registry.json` 에 승인돼 있어야 한다(하위 폴더도 각각). 새 폴더는 작업 창 → 지휘창 '새 폴더 요청'(경로·목적·왜 기존 폴더로 안 되는지) → 대표님 승인 → 목록 추가 → PR 라벨 `folder-approved`(지휘창만 붙임). pre-commit `--staged`, CI `--check-all` + `--check-approval`(목록 추가 시 라벨 확인). 삭제는 승인 불필요.
+- 번들 경로 일관성(G17): `tools/repo_gates/bundle_path_gate.py` — 폴더를 옮기면 파이썬 밖의 참조(PyInstaller spec 진입 파일·우리 모듈 hiddenimports·datas, `admin-web/electron/package.json` extraResources, `lib/*.js` 의 `process.resourcesPath` 경로, `desktop-release.yml` 경로)도 함께 고친다. pre-commit `--staged`(관련 파일 staged 시만), CI `--check-all`.
+
+## T4 진행 기록 (local_agent 3벌 → 1벌, 설계 `_coordination/T4_DESIGN.md`)
+- C1·C2: 경로 고정·잠금 경쟁 수정(W2).
+- C3: 서버·PC 공유 계약 4개를 `ai_orchestrator/contracts/` 로 — `user_present_ws_contract`·`action_risk_policy`·`local_task_protocol`·`local_agent_actions`(참조 직접 교체, shim 없음).
+- C4~C8: 서버 쪽 에이전트 허브를 `ai_orchestrator/agent_hub/` 로 — 루트(models·redaction·audit_builders·error_mapping·response_builders·user_present_*·action_*·business_*), `policy/`(risk·status·cleanup·audit_event·file_upload_policy·user_approval_gate), `registry/`(facade + leaf 8 + diagnostics 2), `router/`(root + 11), `actions/`(핸들러 7).
+- C9: PC 런타임 57개를 `local_agent/runtime/` 으로. C10: 네이버 워크플로 5개를 `scripts/naver/{blog,cafe}/` 로.
+- C11: `scripts/local_agent/` 해체 — 컨트롤러 3개는 `local_agent/`, 점검·스모크는 `scripts/ops/`, 정부24·민원24·웹메일·CLI 라우터는 `scripts/sites/`, g2b E2E 는 `scripts/g2b/`, CDP 크롬 기동은 `scripts/browser/cdp/`.
+- C12: 사이트 믹스인 15개는 도구 집(`scripts/naver/{blog,cafe,mail}/`), CDP 엔진과 JS 는 `scripts/browser/agent/`(+`_js/`).
+- C13: `ai_orchestrator/local_agent/`·`scripts/local_agent/` 폴더 소멸, 폴더 승인 목록과 G11 예외(`local_agent/`·`ai_orchestrator/local_agent/`·`scripts/local_agent/`)에서 제거. `ai_orchestrator/` 최상위 `local_agent_*` 평면 33 → 0.

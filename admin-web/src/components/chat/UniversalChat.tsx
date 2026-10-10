@@ -130,7 +130,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
  * 2026-09-30: 사용자 지시 "답변이 너무 느려 / 모델 선택 가능하게 / 이전 대화기록을 저장해서
  * 볼수 있게"로 3가지를 추가:
  *  - 모델 선택: 드롭다운 → POST /ai-agent/run 의 model 파라미터로 공식 --model 전달.
- *  - 대화기록 저장: /chat/sessions* (ai_orchestrator/chat_sessions.py, 신규) — 세션 목록/전환/삭제.
+ *  - 대화기록 저장: /chat/sessions* (ai_orchestrator/tasks/chat_sessions.py, 신규) — 세션 목록/전환/삭제.
  *  - 속도: 같은 채팅의 다음 메시지부터 claude_session_id로 --resume 재사용(서버가 chat_id로
  *    자동 처리) → 시스템 프롬프트/CLAUDE.md 재렌더링 생략(공식 --system-prompt-snapshot 근거),
  *    실측상 냉간시작 대비 후속 메시지가 더 빠르다. 첫 메시지 자체의 지연(claude -p 프로세스
@@ -138,7 +138,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
  *    세션 후보(상시 세션 프로세스 등)로 남김, 사용자에게 투명하게 설명.
  *
  * 경로: 이 컴포넌트 → POST /api/v1/ai-agent/run(로컬 에이전트 자동 선택) → 기존
- * local_agent_registry 작업 큐 → local_agent/agent.py(WS 상시 클라이언트) → 헤드리스
+ * local_agent_registry 작업 큐 → core/agent_runtime/agent.py(WS 상시 클라이언트) → 헤드리스
  * `claude -p --mcp-config .mcp.json` → 이 앱 자신의 MCP 서버(haehan-orchestrator) 호출.
  * 설계·실측 검증: docs/specs/2026-09-28_cdp_universal_automation_and_mcp_trigger.md
  */
@@ -382,7 +382,7 @@ export function UniversalChat({ title, agentHint, presets, extraCards, className
         ))}
         {agentUnavailable && (
           <p className="text-[10px] text-amber-600 text-center px-2">
-            로컬 에이전트 미연결 — <code>python -m local_agent.agent --run</code> 실행 필요
+            로컬 에이전트 미연결 — <code>python -m core.agent_runtime.agent --run</code> 실행 필요
           </p>
         )}
       </div>

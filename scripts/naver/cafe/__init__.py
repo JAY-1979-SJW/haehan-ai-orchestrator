@@ -18,7 +18,7 @@
 - write_post(page, cafe_url, board_name, title, body, ...)
 - confirm_publish(page)
 
-### API 엔드포인트 (ai_orchestrator/connectors/naver_cafe_router.py)
+### API 엔드포인트 (ai_orchestrator/connectors/naver_cafe/naver_cafe_router.py)
 - POST /naver-cafe/collect            (cafe_url, days, max_detail, keyword)
 - POST /naver-cafe/collect-my-cafes
 - POST /naver-cafe/ai-analyze         (category, days, max_posts)
@@ -43,9 +43,9 @@ import time
 from playwright.sync_api import Page
 
 from scripts.community.analyzer import prepare_posts_for_review
-from scripts.logger import get_logger
-from scripts.naver.auth import ensure_naver_login
-from scripts.popup_detector import handle_page_popups
+from scripts.common.logger import get_logger
+from scripts.naver.common.auth import ensure_naver_login
+from scripts.browser.popup.popup_detector import handle_page_popups
 
 from .analysis.organizer import organize
 from .analysis.pipeline import run_pipeline

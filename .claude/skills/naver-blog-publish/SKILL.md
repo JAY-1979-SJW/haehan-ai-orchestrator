@@ -56,7 +56,7 @@ python scripts/naver/blog/cli/blog_analytics_report.py
 
 ## 코드 작성 전 확인 (매번)
 
-1. `python scripts/ops/capability_check.py naver blog` 로 기존 구현 재확인
+1. `python tools/hooks/capability_check.py naver blog` 로 기존 구현 재확인
    — 이미 `scripts/naver/blog/marketing/`, `scripts/naver/blog/core/writer.py`
    에 전부 있음. **새로 만들지 말고 이걸 import해서 쓴다.**
 2. 프롬프트/구조를 바꿀 거면: `python -m ruff check --config configs/ruff.toml

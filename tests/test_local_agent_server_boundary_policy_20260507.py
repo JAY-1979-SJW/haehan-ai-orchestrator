@@ -2,7 +2,7 @@
 서버 브라우저 경계 정책 테스트 (2026-05-07)
 
 테스트 대상:
-- ai_orchestrator/browser_tool/server_browser_boundary_policy.py
+- ai_orchestrator/browser_tool/policy/server_browser_boundary_policy.py
 
 정책:
 - 제한 사이트(은행/카드/세무/정부/보험/인증서) → 서버 브라우저 금지
@@ -21,7 +21,7 @@ import pathlib
 
 import pytest
 
-from ai_orchestrator.browser_tool.server_browser_boundary_policy import (
+from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (
     DECISION_BLOCK,
     DECISION_REQUIRE_API_CONNECTOR,
     DECISION_REQUIRE_LOCAL_AGENT,
@@ -434,7 +434,7 @@ class TestValidateBoundaryResult:
 class TestCompatibilityWithExistingPolicies:
     def test_compatible_with_site_compliance_policy(self):
         """site_compliance_policy 결과를 입력으로 받을 수 있는지 확인."""
-        from ai_orchestrator.browser_tool.site_compliance_policy import evaluate_site_compliance
+        from ai_orchestrator.browser_tool.policy.site_compliance_policy import evaluate_site_compliance
 
         compliance = evaluate_site_compliance({"site_category": "bank", "operation_type": "read"})
         # site_compliance 결과를 boundary_policy 입력으로 사용
@@ -449,7 +449,7 @@ class TestCompatibilityWithExistingPolicies:
 
     def test_compatible_with_site_access_auditor(self):
         """site_access_compatibility_auditor 결과를 입력으로 받을 수 있는지 확인."""
-        from ai_orchestrator.browser_tool.site_access_compatibility_auditor import evaluate_site_access_policy
+        from ai_orchestrator.browser_tool.policy.site_access_compatibility_auditor import evaluate_site_access_policy
 
         audit = evaluate_site_access_policy({"site_category": "bank", "action_name": "read"})
         boundary = classify_restricted_site_for_server_browser(
@@ -462,7 +462,7 @@ class TestCompatibilityWithExistingPolicies:
 
     def test_compatible_with_local_agent_user_present_flow(self):
         """local_agent_user_present_flow와 호환 확인."""
-        from ai_orchestrator.browser_tool.local_agent_user_present_flow import evaluate_user_present_requirement
+        from ai_orchestrator.agent_hub.user_present_flow import evaluate_user_present_requirement
 
         evaluate_user_present_requirement({"site_category": "bank", "requires_certificate": True})
         boundary = classify_restricted_site_for_server_browser(
@@ -475,7 +475,7 @@ class TestCompatibilityWithExistingPolicies:
 
     def test_compatible_with_browser_readonly_runtime(self):
         """browser_readonly_runtime과 호환 확인 — 제한 사이트 readonly 결과."""
-        from local_agent.browser_readonly_runtime import evaluate_readonly_browser_permission
+        from core.agent_runtime.browser.browser_readonly_runtime import evaluate_readonly_browser_permission
 
         evaluate_readonly_browser_permission(
             {
@@ -498,7 +498,7 @@ class TestCompatibilityWithExistingPolicies:
 
 class TestSourceCodePolicy:
     SOURCE_FILE = (
-        pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "server_browser_boundary_policy.py"
+        pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "policy" / "server_browser_boundary_policy.py"
     )
 
     def _src(self):

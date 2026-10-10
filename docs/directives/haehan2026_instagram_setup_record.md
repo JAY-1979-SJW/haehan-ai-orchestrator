@@ -39,7 +39,7 @@
 
 ## 4단계 — 정식 OAuth 인가 플로우로 연결 (실제 성공한 경로)
 
-이 프로젝트엔 이미 `ai_orchestrator/connectors/instagram_dm_router.py`에
+이 프로젝트엔 이미 `ai_orchestrator/connectors/instagram/instagram_dm_router.py`에
 운영 서버용 OAuth 라우트가 구현돼 있다 (big.sun2024가 이 경로로 연결됨):
 
 ```

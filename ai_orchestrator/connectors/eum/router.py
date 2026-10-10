@@ -17,12 +17,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.gates.send_approval import addresses, require_send_approval
 from ai_orchestrator.paths import repo_root
 from ai_orchestrator.paths.runtime import data_dir
+from tools.gates.auth import require_role
+from tools.gates.send_approval import addresses, require_send_approval
 
-from ...audit_logger import log_event
+from ...audit.audit_logger import log_event
 
 logger = logging.getLogger(__name__)
 
@@ -65,9 +65,9 @@ def _run_eum_query(query_fn, *, needs_login_hint: bool = True) -> dict:
 
     CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
     """
-    from scripts.site_access import LoginError
-    from scripts.site_watch import StepFailure
-    from scripts.web_connector import get_page, run_on_browser_thread
+    from scripts.browser.cdp.connection import get_page, run_on_browser_thread
+    from scripts.site_engine.site_access import LoginError
+    from scripts.site_engine.site_watch import StepFailure
 
     try:
 
@@ -202,7 +202,7 @@ def collect_and_prepare(
         _ensure_root_on_path()
         from scripts.eum.install_targets import collect_all_install_targets
         from scripts.eum.sales_mail import prepare_sales_mail
-        from scripts.site_access import open_site
+        from scripts.site_engine.site_access import open_site
 
         page = open_site("eum")
         collected = collect_all_install_targets(page, max_pages=req.max_pages)
@@ -226,8 +226,8 @@ def collect_and_prepare(
     except Exception as e:
         # 로그인 미완료/세션 없음(LoginError/StepFailure) → 500 대신 graceful 안내.
         try:
-            from scripts.site_access import LoginError
-            from scripts.site_watch import StepFailure
+            from scripts.site_engine.site_access import LoginError
+            from scripts.site_engine.site_watch import StepFailure
 
             login_issue = isinstance(e, (LoginError, StepFailure))
         except Exception:  # noqa: BLE001 - EUM 영업메일 API(문서에 '발송은 confirmed=True 필수, 자동 일괄발송 금지' 명시) — send_one 엔드포인트는 confirmed 검증이 try 블록 이전에 이미 끝난 뒤에만 실제 발송을 시도하며, except는 실패를 HTTPException(500) 또는 로그인필요 안내로 변환할 뿐 승인을 우회하지 않음. 견적서 로컬 사본 저장 실패는 warn 로그만 남기고 본 스트리밍 응답에는 영향 없음.
@@ -283,8 +283,8 @@ def send_one(
     )
     try:
         _ensure_root_on_path()
+        from scripts.browser.cdp.connection import get_page, run_on_browser_thread
         from scripts.hiworks.mail import fill_compose, send_mail
-        from scripts.web_connector import get_page, run_on_browser_thread
 
         # CDP page 조작은 브라우저 전용 스레드에서(playwright sync 스레드 경계).
         def _compose_and_send():

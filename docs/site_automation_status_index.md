@@ -62,9 +62,9 @@ baseline.
 - Workflow reference: `docs/google_business_workflow_reference_20260513.md`
 - Completion report:
   `docs/reports/google_surface_exploration_completion_report_20260513.md`
-- Router command: `python scripts\cdp_client.py google surfaces catalog`
-- Workflow command: `python scripts\cdp_client.py google work catalog`
-- Adapter command: `python scripts\cdp_client.py google work adapters`
+- Router command: `python scripts\entry\cdp_cli.py google surfaces catalog`
+- Workflow command: `python scripts\entry\cdp_cli.py google work catalog`
+- Adapter command: `python scripts\entry\cdp_cli.py google work adapters`
 - Included: 50 Google surfaces, 96 work actions, and 96 execution adapter
   profiles.
 - Gate: live browser work is read-only first. Writes, publishing, billing,

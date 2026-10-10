@@ -33,7 +33,7 @@
     },
     {
       "code": "CIRCULAR_IMPORT",
-      "path": "ai_orchestrator.local_agent_models",
+      "path": "ai_orchestrator.agent_hub.models",
       "status": "resolved",
       "owner": "platform",
       "next_action": "Resolved by replacing direct late imports with importlib module lookup."

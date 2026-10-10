@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.cdp_helper import CDP  # noqa: E402
+from scripts.browser.cdp.cdp_helper import CDP  # noqa: E402
 
 
 def lookup_naver_openapi_keys(app_id: str, confirm_secret_reveal: bool) -> dict:

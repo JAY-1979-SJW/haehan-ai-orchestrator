@@ -24,9 +24,9 @@ reload 하면 `get_current_user` 가 새 함수 객체가 되지만, `local_agen
 ## 3. 변경
 수정 대상 6개 파일(추가), fixture 의 아래 두 줄과 그 직전 import 만 제거(`importlib` 은 `admin_ui` 에서만 계속 사용):
 ```
-import ai_orchestrator.gates.auth as _auth      # 제거
+import tools.gates.auth as _auth      # 제거
 importlib.reload(_auth)                         # 제거
-import ai_orchestrator.local_agent_router as _lar   # 제거
+import ai_orchestrator.agent_hub.router.root as _lar   # 제거
 importlib.reload(_lar)                          # 제거
 ```
 이유 주석 3줄을 남긴다. 운영 코드·공통 conftest·훅은 건드리지 않는다. (공통 헬퍼는 불필요 — 필요한 파일은 이미 통과하고 필요 없는 파일은 줄 제거로 충분)

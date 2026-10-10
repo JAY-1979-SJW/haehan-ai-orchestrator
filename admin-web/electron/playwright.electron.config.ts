@@ -7,6 +7,10 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e-electron",
   timeout: 60_000,
+  // 앱이 고정 포트(FastAPI 8401·Next 3000·앱 디버그 9333)를 쓰므로 동시에 두 개를 띄우면 서로 포트를 못 잡아
+  // 두 번째 앱의 실행 대기가 시간 초과된다(2026-10-08 E2E 실측: 9333 bind 실패) — 한 번에 하나씩 실행.
+  workers: 1,
+  fullyParallel: false,
   use: {
     // 스크린샷 실패 시 자동 저장
     screenshot: "on",

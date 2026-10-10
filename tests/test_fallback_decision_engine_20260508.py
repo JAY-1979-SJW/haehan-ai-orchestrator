@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ai_orchestrator.browser_tool.fallback_decision_engine import (
+from ai_orchestrator.browser_tool.routing.fallback_decision_engine import (
     BLOCK,
     COMPLETE_ON_SERVER,
     HANDOFF_TO_LOCAL_AGENT,

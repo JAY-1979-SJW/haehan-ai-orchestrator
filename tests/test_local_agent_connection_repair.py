@@ -5,10 +5,10 @@ import json
 
 import pytest
 
-from ai_orchestrator import local_agent_registry as reg
-from ai_orchestrator import registration_codes as rc
-from local_agent import connection_diagnostics as cd
-from scripts.ops import audit_local_desktop_agent_connection as audit
+from ai_orchestrator.agent_hub.registry import facade as reg
+from ai_orchestrator.auth import registration_codes as rc
+from core.agent_runtime.connection import connection_diagnostics as cd
+from tools.audits.agent import audit_local_desktop_agent_connection as audit
 
 
 @pytest.fixture(autouse=True)
@@ -358,16 +358,16 @@ def test_audit_warn_installer_flow_incomplete():
 
 
 def test_regression_local_agent_router_imports():
-    from ai_orchestrator import local_agent_router as r
+    from ai_orchestrator.agent_hub.router import root as r
     assert hasattr(r, "local_agent_router")
 
 
 def test_regression_registration_codes_imports():
-    from ai_orchestrator import registration_codes as rc
+    from ai_orchestrator.auth import registration_codes as rc
     assert hasattr(rc, "issue_code")
     assert hasattr(rc, "consume_code")
 
 
 def test_regression_websocket_client_imports():
-    from local_agent import websocket_client
+    from core.agent_runtime.connection import websocket_client
     assert hasattr(websocket_client, "run_forever")

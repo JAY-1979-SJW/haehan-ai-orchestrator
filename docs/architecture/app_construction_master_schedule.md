@@ -39,9 +39,9 @@ haehan-ai-orchestrator 앱을 건물로 비유하여 공사 전체 일정을 정
 
 | 항목 | 증거 |
 |------|------|
-| P0 게이트 구현 (FORBIDDEN_IMPORT, CIRCULAR_IMPORT, SECURITY_PATTERN, FAT_SITE) | `scripts/ops/codebase_layer_audit.py` |
-| P1 게이트 구현 (ROUTER_THINNESS, STORAGE_BOUNDARY, SERVER_BROWSER_GUARD) | `scripts/ops/codebase_layer_audit.py` |
-| Quality Gate 구현 | `scripts/quality_gate.py` |
+| P0 게이트 구현 (FORBIDDEN_IMPORT, CIRCULAR_IMPORT, SECURITY_PATTERN, FAT_SITE) | `tools/repo_gates/codebase_layer_audit.py` |
+| P1 게이트 구현 (ROUTER_THINNESS, STORAGE_BOUNDARY, SERVER_BROWSER_GUARD) | `tools/repo_gates/codebase_layer_audit.py` |
+| Quality Gate 구현 | `tools/quality/quality_gate.py` |
 | Governance Gate Matrix 문서 | `docs/architecture/governance_gate_matrix.md` |
 | Layer 정책 문서 | `docs/architecture/layer_policy.md` |
 | Storage Audit Evidence Model | `docs/architecture/storage_audit_evidence_model.md` |

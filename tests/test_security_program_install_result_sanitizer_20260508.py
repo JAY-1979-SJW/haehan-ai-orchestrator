@@ -1,6 +1,6 @@
 """tests/test_security_program_install_result_sanitizer_20260508.py"""
 
-from ai_orchestrator.local_agent.security_program_install_result_sanitizer import (
+from core.agent_runtime.runtime.security_program.security_program_install_result_sanitizer import (
     build_safe_report,
     check_result_has_no_sensitive_data,
     sanitize_install_result,

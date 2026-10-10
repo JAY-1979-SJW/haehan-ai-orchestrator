@@ -12,12 +12,12 @@
 사이트 자동화, 데이터 수집, CDP 조작, 스크래핑 코드를 **새로 작성하기 전에** 반드시 아래를 먼저 실행한다.
 
 ```bash
-python scripts/ops/capability_check.py <도메인>
+python tools/hooks/capability_check.py <도메인>
 # 예시
-python scripts/ops/capability_check.py cafe
-python scripts/ops/capability_check.py smartstore
-python scripts/ops/capability_check.py eum
-python scripts/ops/capability_check.py naver mail
+python tools/hooks/capability_check.py cafe
+python tools/hooks/capability_check.py smartstore
+python tools/hooks/capability_check.py eum
+python tools/hooks/capability_check.py naver mail
 ```
 
 출력에서 기존 구현(API 엔드포인트, Python 함수, CLI 커맨드)이 확인되면:
@@ -39,7 +39,7 @@ python scripts/ops/capability_check.py naver mail
 - 위반 시 quality gate `NO_LOCAL_DOCKER_CLI` 에러로 커밋 차단됨
 - 삭제된 스크립트(복구 금지): `deploy_api_with_runtime_gates.py`, `verify_compose_project_boundary.py`, `verify_docker_context_policy.py`, `verify_container_orphans.py`, `docker/docker-compose.dev.yml`, `docker/docker-compose.file-map-executor.yml`
 
-### 정책 예외 (Scoped Exception) — `scripts/ops/server_deploy.py`
+### 정책 예외 (Scoped Exception) — `tools/server_deploy.py`
 
 - **유일하게 docker 호출이 허용된 스크립트.** `configs/quality_gate.json` 의 `no_local_docker_cli_allow_paths` 에 등록.
 - 사유: 서버 배포는 docker compose가 정당하게 필요(서버는 docker로 구동). 배포 스크립트를 repo에 두어 버전관리·리뷰 대상으로 유지하기 위함.
@@ -241,9 +241,9 @@ chmod/chown 자동 변경 금지
 
 작업 후 반드시 실행:
 ```bash
-python scripts/ops/codebase_layer_audit.py
+python tools/repo_gates/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
-python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+python tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 ```
 
 FORBIDDEN_IMPORT > 0 → STOP  
@@ -453,9 +453,9 @@ NAVER_SEARCH_DB_ENABLED=true  # SQLite DB 적재 활성화
 
 브라우저 CDP가 내려갔을 때:
 ```bash
-python scripts/cdp_force_start.py start [URL]
-python scripts/cdp_force_start.py status
-python scripts/cdp_force_start.py stop
+python scripts/browser/cdp/cdp_force_start.py start [URL]
+python scripts/browser/cdp/cdp_force_start.py status
+python scripts/browser/cdp/cdp_force_start.py stop
 ```
 - 샌드박스 게이트 우회 버전 (`assert_browser_launch_allowed` 미호출)
 - 프로필: `data/cdp_profile/ai_chrome`

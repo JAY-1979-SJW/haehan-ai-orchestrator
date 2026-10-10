@@ -442,8 +442,8 @@ PyInstaller hidden imports 추가:
 ## 12. 적용 시 산출물
 
 - `local_agent/gui_app.py` (전면 재작성)
-- `local_agent/gui_icons.py` (신규)
-- `local_agent/gui_log_buffer.py` (신규)
+- `core/agent_runtime/gui/gui_icons.py` (신규)
+- `core/agent_runtime/gui/gui_log_buffer.py` (신규)
 - `local_agent/gui_tray.py` (메뉴 4탭 동기화)
 - `tests/test_local_agent_gui_pages.py` (신규 12+ 테스트)
 - `docs/design/local_agent_gui_design_spec_20260521.md` (본 문서)

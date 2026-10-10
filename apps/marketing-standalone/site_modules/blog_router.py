@@ -22,8 +22,8 @@ _APP_ROOT = Path(__file__).resolve().parents[1]
 _sys.path.insert(0, str(_APP_ROOT))
 
 from _bootstrap import get_logger  # noqa: E402
-from connectors.blog_accounts import DEFAULT_ACCOUNT, get_account  # noqa: E402
 from core import ai_writer  # noqa: E402
+from core.blog_accounts import DEFAULT_ACCOUNT, get_account  # noqa: E402
 from core.content_rules import seo_check, split_body  # noqa: E402
 from core.license_check import verify_license  # noqa: E402
 

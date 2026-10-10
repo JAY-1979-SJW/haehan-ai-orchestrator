@@ -89,7 +89,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "aliases": ["dashboard", "home"],
         "title": "Hiworks dashboard read-only view",
         "risk": "read",
-        "command": "python scripts/cdp_client.py hiworks dashboard",
+        "command": "python scripts/entry/cdp_cli.py hiworks dashboard",
         "auto_execute": True,
     },
     {
@@ -97,7 +97,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "aliases": ["apps", "scan"],
         "title": "Hiworks app catalog scan",
         "risk": "read",
-        "command": "python scripts/cdp_client.py hiworks apps",
+        "command": "python scripts/entry/cdp_cli.py hiworks apps",
         "auto_execute": True,
     },
     {
@@ -105,7 +105,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "aliases": ["mail"],
         "title": "Hiworks mail read-only open",
         "risk": "read",
-        "command": "python scripts/cdp_client.py hiworks mail",
+        "command": "python scripts/entry/cdp_cli.py hiworks mail",
         "auto_execute": True,
     },
     {
@@ -113,7 +113,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "aliases": ["compose"],
         "title": "Hiworks compose page inspection",
         "risk": "read",
-        "command": "python scripts/cdp_client.py hiworks compose",
+        "command": "python scripts/entry/cdp_cli.py hiworks compose",
         "auto_execute": True,
     },
     {
@@ -121,7 +121,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "aliases": ["prepare-sales-mail"],
         "title": "Fill one Hiworks sales-mail draft without sending",
         "risk": "prepare",
-        "command": "python scripts/cdp_client.py hiworks prepare-sales-mail <index>",
+        "command": "python scripts/entry/cdp_cli.py hiworks prepare-sales-mail <index>",
         "auto_execute": True,
     },
     {
@@ -129,7 +129,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "aliases": ["send-batch"],
         "title": "Build one-recipient-at-a-time send dry-run plan",
         "risk": "prepare",
-        "command": "python scripts/cdp_client.py hiworks send-batch <limit> --dry-run",
+        "command": "python scripts/entry/cdp_cli.py hiworks send-batch <limit> --dry-run",
         "auto_execute": True,
     },
     {
@@ -137,7 +137,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "aliases": ["service", "services", "explore-services"],
         "title": "Read-only scan of Hiworks business service surfaces",
         "risk": "read",
-        "command": "python scripts/cdp_client.py hiworks service <name|all>",
+        "command": "python scripts/entry/cdp_cli.py hiworks service <name|all>",
         "auto_execute": True,
     },
     {
@@ -145,7 +145,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "aliases": ["actions", "action-catalog"],
         "title": "Build input/button catalog for all Hiworks service sections",
         "risk": "read",
-        "command": "python scripts/cdp_client.py hiworks actions <name|all>",
+        "command": "python scripts/entry/cdp_cli.py hiworks actions <name|all>",
         "auto_execute": True,
     },
     {
@@ -153,7 +153,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "aliases": ["prepare-section", "section-prepare"],
         "title": "Prepare explicit values for a Hiworks section without submit",
         "risk": "prepare",
-        "command": "python scripts/cdp_client.py hiworks prepare-section <name|all> [--values=path]",
+        "command": "python scripts/entry/cdp_cli.py hiworks prepare-section <name|all> [--values=path]",
         "auto_execute": True,
     },
     {
@@ -161,7 +161,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "aliases": ["submit-section", "section-submit"],
         "title": "Approval-gated Hiworks section submit execution",
         "risk": "send",
-        "command": "python scripts/cdp_client.py hiworks submit-section <name> <control_id> --approved --confirm=HIWORKS_APPROVED_SUBMIT",
+        "command": "python scripts/entry/cdp_cli.py hiworks submit-section <name> <control_id> --approved --confirm=HIWORKS_APPROVED_SUBMIT",
         "auto_execute": False,
     },
 ]

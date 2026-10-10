@@ -1,11 +1,4 @@
 {
- "_doc": "skeleton_gate.py 금지-import 기준선 — 여기 등록된 (file, target) 쌍은 기존 부채로 통과시키고, 새로 생기는 것만 FAIL 시킨다. 2026-09-24 확인: python scripts/ops/code_map/modules.py 의 crosscheck.forbidden_import_hits 로 실측.",
- "known_forbidden_imports": [
-  {
-   "file": "scripts/google/youtube/search_analyze.py",
-   "target": "scripts.youtube.research",
-   "rule": "cross-domain import: google must not import youtube domain",
-   "note": "import_module(\"scripts.youtube.research\") 동적 import — 2026-09-24 이전부터 존재"
-  }
- ]
+ "_doc": "skeleton_gate.py 금지-import 기준선 — 여기 등록된 (file, target) 쌍은 기존 부채로 통과시키고, 새로 생기는 것만 FAIL 시킨다. 2026-09-24 확인: python tools/code_map/modules.py 의 crosscheck.forbidden_import_hits 로 실측. 2026-10-08: 마지막 1건(google→youtube 댓글 수집 동적 import)을 공용 잎(scripts/common/youtube_comments)으로 내려 해소 — 기준선 0.",
+ "known_forbidden_imports": []
 }

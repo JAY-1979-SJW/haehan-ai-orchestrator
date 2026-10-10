@@ -75,11 +75,11 @@ data/audit/
 
 **도구:** Write
 
-**대상:** `ai_orchestrator/local_agent/browser/cdp_audit.py`
+**대상:** `scripts/common/cdp_audit.py`
 
 **내용:** 본 가이드 §A 부록 그대로 (한 글자도 변경 금지).
 
-**검증:** `python -c "from ai_orchestrator.local_agent.browser.cdp_audit import L1, L2, L3, emit, rotate; print('ok')"` → `ok`.
+**검증:** `python -c "from scripts.common.cdp_audit import L1, L2, L3, emit, rotate; print('ok')"` → `ok`.
 
 ---
 
@@ -87,11 +87,11 @@ data/audit/
 
 **도구:** Write
 
-**대상:** `ai_orchestrator/local_agent/browser/cdp_launcher.py`
+**대상:** `scripts/browser/agent/cdp_launcher.py`
 
 **내용:** 본 가이드 §B 부록 그대로.
 
-**검증:** `python -c "from ai_orchestrator.local_agent.browser.cdp_launcher import probe_cdp, ensure_cdp, is_task_registered; print('ok')"` → `ok`.
+**검증:** `python -c "from scripts.browser.agent.cdp_launcher import probe_cdp, ensure_cdp, is_task_registered; print('ok')"` → `ok`.
 
 ---
 
@@ -99,11 +99,11 @@ data/audit/
 
 **도구:** Write
 
-**대상:** `ai_orchestrator/local_agent/browser/cdp_session_manager.py`
+**대상:** `scripts/browser/agent/cdp_session_manager.py`
 
 **내용:** 본 가이드 §C 부록 그대로.
 
-**검증:** `python -c "from ai_orchestrator.local_agent.browser.cdp_session_manager import get_profile_dir, is_session_initialized, get_logged_in_sites; print('ok')"` → `ok`.
+**검증:** `python -c "from scripts.browser.agent.cdp_session_manager import get_profile_dir, is_session_initialized, get_logged_in_sites; print('ok')"` → `ok`.
 
 ---
 
@@ -123,7 +123,7 @@ data/audit/
 
 **도구:** Edit (replace)
 
-**대상:** `ai_orchestrator/local_agent/browser/agent.py`
+**대상:** `scripts/browser/agent/agent.py`
 
 **작업 1:** 파일 상단의 import 블록 끝에 다음 추가 (이미 있으면 skip):
 
@@ -148,8 +148,8 @@ import uuid
 교체할 문자열:
 ```python
     def connect(self):
-        from ai_orchestrator.local_agent.browser.cdp_launcher import ensure_cdp
-        from ai_orchestrator.local_agent.browser.cdp_audit import L2
+        from scripts.browser.agent.cdp_launcher import ensure_cdp
+        from scripts.common.cdp_audit import L2
         self._session_id = str(uuid.uuid4())
         self._connect_t0 = time.time()
         ensure_cdp()
@@ -178,7 +178,7 @@ import uuid
 교체할 문자열:
 ```python
     def close(self):
-        from ai_orchestrator.local_agent.browser.cdp_audit import L2
+        from scripts.common.cdp_audit import L2
         if self._pw:
             self._pw.stop()
         L2("CDP_DISCONNECT", "browser_agent",
@@ -186,7 +186,7 @@ import uuid
            duration_ms=int((time.time() - getattr(self, "_connect_t0", time.time())) * 1000))
 ```
 
-**검증:** `python -c "from ai_orchestrator.local_agent.browser.agent import BrowserAgent; print('ok')"` → `ok` (실행은 안 함, import만).
+**검증:** `python -c "from scripts.browser.agent.agent import BrowserAgent; print('ok')"` → `ok` (실행은 안 함, import만).
 
 **※ 만약 `connect()` 또는 `close()`의 기존 코드가 위 "찾을 문자열"과 정확히 일치하지 않으면 — 즉시 중단하고 §10 형식으로 보고.**
 
@@ -264,7 +264,7 @@ powershell -ExecutionPolicy Bypass -File scripts\local_agent\install_cdp_chrome_
 
 **명령:**
 ```
-python -c "import time; from ai_orchestrator.local_agent.browser.cdp_launcher import probe_cdp; t=time.time()+15;
+python -c "import time; from scripts.browser.agent.cdp_launcher import probe_cdp; t=time.time()+15;
 while time.time()<t:
   if probe_cdp(): print('OK'); break
   time.sleep(1)
@@ -281,7 +281,7 @@ else: print('FAIL')"
 
 **명령 1 (세션 상태 확인):**
 ```
-python -c "from ai_orchestrator.local_agent.browser.cdp_session_manager import is_session_initialized, get_logged_in_sites; print('init=', is_session_initialized()); print('sites=', get_logged_in_sites()[:10])"
+python -c "from scripts.browser.agent.cdp_session_manager import is_session_initialized, get_logged_in_sites; print('init=', is_session_initialized()); print('sites=', get_logged_in_sites()[:10])"
 ```
 
 **케이스 A: `init= False`** — 첫 실행.
@@ -289,12 +289,12 @@ python -c "from ai_orchestrator.local_agent.browser.cdp_session_manager import i
 **명령 2 (자동 탭 열기 + 로그인 자동 감지 — 사용자 수동 입력/'완료' 회신 절대 금지):**
 
 ```
-python -m ai_orchestrator.local_agent.browser.cdp_launcher <url> --wait-login [domain] [timeout_s]
+python -m scripts.browser.agent.cdp_launcher <url> --wait-login [domain] [timeout_s]
 ```
 
 또는 Python 모듈:
 ```python
-from ai_orchestrator.local_agent.browser.cdp_launcher import open_and_wait_login
+from scripts.browser.agent.cdp_launcher import open_and_wait_login
 result = open_and_wait_login("https://blog.naver.com", timeout=300)
 # result["logged_in"]이 True가 될 때까지 자동 폴링 (2초 간격)
 ```
@@ -334,7 +334,7 @@ result = open_and_wait_login("https://blog.naver.com", timeout=300)
 
 ```
 python -c "
-from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+from scripts.browser.agent.agent import BrowserAgent
 with BrowserAgent() as a:
     a.go('https://blog.naver.com')
     print('TITLE:', a._page.title()[:80])
@@ -582,7 +582,7 @@ import time
 import urllib.request
 import urllib.error
 
-from ai_orchestrator.local_agent.browser.cdp_audit import L1, L2
+from scripts.common.cdp_audit import L1, L2
 
 CDP_HOST = "127.0.0.1"
 CDP_PORT = 9222
@@ -683,7 +683,7 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 
-from ai_orchestrator.local_agent.browser.cdp_audit import L2, L3
+from scripts.common.cdp_audit import L2, L3
 
 PROFILE_ROOT = Path(__file__).resolve().parents[3] / "data" / "cdp_profile"
 ACTOR = "session_manager"

@@ -1,7 +1,7 @@
 """네이버 카페 글쓰기 자동화.
 
 사용:
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.naver.cafe.writer import write_post, confirm_publish
 
     page = get_page()
@@ -21,9 +21,9 @@ import time
 import pyperclip
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
-from scripts.naver.auth import ensure_naver_login
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
+from scripts.naver.common.auth import ensure_naver_login
 
 _log = get_logger(__name__)
 

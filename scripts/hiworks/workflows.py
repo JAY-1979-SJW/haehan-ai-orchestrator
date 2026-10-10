@@ -44,14 +44,14 @@ def prepare_sales_mail(page, *, index: int = 1, queue_path: str | Path = SALES_Q
 
 def record_prepare_success(index: int, item: dict[str, Any]) -> None:
     try:
-        from scripts import cdp_db
+        from scripts.browser.cdp import cdp_db
 
         cdp_db.init_db()
         cdp_db.mark_mail_queue_prepared(provider="hiworks", recipient=item["to"], subject=item["subject"])
         cdp_db.log_automation_run(
             "hiworks",
             "prepare_sales_mail",
-            command=f"python scripts/cdp_client.py hiworks prepare-sales-mail {index}",
+            command=f"python scripts/entry/cdp_cli.py hiworks prepare-sales-mail {index}",
             status="success",
             risk_level="notify",
             input_ref=str(SALES_QUEUE),
@@ -69,13 +69,13 @@ def build_and_save_send_plan(
     plan = build_send_plan(limit=limit, delay_min=delay_min, delay_max=delay_max)
     path = save_send_plan(plan)
     try:
-        from scripts import cdp_db
+        from scripts.browser.cdp import cdp_db
 
         cdp_db.init_db()
         cdp_db.log_automation_run(
             "hiworks",
             "sales_mail_send_batch_plan",
-            command=f"python scripts/cdp_client.py hiworks send-batch {limit} --dry-run",
+            command=f"python scripts/entry/cdp_cli.py hiworks send-batch {limit} --dry-run",
             status="success",
             risk_level="notify",
             input_ref=str(SALES_QUEUE),

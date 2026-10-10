@@ -34,7 +34,7 @@ apps/marketing-standalone/          ← 신규 최상위 디렉터리 (신규 �
 | Phase | 범위 | 근거 |
 |---|---|---|
 | **Phase 1 (이번 작업)** | 블로그 핵심 발행 경로 + 인스타 Graph API | 둘 다 `ai_orchestrator` 무의존 확인됨(실측) — 위험 최소 |
-| Phase 2 | 지식iN 리서치(`naver_kin_client`) + 카페참여(`blog_explorer`, `targeted_engage`) | `ai_orchestrator.connectors.naver_kin_client`, `ai_orchestrator.local_agent.browser.agent` 사본 분리 필요 |
+| Phase 2 | 지식iN 리서치(`naver_kin_client`) + 카페참여(`blog_explorer`, `targeted_engage`) | `ai_orchestrator.connectors.naver_kin_client`, `scripts.browser.agent.agent` 사본 분리 필요 |
 | Phase 3 | 유튜브 OAuth 업로드 | 고객별 GCP 프로젝트/OAuth 클라이언트 이슈 별도 검토 필요 |
 
 이번 지시("현재 코드에서 먼저 분리해서 모듈화")는 **Phase 1**을 우선
@@ -49,7 +49,7 @@ apps/marketing-standalone/          ← 신규 최상위 디렉터리 (신규 �
 | `scripts/naver/blog/marketing/images.py` | `apps/marketing-standalone/connectors/blog_images.py` | 그대로 |
 | `scripts/naver/blog/accounts.py` | `apps/marketing-standalone/connectors/blog_accounts.py` | 계정 목록은 신규 앱 전용 config로 교체(고객 계정은 다름) |
 | `scripts/instagram/api_publish.py` | `apps/marketing-standalone/connectors/instagram_graph_api.py` | 그대로(이미 무의존) |
-| `scripts/cdp_helper.py` | `apps/marketing-standalone/connectors/cdp_helper.py` | 그대로 |
+| `scripts/browser/cdp/cdp_helper.py` | `apps/marketing-standalone/connectors/cdp_helper.py` | 그대로 |
 
 **뺄 것 (Phase 1 범위 아님)**: `research_blog_topics*.py`, `blog_explorer.py`,
 `targeted_engage.py`, `blog_scraper.py`, `apply_cta_to_batches.py`,
@@ -70,10 +70,10 @@ apps/marketing-standalone/          ← 신규 최상위 디렉터리 (신규 �
 ## 5. 완료 후 실행할 게이트
 
 ```bash
-python scripts/ops/codebase_layer_audit.py
+python tools/repo_gates/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
-python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
-python scripts/ops/duplicate_code_check.py   # 사본이 "중복 구현"으로 오탐되는지 확인
+python tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change
+python tools/hooks/duplicate_code_check.py   # 사본이 "중복 구현"으로 오탐되는지 확인
 ```
 
 `duplicate_code_check.py`가 사본을 중복으로 잡을 가능성이 높음 — 오탐이면

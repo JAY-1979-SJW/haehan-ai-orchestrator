@@ -1,8 +1,7 @@
 """Google Workspace registry derived from the locked Google tab registry."""
 from __future__ import annotations
 
-from scripts.google.live_inputs import build_live_input_coverage
-from scripts.google.tab_registry import build_google_tab_summary
+from scripts.google.common.tab_live_summary import tab_summary_with_live_inputs
 
 WORKSPACE_TAB_KEY = "workspace"
 WORKSPACE_LIVE_INPUT_ACTIONS = (
@@ -22,18 +21,7 @@ WORKSPACE_LIVE_INPUT_ACTIONS = (
 
 
 def workspace_summary() -> dict:
-    summary = build_google_tab_summary()
-    workspace = next(tab for tab in summary["tabs"] if tab["key"] == WORKSPACE_TAB_KEY)
-    live_supported = {item["action_key"] for item in build_live_input_coverage()["supported"]}
-    workspace["live_input_supported_actions"] = [
-        action["key"] for action in workspace["actions"] if action["key"] in live_supported
-    ]
-    workspace["prepare_or_open_only_approval_actions"] = [
-        action["key"]
-        for action in workspace["actions"]
-        if action["requires_approval"] and action["key"] not in live_supported
-    ]
-    return workspace
+    return tab_summary_with_live_inputs(WORKSPACE_TAB_KEY)
 
 
 def list_surfaces() -> list[dict]:

@@ -11,7 +11,7 @@ from pathlib import Path
 from scripts.naver.mail import inbox_collector as ic
 from scripts.naver.mail import read_state_guard as rsg
 from scripts.naver.mail.read import cdp
-from scripts.ops import audit_naver_mail_inbox_p0_complete as audit
+from scripts.naver.mail.collection import audit_naver_mail_inbox_p0_complete as audit
 
 
 class LiveActions:
@@ -68,7 +68,7 @@ def main():
     unread_only = run_mode(target_id, rsg.MODE_UNREAD_ONLY, out_dir)
 
     # 필터 실효성 audit
-    from scripts.ops import audit_naver_mail_unread_filter_dom_fix as audit_filter
+    from scripts.naver.mail.collection import audit_naver_mail_unread_filter_dom_fix as audit_filter
     # CollectionResult 재구성 (smoke 가 dict 로 저장하므로 ic.CollectionResult 로 변환)
     def _to_result(d):
         r = ic.CollectionResult(
@@ -102,7 +102,7 @@ def main():
     print(json.dumps(filter_audit, ensure_ascii=False, indent=2))
 
     # 새: pagination depth audit
-    from scripts.ops import audit_naver_mail_unread_pagination_depth as audit_depth
+    from scripts.naver.mail.collection import audit_naver_mail_unread_pagination_depth as audit_depth
     dv = audit_depth.judge_pagination_depth(r2)
     depth_audit = {
         "verdict": dv.code, "passed": dv.passed, "reasons": dv.reasons,

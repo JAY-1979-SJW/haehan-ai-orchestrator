@@ -8,10 +8,10 @@ import time as _t
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.gates.send_approval import require_send_approval
+from tools.gates.auth import require_role
+from tools.gates.send_approval import require_send_approval
 
-from ...audit_logger import log_event
+from ...audit.audit_logger import log_event
 from ._helpers import ROOT, elapsed_ms, load_ss, now_iso, run_with_cdp_page, save_ss
 
 router = APIRouter()
@@ -96,7 +96,7 @@ def api_reviews_reply(body: ReplyReviewsRequest, user: dict = Depends(require_ro
             "note": "dry_run=True — 실제 저장 없이 계획만 반환합니다.",
             "limit": body.limit,
         }
-    from ai_orchestrator.gates.gate_core import CONFIRM_TEXTS
+    from tools.gates.gate_core import CONFIRM_TEXTS
 
     # 실제 저장은 사용자가 직접 입력한 승인 문구가 있어야 한다(없으면 403, CDP 접근 전에 차단)
     require_send_approval("smartstore_reply", send_confirm=body.send_confirm, expected=CONFIRM_TEXTS["smartstore_reply"])

@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from local_agent.user_present_state_store import (
+from core.agent_runtime.user_present.user_present_state_store import (
     STATE_APPROVAL_REQUIRED,
     STATE_CANCELLED,
     STATE_USER_CONFIRMED,
@@ -97,7 +97,7 @@ def test_user_cancelled_transition():
 
 
 def test_site_compliance_gate_blocks_automation_blocked_site():
-    from local_agent.site_compliance_gate import (
+    from core.agent_runtime.policy.site_compliance_gate import (
         POLICY_AUTOMATION_BLOCKED,
         evaluate_gate,
         is_blocked,
@@ -126,8 +126,8 @@ def test_site_compliance_gate_blocks_automation_blocked_site():
 def test_site_compliance_gate_allows_user_present_local_only_when_user_present():
     # 알려지지 않은 사이트는 기본적으로 BLOCK 이므로, USER_PRESENT_LOCAL_ONLY
     # 분기는 policy module 의 patch 로 시뮬레이션한다.
-    import local_agent.site_compliance_gate as gate
-    from local_agent.site_compliance_gate import (
+    import core.agent_runtime.policy.site_compliance_gate as gate
+    from core.agent_runtime.policy.site_compliance_gate import (
         POLICY_USER_PRESENT_LOCAL_ONLY,
         evaluate_gate,
     )
@@ -156,7 +156,7 @@ def test_site_compliance_gate_allows_user_present_local_only_when_user_present()
 
 
 def test_send_task_blocked_emits_status_message():
-    from ai_orchestrator.local_agent_router_ws import _send_task_blocked
+    from ai_orchestrator.agent_hub.router.ws import _send_task_blocked
 
     ws = _FakeWS()
     asyncio.new_event_loop().run_until_complete(
@@ -183,7 +183,7 @@ def test_send_task_blocked_emits_status_message():
 
 
 def test_handle_result_idempotent_when_already_final():
-    from ai_orchestrator import local_agent_router_ws as r
+    from ai_orchestrator.agent_hub.router import ws as r
 
     ws = _FakeWS()
 
@@ -233,7 +233,7 @@ def test_approval_required_state_passes_validator():
 
 
 def test_task_blocked_strips_long_fields():
-    from ai_orchestrator.local_agent_router_ws import _send_task_blocked
+    from ai_orchestrator.agent_hub.router.ws import _send_task_blocked
 
     ws = _FakeWS()
     asyncio.new_event_loop().run_until_complete(

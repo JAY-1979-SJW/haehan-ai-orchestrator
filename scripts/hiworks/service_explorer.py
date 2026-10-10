@@ -10,15 +10,11 @@ from typing import Any
 
 from scripts.hiworks.explorer import open_hiworks
 from scripts.hiworks.schemas import DATA_DIR, SERVICE_TARGETS
+from scripts.site_engine.catalog_helpers import select_named_targets
 
 
 def selected_targets(name: str | None = None) -> dict[str, dict[str, str]]:
-    if not name or name == "all":
-        return dict(SERVICE_TARGETS)
-    key = name.strip().lower()
-    if key not in SERVICE_TARGETS:
-        raise KeyError(f"unknown Hiworks service: {name}")
-    return {key: SERVICE_TARGETS[key]}
+    return select_named_targets(SERVICE_TARGETS, name, "Hiworks service")
 
 
 def extract_service_surface(page, *, limit: int = 120) -> dict[str, Any]:

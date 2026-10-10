@@ -11,7 +11,7 @@ import urllib.request
 
 from fastapi import APIRouter, Depends, Response
 
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
 cdp_screen_router = APIRouter(prefix="/cdp", tags=["cdp"])
 logger = logging.getLogger(__name__)

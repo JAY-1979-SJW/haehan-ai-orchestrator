@@ -7,7 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends
 
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
 from ._helpers import audit, duration_ms
 
@@ -36,7 +36,7 @@ def get_gmail_inbox(
     """Gmail 수신함 조회."""
     t0 = time.monotonic()
     try:
-        from ai_orchestrator.sites.gmail_reader import fetch_recent_emails
+        from ai_orchestrator.connectors.google.gmail_reader import fetch_recent_emails
 
         items = fetch_recent_emails(max_results=max_results, hours=hours)
         audit("GOOGLE_GMAIL_INBOX_READ", user, status="ok", note=f"count={len(items)}")

@@ -1,7 +1,6 @@
 import json
 
-from local_agent import audit
-from local_agent import config
+from core.agent_runtime.common import audit, config
 
 
 def _read_jsonl(path):

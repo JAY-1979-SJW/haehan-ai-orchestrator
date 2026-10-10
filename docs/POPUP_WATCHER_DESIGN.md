@@ -2,7 +2,7 @@
 
 작성일: 2026-05-11
 대상 구현자: 최하위 모델 (Claude Haiku 등) — 단계별 그대로 따라 작성하면 동작해야 함
-참조 기존 코드: `scripts/navigator.py` (현재 `handle_draft_restore_popup` 함수)
+참조 기존 코드: `scripts/browser/navigator/navigator.py` (현재 `handle_draft_restore_popup` 함수)
 
 ---
 
@@ -16,7 +16,7 @@
 
 | 파일 | 신규/수정 | 역할 |
 |------|---------|------|
-| `scripts/popup_watcher.py` | **신규** | 본체 — 주입/조회/처리 |
+| `scripts/browser/popup/popup_watcher.py` | **신규** | 본체 — 주입/조회/처리 |
 | `scripts/cdp_client.py` | 수정 | CLI 명령 3개 추가 |
 | `tests/test_popup_watcher.py` | **신규** | 단위 테스트 |
 
@@ -137,7 +137,7 @@ def auto_handle(page=None) -> dict:
             continue
         if spec["action"] == "click_button":
             # 기존 click_button 함수 재사용
-            from scripts.navigator import click_button
+            from scripts.browser.navigator.navigator import click_button
             ok = click_button(spec["target"])
             handled.append({"event": ev, "clicked": ok})
     if events:
@@ -185,9 +185,9 @@ def auto_handle(page=None) -> dict:
 ## 6. CLI 명령 3개 (`cdp_client.py`)
 
 ```
-python scripts/cdp_client.py popup-install
-python scripts/cdp_client.py popup-poll              # 이벤트 출력 (consume 안 함)
-python scripts/cdp_client.py popup-auto              # poll + 자동 처리 + clear
+python scripts/entry/cdp_cli.py popup-install
+python scripts/entry/cdp_cli.py popup-poll              # 이벤트 출력 (consume 안 함)
+python scripts/entry/cdp_cli.py popup-auto              # poll + 자동 처리 + clear
 ```
 
 각 case 분기는 기존 패턴(`case "is-ready":` 등) 따라간다.
@@ -200,30 +200,30 @@ python scripts/cdp_client.py popup-auto              # poll + 자동 처리 + cl
 
 ### 검증 1: 설치 검증
 ```
-python scripts/cdp_client.py goto naver
-python scripts/cdp_client.py popup-install
+python scripts/entry/cdp_cli.py goto naver
+python scripts/entry/cdp_cli.py popup-install
 # 기대: 성공 메시지, frame_count >= 1
-python scripts/cdp_client.py popup-poll
+python scripts/entry/cdp_cli.py popup-poll
 # 기대: 빈 리스트 (이벤트 없음, 정상 상태)
 ```
 
 ### 검증 2: 알려진 팝업 감지
 ```
-python scripts/cdp_client.py goto https://blog.naver.com/skyjwsin?Redirect=Write
-python scripts/cdp_client.py popup-install
+python scripts/entry/cdp_cli.py goto https://blog.naver.com/skyjwsin?Redirect=Write
+python scripts/entry/cdp_cli.py popup-install
 # 페이지 새로고침해서 '작성 중인 글' 팝업 띄움:
-python scripts/cdp_client.py reload     # (있다면) 또는 navigator에 reload 명령 추가
+python scripts/entry/cdp_cli.py reload     # (있다면) 또는 navigator에 reload 명령 추가
 sleep 3
-python scripts/cdp_client.py popup-poll
+python scripts/entry/cdp_cli.py popup-poll
 # 기대: events 최소 1개, marker == '작성 중인 글'
 ```
 
 ### 검증 3: 자동 처리
 ```
 # 검증 2와 동일 상태에서:
-python scripts/cdp_client.py popup-auto
+python scripts/entry/cdp_cli.py popup-auto
 # 기대: handled에 1개 이상, 팝업 사라짐
-python scripts/cdp_client.py popup-poll
+python scripts/entry/cdp_cli.py popup-poll
 # 기대: 빈 리스트 (clear됨)
 ```
 
@@ -238,7 +238,7 @@ python scripts/cdp_client.py popup-poll
 ### 종합 회귀 검증
 기존 통합 흐름이 망가지지 않았는지 확인:
 ```
-python scripts/cdp_client.py write-post "watcher 후 회귀 테스트" "본문" data/test_image.png
+python scripts/entry/cdp_cli.py write-post "watcher 후 회귀 테스트" "본문" data/test_image.png
 # 기대: 모든 단계 ✓ 통과
 ```
 
@@ -246,7 +246,7 @@ python scripts/cdp_client.py write-post "watcher 후 회귀 테스트" "본문" 
 
 ## 8. 구현 순서 (단계별 지시)
 
-1. `scripts/popup_watcher.py` 파일 생성 — `POPUP_MARKERS`, `build_watcher_js`, `install_watcher` 작성
+1. `scripts/browser/popup/popup_watcher.py` 파일 생성 — `POPUP_MARKERS`, `build_watcher_js`, `install_watcher` 작성
 2. 단위 테스트 `tests/test_popup_watcher.py` 작성 (모킹 기반, 실제 브라우저 없이 동작 검증)
 3. `poll_events`, `clear_events`, `auto_handle` 작성
 4. `cdp_client.py`에 3개 case 분기 추가

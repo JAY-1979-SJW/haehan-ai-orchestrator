@@ -187,7 +187,7 @@ data/smartstore/
 ### 4-2. 셀렉터 관리 원칙
 
 ```python
-# scripts/naver/smartstore/product/selectors.py 에 집중 관리
+# scripts/naver/smartstore/product/page_selectors.py 에 집중 관리
 SELECTORS = {
     "product_name":     'input[name="productName"]',
     "price":            'input[name="salePrice"]',
@@ -394,7 +394,7 @@ log_event(
 ### Phase 1 — 상세 조회 (P0, read-only)
 
 ```
-Step 1. scripts/naver/smartstore/product/selectors.py 작성
+Step 1. scripts/naver/smartstore/product/page_selectors.py 작성
 Step 2. scripts/naver/smartstore/product/detail_collector.py 작성
         └── collect_product_detail(page, product_id) → ProductDetail
 Step 3. GET /smartstore/products/{product_id} 엔드포인트 추가
@@ -430,9 +430,9 @@ Step 4. 편집 이력 JSONL → 이력 탭 표시
 ## 9. 품질 게이트 (작업 후 필수 실행)
 
 ```bash
-python scripts/ops/codebase_layer_audit.py
+python tools/repo_gates/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
-python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+python tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 ```
 
 **판정 기준:**
@@ -455,6 +455,6 @@ python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
 | `scripts/naver/smartstore/__init__.py` | NaverSmartStore 클래스 (CDP 자동화) |
 | `scripts/naver/smartstore/product/models.py` | 데이터 모델 (확장 대상) |
 | `admin-web/src/app/naver/smartstore/SmartStoreClient.tsx` | 기존 UI (드로어 추가 위치) |
-| `scripts/auth_session.py` | 세션 복원 (`restore_session('naver.com', page)`) |
-| `ai_orchestrator/connectors/naver_session_router.py` | 세션 파이프라인 API |
+| `scripts/auth/auth_session.py` | 세션 복원 (`restore_session('naver.com', page)`) |
+| `ai_orchestrator/connectors/naver_auth/session_router.py` | 세션 파이프라인 API |
 | `data/sessions/naver.com.json` | 저장된 로그인 세션 |

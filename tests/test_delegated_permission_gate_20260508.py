@@ -2,16 +2,26 @@
 사용자 위임 권한 게이트 테스트
 """
 import pytest
-from ai_orchestrator.local_agent.delegated_permission_gate import (
+
+from core.agent_runtime.runtime.permission.delegated_permission_gate import (
+    GATE_BLOCKED,
+    GATE_NEED_PERMISSION,
+    GATE_PASS,
+    GATE_USER_DIRECT,
     evaluate_gate,
-    GATE_PASS, GATE_NEED_PERMISSION, GATE_USER_DIRECT, GATE_BLOCKED,
 )
-from ai_orchestrator.local_agent.delegated_permission_store import (
-    grant_permission, revoke, clear_all,
+from core.agent_runtime.runtime.permission.delegated_permission_policy import (
+    CHECK_ALLOWED,
+    CHECK_BLOCKED,
+    CHECK_EXHAUSTED,
+    CHECK_PERMISSION_REQUIRED,
+    CHECK_REVOKED,
+    CHECK_SCOPE_EXCEEDED,
 )
-from ai_orchestrator.local_agent.delegated_permission_policy import (
-    CHECK_ALLOWED, CHECK_PERMISSION_REQUIRED, CHECK_BLOCKED,
-    CHECK_REVOKED, CHECK_EXHAUSTED, CHECK_SCOPE_EXCEEDED,
+from core.agent_runtime.runtime.permission.delegated_permission_store import (
+    clear_all,
+    grant_permission,
+    revoke,
 )
 
 

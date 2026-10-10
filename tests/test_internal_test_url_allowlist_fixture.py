@@ -1,7 +1,7 @@
 """Stage 12M — 내부 테스트 URL allowlist + 페이지 안전성 fixture.
 
 Stage 12L 정책 문서를 코드로 고정한다. 실제 HTTP/브라우저/local-agent/서버 실행
-없이 `local_agent.internal_test_allowlist` 만 검증한다.
+없이 `core.agent_runtime.policy.internal_test_allowlist` 만 검증한다.
 
 검증 대상:
   - validate_internal_test_url: scheme/host/port/path/query/fragment/traversal/risky-keyword
@@ -20,7 +20,7 @@ from unittest.mock import patch
 
 import pytest
 
-from local_agent import internal_test_allowlist as _al
+from core.agent_runtime.policy import internal_test_allowlist as _al
 
 TEST_PORT = 9876
 PFX = "/__haehan_test__/readonly"

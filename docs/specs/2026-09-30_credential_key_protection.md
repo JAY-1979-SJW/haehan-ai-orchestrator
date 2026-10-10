@@ -15,7 +15,7 @@
 | 저장소 | `scripts/credentials.py` — `data/credentials.json`, 비밀번호는 Fernet 암호화. 사이트별 `set_cred/get_cred/list_sites/delete_cred`, 계정별 키 `naver:<id>` 지원. CLI: `python -m scripts.credentials set/get/list/delete` (출력 마스킹) |
 | **약점 1** | 암호화 키가 `data/.cred.key` 파일로 **암호문 바로 옆**에 있다. `chmod 0o600`은 Windows에서 효과가 없다. `data/` 폴더에 접근하면 복호화 가능 → 사실상 난독화 |
 | **약점 2** | `scripts/naver/auth.py::save_credentials`가 `data/.env_naver`에 **평문**으로 쓴다. 이 PC에 실제로 존재(8월 16일). 로그인 코드가 폴백으로 이 파일도 읽는다 |
-| 두 번째 키 사용처 | `scripts/form/profile.py`가 `credentials._get_or_create_key`를 재사용 |
+| 두 번째 키 사용처 | `scripts/form/personal_profile.py`가 `credentials._get_or_create_key`를 재사용 |
 | 로그인 흐름 | `ensure_naver_login` → 세션 점검 → 로그아웃이면 `login_naver`(천천히 타이핑) → 캡차/2단계 인증 감지 시 중단하고 사용자에게 위임(`needs_manual`) |
 | 정책 | 구글은 비밀번호 로그인 비활성(`_is_password_login_disabled`) — 변경하지 않음 |
 | OS 저장소 | Windows 자격 증명 관리자(`keyring.backends.Windows.WinVaultKeyring`) 사용 가능. 로컬 에이전트 토큰이 이미 같은 방식 사용(`local_agent/token_store.py`) |
@@ -38,7 +38,7 @@
 1. 키 조회 순서: **(a) keyring** (서비스 `haehan-ai/credentials`, 항목 `master-key`) → (b) 없고 `data/.cred.key`가 있으면 그 값으로 **마이그레이션** → (c) 둘 다 없으면 새 키 생성 후 keyring에 저장.
 2. 마이그레이션: keyring에 저장 → **읽어서 동일함 확인** → 기존 `credentials.json`의 모든 항목이 새 키로 복호화되는지 확인 → 성공 시 `data/.cred.key`를 `data/.cred.key.migrated`로 **이름 변경(삭제하지 않음)**. 사용자가 확인 후 직접 지운다(비가역 삭제 방지).
 3. keyring 사용 불가(Windows 이외, 백엔드 없음): 환경변수 `HAEHAN_CRED_KEY_BACKEND=file`이 명시된 경우에만 파일 폴백(개발용). 기본은 **fail-closed**(오류로 중단, 조용히 파일에 쓰지 않음).
-4. `_get_or_create_key()`의 시그니처·반환형(bytes) 유지 → `scripts/form/profile.py` 영향 없음.
+4. `_get_or_create_key()`의 시그니처·반환형(bytes) 유지 → `scripts/form/personal_profile.py` 영향 없음.
 
 ### 4.2 평문 제거 (`auth.py`)
 - `save_credentials(id, pw)` → 내부적으로 `credentials.set_cred("naver:<id>", ...)` 호출, 반환은 저장소 경로 문자열(호환).
@@ -59,7 +59,7 @@
 |---|---|
 | 기존 저장소 열림 | 11개 사이트 저장, 그중 6개가 아이디+비밀번호 보유, 전부 복호화 성공(값 미출력) |
 | keyring 왕복 | 44자 값 저장·조회·삭제 성공, 정리 후 조회 `None` |
-| 키 함수 사용처 | `scripts/credentials.py`(정의), `scripts/form/profile.py`(재사용), 테스트 1개 |
+| 키 함수 사용처 | `scripts/credentials.py`(정의), `scripts/form/personal_profile.py`(재사용), 테스트 1개 |
 | 기존 테스트 영향 | `tests/test_credentials_cli_security.py`가 `KEY_FILE`을 바꿔치기함 → 새 설계에서도 `KEY_FILE`을 폴백 경로로 유지해 호환 |
 
 **예상 diff:** `credentials.py` +약 50줄/-약 10줄, `auth.py` +약 10줄/-약 12줄, 신규 테스트 약 90줄.

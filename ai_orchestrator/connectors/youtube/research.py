@@ -8,8 +8,8 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
 from scripts.youtube import research as _research_svc
+from tools.gates.auth import require_role
 
 from ._helpers import audit, duration_ms
 

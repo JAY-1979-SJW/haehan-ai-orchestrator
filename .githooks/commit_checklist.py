@@ -41,8 +41,15 @@ SECRET_CONTENT_PATTERNS = [
 CONFLICT_RE = re.compile(r"^(<{7} |>{7} )", re.M)
 
 
+def _no_window() -> dict:
+    # scripts/ops/_proc.no_window_kwargs 와 같은 로직 — 이 파일은 여러 저장소에
+    # 사본으로 배포돼(위 "원본" 참고) 특정 저장소의 scripts/ops/_proc.py를 import할
+    # 수 없다. 콘솔 깜빡임 방지(2026-10-07, git 자손 프로세스가 매번 새 conhost 생성).
+    return {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
+
+
 def _git(args: list[str], cwd: str | None = None, binary: bool = False):
-    out = subprocess.run(["git", *args], cwd=cwd, capture_output=True)
+    out = subprocess.run(["git", *args], cwd=cwd, capture_output=True, **_no_window())
     if out.returncode != 0:
         raise RuntimeError(out.stderr.decode("utf-8", "replace").strip())
     return out.stdout if binary else out.stdout.decode("utf-8", "replace")

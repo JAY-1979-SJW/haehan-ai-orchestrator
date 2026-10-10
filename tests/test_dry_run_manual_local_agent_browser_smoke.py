@@ -1,4 +1,4 @@
-from scripts.ops import dry_run_manual_local_agent_browser_smoke as dry
+from tools.verify import dry_run_manual_local_agent_browser_smoke as dry
 
 
 def test_manual_local_agent_browser_smoke_dry_run_ready():

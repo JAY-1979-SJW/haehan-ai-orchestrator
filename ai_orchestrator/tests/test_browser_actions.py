@@ -1,4 +1,4 @@
-"""local_agent.browser_actions 검증 (Stage 3 guarded browser action 골격).
+"""core.agent_runtime.browser.browser_actions 검증 (Stage 3 guarded browser action 골격).
 
 실제 외부 웹사이트 접속 금지. 실제 계정/비밀번호 입력 금지. 모든 테스트는
 fake Playwright 팩토리(아래 ``_FakePlaywrightContext``) 를
@@ -190,7 +190,7 @@ def _make_fake_factory(
 
 
 def test_classify_safe_click_is_low() -> None:
-    from local_agent.browser_actions import classify_browser_action
+    from core.agent_runtime.browser.browser_actions import classify_browser_action
 
     r = classify_browser_action("click", text="상세보기")
     assert r["risk"] == "low"
@@ -200,7 +200,7 @@ def test_classify_safe_click_is_low() -> None:
 
 @pytest.mark.parametrize("text", ["저장", "제출", "등록", "수정", "전송", "신청", "취소"])
 def test_classify_high_write_button(text: str) -> None:
-    from local_agent.browser_actions import classify_browser_action
+    from core.agent_runtime.browser.browser_actions import classify_browser_action
 
     r = classify_browser_action("click", text=text)
     assert r["risk"] == "high"
@@ -210,7 +210,7 @@ def test_classify_high_write_button(text: str) -> None:
 
 @pytest.mark.parametrize("text", ["삭제", "탈퇴", "결제", "승인", "확정", "마감", "로그아웃"])
 def test_classify_critical_text_button(text: str) -> None:
-    from local_agent.browser_actions import classify_browser_action
+    from core.agent_runtime.browser.browser_actions import classify_browser_action
 
     r = classify_browser_action("click", text=text)
     assert r["risk"] == "critical"
@@ -219,7 +219,7 @@ def test_classify_critical_text_button(text: str) -> None:
 
 
 def test_classify_type_text_general_input_is_medium() -> None:
-    from local_agent.browser_actions import classify_browser_action
+    from core.agent_runtime.browser.browser_actions import classify_browser_action
 
     r = classify_browser_action("type_text", selector="#search", value="query")
     assert r["risk"] == "medium"
@@ -228,7 +228,7 @@ def test_classify_type_text_general_input_is_medium() -> None:
 
 
 def test_classify_password_selector_blocked() -> None:
-    from local_agent.browser_actions import classify_browser_action
+    from core.agent_runtime.browser.browser_actions import classify_browser_action
 
     r = classify_browser_action("type_text", selector="input[type=password]")
     assert r["category"] == "blocked"
@@ -237,14 +237,14 @@ def test_classify_password_selector_blocked() -> None:
 
 
 def test_classify_password_selector_by_name_blocked() -> None:
-    from local_agent.browser_actions import classify_browser_action
+    from core.agent_runtime.browser.browser_actions import classify_browser_action
 
     r = classify_browser_action("type_text", selector="#user-password")
     assert r["category"] == "blocked"
 
 
 def test_classify_select_option_medium() -> None:
-    from local_agent.browser_actions import classify_browser_action
+    from core.agent_runtime.browser.browser_actions import classify_browser_action
 
     r = classify_browser_action("select_option", selector="#region", value="seoul")
     assert r["risk"] == "medium"
@@ -253,7 +253,7 @@ def test_classify_select_option_medium() -> None:
 
 
 def test_classify_scroll_low() -> None:
-    from local_agent.browser_actions import classify_browser_action
+    from core.agent_runtime.browser.browser_actions import classify_browser_action
 
     r = classify_browser_action("scroll")
     assert r["risk"] == "low"
@@ -277,7 +277,7 @@ def test_classify_scroll_low() -> None:
     ],
 )
 def test_classify_blocked_actions(action: str) -> None:
-    from local_agent.browser_actions import classify_browser_action
+    from core.agent_runtime.browser.browser_actions import classify_browser_action
 
     r = classify_browser_action(action)
     assert r["category"] == "blocked"
@@ -289,7 +289,7 @@ def test_classify_blocked_actions(action: str) -> None:
 
 
 def test_safe_click_calls_page_click() -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -311,7 +311,7 @@ def test_safe_click_calls_page_click() -> None:
 
 
 def test_type_text_general_input_calls_page_fill() -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -333,7 +333,7 @@ def test_type_text_general_input_calls_page_fill() -> None:
 
 
 def test_select_option_calls_page_select_option() -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -353,7 +353,7 @@ def test_select_option_calls_page_select_option() -> None:
 
 
 def test_scroll_uses_mouse_wheel_only() -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -375,7 +375,7 @@ def test_scroll_uses_mouse_wheel_only() -> None:
 
 
 def test_save_button_click_requires_approval_and_never_clicks() -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -395,7 +395,7 @@ def test_save_button_click_requires_approval_and_never_clicks() -> None:
 
 
 def test_submit_button_click_requires_approval() -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -413,7 +413,7 @@ def test_submit_button_click_requires_approval() -> None:
 
 
 def test_delete_button_blocked_never_clicks() -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -432,7 +432,7 @@ def test_delete_button_blocked_never_clicks() -> None:
 
 
 def test_critical_even_when_approved_is_not_executed() -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -450,7 +450,7 @@ def test_critical_even_when_approved_is_not_executed() -> None:
 
 
 def test_password_fill_blocked_never_fills() -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -472,7 +472,7 @@ def test_password_fill_blocked_never_fills() -> None:
 
 
 def test_form_submit_is_blocked() -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -503,7 +503,7 @@ def test_form_submit_is_blocked() -> None:
     ],
 )
 def test_banned_actions_never_execute(banned_action: str) -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -532,7 +532,7 @@ def test_banned_actions_never_execute(banned_action: str) -> None:
     ],
 )
 def test_url_safety_blocks_private_network_default(url: str) -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -558,7 +558,7 @@ def test_url_safety_blocks_private_network_default(url: str) -> None:
     ],
 )
 def test_url_safety_blocks_dangerous_schemes(url: str) -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -578,7 +578,7 @@ def test_url_safety_blocks_dangerous_schemes(url: str) -> None:
 
 
 def test_playwright_missing_graceful_fail() -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         BrowserActionDependencyMissing,
         perform_browser_action_readwrite_guarded,
     )
@@ -602,7 +602,7 @@ def test_playwright_missing_graceful_fail() -> None:
 
 def test_result_contains_no_sensitive_values() -> None:
     """password 값/쿠키/토큰 후보가 반환 dict 에 절대 포함되지 않는다."""
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -625,7 +625,7 @@ def test_result_contains_no_sensitive_values() -> None:
 
 
 def test_page_context_browser_all_closed_on_safe_action() -> None:
-    from local_agent.browser_actions import (
+    from core.agent_runtime.browser.browser_actions import (
         perform_browser_action_readwrite_guarded,
     )
 
@@ -650,7 +650,7 @@ def test_page_context_browser_all_closed_on_safe_action() -> None:
 def test_browser_actions_source_has_no_mutating_network_calls() -> None:
     from pathlib import Path
 
-    import local_agent.browser_actions as mod
+    import core.agent_runtime.browser.browser_actions as mod
 
     src = Path(mod.__file__).read_text(encoding="utf-8")
     # 실제로 form submit / 쿠키 / 다운로드 관련 API 를 호출하지 않아야 한다.
@@ -671,8 +671,8 @@ def test_browser_actions_source_has_no_mutating_network_calls() -> None:
 
 
 def test_action_web_click_guarded_safe(monkeypatch) -> None:
-    from local_agent import browser_actions
-    from local_agent.actions import execute_action
+    from core.agent_runtime.browser import browser_actions
+    from core.agent_runtime.connection.actions import execute_action
 
     captured: list[dict] = []
 
@@ -714,8 +714,8 @@ def test_action_web_click_guarded_safe(monkeypatch) -> None:
 
 
 def test_action_web_type_guarded_password_approval_required(monkeypatch) -> None:
-    from local_agent import browser_actions
-    from local_agent.actions import execute_action
+    from core.agent_runtime.browser import browser_actions
+    from core.agent_runtime.connection.actions import execute_action
 
     def fake_perform(**kwargs):
         return {
@@ -756,8 +756,8 @@ def test_action_web_type_guarded_password_approval_required(monkeypatch) -> None
 
 
 def test_action_web_scroll_guarded_defaults(monkeypatch) -> None:
-    from local_agent import browser_actions
-    from local_agent.actions import execute_action
+    from core.agent_runtime.browser import browser_actions
+    from core.agent_runtime.connection.actions import execute_action
 
     captured: list[dict] = []
 
@@ -796,7 +796,7 @@ def test_action_web_scroll_guarded_defaults(monkeypatch) -> None:
 
 
 def test_action_web_click_guarded_missing_url() -> None:
-    from local_agent.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     r = execute_action("web_click_guarded", {})
     assert r.success is False

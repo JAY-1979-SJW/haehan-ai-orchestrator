@@ -16,7 +16,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.naver.blog.marketing import TARGET_BLOG_ID
 from scripts.naver.blog.marketing.topics import save_cache, topic_key
 
@@ -60,8 +60,8 @@ def connect_and_ensure_login(cdp_url: str = "http://localhost:9222", blog_id: st
 
     if detected_alias != target_alias:
         print(f"  → {blog_id} 재로그인 필요 (현재: {detected_alias}, 기대: {target_alias})")
-        from scripts.credentials import get_naver_cred
-        from scripts.naver.auth import login_naver
+        from scripts.auth.credentials import get_naver_cred
+        from scripts.naver.common.auth import login_naver
 
         cred = get_naver_cred(blog_id)
         if detected_alias:
@@ -90,7 +90,7 @@ def publish_one(page, *, post: dict, img_paths: list[str], approval: str | None 
 
     approval: 사용자가 직접 입력한 승인 문구. 없거나 다르면 GateBlocked(발행하지 않는다).
     """
-    from scripts.gate import require_approved
+    from scripts.common.gate import require_approved
     from scripts.naver.blog.core.writer import write_post
 
     require_approved("blog_publish", approval, via="blog_marketing_publish_one", title=str(post.get("title", ""))[:60])

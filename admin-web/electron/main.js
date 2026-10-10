@@ -20,7 +20,7 @@ const path = require("path");
 
 // Electron 앱 자신의 창(webview 포함)을 CDP로 제어할 수 있게 원격 디버깅 포트를 연다.
 // ready 이벤트 이전에 호출해야 한다(공식 문서: code.electronjs.org/docs/latest/api/command-line-switches).
-// 9222는 scripts/local_agent/start_chrome_with_cdp.py 가 쓰는 "사용자 Chrome" CDP 포트와 겹치므로
+// 9222는 scripts/browser/cdp/start_chrome_with_cdp.py 가 쓰는 "사용자 Chrome" CDP 포트와 겹치므로
 // 별도 포트(9333)를 쓴다 — 웹사이트 자동화(사용자 Chrome)와 앱 자체 자동화(이 창)를 분리한다.
 app.commandLine.appendSwitch("remote-debugging-port", "9333");
 
@@ -33,7 +33,8 @@ const {
   SERVER_URL, FASTAPI_URL,
 } = require("./lib/config");
 const { startAgent, stopAgent } = require("./lib/agent");
-const { createMainWindow, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
+const { createMainWindow, loadMainShell, showMainWindow, getMainWindow, setQuiting } = require("./lib/mainWindow");
+const { stage } = require("./lib/startup_log");
 const { createLicenseWindow, verifyLicense } = require("./lib/licenseWindow");
 const { startYouTubeOAuth, ensureYouTubeAuth, setWindowProvider } = require("./lib/youtube");
 const { createTray, updateAutoLaunchCheck, hasTray } = require("./lib/tray");
@@ -128,8 +129,18 @@ if (!gotLock) {
   app.on("second-instance", () => bus.emit(EVENTS.SHOW_WINDOW));
 
   app.whenReady().then(async () => {
+    stage("ready");
+    const startCfg = loadConfig();
     // 소유자 모드 환경변수 조기 주입 — Next.js fork에 상속되어 미들웨어 인증 우회
-    if (isOwnerMode(loadConfig())) process.env.OWNER_MODE = "true";
+    if (isOwnerMode(startCfg)) process.env.OWNER_MODE = "true";
+
+    // 빠른 시작: 소유자·라이선스가 이미 있으면 창부터 바로 띄우고(대기 화면), 서버는 뒤에서 준비한다.
+    const startHidden = process.argv.includes("--hidden");
+    const earlyKey = isOwnerMode(startCfg) || startCfg.license_key ? (startCfg.license_key || "OWNER") : null;
+    if (earlyKey && !startHidden) {
+      createMainWindow(earlyKey, false, { deferLoad: true });
+      stage("window-shown");
+    }
 
     // 자동실행 여부는 electron.app 로그인아이템 레지스트리가 아니라 config.json 의 autoStart
     // 값으로 관리한다(isAutoStartEnabled/setAutoStartEnabled). 시작프로그램 폴더의
@@ -147,38 +158,45 @@ if (!gotLock) {
 
     // webview 파티션의 Service Worker/캐시 정리 — 빌드 변경 시 옛 SW가 cache-first로
     // 깨진 자원을 서빙해 화면이 RSC 원문으로 깨지는 문제 방지. 쿠키(로그인)는 보존.
-    try {
-      await session.fromPartition("persist:haehan").clearStorageData({
-        storages: ["serviceworkers", "cachestorage"],
-      });
-    } catch (e) {
-      console.warn("[main] webview SW/캐시 정리 실패(무시):", e.message);
-    }
-    // HTTP 디스크 캐시도 비움 — 빌드 변경 시 옛 Next 청크/HTML 이 캐시돼 옛 화면이 뜨던
-    // 문제 해결(쿠키·localStorage 토큰은 보존). 로컬 서버라 재다운로드 비용 작음.
-    try {
-      await session.fromPartition("persist:haehan").clearCache();
-    } catch (e) {
-      console.warn("[main] webview HTTP 캐시 정리 실패(무시):", e.message);
-    }
+    const clearWebviewCache = async () => {
+      try {
+        await session.fromPartition("persist:haehan").clearStorageData({
+          storages: ["serviceworkers", "cachestorage"],
+        });
+      } catch (e) {
+        console.warn("[main] webview SW/캐시 정리 실패(무시):", e.message);
+      }
+      // HTTP 디스크 캐시도 비움 — 빌드 변경 시 옛 Next 청크/HTML 이 캐시돼 옛 화면이 뜨던
+      // 문제 해결(쿠키·localStorage 토큰은 보존). 로컬 서버라 재다운로드 비용 작음.
+      try {
+        await session.fromPartition("persist:haehan").clearCache();
+      } catch (e) {
+        console.warn("[main] webview HTTP 캐시 정리 실패(무시):", e.message);
+      }
+    };
 
-    // ── FastAPI 서버 시작 (번들 EXE 또는 외부 uvicorn 대기) ───────────────
-    const serverReady = await startFastAPIServer();
+    // ── 서버 두 개를 동시에 시작(빠른 시작) ───────────────────────────────────
+    // UI 서버(Next)는 FastAPI 에 의존하지 않고 기동한다(주소는 환경변수로 고정) — 순서대로 기다리던
+    // 것을 병렬로 바꿔 시작 시간을 줄인다. webview 캐시 정리도 함께.
+    const timed = (name, p) => p.then((ok) => { stage(name, ok ? "ok" : "FAIL"); return ok; });
+    const [serverReady, nextReady] = await Promise.all([
+      timed("fastapi-ready", startFastAPIServer()),
+      timed("next-ready", startNextServer()),
+      clearWebviewCache(),
+    ]);
     if (!serverReady) {
-      dialog.showErrorBox(
+      failStartup(
         "서버 시작 실패",
         "Haehan AI 서버를 시작할 수 없습니다.\n" +
         "로그 파일(%APPDATA%\\Haehan AI\\logs\\fastapi.log)을 확인하세요."
       );
-      app.quit();
       return;
     }
 
     // ── CDP 브라우저: 온디맨드 ────────────────────────────────────────────────
     // 자동 시작/15초 워치독 제거(사용자 선택). CDP 창을 닫아도 다시 뜨지 않는다.
-    // 브라우저가 필요한 작업이 들어오면 백엔드(web_connector._ensure_cdp_daemon)가
-    // 그 시점에 CDP를 자동 기동하므로 기능 손실 없음. (startCdpBrowser 는 보존 —
-    // 추후 명시적 요청 시 호출 가능)
+    // 백엔드 라이브러리(connection._get_cdp_port)도 CDP 를 자동 기동하지 않는다 —
+    // 필요하면 사용자가 명시적으로 시작한다. (startCdpBrowser 는 보존 — 명시적 요청 시 호출 가능)
     if (cdpWatchdogTimer) { clearInterval(cdpWatchdogTimer); cdpWatchdogTimer = null; }
 
     // 데스크톱 자동 세션: 시작할 때마다 등록된 owner 의 새 토큰을 받아 config(auth_token)에 보관한다(webview 가 이를 쿠키로 사용).
@@ -201,15 +219,12 @@ if (!gotLock) {
       }).catch(() => {});
     }
 
-    // ── Next.js 서버 시작 ────────────────────────────────────────────────────
-    const nextReady = await startNextServer();
     if (!nextReady) {
-      dialog.showErrorBox(
+      failStartup(
         "UI 서버 시작 실패",
         "Haehan AI UI 서버를 시작할 수 없습니다.\n" +
         "로그 파일(%APPDATA%\\Haehan AI\\logs\\nextjs.log)을 확인하세요."
       );
-      app.quit();
       return;
     }
 
@@ -226,9 +241,10 @@ if (!gotLock) {
     // 소유자 모드 또는 저장된 라이선스 → 바로 시작
     if (isOwnerMode(cfg) || cfg.license_key) {
       const key = cfg.license_key || "OWNER";
-      const startHidden = process.argv.includes("--hidden");
       startAgent(key);
-      createMainWindow(key, startHidden);
+      // 대기 화면으로 먼저 띄운 창이 있으면 본 화면만 열고, 없으면(자동시작 숨김 등) 새로 만든다
+      if (!loadMainShell()) createMainWindow(key, startHidden);
+      stage("shell-loaded");
       createTray(isAutoStartEnabled());
       // 창이 뜬 뒤 백그라운드로 Claude 연결 확인(처음이면 동의 요청) — 시작을 막지 않는다
       if (!startHidden) setTimeout(() => syncClaudeOnStart().catch((e) => console.warn("[main] Claude 연결 확인 실패(무시):", e.message)), 5000);
@@ -243,6 +259,22 @@ if (!gotLock) {
 }
 
 // ── 라이선스 입력 흐름 (일반 클라이언트 전용) ──────────────────────────────────
+// 시작 실패 처리: 사용자에게는 오류 창, 자동 점검(HAEHAN_E2E=1)에서는 창을 띄우지 않고 바로 종료
+// (사람이 닫아야 하는 오류 창이 뜨면 점검 환경에서 앱이 끝나지 않아 다음 점검까지 막히던 문제).
+function failStartup(title, body) {
+  stage("startup-failed", title);
+  if (process.env.HAEHAN_E2E === "1") {
+    console.error(`[main] ${title}: ${body}`);
+    // app.exit 은 before-quit 정리를 건너뛰므로, 먼저 띄운 서버를 직접 끈다(남으면 다음 실행에서 포트 3000·8401 충돌)
+    try { stopNextServer(); } catch {}
+    try { stopFastAPIServer(); } catch {}
+    setTimeout(() => app.exit(1), 1500);
+    return;
+  }
+  dialog.showErrorBox(title, body);
+  app.quit();
+}
+
 function startLicenseFlow() {
   const licWin = createLicenseWindow();
 

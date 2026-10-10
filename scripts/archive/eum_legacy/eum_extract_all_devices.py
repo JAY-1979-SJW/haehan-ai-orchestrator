@@ -5,7 +5,7 @@
 - 헤더도 2행 (행0: 14열 / 행1: 13열)
 - 페이지네이션 존재 (1, 2 페이지)
 
-2026-08-16: scripts/eum_extract_all_devices.py 의 re-export 대상 파일이
+2026-08-16: 당시 scripts/ 최상위 eum_extract_all_devices.py(현 scripts/eum/extract_all_devices.py) 의 re-export 대상 파일이
 누락돼(dfa06bfa 모듈화 리팩토링 중 아카이브 파일 생성 누락) 깨져 있던 것을
 git 이력(6e08aec2)에서 복원. 저장 경로만 get_app_dir("eum") 기준으로 보정.
 """
@@ -21,9 +21,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
-from scripts.op_log import op_context  # noqa: E402
-from scripts.web_connector import get_page  # noqa: E402
+from scripts.browser.cdp.connection import get_page  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
+from scripts.common.op_log import op_context  # noqa: E402
 
 _log = get_logger(__name__)
 
@@ -167,7 +167,7 @@ def main():
 
     # 팝업 처리
     try:
-        from scripts.popup_detector import handle_page_popups
+        from scripts.browser.popup.popup_detector import handle_page_popups
 
         handle_page_popups(page, timeout_s=2.0)
     except Exception:  # noqa: BLE001 - 페이지 팝업 처리 실패는 무시하고 계속 진행(팝업 없는 정상 케이스가 대부분)

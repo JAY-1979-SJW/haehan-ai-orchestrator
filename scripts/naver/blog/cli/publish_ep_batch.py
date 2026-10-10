@@ -14,10 +14,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
 
-from scripts.gate import force_approved  # noqa: E402
+from scripts.browser.cdp.connection import get_page  # noqa: E402
+from scripts.common.gate import force_approved  # noqa: E402
 from scripts.naver.blog.core.writer import write_post  # noqa: E402
 from scripts.naver.blog.unsplash_images import resolve_unsplash_images as _resolve_unsplash_images  # noqa: E402
-from scripts.web_connector import get_page  # noqa: E402
 
 FULL_PATH = ROOT / "data" / "marketing" / "ep_batch_full.json"
 LOG_PATH = ROOT / "data" / "marketing" / "ep_batch_publish_log_v2.jsonl"
@@ -43,7 +43,7 @@ def main() -> int:
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     confirm = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--confirm=")), None)
     skip_n = int(args[0]) if args else 0
-    from scripts.gate import GateBlocked, require_approved
+    from scripts.common.gate import GateBlocked, require_approved
 
     try:  # force_approved() 로 게이트를 우회하기 전에, 사용자가 입력한 승인 문구를 먼저 확인한다
         require_approved("blog_publish", confirm, via="publish_ep_batch")

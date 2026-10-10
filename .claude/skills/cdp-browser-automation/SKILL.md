@@ -5,15 +5,15 @@ description: 이 프로젝트에서 브라우저 자동화가 필요할 때(사�
 
 # CDP 브라우저 자동화 (상시 방식)
 
-이 프로젝트는 `claude-in-chrome` MCP 확장이 아니라 **`scripts/cdp_force_start.py` + `scripts/cdp_helper.py`** 조합으로
+이 프로젝트는 `claude-in-chrome` MCP 확장이 아니라 **`scripts/browser/cdp/cdp_force_start.py` + `scripts/browser/cdp/cdp_helper.py`** 조합으로
 Chrome을 CDP(포트 9222)로 직접 띄우고 조작한다. 확장 연결이 안 될 때 헤매지 말고 바로 이 경로를 쓴다.
 
 ## 1. CDP 확인/시작
 
 ```bash
-python scripts/cdp_force_start.py status   # 이미 떠 있는지 확인
-python scripts/cdp_force_start.py start [URL]   # 안 떠 있으면 시작 (선택적으로 시작 URL 지정)
-python scripts/cdp_force_start.py stop     # 종료 (요청 없이 임의로 하지 않음)
+python scripts/browser/cdp/cdp_force_start.py status   # 이미 떠 있는지 확인
+python scripts/browser/cdp/cdp_force_start.py start [URL]   # 안 떠 있으면 시작 (선택적으로 시작 URL 지정)
+python scripts/browser/cdp/cdp_force_start.py stop     # 종료 (요청 없이 임의로 하지 않음)
 ```
 
 - 프로필: `HAEHAN_CDP_PROFILE` 환경변수(없으면 `data/cdp_profile/ai_chrome`) — 로그인 세션이 여기 유지된다.
@@ -25,7 +25,7 @@ python scripts/cdp_force_start.py stop     # 종료 (요청 없이 임의로 하
 ```python
 import sys
 sys.path.insert(0, r"C:\work\01. haehan-ai-orchestrator")
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 
 cdp = CDP(port=9222)
 cdp.navigate("https://example.com")
@@ -38,7 +38,7 @@ cdp.close()
 
 - 스크린샷은 `cdp.shot()` 저장 후 Read 도구로 열어 화면을 직접 눈으로 확인하고 다음 액션 결정.
 - 클릭/타이핑은 `cdp.send("Input.dispatchMouseEvent", ...)` / `"Input.dispatchKeyEvent"` 등 CDP 프로토콜 직접 호출.
-- 반복 패턴(로그인 감지, 폼 입력 등)은 `scripts/ops/login_sites.py`, `scripts/naver/mail_read/cdp.py` 등 기존 구현 먼저 확인 후 재사용.
+- 반복 패턴(로그인 감지, 폼 입력 등)은 `scripts/auth/login_sites.py`, `scripts/naver/mail/read/cdp.py` 등 기존 구현 먼저 확인 후 재사용.
 - **`CDP(port=9222)`는 항상 Chrome의 `/json` 목록에서 첫 번째 "page" 탭에 붙는다** — 여러
   탭이 열려있는 세션(이 프로젝트는 거의 항상 그렇다)에서 "이미 열려있는 특정 탭"을 골라
   잡을 수 없다. 그래서 이 헬퍼는 **연결 직후 바로 `cdp.navigate(url)`로 원하는 URL로
@@ -59,7 +59,7 @@ cdp.close()
 ## 4. Playwright(`connect_over_cdp`)를 쓸 때 반드시 지킬 것 (2026-08-21, 반복 오류 원인 확정)
 
 인스타/네이버클립/유튜브 3채널 발행 작업에서 같은 실수를 여러 번 반복했다. 원인은
-`scripts/cdp_helper.py`(raw CDP) 대신 **Playwright `connect_over_cdp`를 매 스크립트 실행마다 새로
+`scripts/browser/cdp/cdp_helper.py`(raw CDP) 대신 **Playwright `connect_over_cdp`를 매 스크립트 실행마다 새로
 붙이고 `ctx.new_page()`로 새 탭을 판 것**이었다. 반드시 아래 규칙을 지킨다.
 
 - **탭 하나를 여러 Bash 호출에 걸쳐 재사용하지 마라.** `ctx.new_page()`로 만든 탭은 그 파이썬

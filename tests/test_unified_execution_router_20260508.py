@@ -10,7 +10,7 @@ from ai_orchestrator.browser_tool.unified_browser_safe_result import (
     STATUS_LOCAL_HANDOFF_CREATED,
     STATUS_USER_ACTION_REQUIRED,
 )
-from ai_orchestrator.browser_tool.unified_execution_router import (
+from ai_orchestrator.browser_tool.routing.unified_execution_router import (
     classify_task_only,
     route_browser_task,
 )

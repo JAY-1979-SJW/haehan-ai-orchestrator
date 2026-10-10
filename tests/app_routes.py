@@ -2,7 +2,7 @@
 
 FastAPI 0.137+ 는 include_router() 를 즉시 펼치지 않고 지연 래퍼(_IncludedRouter)로 저장하므로
 `app.routes` 를 바로 순회하면 서브라우터의 실제 라우트가 보이지 않는다(2026-09-29 defect_index #39·#40).
-공식 `iter_route_contexts` 로 펼친 목록을 쓰는 `scripts.ops.audit_backend_runtime_contract.iter_runtime_routes`
+공식 `iter_route_contexts` 로 펼친 목록을 쓰는 `tools.audits.backend.audit_backend_runtime_contract.iter_runtime_routes`
 를 재사용한다(새로 구현하지 않음).
 """
 
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
-from scripts.ops.audit_backend_runtime_contract import (
+from tools.audits.backend.audit_backend_runtime_contract import (
     EXPECTED_HTTP_ROUTES,
     EXPECTED_POST_ROUTES,
     EXPECTED_RUNTIME_ROUTES,

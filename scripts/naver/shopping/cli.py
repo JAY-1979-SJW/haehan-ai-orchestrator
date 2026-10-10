@@ -71,7 +71,7 @@ def cmd_history(args):
 
 
 def cmd_summary(args):
-    from ai_orchestrator.connectors import naver_search_queries as q
+    from scripts.naver.shopping import naver_search_queries as q
 
     page = q.search_shopping_items(limit=200, offset=0)
     if not page.total:

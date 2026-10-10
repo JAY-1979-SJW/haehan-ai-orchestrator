@@ -29,7 +29,6 @@
   "schema_prefixes": [
     "migrations/",
     "ai_orchestrator/server/",
-    "ai_orchestrator/local_agent/",
     "browser_api/",
     "browser_worker/",
     "services/"
@@ -68,7 +67,7 @@
   "deploy_dry_run_evidence_path": "data/logs/deploy_dry_run_latest.json",
   "deploy_dry_run_required": false,
   "no_local_docker_cli": true,
-  "no_local_docker_cli_allow_paths": ["scripts/ops/server_deploy.py"],
+  "no_local_docker_cli_allow_paths": ["tools/server_deploy.py", "tools/runtime/verify_runtime_drift.py"],
   "existing_code_change_requires_flag": true,
   "existing_code_change_severity": "error",
   "code_change_requires_test_or_doc": true,

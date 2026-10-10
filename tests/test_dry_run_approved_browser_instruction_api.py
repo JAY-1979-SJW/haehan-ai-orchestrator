@@ -1,4 +1,4 @@
-from scripts.ops import dry_run_approved_browser_instruction_api as dry
+from tools.verify import dry_run_approved_browser_instruction_api as dry
 
 
 def test_approved_browser_instruction_api_dry_run_ready():

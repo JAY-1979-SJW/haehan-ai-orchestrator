@@ -9,7 +9,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import urllib.error
 import urllib.parse
 import urllib.request
 from collections import Counter
@@ -17,9 +16,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 from scripts.common import youtube_search_cache as _shared_cache
-from security_utils import safe_preview
+from scripts.common.http_retry import urlopen_with_dead_proxy_fallback as _urlopen_with_dead_proxy_fallback
+from ai_orchestrator.core.security_utils import safe_preview
 
 ROOT = repo_root()
 REPORT_DIR = ROOT / "data" / "google_youtube_search_reports"
@@ -244,28 +244,6 @@ def _get_json(url: str, params: dict[str, str | int]) -> dict[str, Any]:
         request = urllib.request.Request(f"{url}?{query}", headers={"Accept": "application/json"})
     with _urlopen_with_dead_proxy_fallback(request, timeout=20) as response:
         return json.loads(response.read().decode("utf-8"))
-
-
-def _urlopen_with_dead_proxy_fallback(request: urllib.request.Request, *, timeout: int):
-    try:
-        return urllib.request.urlopen(request, timeout=timeout)
-    except urllib.error.URLError as exc:
-        if not _should_retry_without_proxy(exc):
-            raise
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-        return opener.open(request, timeout=timeout)
-
-
-def _should_retry_without_proxy(exc: urllib.error.URLError) -> bool:
-    reason = str(getattr(exc, "reason", exc))
-    proxy_values = [
-        os.environ.get("HTTPS_PROXY", ""),
-        os.environ.get("HTTP_PROXY", ""),
-        os.environ.get("https_proxy", ""),
-        os.environ.get("http_proxy", ""),
-    ]
-    dead_local_proxy = any("127.0.0.1:9" in value or "localhost:9" in value for value in proxy_values)
-    return dead_local_proxy and ("10061" in reason or "Connection refused" in reason or "연결을 거부" in reason)
 
 
 # scripts/youtube/research_search.py 와 동일한 캐시 DB(파일)를 공유한다.

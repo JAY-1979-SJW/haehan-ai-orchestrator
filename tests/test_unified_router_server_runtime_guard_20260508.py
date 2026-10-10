@@ -4,7 +4,7 @@ unified_execution_router의 runtime_context guard 단위 검증.
 runtime_context == "server" + 외부 URL → 즉시 BLOCKED 반환되는지 확인.
 """
 
-from ai_orchestrator.browser_tool.unified_execution_router import route_browser_task
+from ai_orchestrator.browser_tool.routing.unified_execution_router import route_browser_task
 from ai_orchestrator.server.execution_location_guard import (
     BLOCKED_SERVER_EXTERNAL_WEB_EXECUTION,
 )

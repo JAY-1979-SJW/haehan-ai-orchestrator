@@ -93,7 +93,7 @@ def adapt_external_work_entry(entry: Any) -> ExternalWork:
 def list_external_works_as_models() -> list[ExternalWork]:
     """기존 external_work_registry 전체를 ExternalWork 모델 목록으로 반환."""
     try:
-        from ai_orchestrator.external_work_registry import list_external_works
+        from ai_orchestrator.tasks.external_work_registry import list_external_works
 
         entries = list_external_works()
         return [adapt_external_work_entry(e) for e in entries]
@@ -286,7 +286,7 @@ _SAFETY_POLICY_SUMMARY: list[dict[str, Any]] = [
         "decision": SafetyDecision.REQUIRE_APPROVAL,
         "reason": "high/critical 위험 작업은 승인 없이 실행 불가",
         "required_execution_location": None,
-        "impl": "browser_tool/gate_approval_preflight.py",
+        "impl": "browser_tool/preflight/gate_approval_preflight.py",
     },
     {
         "policy_id": "pol-secret-redaction",
@@ -308,7 +308,7 @@ _SAFETY_POLICY_SUMMARY: list[dict[str, Any]] = [
         "decision": SafetyDecision.REQUIRE_USER_DIRECT,
         "reason": "비밀번호/OTP/전자서명은 사용자가 직접 입력해야 함",
         "required_execution_location": "USER_DIRECT_REQUIRED",
-        "impl": "browser_tool/execution_location_policy.py",
+        "impl": "browser_tool/routing/execution_location_policy.py",
     },
     {
         "policy_id": "pol-external-app-hold",
@@ -330,7 +330,7 @@ _SAFETY_POLICY_SUMMARY: list[dict[str, Any]] = [
         "decision": SafetyDecision.BLOCK,
         "reason": "투찰/전자서명/결제는 자동 실행 금지",
         "required_execution_location": "USER_DIRECT_REQUIRED",
-        "impl": "browser_tool/controlled_submit.py",
+        "impl": "ai_orchestrator/local_agent/actions/browser_submit_with_user_approval.py",
     },
 ]
 

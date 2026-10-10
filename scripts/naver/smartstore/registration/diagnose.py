@@ -18,11 +18,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
-from scripts.naver.auth import ensure_naver_login  # noqa: E402
+from scripts.browser.cdp.connection import get_page  # noqa: E402
+from scripts.browser.popup.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
+from scripts.naver.common.auth import ensure_naver_login  # noqa: E402
 from scripts.naver.smartstore.product.product import REGISTER_URL, ProductRegister  # noqa: E402
-from scripts.popup_detector import close_popup_windows, handle_page_popups  # noqa: E402
-from scripts.web_connector import get_page  # noqa: E402
 
 _log = get_logger(__name__)
 

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from scripts.google.domain_taxonomy import build_google_domain_taxonomy
-from scripts.google.tab_logic import build_tab_logic_catalog, classify_tab_operation, get_tab_summary
+from scripts.google.common.domain_taxonomy import build_google_domain_taxonomy
+from scripts.google.common.tab_logic import build_tab_logic_catalog, classify_tab_operation, get_tab_summary
 from scripts.google.youtube import search as search_module
 from scripts.google.youtube.search import search_videos
-from scripts.google.youtube_upload import build_youtube_upload_plan
+from scripts.google.common.youtube_upload import build_youtube_upload_plan
 
 TAB_KEY = "youtube"
 

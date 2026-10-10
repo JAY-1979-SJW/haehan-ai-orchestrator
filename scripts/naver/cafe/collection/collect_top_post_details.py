@@ -15,8 +15,8 @@ import argparse
 import json
 import time
 
-from scripts.app_paths import repo_root
-from scripts.logger import get_logger
+from scripts.common.app_paths import repo_root
+from scripts.common.logger import get_logger
 from scripts.naver.cafe.collection.collector import _fetch_article_detail
 
 _log = get_logger(__name__)
@@ -95,7 +95,7 @@ def _main() -> None:
     parser.add_argument("--top", type=int, default=300)
     args = parser.parse_args()
 
-    from ai_orchestrator.local_agent.browser.agent import BrowserAgent
+    from scripts.browser.agent.agent import BrowserAgent
 
     with BrowserAgent() as agent:
         summary = collect_top_details(agent._page, top=args.top)

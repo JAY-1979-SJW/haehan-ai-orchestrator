@@ -10,7 +10,7 @@ import pathlib
 
 import pytest
 
-from ai_orchestrator.browser_tool.local_agent_user_present_flow import (
+from ai_orchestrator.agent_hub.user_present_flow import (
     DECISION_BLOCK,
     DECISION_READONLY,
     DECISION_REQUIRE_API,
@@ -33,7 +33,7 @@ from ai_orchestrator.browser_tool.local_agent_user_present_flow import (
 
 FIXTURE_PATH = pathlib.Path(__file__).parent / "fixtures" / "local_agent_user_present_web_flow_20260507.json"
 MODULE_PATH = (
-    pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "local_agent_user_present_flow.py"
+    pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "agent_hub" / "user_present_flow.py"
 )
 
 REQUIRED_CASE_FIELDS = [
@@ -557,6 +557,7 @@ def test_compatible_with_site_access_compatibility_auditor():
         pathlib.Path(__file__).parent.parent
         / "ai_orchestrator"
         / "browser_tool"
+        / "policy"
         / "site_access_compatibility_auditor.py"
     )
     assert auditor_path.exists(), "site_access_compatibility_auditor.py 파일 없음"
@@ -572,7 +573,7 @@ def test_compatible_with_site_access_compatibility_auditor():
 
 def test_compatible_with_site_compliance_policy():
     compliance_path = (
-        pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "site_compliance_policy.py"
+        pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "policy" / "site_compliance_policy.py"
     )
     assert compliance_path.exists(), "site_compliance_policy.py 파일 없음"
 

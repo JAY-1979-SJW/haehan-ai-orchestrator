@@ -17,7 +17,7 @@
 ## 1. 배포 안전망 (결함 #4, #6)
 
 **현재 동작**
-- scripts/ops/server_deploy.py (99줄, `main()` :84): `--approved` 필수(없으면 2) → `_guard_server_only`(:27-31, docker 없으면 exit 3 = **로컬 실행 불가**) → `_git_sync`(:39-56: fetch, 뒤처진 커밋 수, `merge --ff-only`, 분기 시 exit 4, 0 커밋이면 배포 생략) → `_compose_rebuild`(:59) → `_reload_nginx`(:69, best-effort). **테스트·게이트 단계 없음.**
+- tools/server_deploy.py (99줄, `main()` :84): `--approved` 필수(없으면 2) → `_guard_server_only`(:27-31, docker 없으면 exit 3 = **로컬 실행 불가**) → `_git_sync`(:39-56: fetch, 뒤처진 커밋 수, `merge --ff-only`, 분기 시 exit 4, 0 커밋이면 배포 생략) → `_compose_rebuild`(:59) → `_reload_nginx`(:69, best-effort). **테스트·게이트 단계 없음.**
 - deploy_trigger_daemon.py: 커밋 b4ad2f70(2026-06-02 "fix(zombie)")에서 삭제. 복원 `git show b4ad2f70^:scripts/ops/deploy_trigger_daemon.py`(8401 포트 HTTP, HMAC 검증 POST `/trigger`, server_deploy.py 호출). 아직 살아 있는 참조: CLAUDE.md:63, AGENTS.md:48, docs/deploy_troubleshooting.md:23, docs/architecture/DEPLOY_PIPELINE_REPAIR.md:17·61, PROD_DEPLOY_PLAN.md:26·75, docs/inventory.md:53·74, **scripts/ops/ai-orchestrator-deploy-trigger.service:10(ExecStart 가 삭제된 파일 — 설치 시 Restart=always 로 크래시 루프)**, **ai_orchestrator/routers/deploy_router.py:37-40 이 `host.docker.internal:<port>/trigger` 로 POST(502/503 처리 :78,:80) — 호스트에 데몬이 있다고 가정**.
 
 **변경안**
@@ -86,7 +86,7 @@
 
 **현재**: 2026-05-18 시점 정확 개수 단언(`== 63`, POST `== 27`)이 여러 테스트에 흩어져 있음. 배치 1 의 2d 에서 deployment 테스트 1개만 현행값(284/122)으로 갱신했으나, 같은 결함이 남아 있음.
 - 실측(stage/mat-tests): tests/test_app_approval_gate_readonly_polish_20260518.py:116,124, test_app_logs_audit_readonly_view_20260518.py:261,268, test_app_task_detail_readonly_polish_20260518.py:218, test_app_test_baseline_current_contract_sync_20260518.py:187 및 동 파일 `test_runtime_endpoint_count_is_63`·`http_count_is_62`·`cycle_test_count_63`, tests/test_backend_domain_core_models_20260516.py:845 — **이 5개 파일을 돌리면 36개 실패**(정확 개수 + 페이지 경로 `(legacy)` 이동 + `_src()` 가 빈 문자열을 돌려 UI 단언 다수 실패 등 복합 원인).
-- verify_change 는 이미 "서버 라우트 수" 를 커밋 전후 비교(scripts/ops/verify_change.py:208, :383-391, `--expect-routes`)하므로 **정확 개수 스냅샷 테스트는 중복이자 취약**.
+- verify_change 는 이미 "서버 라우트 수" 를 커밋 전후 비교(tools/verify_change.py:208, :383-391, `--expect-routes`)하므로 **정확 개수 스냅샷 테스트는 중복이자 취약**.
 
 **변경안**
 1. 공용 헬퍼 `tests/_route_helpers.py`(신규): `collect_routes()`, `assert_routes_present(paths)`, `assert_route_floor(n)`.

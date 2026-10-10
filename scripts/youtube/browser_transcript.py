@@ -14,9 +14,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
-from scripts.cdp_session_selector import select_cdp_session
-from security_utils import safe_preview
+from scripts.common.app_paths import repo_root
+from scripts.browser.cdp.cdp_session_selector import select_cdp_session
+from ai_orchestrator.core.security_utils import safe_preview
 
 from .research import parse_youtube_video_id
 

@@ -1,6 +1,6 @@
 """tests/test_local_security_installer_runner_20260508.py"""
 
-from ai_orchestrator.local_agent.local_security_installer_runner import (
+from core.agent_runtime.runtime.security_program.local_security_installer_runner import (
     GRADE_BLOCKED,
     STATUS_INSTALL_COMPLETED,
     STATUS_INSTALL_FAILED,

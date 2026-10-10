@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from local_agent import network_bypass as nb
+from core.agent_runtime.connection import network_bypass as nb
 
 
 def test_haehan_host_needs_direct():

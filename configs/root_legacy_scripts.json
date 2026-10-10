@@ -11,25 +11,10 @@
   ],
   "scripts": [
     {"path": "app.py", "category": "runtime_entrypoint", "next_action": "Keep until Flask-to-FastAPI entrypoint migration is complete."},
-    {"path": "approval_manager.py", "category": "shared_legacy_module", "next_action": "Move approval state into ai_orchestrator policy module."},
-    {"path": "audit_logger.py", "category": "shared_legacy_module", "next_action": "Move audit facade behind ai_orchestrator audit package."},
-    {"path": "candidate_store.py", "category": "workflow_legacy_module", "next_action": "Move candidate persistence behind workflow package."},
     {"path": "conftest.py", "category": "verification_tool", "next_action": "Keep as pytest runtime guard forcing repo-local temporary directories."},
-    {"path": "dashboard.py", "category": "runtime_entrypoint", "next_action": "Keep until dashboard route migration is complete."},
-    {"path": "email_task_approval.py", "category": "workflow_legacy_module", "next_action": "Move under mail workflow module."},
-    {"path": "email_task_store.py", "category": "workflow_legacy_module", "next_action": "Move under mail workflow module."},
-    {"path": "executor.py", "category": "workflow_legacy_module", "next_action": "Move under orchestrator workflow executor package."},
-    {"path": "hiworks_mail_reader.py", "category": "workflow_legacy_module", "next_action": "Move under hiworks/mail module."},
-    {"path": "inbox_store.py", "category": "workflow_legacy_module", "next_action": "Move under inbox persistence module."},
-    {"path": "logger.py", "category": "shared_legacy_module", "next_action": "Move behind shared logging module."},
-    {"path": "logging_utils.py", "category": "shared_legacy_module", "next_action": "Move behind shared logging module."},
-    {"path": "log_analyzer.py", "category": "archive_candidate", "next_action": "Move under scripts/ops if still active."},
-    {"path": "models.py", "category": "shared_legacy_module", "next_action": "Move models into explicit contract package."},
-    {"path": "monitor.py", "category": "runtime_entrypoint", "next_action": "Keep until monitor service migration is complete."},
-    {"path": "notice_router.py", "category": "workflow_legacy_module", "next_action": "공고 첨부파일 분석 실행 API 라우터(루트 레거시). FastAPI 라우터 영역으로 이전하기 전까지 유지."},
-    {"path": "policy_engine.py", "category": "shared_legacy_module", "next_action": "Move under policy package."},
-    {"path": "security_utils.py", "category": "shared_legacy_module", "next_action": "Move under shared security package."},
-    {"path": "task_store.py", "category": "workflow_legacy_module", "next_action": "Move under task persistence module."},
-    {"path": "telegram_notifier.py", "category": "workflow_legacy_module", "next_action": "Move under notification connector module."}
+    {"path": "hiworks_mail_reader.py", "category": "shared_legacy_module", "next_action": "Pre-existing root residual tracked in configs/flat_root_baseline.json; move under a module when its callers are migrated."},
+    {"path": "inbox_store.py", "category": "shared_legacy_module", "next_action": "Pre-existing root residual tracked in configs/flat_root_baseline.json; move under a module when its callers are migrated."},
+    {"path": "log_analyzer.py", "category": "shared_legacy_module", "next_action": "Pre-existing root residual tracked in configs/flat_root_baseline.json; move under a module when its callers are migrated."},
+    {"path": "telegram_notifier.py", "category": "shared_legacy_module", "next_action": "Pre-existing root residual tracked in configs/flat_root_baseline.json; move under a module when its callers are migrated."}
   ]
 }

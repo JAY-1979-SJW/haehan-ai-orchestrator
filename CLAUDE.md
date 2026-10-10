@@ -12,12 +12,12 @@
 사이트 자동화, 데이터 수집, CDP 조작, 스크래핑 코드를 **새로 작성하기 전에** 반드시 아래를 먼저 실행한다.
 
 ```bash
-python scripts/ops/capability_check.py <도메인>
+python tools/hooks/capability_check.py <도메인>
 # 예시
-python scripts/ops/capability_check.py cafe
-python scripts/ops/capability_check.py smartstore
-python scripts/ops/capability_check.py eum
-python scripts/ops/capability_check.py naver mail
+python tools/hooks/capability_check.py cafe
+python tools/hooks/capability_check.py smartstore
+python tools/hooks/capability_check.py eum
+python tools/hooks/capability_check.py naver mail
 ```
 
 출력에서 기존 구현(API 엔드포인트, Python 함수, CLI 커맨드)이 확인되면:
@@ -31,7 +31,7 @@ python scripts/ops/capability_check.py naver mail
 
 `capability_check` 출력 맨 위의 **`[0] 벤더 공식 API`** 를 확인하지 않고 CDP 작업을 시작하지 않는다.
 
-- 목록: `configs/vendor_apis.json` / 조회: `scripts/ops/vendor_api_registry.py`
+- 목록: `configs/vendor_apis.json` / 조회: `tools/hooks/vendor_api_registry.py`
 - ✅ 표시된 기능은 **API로 구현**한다. CDP로 만들지 않는다.
 - ❌ 표시된 것만 CDP가 정당한 경로다.
 - 목록에 없는 새 도메인이면 **벤더 API 존재 여부를 검색해 확인**하고 결과를 목록에 추가한다.
@@ -54,7 +54,7 @@ python scripts/ops/capability_check.py naver mail
 - 위반 시 quality gate `NO_LOCAL_DOCKER_CLI` 에러로 커밋 차단됨
 - 삭제된 스크립트(복구 금지): `deploy_api_with_runtime_gates.py`, `verify_compose_project_boundary.py`, `verify_docker_context_policy.py`, `verify_container_orphans.py`, `docker/docker-compose.dev.yml`, `docker/docker-compose.file-map-executor.yml`
 
-### 정책 예외 (Scoped Exception) — `scripts/ops/server_deploy.py`
+### 정책 예외 (Scoped Exception) — `tools/server_deploy.py`
 
 - **유일하게 docker 호출이 허용된 스크립트.** `configs/quality_gate.json` 의 `no_local_docker_cli_allow_paths` 에 등록.
 - 사유: 서버 배포는 docker compose가 정당하게 필요(서버는 docker로 구동). 배포 스크립트를 repo에 두어 버전관리·리뷰 대상으로 유지하기 위함.
@@ -79,7 +79,7 @@ python scripts/ops/capability_check.py naver mail
 **GPT/OpenAI 등 외부 유료 AI API를 호출하는 작업은 반드시 사용자 사전 승인 후에만 실행한다.**
 
 - 대상: `ai_orchestrator/openai_proxy_caller.py`(`call_openai_agent`, `call_openai_chat`), `OPENAI_API_KEY` 사용, `api.openai.com` 직접 호출 등 모든 유료 외부 AI API 경로.
-- **자동 차단 훅**: `.claude/settings.json` → `hooks.PreToolUse` (matcher `Bash|PowerShell`) → `scripts/ops/guard_openai_call.py`. 위 키워드가 명령어에 포함되면 `bypassPermissions` 모드여도 강제로 사용자 확인(ask)을 받는다.
+- **자동 차단 훅**: `.claude/settings.json` → `hooks.PreToolUse` (matcher `Bash|PowerShell`) → `tools/hooks/guard_openai_call.py`. 위 키워드가 명령어에 포함되면 `bypassPermissions` 모드여도 강제로 사용자 확인(ask)을 받는다.
 - 사유: 이 프로젝트의 `permissions.defaultMode`는 `bypassPermissions`(자동 실행)라서, 승인 없이 유료 API를 호출하는 사고가 실제로 발생함(2026-07-28, KPI PDF 비전 파싱 작업 중 사용자 확인 없이 GPT 호출 시도).
 - 신규 기능에서 OpenAI/GPT 호출이 필요하면: 먼저 사용자에게 비용·목적을 설명하고 명시적 승인("진행해", "GPT 써도 돼" 등)을 받은 뒤에만 실행한다. 승인 없이 "일단 테스트해본다"는 금지.
 - 이 훅은 Bash/PowerShell 명령어 문자열 매칭 방식이라 완벽하지 않음(예: 변수로 우회한 코드는 못 잡음) — 최종 책임은 AI가 실행 전에 스스로 확인하는 것.
@@ -287,21 +287,21 @@ chmod/chown 자동 변경 금지
 
 작업 후 반드시 실행:
 ```bash
-python scripts/ops/codebase_layer_audit.py
+python tools/repo_gates/codebase_layer_audit.py
 pytest tests/test_codebase_layer_audit.py -q
-python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+python tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 ```
 
 FORBIDDEN_IMPORT > 0 → STOP  
 SECURITY_PATTERN > 0 → STOP  
 CIRCULAR_IMPORT > 0 → STOP  
 quality gate errors > 0 → STOP  
-지도↔골격 대조(`scripts/ops/code_map/skeleton_gate.py`, pre-commit 자동·차단) FAIL → 안내된 `registry_sync.py --fix` 로 정본 맞춘 뒤 재커밋. master 병합은 `python scripts/ops/merge_stage.py <branch>`(verify_change PASS 일 때만) — 설계 docs/specs/2026-09-24_skeleton_map_crosscheck_gate.md
+지도↔골격 대조(`tools/code_map/skeleton_gate.py`, pre-commit 자동·차단) FAIL → 안내된 `registry_sync.py --fix` 로 정본 맞춘 뒤 재커밋. master 병합은 `python tools/merge_stage.py <branch>`(verify_change PASS 일 때만) — 설계 docs/specs/2026-09-24_skeleton_map_crosscheck_gate.md
 
 ## 코딩 컨벤션 및 완료 보고 기준 (2026-09-26 추가)
 
 ### 재사용 우선
-새 함수/유틸을 만들기 전 `scripts/ops/capability_check.py`, `scripts/ops/duplicate_code_check.py`,
+새 함수/유틸을 만들기 전 `tools/hooks/capability_check.py`, `tools/hooks/duplicate_code_check.py`,
 Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/import, 없을 때만 신규 작성.
 검증 안 된 추측성 코드 금지 — 불확실하면 Grep/Read로 실제 시그니처·동작을 확인한 뒤 작성한다.
 
@@ -310,7 +310,7 @@ Grep으로 유사 기능이 있는지 먼저 확인한다. 있으면 재사용/i
 확인할 것. 실행해보지 않은 코드를 '완료'로 보고하지 말 것.
 
 ### audit-kit 검증 강제 (2026-10-05 추가)
-코드를 쓴 직후 `scripts/ops/audit_kit_gate.py`(PostToolUse/Stop 훅)가, 커밋 시점에는 pre-commit 의
+코드를 쓴 직후 `tools/hooks/audit_kit_gate.py`(PostToolUse/Stop 훅)가, 커밋 시점에는 pre-commit 의
 `audit_kit_gate.py --staged` 가 **이번 변경으로 새로 생긴** 개발 기준서·구조 문제를 막는다(기존 문제는 안 막음).
 audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/audit-kit` 로 설치하며, 위치는
 `AUDIT_KIT_BIN` 으로 지정한다. **`AUDIT_KIT_REQUIRED=1` 이면 audit-kit 를 못 찾을 때 건너뛰지 않고 막는다** —
@@ -318,7 +318,7 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
 
 ### 워크플로
 복잡하거나 여러 파일에 걸친 작업은 Explore → Plan(Plan Mode) → Implement → Verify → Commit
-순서로 진행한다. Verify 단계는 `scripts/ops/verify_change.py`(전체) 또는 세션 빠른 게이트
+순서로 진행한다. Verify 단계는 `tools/verify_change.py`(전체) 또는 세션 빠른 게이트
 (ruff+영향 테스트, 바뀐 파일 기준)로 한다 — 전체 pytest는 21분+ 걸리고 멈추는 결함이 있어
 매번 돌리지 않는다(2026-10-05 실측: CI 조건 약 16분 25초, 위 gotcha 정정 참조).
 
@@ -329,7 +329,7 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
   금지는 유지한다 — 전체 시험은 오래 걸리므로 영향 시험만 돌린다.)
 - ruff는 레거시 오류가 많은 파일이 다수 존재 — 새 훅은 "이번 편집으로 새로 생긴 오류"만 차단.
 - Windows에서 훅은 셸 스크립트가 아니라 python 스크립트로 작성(기존 관례, PowerShell/cmd 차이 회피).
-- `scripts/ops/stop_fast_verify.py`는 세션별 편집 기록(`data/.session_edits/<session_id>.json`,
+- `tools/hooks/stop_fast_verify.py`는 세션별 편집 기록(`data/.session_edits/<session_id>.json`,
   `post_edit_fast_gate.py`가 PostToolUse마다 기록)만 검사한다 — 최초 구현은
   `git status --porcelain` 전체를 대상으로 해서 다른 세션의 미커밋 변경분까지 차단 사유에
   끼어드는 문제가 있었고(code-reviewer 서브에이전트 실측 지적, 2026-09-26), 세션별 목록 방식으로
@@ -348,18 +348,18 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
   코드보다 먼저 브라우저 자체 상태를 의심한다** — 장시간 세션에서 탭을 많이
   열고 닫으며 반복 테스트하면 브라우저(Chrome) 세션 자체가 오염돼 이후의 모든
   CDP 연결 핸드셰이크가 느려질 수 있다(2026-09-29 실측: 여러 시간 테스트 후 새로
-  기동한 FastAPI 프로세스의 첫 Gmail 호출조차 멈춤 → `scripts/cdp_force_start.py
+  기동한 FastAPI 프로세스의 첫 Gmail 호출조차 멈춤 → `scripts/browser/cdp/cdp_force_start.py
   stop` 후 `start`로 브라우저만 재시작(프로필 유지, 로그인 세션 그대로 보존됨)하니
   즉시 정상화). 코드를 계속 고치기 전에 이 재시작부터 시도한다.
-- Google 서비스 URL은 `scripts/config.py`의 `GOOGLE_URLS` 딕셔너리에서 가져온다
+- Google 서비스 URL은 `scripts/common/config.py`의 `GOOGLE_URLS` 딕셔너리에서 가져온다
   (하드코딩 금지) — 실제 인증된 세션에서 도착 URL을 확인하지 않고 추측으로
   적으면 리다이렉트/마케팅 페이지로 빠질 수 있다. 새 URL을 추가하기 전엔 실제
   로그인된 CDP 세션으로 `page.goto()` 후 `page.url`을 찍어 확인한다.
-- **9222 데몬 Chrome 의 로그인 유지·깨끗한 시작 정책은 `scripts/config.py` 의 `CDP_BROWSER_POLICY`
+- **9222 데몬 Chrome 의 로그인 유지·깨끗한 시작 정책은 `scripts/common/config.py` 의 `CDP_BROWSER_POLICY`
   한 곳에서 정한다**(상세·근거: `docs/architecture/CDP_BROWSER_POLICY.md`). (2026-10-05 실측) 로그인(세션
   쿠키)은 `--restore-last-session` 스위치(**값 없이** — `=false` 도 켜진다) + CDP `Browser.close` 정상
   종료일 때만 재시작 뒤에도 남는다. 종료 신호·강제 종료·전원 차단은 로그인을 잃는다 → 데몬 재시작은
-  `python scripts/cdp_daemon.py restart` 로만. 시작 페이지는 구글 홈(복원된 옛 탭은 시작 직후 정리).
+  `python scripts/browser/cdp/cdp_daemon.py restart` 로만. 시작 페이지는 구글 홈(복원된 옛 탭은 시작 직후 정리).
   로그인 확인은 쿠키 이름 존재 여부(참/거짓)로만 하고 값은 읽지 않는다.
 - **시험·검증 도구가 9222 브라우저에 접속하면 안 된다** — 사용자 탭이 이동·소멸하고 로그인이 풀린다
   (2026-10-05: 패치가 잘못된 모듈에 걸린 YouTube 시험과, 파일 이름 지정만으로 수집되던
@@ -379,7 +379,7 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
 - **Python 3.14 문법 `except A, B:`(괄호 없는 다중 예외)는 유효하다** (2026-10-05, 로컬 3.14 로 실행 확인).
   3.13 이하 기준 도구·검수가 이를 문법 오류로 오판할 수 있으니 오류로 단정하기 전에 실제 인터프리터로 확인한다.
 - **`configs/module_registry.json` 병합 충돌** (2026-10-05). master 쪽 내용을 취한 뒤(`git checkout --theirs`)
-  `python scripts/ops/code_map/registry_sync.py --fix` 로 내 새 파일만 다시 등록하고 `--check` 로 일치를
+  `python tools/code_map/registry_sync.py --fix` 로 내 새 파일만 다시 등록하고 `--check` 로 일치를
   확인한다. PR 브랜치는 푸시 직전에 `git merge origin/master` 로 최신을 병합한다.
 
 ### 코딩 컨벤션 (2026-09-26 실측 확인)
@@ -411,8 +411,8 @@ audit-kit 는 공개 저장소 `pip install git+https://github.com/JAY-1979-SJW/
 ### 테스트·빌드·린트 명령 (2026-09-26 실행 확인)
 
 - **린트 (파일 단위)**: `python -m ruff check --config configs/ruff.toml <파일경로>` — 새 편집으로 생긴 오류만 확인 (레거시 오류 다수 존재, 위 gotcha 참조)
-- **영향 테스트 조회 → 실행**: `HAEHAN_NO_BROWSER_LAUNCH=1 python scripts/ops/code_map/query.py tests-for <변경파일>` 로 관련 테스트 목록을 얻은 뒤 해당 테스트만 `pytest` 실행 (전체 pytest 금지, 위 gotcha 참조)
-- **전체 변경 검증**: `python scripts/ops/verify_change.py --base <기준커밋> --head <대상커밋> [--expect-routes N]`
+- **영향 테스트 조회 → 실행**: `HAEHAN_NO_BROWSER_LAUNCH=1 python tools/code_map/query.py tests-for <변경파일>` 로 관련 테스트 목록을 얻은 뒤 해당 테스트만 `pytest` 실행 (전체 pytest 금지, 위 gotcha 참조)
+- **전체 변경 검증**: `python tools/verify_change.py --base <기준커밋> --head <대상커밋> [--expect-routes N]`
 - **게이트 3종**: 위 "게이트 실행 의무" 섹션 참조 (`codebase_layer_audit.py`, `test_codebase_layer_audit.py`, `quality_gate.py --staged --enforce --allow-existing-code-change`)
 - **프론트 타입체크**: `cd admin-web && npm run typecheck` (`tsc --noEmit -p tsconfig.app.json`) — 확인 완료(통과)
 - **프론트 빌드**: `cd admin-web && npm run build` (`next build`) — 시간이 걸리므로 필요할 때만
@@ -632,7 +632,7 @@ NAVER_SEARCH_DB_ENABLED=true  # SQLite DB 적재 활성화
 네이버 블로그 글에 사진을 첨부할 때는 **Unsplash API**를 사용한다 (AI API 아님, 승인 절차 대상 아님, 상시 허용).
 
 - 환경변수: `UNSPLASH_ACCESS_KEY` (`.env` 참조, 원문 로그 출력 금지)
-- 이미 구현되어 있음 — 신규 코드 불필요: `ai_orchestrator/connectors/naver_blog_router.py`
+- 이미 구현되어 있음 — 신규 코드 불필요: `ai_orchestrator/connectors/naver_blog/naver_blog_router.py`
   - 검색: `GET https://api.unsplash.com/search/photos` (쿼리 영어 3단어 이내, orientation=landscape)
   - 로컬 캐시: `data/unsplash_images.json`
   - 다운로드: `data/blog_uploads/unsplash_*.jpg` (Unsplash 정책상 `download_location` 트리거 필요)
@@ -643,9 +643,9 @@ NAVER_SEARCH_DB_ENABLED=true  # SQLite DB 적재 활성화
 
 브라우저 CDP가 내려갔을 때:
 ```bash
-python scripts/cdp_force_start.py start [URL]
-python scripts/cdp_force_start.py status
-python scripts/cdp_force_start.py stop
+python scripts/browser/cdp/cdp_force_start.py start [URL]
+python scripts/browser/cdp/cdp_force_start.py status
+python scripts/browser/cdp/cdp_force_start.py stop
 ```
 - 샌드박스 게이트 우회 버전 (`assert_browser_launch_allowed` 미호출)
 - 프로필: `data/cdp_profile/ai_chrome`

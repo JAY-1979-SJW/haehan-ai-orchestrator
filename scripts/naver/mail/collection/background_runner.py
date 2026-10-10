@@ -13,19 +13,19 @@ import sys
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.browser_cdp_selection_gate import (  # noqa: E402 - sys.path 조정 뒤 import (이 파일의 기존 구조)
+from scripts.browser.session.browser_cdp_selection_gate import (  # noqa: E402 - sys.path 조정 뒤 import (이 파일의 기존 구조)
     create_isolated_target,
     select_naver_session,
 )
 from scripts.naver.mail import folder_discovery as fd
-from scripts.naver.mail import settings_panel
 from scripts.naver.mail.read import cdp, list_collector  # noqa: E402 - sys.path 조정 뒤 import (이 파일의 기존 구조)
+from scripts.naver.mail.utilities import settings_panel  # noqa: E402 - sys.path 조정 뒤 import (이 파일의 기존 구조)
 
 
 @dataclass

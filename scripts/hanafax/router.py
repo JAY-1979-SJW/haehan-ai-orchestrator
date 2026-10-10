@@ -18,7 +18,7 @@ from scripts.hanafax.batch import (
     print_plan,
     print_result,
 )
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -69,7 +69,7 @@ def _cmd_send(sub: str | None, args: list[str]) -> None:
     if not fax_no or not subject:
         raise SystemExit("사용법: hanafax send <팩스번호> <제목> [본문] --confirm=<승인 문구(직접 입력)>")
 
-    from scripts.gate import GateBlocked, require_approved
+    from scripts.common.gate import GateBlocked, require_approved
 
     try:
         require_approved("hanafax_send", confirm, via="hanafax_cli_send")
@@ -150,4 +150,4 @@ def _print_help() -> None:
   queue [N]                           큐 미리보기
 
 큐 파일: data/hanafax_queue.jsonl
-자격증명: python scripts/cdp_client.py cred set hanafax""")
+자격증명: python scripts/entry/cdp_cli.py cred set hanafax""")

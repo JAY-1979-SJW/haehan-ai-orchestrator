@@ -234,11 +234,11 @@ NAVER_SHOPPING_SEARCH_QUERIES=기계식키보드,모니터
 
 ## 8. 관련 파일
 
-- `ai_orchestrator/connectors/naver_openapi_config.py` — env 설정
-- `ai_orchestrator/connectors/naver_search_client.py` — GET-only 클라이언트
-- `ai_orchestrator/connectors/naver_search_utils.py` — strip_html / 가격 / 날짜
-- `ai_orchestrator/connectors/naver_blog_collectors.py` — 블로그 수집
-- `ai_orchestrator/connectors/naver_shopping_collectors.py` — 쇼핑 수집
+- `scripts/naver/shopping/naver_openapi_config.py` — env 설정
+- `scripts/naver/shopping/naver_search_client.py` — GET-only 클라이언트
+- `scripts/naver/shopping/naver_search_utils.py` — strip_html / 가격 / 날짜
+- `ai_orchestrator/connectors/naver_blog/naver_blog_collectors.py` — 블로그 수집
+- `scripts/naver/shopping/naver_shopping_collectors.py` — 쇼핑 수집
 - `ai_orchestrator/connectors/naver_public_page_reader.py` — 공개 페이지 fallback
-- `ai_orchestrator/connectors/naver_search_jobs.py` — 저장 + Job 진입점
+- `ai_orchestrator/connectors/naver_search/naver_search_jobs.py` — 저장 + Job 진입점
 - `ai_orchestrator/tests/test_naver_openapi_collection.py` — 27 케이스

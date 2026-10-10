@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 
 from scripts.explorer.page_classifier import classify_page
 from scripts.form.bot_radar import scan as bot_scan
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -130,7 +130,7 @@ def snapshot_current(page, *, save_html: bool = True, save_screenshot: bool = Tr
 
 
 def cli_snapshot() -> None:
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     page = get_page()
     r = snapshot_current(page)
     if r["ok"]:

@@ -128,7 +128,7 @@ L1  Shared Contracts   ai_orchestrator/models.py
 L2  Policy/Gate        ai_orchestrator/auth.py
                        ai_orchestrator/approval.py
                        ai_orchestrator/browser_gate_middleware.py
-                       scripts/gate.py                  (53파일)
+                       scripts/common/gate.py                  (53파일)
 
 L3  Connectors         ai_orchestrator/connectors/*
                        admin-web/electron/lib/agent.js
@@ -140,7 +140,7 @@ L3  Connectors         ai_orchestrator/connectors/*
                        admin-web/electron/lib/bus.js
                        admin-web/electron/lib/nextjs_wrapper.js  (76파일)
 
-L4  Browser Engine     ai_orchestrator/local_agent/browser/
+L4  Browser Engine     scripts/browser/agent/
                        scripts/cdp_*.py                  (482파일)
 
 L5  Site Modules       scripts/eum/
@@ -155,10 +155,10 @@ L5  Site Modules       scripts/eum/
 L6  Workflows          scripts/*/workflows.py
                        scripts/hiworks/mail_batch.py     (5파일)
 
-L7  Persistence/Audit  ai_orchestrator/audit_logger.py
+L7  Persistence/Audit  ai_orchestrator/audit/audit_logger.py
                        ai_orchestrator/persistence/user_db.py
-                       scripts/cdp_db.py
-                       scripts/op_log.py                 (940파일)
+                       scripts/browser/cdp/cdp_db.py
+                       scripts/common/op_log.py                 (940파일)
 
 L8  Server API         ai_orchestrator/asgi.py
                        ai_orchestrator/router.py
@@ -201,9 +201,9 @@ git push
        → BLOCK 판정 시 푸시 차단
 
 작업 후 수동 의무 (CLAUDE.md 규칙):
-  ├─ python scripts/ops/codebase_layer_audit.py
+  ├─ python tools/repo_gates/codebase_layer_audit.py
   ├─ pytest tests/test_codebase_layer_audit.py -q
-  └─ python scripts/quality_gate.py --staged --enforce --allow-existing-code-change
+  └─ python tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change
 
   STOP 조건:
     FORBIDDEN_IMPORT > 0  → STOP
@@ -295,4 +295,4 @@ git push
 1. 새 라우터/모듈 추가 시
 2. 포트/서버 구성 변경 시
 3. 레이어 분류 변경 시
-4. `python scripts/ops/codebase_layer_audit.py` 실행 후 주요 변화 시
+4. `python tools/repo_gates/codebase_layer_audit.py` 실행 후 주요 변화 시

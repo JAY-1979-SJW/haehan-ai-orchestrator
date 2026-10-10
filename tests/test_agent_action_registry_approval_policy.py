@@ -3,7 +3,7 @@
 Validates that RISK_HIGH and RISK_MEDIUM write actions have requires_approval=True.
 """
 
-import ai_orchestrator.browser_tool.agent_action_registry as reg
+import ai_orchestrator.browser_tool.preflight.agent_action_registry as reg
 
 
 def test_all_high_risk_write_actions_require_approval():

@@ -6,26 +6,26 @@
 
 from __future__ import annotations
 
-from ai_orchestrator.browser_tool.domain_profile_registry import (
+from ai_orchestrator.browser_tool.policy.domain_profile_registry import (
     get_domain_profile,
 )
-from ai_orchestrator.browser_tool.execution_location_policy import (
+from ai_orchestrator.browser_tool.routing.execution_location_policy import (
     BLOCKED,
     LOCAL_BROWSER_DEFAULT,
     SERVER_ALLOWED,
     USER_DIRECT_ONLY,
     classify_execution_location,
 )
-from ai_orchestrator.browser_tool.local_agent_handoff import (
+from ai_orchestrator.browser_tool.routing.local_agent_handoff import (
     build_local_agent_handoff,
+)
+from ai_orchestrator.browser_tool.routing.unified_execution_router import (
+    route_browser_task,
 )
 from ai_orchestrator.browser_tool.unified_browser_safe_result import (
     EXEC_LOCAL_AGENT,
     EXEC_SERVER_BROWSER,
     STATUS_LOCAL_HANDOFF_CREATED,
-)
-from ai_orchestrator.browser_tool.unified_execution_router import (
-    route_browser_task,
 )
 
 
@@ -243,17 +243,17 @@ class TestHandoffPayload:
 
 class TestServerFirstLegacy:
     def test_server_first_is_alias_for_server_allowed(self):
-        from ai_orchestrator.browser_tool.execution_location_policy import SERVER_ALLOWED, SERVER_FIRST
+        from ai_orchestrator.browser_tool.routing.execution_location_policy import SERVER_ALLOWED, SERVER_FIRST
 
         assert SERVER_FIRST == SERVER_ALLOWED
 
     def test_is_server_first_legacy_helper_works(self):
-        from ai_orchestrator.browser_tool.execution_location_policy import is_server_first
+        from ai_orchestrator.browser_tool.routing.execution_location_policy import is_server_first
 
         # report_generate → SERVER_ALLOWED → is_server_first True (레거시 호환)
         assert is_server_first(_task(action="report_generate"))
 
     def test_g2b_not_server_first(self):
-        from ai_orchestrator.browser_tool.execution_location_policy import is_server_first
+        from ai_orchestrator.browser_tool.routing.execution_location_policy import is_server_first
 
         assert not is_server_first(_task(action="open", site_category="government_procurement"))

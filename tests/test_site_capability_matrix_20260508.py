@@ -1,6 +1,6 @@
 """tests/test_site_capability_matrix_20260508.py - site_capability_matrix 단위 테스트"""
 
-from ai_orchestrator.local_agent.site_capability_matrix import (
+from core.agent_runtime.runtime.site_profile.site_capability_matrix import (
     _CAPABILITY_GRADE,
     CAP_BID_DIRECT_ONLY,
     CAP_PAYMENT_DIRECT_ONLY,
@@ -16,7 +16,7 @@ from ai_orchestrator.local_agent.site_capability_matrix import (
     get_required_risk_level,
     reject_if_blocked,
 )
-from ai_orchestrator.local_agent.site_profile_registry import get_site_profile
+from core.agent_runtime.runtime.site_profile.site_profile_registry import get_site_profile
 
 
 def test_readonly_explore_in_capability_grade():
@@ -51,7 +51,7 @@ def test_get_required_risk_level_blog_publish():
 
 
 def test_get_required_risk_level_search():
-    from ai_orchestrator.local_agent.site_capability_matrix import CAP_SEARCH
+    from core.agent_runtime.runtime.site_profile.site_capability_matrix import CAP_SEARCH
 
     level = get_required_risk_level("naver", CAP_SEARCH)
     assert level == GRADE_AUTO_ALLOWED

@@ -8,15 +8,15 @@ import sys
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.browser_cdp_selection_gate import (  # noqa: E402
+from scripts.browser.session.browser_cdp_selection_gate import (  # noqa: E402
     create_isolated_target,
-    evaluate_sessions,  # noqa: F401 - tests/test_naver_cafe_list_collector.py 가 runner.evaluate_sessions 로 접근
+    evaluate_sessions,  # noqa: F401 - tests/naver_cafe/test_naver_cafe_list_collector.py 가 runner.evaluate_sessions 로 접근
     select_naver_session,
 )
 from scripts.naver.cafe import (  # noqa: E402

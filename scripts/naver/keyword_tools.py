@@ -8,7 +8,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
+from scripts.common.json_report import save_json_report
 
 DATA_DIR = Path("data")
 LATEST_PATH = DATA_DIR / "naver_keyword_tools_latest.json"
@@ -116,9 +117,9 @@ def build_keyword_plan(query: str, *, topic: str = "") -> dict[str, Any]:
             "Use resulting keywords as inputs for Naver Cafe read-only searches.",
         ],
         "tool_commands": [
-            f"python scripts/cdp_client.py naver keyword-tools datalab --query={','.join(keywords)}",
-            f"python scripts/cdp_client.py naver keyword-tools shopping --query={','.join(keywords)}",
-            f"python scripts/cdp_client.py naver keyword-tools searchad-plan --query={','.join(keywords)}",
+            f"python scripts/entry/cdp_cli.py naver keyword-tools datalab --query={','.join(keywords)}",
+            f"python scripts/entry/cdp_cli.py naver keyword-tools shopping --query={','.join(keywords)}",
+            f"python scripts/entry/cdp_cli.py naver keyword-tools searchad-plan --query={','.join(keywords)}",
         ],
         "paid_actions_blocked": build_paid_block_plans(),
     }
@@ -140,7 +141,7 @@ def assert_paid_actions_blocked() -> dict[str, Any]:
     for item in build_paid_block_plans():
         try:
             gate_check(str(item["gate"]))
-        except Exception:  # noqa: BLE001 - 네이버 무료정책(FREE_ONLY_POLICY) 자가진단 함수 assert_paid_actions_blocked — 실제 결제/광고 차단은 scripts.gate.check가 수행하며, 여기선 그 호출이 예외를 던졌는지(=차단됨)만 집계하는 읽기전용 감사 카운터. 쓰기/승인 로직 없음.
+        except Exception:  # noqa: BLE001 - 네이버 무료정책(FREE_ONLY_POLICY) 자가진단 함수 assert_paid_actions_blocked — 실제 결제/광고 차단은 scripts.common.gate.check가 수행하며, 여기선 그 호출이 예외를 던졌는지(=차단됨)만 집계하는 읽기전용 감사 카운터. 쓰기/승인 로직 없음.
             blocked.append(str(item["gate"]))
     return {
         "ok": len(blocked) == len(build_paid_block_plans()),
@@ -150,10 +151,7 @@ def assert_paid_actions_blocked() -> dict[str, Any]:
 
 
 def save_payload(payload: dict[str, Any], output: str | Path | None = None) -> Path:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    path = Path(output) if output else LATEST_PATH
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    return path
+    return save_json_report(payload, DATA_DIR, LATEST_PATH, output)
 
 
 def print_summary(payload: dict[str, Any], path: Path) -> None:

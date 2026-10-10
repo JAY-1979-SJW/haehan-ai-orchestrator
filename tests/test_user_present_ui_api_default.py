@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 
-from local_agent import user_present_ui_server as server
-from local_agent.user_present_state_store import UserPresentStateStore, STATE_WAITING_FOR_USER
+from core.agent_runtime.user_present import user_present_ui_server as server
+from core.agent_runtime.user_present.user_present_state_store import STATE_WAITING_FOR_USER, UserPresentStateStore
 
 
 def test_html_ui_fallback_disabled_by_default(monkeypatch):

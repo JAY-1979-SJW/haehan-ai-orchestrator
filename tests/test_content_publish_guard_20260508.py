@@ -2,7 +2,7 @@
 콘텐츠 발행 guard 테스트
 """
 
-from ai_orchestrator.local_agent.content_publish_guard import (
+from core.agent_runtime.runtime.permission.content_publish_guard import (
     MAX_COMMENTS_PER_GRANT,
     MAX_POSTS_PER_GRANT,
     check_bulk_spam,

@@ -2,7 +2,7 @@
 download_result_sanitizer 테스트
 """
 
-from ai_orchestrator.local_agent.download_result_sanitizer import (
+from core.agent_runtime.runtime.download.download_result_sanitizer import (
     sanitize_download_result,
     validate_sanitized_download_result,
 )

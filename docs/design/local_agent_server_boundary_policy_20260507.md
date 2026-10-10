@@ -70,12 +70,12 @@
 
 ## 6. 로컬 Agent 역할
 
-- 사용자 PC에서 브라우저 열기 (local_agent/browser_reader.py)
+- 사용자 PC에서 브라우저 열기 (core/agent_runtime/browser/browser_reader.py)
 - 사용자가 직접 인증 수행 (공동인증서, OTP, 비밀번호)
-- read-only 상태 확인 (local_agent/browser_readonly_runtime.py)
+- read-only 상태 확인 (core/agent_runtime/browser/browser_readonly_runtime.py)
 - 결과 요약 및 서버 전달
 - 민감정보 차단 (sanitize)
-- 127.0.0.1 로컬 UI (local_agent/user_present_ui_server.py)
+- 127.0.0.1 로컬 UI (core/agent_runtime/user_present/user_present_ui_server.py)
 
 ---
 
@@ -102,13 +102,13 @@
 
 | 역할 | 경로 |
 |---|---|
-| 서버 브라우저 경계 정책 | ai_orchestrator/browser_tool/server_browser_boundary_policy.py |
-| 사이트 준수 정책 | ai_orchestrator/browser_tool/site_compliance_policy.py |
-| 사이트 접근 감사 | ai_orchestrator/browser_tool/site_access_compatibility_auditor.py |
-| 로컬 Agent read-only 런타임 | local_agent/browser_readonly_runtime.py |
-| user-present 플로우 | ai_orchestrator/browser_tool/local_agent_user_present_flow.py |
-| user-present 상태 store | local_agent/user_present_state_store.py |
-| user-present UI 서버 | local_agent/user_present_ui_server.py |
+| 서버 브라우저 경계 정책 | ai_orchestrator/browser_tool/policy/server_browser_boundary_policy.py |
+| 사이트 준수 정책 | ai_orchestrator/browser_tool/policy/site_compliance_policy.py |
+| 사이트 접근 감사 | ai_orchestrator/browser_tool/policy/site_access_compatibility_auditor.py |
+| 로컬 Agent read-only 런타임 | core/agent_runtime/browser/browser_readonly_runtime.py |
+| user-present 플로우 | ai_orchestrator/agent_hub/user_present_flow.py |
+| user-present 상태 store | core/agent_runtime/user_present/user_present_state_store.py |
+| user-present UI 서버 | core/agent_runtime/user_present/user_present_ui_server.py |
 | 테스트 | tests/test_local_agent_server_boundary_policy_20260507.py |
 | fixture | tests/fixtures/local_agent_server_boundary_policy_20260507.json |
 | 이 문서 | docs/design/local_agent_server_boundary_policy_20260507.md |

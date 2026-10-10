@@ -15,10 +15,11 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 
-from scripts.app_paths import repo_root
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
-_DATA_DIR = ROOT / "data" / "cafe"
+_DATA_DIR = data_dir() / "cafe"
 
 # ── 카테고리 순서 (보고서용) ──────────────────────────────────────────
 CAT_ORDER = [

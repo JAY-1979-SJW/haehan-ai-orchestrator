@@ -4,7 +4,7 @@
 
 ## 1) 원격 안전 진단 (로컬에서)
 ```
-python scripts/ops/deploy_diagnose.py
+python tools/deploy/deploy_diagnose.py
 ```
 - `/health 200` + `/grant-radar/report 404` → 서버가 **구 이미지 실행 중**(재빌드 미완료/실패).
 - GitHub webhook 전달 확인: `gh api repos/<owner>/<repo>/hooks/<id>/deliveries`

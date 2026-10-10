@@ -7,7 +7,7 @@
 보안 원칙:
   - HMAC-SHA256 서명 검증 (DEPLOY_WEBHOOK_SECRET). 실패 시 401.
   - secret 값 로그/응답 노출 금지.
-  - 배포는 scripts/ops/server_deploy.py 로 위임 (서버 전용, docker 보호됨).
+  - 배포는 tools/server_deploy.py 로 위임 (서버 전용, docker 보호됨).
   - owner role 만 /deploy/status 접근 가능.
   - 동시 배포 방지: 실행 중이면 409 반환.
 """
@@ -26,8 +26,8 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
-from ai_orchestrator.gates.auth import require_role
 from ai_orchestrator.paths.runtime import data_dir
+from tools.gates.auth import require_role
 
 logger = logging.getLogger(__name__)
 

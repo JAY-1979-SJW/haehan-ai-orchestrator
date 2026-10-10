@@ -4,7 +4,7 @@ browser_foreground_adapter 테스트
 
 from unittest.mock import patch
 
-from ai_orchestrator.local_agent.browser_foreground_adapter import (
+from core.agent_runtime.runtime.playwright.browser_foreground_adapter import (
     BROWSER_FOREGROUND_REQUESTED,
     BROWSER_FOREGROUND_UNAVAILABLE,
     HEADED_BROWSER_REQUIRED,
@@ -66,7 +66,7 @@ class TestRequestForeground:
         with (
             patch("sys.platform", "win32"),
             patch(
-                "ai_orchestrator.local_agent.browser_foreground_adapter._foreground_windows",
+                "core.agent_runtime.runtime.playwright.browser_foreground_adapter._foreground_windows",
                 return_value=BROWSER_FOREGROUND_REQUESTED,
             ),
         ):

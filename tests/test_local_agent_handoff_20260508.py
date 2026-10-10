@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ai_orchestrator.browser_tool.local_agent_handoff import (
+from ai_orchestrator.browser_tool.routing.local_agent_handoff import (
     HANDOFF_LOCAL_BROWSER_CONTINUE,
     HANDOFF_LOCAL_LOGIN_WAIT,
     build_local_agent_handoff,

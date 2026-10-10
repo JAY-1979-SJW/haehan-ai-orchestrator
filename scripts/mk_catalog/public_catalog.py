@@ -25,7 +25,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from scripts.app_paths import resolve_external, sibling_project  # noqa: E402
+from scripts.common.app_paths import resolve_external, sibling_project  # noqa: E402
 
 SRC = _ROOT / "data" / "mk_catalog" / "site" / "catalog_web.html"
 DST = resolve_external(

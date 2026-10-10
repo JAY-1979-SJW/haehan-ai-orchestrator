@@ -5,7 +5,7 @@
       "command": "py",
       "args": [
         "-3",
-        "scripts/local/pc_inventory_mcp.py"
+        "tools/pc_inventory_mcp.py"
       ],
       "env": {}
     },
@@ -15,7 +15,7 @@
       "args": [
         "-3",
         "-m",
-        "ai_orchestrator.mcp_server"
+        "ai_orchestrator.server.mcp_server"
       ],
       "env": {}
     }

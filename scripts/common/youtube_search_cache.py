@@ -21,9 +21,11 @@ import time
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
+
 # 프로젝트 루트(이 파일 기준 두 단계 위) - 기존 두 사본과 동일한 경로를 그대로 유지.
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
-SEARCH_CACHE_DB = _PROJECT_ROOT / "data" / "youtube_search_cache.db"
+SEARCH_CACHE_DB = data_dir() / "youtube_search_cache.db"
 CACHE_TTL_SECONDS = 86_400  # 24시간
 _PRUNE_AGE_SECONDS = 259_200  # 72시간
 

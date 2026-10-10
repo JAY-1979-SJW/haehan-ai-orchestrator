@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from scripts.common.json_report import save_json_report
 
 DATA_DIR = Path("data")
 LATEST_PLAN_PATH = DATA_DIR / "naver_company_seo_plan_latest.json"
@@ -638,17 +639,11 @@ def build_company_seo_plan(
 
 
 def save_plan(plan: dict[str, Any], output: str | Path | None = None) -> Path:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    path = Path(output) if output else LATEST_PLAN_PATH
-    path.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
-    return path
+    return save_json_report(plan, DATA_DIR, LATEST_PLAN_PATH, output)
 
 
 def save_diagnosis(diagnosis: dict[str, Any], output: str | Path | None = None) -> Path:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    path = Path(output) if output else LATEST_DIAGNOSIS_PATH
-    path.write_text(json.dumps(diagnosis, ensure_ascii=False, indent=2), encoding="utf-8")
-    return path
+    return save_json_report(diagnosis, DATA_DIR, LATEST_DIAGNOSIS_PATH, output)
 
 
 def _save_json(payload: dict[str, Any], default_path: Path, output: str | Path | None = None) -> Path:

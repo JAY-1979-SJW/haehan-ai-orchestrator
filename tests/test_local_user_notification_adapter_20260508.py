@@ -4,7 +4,7 @@ user_notification_adapter 테스트
 
 from unittest.mock import MagicMock, patch
 
-from ai_orchestrator.local_agent.user_notification_adapter import (
+from core.agent_runtime.runtime.notify.user_notification_adapter import (
     _SAFE_BODY,
     _SAFE_TITLE,
     FALLBACK_MESSAGE_ONLY,
@@ -91,7 +91,7 @@ class TestNotifyAuthRequired:
 
     def test_fallback_available_when_os_unavailable(self):
         with patch(
-            "ai_orchestrator.local_agent.user_notification_adapter._try_send_os_notification",
+            "core.agent_runtime.runtime.notify.user_notification_adapter._try_send_os_notification",
             return_value=NOTIFICATION_UNAVAILABLE,
         ):
             result = notify_auth_required()
@@ -105,7 +105,7 @@ class TestNotifyAuthRequired:
 
     def test_fallback_message_present_when_unavailable(self):
         with patch(
-            "ai_orchestrator.local_agent.user_notification_adapter._try_send_os_notification",
+            "core.agent_runtime.runtime.notify.user_notification_adapter._try_send_os_notification",
             return_value=NOTIFICATION_UNAVAILABLE,
         ):
             result = notify_auth_required()

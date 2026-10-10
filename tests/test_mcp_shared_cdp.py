@@ -9,7 +9,7 @@ import ast
 import re
 from pathlib import Path
 
-_SRC_PATH = Path("ai_orchestrator/mcp_server.py")
+_SRC_PATH = Path("ai_orchestrator/server/mcp_server.py")
 _SRC = _SRC_PATH.read_text(encoding="utf-8")
 _TREE = ast.parse(_SRC)
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { type Dispatch, type SetStateAction } from "react";
+import { type Dispatch, type SetStateAction, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import SmartStoreChat from "@/app/naver/(legacy)/smartstore/SmartStoreChat";
+import { domainChatVersion, getDomainChat, subscribeDomainChat } from "./domainChatRegistry";
 import { UniversalChat } from "./UniversalChat";
 
 /** 현재 경로 → AI 도메인 추론. 도구가 완비된 스마트스토어는 풀 에이전트로 분기. */
@@ -24,18 +24,20 @@ const HIDE_PREFIXES = ["/login", "/about", "/signup"];
 /** 우측 상시 AI 상담 패널. 보는 화면(도메인)에 맞춰 연동, 모든 앱 도구를 AI가 사용. */
 export function AiDock({ open, setOpen }: { open: boolean; setOpen: Dispatch<SetStateAction<boolean>> }) {
   const pathname = usePathname() ?? "";
+  // 전용 패널을 가진 화면(예: 스마트스토어)이 등록하면 다시 그린다
+  useSyncExternalStore(subscribeDomainChat, domainChatVersion, domainChatVersion);
   if (HIDE_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
   const domain = domainFromPath(pathname);
-  const isSmartstore = domain === "smartstore";
-  const panel = isSmartstore ? (
-    <SmartStoreChat />
+  const DomainPanel = getDomainChat(domain);
+  const panel = DomainPanel ? (
+    <DomainPanel />
   ) : (
     <UniversalChat domain={domain} title="AI 어시스턴트" className="h-full rounded-none border-0" />
   );
   const header = (
     <div className="flex items-center justify-between px-3 h-[44px] border-b border-[#F3F4F6] bg-[#FFF7ED] shrink-0">
-      <span className="text-xs font-bold text-[#C2410C]">🤖 AI 상담 · {isSmartstore ? "스마트스토어" : domain}</span>
+      <span className="text-xs font-bold text-[#C2410C]">🤖 AI 상담 · {domain === "smartstore" ? "스마트스토어" : domain}</span>
       <button onClick={() => setOpen(false)} title="패널 접기"
         className="text-[#9CA3AF] hover:text-[#111827] text-sm px-1">✕</button>
     </div>

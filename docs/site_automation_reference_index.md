@@ -14,9 +14,9 @@ EUM과 하이웍스에서 확정한 브라우저, 승인, 감사, 문서화 기�
 | 작업트리 관리 | `docs/worktree_management_index.md` | 변경 파일 분류, 인덱스 생성, 관리 규칙 |
 | 공통 운영 인덱스 | `docs/common_operations_index.md`, `configs/common_operations_index.json` | 신규 작업 전 사이트/홈페이지 작업 순서, 공통 게이트, 다음 작업 확인 |
 | 코드 레이어 분류 | `docs/layer_classification.md` | L0-L12 경계와 사이트 모듈 구조 |
-| 품질 게이트 | `scripts/quality_gate.py` | 코드/문서/테스트/DB 스키마 변경 조건 검사 |
+| 품질 게이트 | `tools/quality/quality_gate.py` | 코드/문서/테스트/DB 스키마 변경 조건 검사 |
 | Pre-change dry-run | `docs/pre_change_dry_run_policy_20260513.md` | 코드 수정 전 현재 동작/dry-run 증적 기록 |
-| 배포 dry-run | `scripts/deploy_dry_run.py` | 배포 관련 변경 전 dry-run 증적 기록 |
+| 배포 dry-run | `tools/deploy/deploy_dry_run.py` | 배포 관련 변경 전 dry-run 증적 기록 |
 | 사이트 상태 취합 | `docs/site_automation_status_index.md` | 모든 사이트 완료/진행 상태 공통 인덱스 |
 | EUM 기준 구현 | `docs/eum_logic_reference_20260513.md` | 현재 사이트에 검증한 실제 적용 패턴 |
 | 하이웍스 기준 구현 | `docs/hiworks_logic_reference_20260513.md` | 섹션 입력/버튼 action catalog, 승인+확인문구 실행 기준, 메일 준비/발송 계획 패턴 |
@@ -80,16 +80,16 @@ discover -> plan -> prepare -> submit -> verify -> log
 
 | 영역 | 경로 |
 | --- | --- |
-| 공통 CDP 진입 | `scripts/cdp_client.py`, `scripts/cdp_daemon.py` |
-| 사이트 라우터 | `scripts/router.py`, `scripts/<site>/router.py` |
-| 브라우저 재사용 | `scripts/web_connector.py` |
-| 로그인/세션 | `scripts/<site>/auth.py`, `scripts/site_access.py` |
-| 팝업/비정상 접근 | `scripts/popup_watcher.py`, `scripts/popup_classifier.py`, `scripts/<site>/access_handler.py` |
+| 공통 CDP 진입 | `scripts/cdp_client.py`, `scripts/browser/cdp/cdp_daemon.py` |
+| 사이트 라우터 | `scripts/site_engine/command_router.py`, `scripts/<site>/router.py` |
+| 브라우저 재사용 | `scripts/browser/cdp/connection.py` |
+| 로그인/세션 | `scripts/<site>/auth.py`, `scripts/site_engine/site_access.py` |
+| 팝업/비정상 접근 | `scripts/browser/popup/popup_watcher.py`, `scripts/browser/popup/popup_classifier.py`, `scripts/<site>/access_handler.py` |
 | 작업 계획 | `scripts/<site>/work_plan.py` |
 | 실행 로그 | `scripts/<site>/run_log.py` |
-| 실시간 감사 | `scripts/realtime_audit.py`, `scripts/watch_log.py` |
-| 승인 게이트 | `scripts/gate.py`, `scripts/<site>/gates.py` |
-| 작업트리 분류 | `scripts/ops/worktree_change_index.py` |
+| 실시간 감사 | `scripts/common/realtime_audit.py`, `tools/runtime/watch_log.py` |
+| 승인 게이트 | `scripts/common/gate.py`, `scripts/<site>/gates.py` |
+| 작업트리 분류 | `tools/devflow/worktree_change_index.py` |
 
 ## Common Session Safety Update
 
@@ -99,7 +99,7 @@ All live site workflows must apply login/session integrity checks before
 navigation, scanning, preparation, or submit execution.
 
 - Policy: `docs/common_login_session_safety_policy_20260513.md`
-- Common module: `scripts/site_session_safety.py`
+- Common module: `scripts/site_engine/site_session_safety.py`
 
 Hard-stop examples:
 
@@ -140,9 +140,9 @@ surface index before live work.
 - Latest artifact: `data/google_surface_catalog_latest.json`
 - Latest action artifact: `data/google_work_action_catalog_latest.json`
 - Latest adapter artifact: `data/google_execution_adapter_catalog_latest.json`
-- Command: `python scripts\cdp_client.py google surfaces catalog`
-- Action command: `python scripts\cdp_client.py google work catalog`
-- Adapter command: `python scripts\cdp_client.py google work adapters`
+- Command: `python scripts\entry\cdp_cli.py google surfaces catalog`
+- Action command: `python scripts\entry\cdp_cli.py google work catalog`
+- Adapter command: `python scripts\entry\cdp_cli.py google work ai_orchestrator.connectors.g2b`
 - Rule: read-only live exploration first; write, publish, release, billing,
   IAM, API key, upload, comment, and indexing actions require dry-run and
   explicit approval.
@@ -173,9 +173,9 @@ Updated: 2026-05-13
 All site automation modules share one security/redaction baseline.
 
 - Root security implementation: `security_utils.py`
-- `scripts.security` compatibility wrapper: `scripts/security.py`
+- `scripts.common.security` compatibility wrapper: `scripts/common/security.py`
 - Logging compatibility facade: `logging_utils.py`
-- Credential storage and masked CLI output: `scripts/credentials.py`
+- Credential storage and masked CLI output: `scripts/auth/credentials.py`
 
 ## YouTube Recording And Upload
 
@@ -188,7 +188,7 @@ workflows.
 - Recording workflow: `scripts/youtube/recording.py`
 - Upload workflow: `scripts/youtube/uploader.py`
 - Reference: `docs/youtube_recording_upload_workflow_20260513.md`
-- Command entry: `python scripts\cdp_client.py youtube ...`
+- Command entry: `python scripts\entry\cdp_cli.py youtube ...`
 
 Recording, upload, and public publishing are separate approval decisions.
 - Policy reference: `docs/common_login_session_safety_policy_20260513.md`
@@ -208,7 +208,7 @@ Naver developed tools are indexed separately:
 - Cafe tools: `scripts/naver/cafe/`
 - Keyword tools: `scripts/naver/keyword_tools.py`
 - Mail background/tools: `scripts/naver_mail/`, `scripts/naver/mail_read/`
-- Common tab isolation gate: `scripts/browser_cdp_selection_gate.py`
+- Common tab isolation gate: `scripts/browser/session/browser_cdp_selection_gate.py`
 
 Current verified Naver tool groups:
 

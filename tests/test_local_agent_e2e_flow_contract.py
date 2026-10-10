@@ -1,4 +1,4 @@
-from scripts.ops import audit_local_agent_e2e_flow_contract as audit
+from tools.audits.agent import audit_local_agent_e2e_flow_contract as audit
 
 
 def test_local_agent_e2e_flow_contract_passes():

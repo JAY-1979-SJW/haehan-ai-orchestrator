@@ -7,7 +7,7 @@
 때문이다(2026-10-07). paths/ 는 아무 것도 import하지 않는 독립 리프 폴더라
 어느 서브패키지가 써도 순환이 생기지 않는다.
 
-scripts.app_paths.repo_root()는 이 모듈을 재수출한다 — scripts → ai_orchestrator
+scripts.common.app_paths.repo_root()는 이 모듈을 재수출한다 — scripts → ai_orchestrator
 import는 원래 허용된 방향이라 폴더 단위 순환이 생기지 않는다. ai_orchestrator
 안의 호출자는 이 모듈을 직접 쓴다.
 

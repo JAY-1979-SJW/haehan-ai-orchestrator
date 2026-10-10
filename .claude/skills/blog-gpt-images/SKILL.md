@@ -25,7 +25,7 @@ GPT(ChatGPT)를 쓰는 작업이라 CLAUDE.md "외부 유료 AI API 호출 승�
 ## 사용법
 
 ```python
-from scripts.cdp_helper import CDP
+from scripts.browser.cdp.cdp_helper import CDP
 from scripts.naver.blog.marketing.gpt_images import generate_image
 
 cdp = CDP(port=9222)

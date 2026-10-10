@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from scripts.google import domain_taxonomy, surfaces, workflows
+from scripts.google.common import domain_taxonomy, surfaces, workflows
 from scripts.google.module_contracts import (
     GOOGLE_TOP_MODULE,
     SUBMODULE_OWNERS,

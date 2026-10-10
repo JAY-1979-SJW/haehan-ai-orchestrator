@@ -1,10 +1,10 @@
 """tests/test_security_program_auto_resume_20260508.py"""
 
-from ai_orchestrator.local_agent.local_security_installer_runner import (
+from core.agent_runtime.runtime.security_program.local_security_installer_runner import (
     STATUS_INSTALL_PERMISSION_REQUIRED,
     STATUS_WAITING_USER_UAC,
 )
-from ai_orchestrator.local_agent.security_program_auto_resume import (
+from core.agent_runtime.runtime.security_program.security_program_auto_resume import (
     FLOW_AWAIT_PERMISSION,
     FLOW_AWAIT_UAC,
     FLOW_INSTALL_COMPLETE,

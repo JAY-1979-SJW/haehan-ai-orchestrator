@@ -21,7 +21,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 log = logging.getLogger("hanafax.sender")
 
@@ -76,7 +76,7 @@ def send_fax(
             "success": False,
             "simulated": True,
             "job_id": None,
-            "message": "자격증명 없음. python scripts/cdp_client.py cred set hanafax",
+            "message": "자격증명 없음. python scripts/entry/cdp_cli.py cred set hanafax",
         }
 
     try:
@@ -136,7 +136,7 @@ def send_fax_bulk(
             "success": False,
             "sent_faxes": [],
             "job_id": None,
-            "message": "자격증명 없음. python scripts/cdp_client.py cred set hanafax",
+            "message": "자격증명 없음. python scripts/entry/cdp_cli.py cred set hanafax",
         }
 
     try:

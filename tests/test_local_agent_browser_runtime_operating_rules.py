@@ -2,13 +2,12 @@ from pathlib import Path
 
 import pytest
 
-from local_agent.cdp_attach import (
+from core.agent_runtime.browser.cdp_attach import (
     CDPAttachValidationError,
     normalize_cdp_endpoint,
     summarize_cdp_tabs,
 )
 from scripts.archive.misc import chrome_ui_monitor
-
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_DOC = ROOT / "docs" / "architecture" / "local_agent_browser_runtime_operating_rules_20260523.md"
@@ -74,7 +73,7 @@ def test_chrome_ui_monitor_operating_rule_uses_runtime_state_path():
 
 
 def test_dry_run_gate_locks_runtime_state_path_check():
-    text = (ROOT / "scripts" / "ops" / "dry_run_local_agent_cdp_attach.py").read_text(
+    text = (ROOT / "tools" / "verify" / "dry_run_local_agent_cdp_attach.py").read_text(
         encoding="utf-8",
         errors="replace",
     )

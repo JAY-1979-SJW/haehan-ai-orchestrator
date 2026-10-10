@@ -16,17 +16,21 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
+from scripts.common.sqlite_helpers import init_sqlite_schema
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[3]
-DB_PATH = ROOT / "data" / "cdp.db"
+DB_PATH = data_dir() / "cdp.db"  # 예전 ROOT(parents[3])는 저장소 루트가 아니라 scripts/ 라 data/cdp.db 와 다른 DB 를 쓰던 버그
 
 
 def _init_db():
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.execute("""
+    init_sqlite_schema(
+        DB_PATH,
+        (
+            """
         CREATE TABLE IF NOT EXISTS smartstore_metrics_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ts TEXT NOT NULL,
@@ -38,10 +42,10 @@ def _init_db():
             orders_today INTEGER,
             raw_json TEXT
         )
-    """)
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_metrics_date ON smartstore_metrics_log(date_key)")
-    conn.commit()
-    conn.close()
+    """,
+            "CREATE INDEX IF NOT EXISTS idx_metrics_date ON smartstore_metrics_log(date_key)",
+        ),
+    )
 
 
 class AnalyticsDashboard:

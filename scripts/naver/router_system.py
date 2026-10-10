@@ -1,7 +1,7 @@
 """네이버 시스템/세션/카탈로그/로그인 명령 핸들러"""
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 from .base import check_session
 
 
@@ -59,12 +59,12 @@ def _cmd_session_check() -> None:
 
     if result["error"]:
         print(f"[WARNING] 데몬 연결 실패: {result['error']}")
-        print("  python scripts/cdp_daemon.py start")
+        print("  python scripts/browser/cdp/cdp_daemon.py start")
     elif result["logged_in"]:
         print("[OK] 로그인 상태 정상")
     else:
         print("[X] 로그인 필요")
-        print("  python scripts/cdp_client.py naver login")
+        print("  python scripts/entry/cdp_cli.py naver login")
 
     print("=" * 60)
 
@@ -75,9 +75,9 @@ def _cmd_login() -> None:
     input() / 터미널 입력 없음. 앱에서 호출 시에도 동일하게 동작.
     CDP 데몬이 꺼져 있으면 자동 시작 후 연결.
     """
-    from scripts.web_connector import browser_session
-    from scripts.login_session import is_logged_in
-    from scripts.login_detector import monitor_for_login
+    from scripts.browser.page.web_connector import browser_session  # noqa: I001 - 이동 전부터 있던 미정렬 import(동작 변경 없음)
+    from scripts.site_engine.login_session import is_logged_in
+    from scripts.auth.login_detector import monitor_for_login
     from scripts.naver.browser_gate import require_naver_browser
 
     print("=" * 60)

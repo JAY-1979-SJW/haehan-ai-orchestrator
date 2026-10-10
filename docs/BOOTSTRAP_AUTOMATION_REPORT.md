@@ -19,9 +19,9 @@
 
 ### 2. Phase 0 자동 완료
 
-- ✓ `ai_orchestrator/local_agent/browser/mixins/mail_mixin.py` 자동 생성
-- ✓ `ai_orchestrator/local_agent/browser/mixins/calendar_mixin.py` 자동 생성
-- ✓ `ai_orchestrator/local_agent/browser/mixins/mybox_mixin.py` 자동 생성
+- ✓ `scripts/naver/mail/mail_mixin.py` 자동 생성
+- ✓ `scripts/browser/agent/calendar_mixin.py` 자동 생성
+- ✓ `scripts/browser/agent/mybox_mixin.py` 자동 생성
 - ✓ `mixins/__init__.py` 자동 업데이트 (3개 Mixin export 추가)
 - ✓ `agent.py` 자동 업데이트 (BrowserAgent 상속 추가)
 - ✓ `cdp_session_manager.py` LOGIN_MARKERS 확장 (메일, 캘린더, MyBox)
@@ -30,7 +30,7 @@
 ### 3. 자동화 파일 생성
 
 ```
-ai_orchestrator/local_agent/browser/
+scripts/browser/agent/
   └─ bootstrap.py                    [신규] 핵심 자동화 엔진
 
 scripts/
@@ -95,7 +95,7 @@ scripts/
 
 ```powershell
 # 로그인 완료 후 이 명령 자동 재실행
-python -m ai_orchestrator.local_agent.browser.bootstrap
+python -m scripts.archive.one_off.browser_agent_bootstrap
 
 # 또는 오류 복구 포함
 python scripts/auto_bootstrap_naver.py

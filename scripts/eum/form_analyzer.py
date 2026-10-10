@@ -18,7 +18,7 @@ try:
 except ImportError:
     pass
 
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -117,7 +117,7 @@ def analyze_page(url: str) -> dict[str, Any]:
         # 를 반환해 크래시하지 않음(읽기전용 폼 분석, 쓰기·제출 없음). (주의: 설명 줄이
         # "# type:"로 시작하면 mypy 가 독립된 type-comment 로 잘못 해석해 구문오류를 내므로
         # — defect_index — 절대 "# type:"으로 문장을 시작하지 않는다.)
-        from scripts.cdp_client import eval_js, goto_url  # type: ignore[attr-defined]
+        from scripts.browser.cdp_client import eval_js, goto_url  # type: ignore[attr-defined]
 
         goto_url(url)
         time.sleep(1)

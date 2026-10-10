@@ -2,7 +2,7 @@
 auth_completion_detector 테스트
 """
 
-from ai_orchestrator.local_agent.auth_completion_detector import (
+from core.agent_runtime.runtime.auth.auth_completion_detector import (
     check_auth_completed_from_dict,
     check_auth_completed_from_page_state,
 )

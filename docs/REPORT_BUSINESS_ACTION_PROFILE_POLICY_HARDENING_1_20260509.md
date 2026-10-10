@@ -17,7 +17,7 @@
 
 ### 1. 신규 모듈: business_action_profiles.py
 
-**파일**: `ai_orchestrator/local_agent/business_action_profiles.py` (163줄)
+**파일**: `ai_orchestrator/agent_hub/business_action_profiles.py` (163줄)
 
 #### 주요 내용:
 - **BusinessProfile 불변 데이터클래스**: 모든 프로필의 정책을 단일 소스에서 정의

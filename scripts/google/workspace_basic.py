@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, asdict
 from typing import Any
 
-from scripts.gates.work_mode_gate import build_google_work_mode_policy
+from scripts.common.gates.work_mode_gate import build_google_work_mode_policy
 
 
 READ_ONLY = "read_only"

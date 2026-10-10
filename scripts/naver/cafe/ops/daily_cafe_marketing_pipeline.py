@@ -15,7 +15,7 @@ import sys
 import traceback
 from datetime import datetime
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 sys.path.insert(0, str(ROOT))
@@ -36,7 +36,7 @@ def main() -> int:
     result = {"snapshot_ok": False, "snapshot_error": "", "build_ok": False, "build_error": ""}
 
     try:
-        from scripts.cdp_force_start import _is_cdp_alive, cmd_start
+        from scripts.browser.cdp.cdp_force_start import _is_cdp_alive, cmd_start
 
         if not _is_cdp_alive():
             cmd_start()
@@ -45,7 +45,7 @@ def main() -> int:
 
     try:
         from scripts.naver.cafe.collection.daily_snapshot import run_daily_snapshot
-        from scripts.web_connector import get_page
+        from scripts.browser.cdp.connection import get_page
 
         page = get_page()
         snap_result = run_daily_snapshot(page)
@@ -57,7 +57,7 @@ def main() -> int:
         print(f"[daily-pipeline] 수집 실패(건너뜀): {result['snapshot_error']}")
 
     try:
-        from scripts import marketing_summary_build
+        from scripts.naver.cafe.ops import marketing_summary_build
 
         marketing_summary_build.main()
         result["build_ok"] = True

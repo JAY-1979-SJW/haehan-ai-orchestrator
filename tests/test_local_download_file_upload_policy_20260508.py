@@ -2,7 +2,7 @@
 download_policy 테스트
 """
 
-from ai_orchestrator.local_agent.download_policy import (
+from core.agent_runtime.runtime.download.download_policy import (
     MAX_FILE_SIZE_BYTES,
     check_file,
     check_files,

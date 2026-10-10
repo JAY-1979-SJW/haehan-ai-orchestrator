@@ -26,7 +26,7 @@ from scripts.form.bot_radar import scan as bot_scan
 from scripts.form.discovery import discover_form
 from scripts.form.events import wait_for_form, wait_submit_done, wait_validation
 from scripts.form.human import human_click, human_type
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -68,7 +68,7 @@ def _resolve_credentials(site: str) -> tuple[str, str]:
     """site 키로 ID/PW 조회. 통합 credentials → profile override 순."""
     # 1) credentials.json
     try:
-        from scripts.credentials import get_cred
+        from scripts.auth.credentials import get_cred
 
         c = get_cred(site)
         if c.get("id") and c.get("pw"):
@@ -78,7 +78,7 @@ def _resolve_credentials(site: str) -> tuple[str, str]:
 
     # 2) profile (site override → base)
     try:
-        from scripts.form.profile import get_value
+        from scripts.form.personal_profile import get_value
 
         nid = get_value("default_id", site=site)
         pw = get_value("default_pw", site=site)
@@ -185,7 +185,7 @@ def universal_login(page, site: str, *, wait_form_ms: int = 8000, wait_submit_ms
     # 1) 자격증명 조회
     nid, pw = _resolve_credentials(site)
     if not nid or not pw:
-        result["reason"] = f"자격증명 없음. 입력: python scripts/credentials.py set {site}"
+        result["reason"] = f"자격증명 없음. 입력: python scripts/auth/credentials.py set {site}"
         return result
 
     # 2) 폼 대기 (SPA 대응)

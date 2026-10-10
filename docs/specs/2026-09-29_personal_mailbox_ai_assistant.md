@@ -72,7 +72,7 @@
         │                       "Bash(py -3.14 scripts/naver/mail/... *)",
         │                       "Bash(py -3.14 scripts/ops/mail_attachment_finder.py *)"] }}
         ▼
-[local_agent/agent.py](기존, 신규 코드 불필요) → claude -p 헤드리스 실행
+[core/agent_runtime/agent.py](기존, 신규 코드 불필요) → claude -p 헤드리스 실행
         ▼
 [Claude가 기존 조회 API + 신규 draft 함수로 초안 생성]
         ▼

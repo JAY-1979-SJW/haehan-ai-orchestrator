@@ -1,6 +1,6 @@
 # 정밀 측정 — 구조 정정 (2026-09-24, 읽기 전용)
 
-방법: data/code_map/map.json(edges 2131노드, 내부 import 6073) + scripts/ops/duplicate_code_check.py --json (1432파일 스캔).
+방법: data/code_map/map.json(edges 2131노드, 내부 import 6073) + tools/hooks/duplicate_code_check.py --json (1432파일 스캔).
 
 ## 1. 순환 import (SCC, Tarjan)
 - SCC 13개. 크기 분포: 2x3, 3x5, 4, 7, 8, 11, **467**.

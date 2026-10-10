@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / ".."))
 
-from ai_orchestrator.local_agent_response_builders import (
+from ai_orchestrator.agent_hub.response_builders import (
     make_get_task_response,
     make_list_agents_response,
     make_list_codes_response,
@@ -199,7 +199,7 @@ def test_response_key_consistency():
 
 def test_response_builders_module_importable():
     """응답 빌더 모듈이 정상적으로 임포트 가능한지 검증."""
-    import ai_orchestrator.local_agent_response_builders as response_builders_module
+    import ai_orchestrator.agent_hub.response_builders as response_builders_module
 
     assert hasattr(response_builders_module, "make_register_agent_response")
     assert hasattr(response_builders_module, "make_list_agents_response")
@@ -211,7 +211,7 @@ def test_response_builders_module_importable():
 def test_no_circular_import_with_router():
     """응답 빌더 모듈과 라우터 간 순환 참조 없음을 검증."""
     try:
-        from ai_orchestrator.local_agent_router import local_agent_router
+        from ai_orchestrator.agent_hub.router.root import local_agent_router
 
         assert local_agent_router is not None
     except ImportError:

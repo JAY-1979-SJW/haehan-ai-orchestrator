@@ -1,9 +1,9 @@
 """tests/test_universal_workflow_runner_20260508.py - universal_workflow_runner 단위 테스트"""
 
-from ai_orchestrator.local_agent.universal_safe_result import (
+from core.agent_runtime.runtime.universal.universal_safe_result import (
     STATUS_BLOCKED,
 )
-from ai_orchestrator.local_agent.universal_workflow_runner import (
+from core.agent_runtime.runtime.universal.universal_workflow_runner import (
     run_single_action,
     run_workflow,
 )

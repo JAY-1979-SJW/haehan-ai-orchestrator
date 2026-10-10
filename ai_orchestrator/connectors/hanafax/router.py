@@ -18,9 +18,9 @@ import sys
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
-from ai_orchestrator.gates.send_approval import require_send_approval
 from ai_orchestrator.paths import repo_root
+from tools.gates.auth import require_role
+from tools.gates.send_approval import require_send_approval
 
 from ..session_status_router import session_status_router  # noqa: F401 (side-effect import for type hints)
 
@@ -185,9 +185,9 @@ def get_queue(_: dict = Depends(require_role("admin", "owner"))):
 def send_fax(body: SendRequest, _: dict = Depends(require_role("admin", "owner"))):
     if not body.confirmed:
         raise HTTPException(status_code=400, detail="팩스 발송은 confirmed=true 승인이 필요합니다")
-    from ai_orchestrator.gates.fax_send_policy import parse_number
-    from ai_orchestrator.gates.gate_core import CONFIRM_TEXTS
-    from ai_orchestrator.persistence import fax_authorization_store as fax_store
+    from ai_orchestrator.connectors.hanafax import authorization_store as fax_store
+    from ai_orchestrator.connectors.hanafax.send_policy import parse_number
+    from tools.gates.gate_core import CONFIRM_TEXTS
 
     # 승인 문구(사용자가 직접 입력) → 번호 형식 → 수신거부 순으로 확인한다. 발송 전에 모두 끝낸다.
     require_send_approval("hanafax_send", send_confirm=body.send_confirm, expected=CONFIRM_TEXTS["hanafax_send"])
@@ -269,7 +269,7 @@ def _actor(user: dict) -> str:
 
 
 def _auth_service():
-    from ai_orchestrator.services import hanafax_authorization_service as service
+    from ai_orchestrator.connectors.hanafax import authorization_service as service
 
     return service
 
@@ -281,7 +281,7 @@ def _bad_request(exc: ValueError) -> HTTPException:
 @hanafax_router.post("/attachments", response_model=dict)
 def upload_attachment(file: UploadFile = File(...), _: dict = Depends(require_role("admin", "owner"))):
     """첨부 파일을 올려 앱 전용 폴더에 저장하고 경로를 돌려준다(pdf/docx/doc, 10MB 이하, 내용 검사)."""
-    from ai_orchestrator.services import hanafax_attachments as limits
+    from ai_orchestrator.connectors.hanafax import attachments as limits
 
     data = file.file.read(limits.MAX_BYTES + 1)  # 한도 +1 바이트만 읽어 거대한 업로드가 메모리를 채우지 않게 한다
     try:
@@ -338,7 +338,7 @@ def create_authorization(body: AuthorizationCreate, user: dict = Depends(require
 
 @hanafax_router.get("/authorizations", response_model=list[dict])
 def list_authorizations(_: dict = Depends(require_role("admin", "owner"))):
-    from ai_orchestrator.persistence import fax_authorization_store as fax_store
+    from ai_orchestrator.connectors.hanafax import authorization_store as fax_store
 
     return [
         {k: v for k, v in a.items() if k != "recipients"} | {"recipient_count": len(a["recipients"])}
@@ -420,7 +420,7 @@ def preview_image(auth_id: str, _: dict = Depends(require_role("admin", "owner")
 
 @hanafax_router.get("/kill-switch", response_model=dict)
 def kill_switch_state(_: dict = Depends(require_role("admin", "owner"))):
-    from ai_orchestrator.persistence import fax_authorization_store as fax_store
+    from ai_orchestrator.connectors.hanafax import authorization_store as fax_store
 
     return {"kill_switch": fax_store.kill_switch_on()}
 

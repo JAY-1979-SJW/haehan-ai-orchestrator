@@ -2,11 +2,11 @@
 
 import pytest
 
-from ai_orchestrator.local_agent.site_capability_matrix import (
+from core.agent_runtime.runtime.site_profile.site_capability_matrix import (
     GRADE_AUTO_ALLOWED,
     GRADE_BLOCKED,
 )
-from ai_orchestrator.local_agent.workflow_template_engine import (
+from core.agent_runtime.runtime.universal.workflow_template_engine import (
     get_auto_steps,
     get_delegated_steps,
     get_template,

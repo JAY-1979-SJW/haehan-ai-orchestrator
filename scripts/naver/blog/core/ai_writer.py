@@ -15,8 +15,8 @@ from datetime import datetime, timedelta
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 from scripts.naver.blog.seo.tag_suggester import (
     _COMPOUND_PAIRS,
     _STOPWORDS,
@@ -43,7 +43,7 @@ class BlogAIWriter:
         return_seo: bool = True,
     ) -> dict:
         """AI로 글 초안 생성 + SEO 분석."""
-        from scripts.naver.automation.ai_responder import AIResponder
+        from scripts.naver.automation.integration.ai_responder import AIResponder
 
         ai = AIResponder()
 
@@ -63,7 +63,7 @@ class BlogAIWriter:
 
         # SEO 분석
         if return_seo and result["ok"]:
-            from scripts.naver.blog.seo import BlogSEO
+            from scripts.naver.blog.seo.seo import BlogSEO
 
             seo = BlogSEO(self.page)
             result["seo"] = seo.optimize_post(title, body, target_keywords=keywords)
@@ -82,7 +82,7 @@ class BlogAIWriter:
     ) -> dict:
         """초안 생성 → 임시저장 또는 발행/예약. publish=True 는 사용자가 직접 입력한 승인 문구(approval)가 필요하다."""
         if publish and not schedule_at:
-            from scripts.gate import require_approved
+            from scripts.common.gate import require_approved
 
             require_approved("blog_publish", approval, via="blog_ai_draft_and_save")
         draft = self.draft(topic, keywords=keywords, length=length, return_seo=False)

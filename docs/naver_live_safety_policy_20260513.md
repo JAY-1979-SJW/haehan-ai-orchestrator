@@ -55,12 +55,12 @@ page can be inspected.
 
 Safety module:
 
-- `scripts/naver/live_safety.py`
+- `scripts/naver/common/live_safety.py`
 
 Integrated paths:
 
 - `scripts/naver/router.py` for `naver content explore`
-- `scripts/naver/content.py` before/after content navigation and before surface extraction
+- `scripts/naver/common/content.py` before/after content navigation and before surface extraction
 - `scripts/smartstore/router.py` before every live SmartStore browser action
 
 ## Operational Notes
@@ -83,7 +83,7 @@ Login/session mismatch is not a Naver-only rule. It is a common site automation
 blocker.
 
 - Common policy: `docs/common_login_session_safety_policy_20260513.md`
-- Common module: `scripts/site_session_safety.py`
+- Common module: `scripts/site_engine/site_session_safety.py`
 
 Naver live safety uses the common policy first, then applies Naver-specific
 robot/captcha/security-signal checks.

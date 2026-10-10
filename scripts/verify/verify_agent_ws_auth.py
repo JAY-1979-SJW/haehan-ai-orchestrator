@@ -1,104 +1,27 @@
-from __future__ import annotations
+# haehan-shim: tools.verify.verify_agent_ws_auth
+# 호환 shim: 실제 모듈은 tools.verify.verify_agent_ws_auth 로 이동했다 (tools/verify/verify_agent_ws_auth.py).
+# 옛 경로의 import · 파일 경로 로드 · 직접 실행을 모두 받는다. 새 코드는 새 경로를 쓸 것.
+# 생성: scripts/ops/make_shim.py — 계약 테스트: tests/test_shim_contract.py
+import importlib as _il
+import sys as _sys
 
-import argparse
-import asyncio
-import json
-from pathlib import Path
+if __name__ == "__main__":  # 직접 실행(python old.py / -m old)은 새 모듈의 __main__ 으로 전달
+    import runpy as _runpy
+    from pathlib import Path as _Path
 
-ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_SERVER_URL = "https://haehan-ai.kr/orchestrator"
+    # haehan-root-bootstrap: 하위 폴더 shim 직접 실행용 루트 부트스트랩(정본 paths import 전이라 불가피, G5 예외)
+    _root = str(_Path(__file__).resolve().parents[2])
+    if _root not in _sys.path:
+        _sys.path.insert(0, _root)
 
-
-def _mask_agent_id(agent_id: str) -> str:
-    if not agent_id:
-        return ""
-    if len(agent_id) <= 10:
-        return agent_id[:3] + "***"
-    return f"{agent_id[:6]}***{agent_id[-4:]}"
-
-
-def _websocket_close_code(exc: object) -> int | None:
-    for attr in ("rcvd", "rcvd_close"):
-        close = getattr(exc, attr, None)
-        code = getattr(close, "code", None)
-        if isinstance(code, int):
-            return code
-    code = getattr(exc, "code", None)
-    return code if isinstance(code, int) else None
+    _runpy.run_module("tools.verify.verify_agent_ws_auth", run_name="__main__")
+    raise SystemExit
 
 
-async def _probe(server_url: str, timeout: float) -> tuple[bool, str, str]:
-    from local_agent import (  # 서브모듈 이름을 함께 가져와 코드맵이 최상위 local_agent 패키지로 해석하게 한다
-        __version__,
-        desktop_config,
-        token_store,
-    )
-    from local_agent.connection_diagnostics import normalize_ws_url
-    from local_agent.network_bypass import websocket_connect_kwargs
-
-    try:
-        import websockets  # type: ignore
-    except ImportError:
-        return False, "WEBSOCKETS_MISSING", ""
-
-    cfg = desktop_config.load_config()
-    effective_server = (server_url or cfg.server_url or DEFAULT_SERVER_URL).rstrip("/")
-    agent_id = cfg.agent_id.strip()
-    if not agent_id:
-        return False, "AGENT_ID_MISSING", ""
-
-    device_token = token_store.load_device_token(effective_server, agent_id)
-    if not device_token:
-        return False, "DEVICE_TOKEN_MISSING", _mask_agent_id(agent_id)
-
-    ws_url = normalize_ws_url(effective_server)
-    try:
-        async with websockets.connect(
-            ws_url,
-            ping_interval=None,
-            close_timeout=3,
-            open_timeout=timeout,
-            **websocket_connect_kwargs(effective_server),
-        ) as ws:
-            await ws.send(json.dumps({
-                "type": "auth",
-                "agent_id": agent_id,
-                "device_token": device_token,
-                "version": __version__,
-            }))
-            raw = await asyncio.wait_for(ws.recv(), timeout=timeout)
-            try:
-                first = json.loads(raw)
-            except json.JSONDecodeError:
-                return False, "INVALID_AUTH_RESPONSE", _mask_agent_id(agent_id)
-            if first.get("type") == "auth_ok":
-                return True, "AUTH_OK", _mask_agent_id(agent_id)
-            return False, str(first.get("type") or "AUTH_REJECTED"), _mask_agent_id(agent_id)
-    except asyncio.TimeoutError:
-        return False, "AUTH_TIMEOUT", _mask_agent_id(agent_id)
-    except getattr(websockets.exceptions, "ConnectionClosed", Exception) as exc:
-        code = _websocket_close_code(exc)
-        if code == 4401:
-            return False, "AUTH_FAILED_4401", _mask_agent_id(agent_id)
-        return False, f"WS_CLOSED_{code or 'UNKNOWN'}", _mask_agent_id(agent_id)
-    except OSError as exc:
-        return False, type(exc).__name__, _mask_agent_id(agent_id)
-    finally:
-        device_token = ""
+def _install(real, g, mods):
+    # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
+    g.update({k: v for k, v in vars(real).items() if not (k.startswith("__") and k.endswith("__"))})
+    mods[g["__name__"]] = real
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--server", default=DEFAULT_SERVER_URL)
-    parser.add_argument("--timeout", type=float, default=15.0)
-    args = parser.parse_args(argv)
-
-    ok, status, masked_agent = asyncio.run(_probe(args.server, args.timeout))
-    print(f"agent_id_masked={masked_agent or '-'}")
-    print(f"ws_auth_status={status}")
-    print(f"RESULT={'PASS_AGENT_WS_AUTH' if ok else 'FAIL_AGENT_WS_AUTH'}")
-    return 0 if ok else 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+_install(_il.import_module("tools.verify.verify_agent_ws_auth"), globals(), _sys.modules)

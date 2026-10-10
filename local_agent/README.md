@@ -64,7 +64,7 @@ local_agent/
 ### 1) 서버에 신규 에이전트 등록
 
 ```powershell
-python -m local_agent.agent --register --user <orchestrator_user> --password <pwd>
+python -m core.agent_runtime.agent --register --user <orchestrator_user> --password <pwd>
 ```
 
 응답에 표시되는 `device_token` 은 **1회만** 노출된다.
@@ -74,7 +74,7 @@ python -m local_agent.agent --register --user <orchestrator_user> --password <pw
 ### 2) 로컬 ping (서버 호출 없음, 셀프 테스트)
 
 ```powershell
-python -m local_agent.agent --ping
+python -m core.agent_runtime.agent --ping
 ```
 
 ---

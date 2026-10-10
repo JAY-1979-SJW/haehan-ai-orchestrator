@@ -74,8 +74,8 @@ approved user
 This flow is enforced by:
 
 ```text
-python scripts/ops/audit_local_agent_e2e_flow_contract.py
-python scripts/module_quality_gate.py --module local_agent_e2e
+python tools/audits/agent/audit_local_agent_e2e_flow_contract.py
+python tools/quality/module_quality_gate.py --module local_agent_e2e
 ```
 
 ## 3. Execution Boundaries
@@ -299,25 +299,25 @@ docs/baseline/APP_DEVELOPMENT_STANDARD.md
 The required local gate is:
 
 ```text
-python scripts/required_quality_gate.py
+python tools/quality/required_quality_gate.py
 ```
 
 Required module gates include:
 
 ```text
-python scripts/module_quality_gate.py --module repo_guard
-python scripts/module_quality_gate.py --module backend_core
-python scripts/module_quality_gate.py --module local_agent_e2e
+python tools/quality/module_quality_gate.py --module repo_guard
+python tools/quality/module_quality_gate.py --module backend_core
+python tools/quality/module_quality_gate.py --module local_agent_e2e
 ```
 
 Required audits include:
 
 ```text
-python scripts/ops/audit_common_tool_runtime.py
-python scripts/ops/audit_backend_runtime_contract.py
-python scripts/ops/audit_local_agent_e2e_flow_contract.py
-python scripts/ops/audit_module_boundaries.py
-python scripts/ops/audit_root_legacy_scripts.py
+python tools/audits/agent/audit_common_tool_runtime.py
+python tools/audits/backend/audit_backend_runtime_contract.py
+python tools/audits/agent/audit_local_agent_e2e_flow_contract.py
+python tools/audits/app/audit_module_boundaries.py
+python tools/repo_gates/audit_root_legacy_scripts.py
 ```
 
 Any code change that affects server/local-agent/browser/approval behavior must

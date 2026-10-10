@@ -15,8 +15,8 @@
 
 ## Phase A — 기초 공사 체크리스트 ✅ 완료
 
-- [x] `scripts/ops/codebase_layer_audit.py` 존재 및 실행 가능
-- [x] `scripts/quality_gate.py` 존재 및 실행 가능
+- [x] `tools/repo_gates/codebase_layer_audit.py` 존재 및 실행 가능
+- [x] `tools/quality/quality_gate.py` 존재 및 실행 가능
 - [x] `docs/architecture/governance_gate_matrix.md` 존재
 - [x] `docs/architecture/layer_policy.md` 존재
 - [x] `docs/architecture/storage_audit_evidence_model.md` 존재
@@ -47,8 +47,8 @@
 - [x] `data/evidence/.gitkeep` 존재
 - [x] `data/artifacts/.gitkeep` 존재
 - [x] `data/uploads/.gitkeep` 존재
-- [x] `scripts/ops/audit_domain_room_allocation.py` 63/63 PASS
-- [x] `scripts/ops/audit_shared_warehouse_policy.py` 75/75 PASS
+- [x] `tools/audits/app/audit_domain_room_allocation.py` 63/63 PASS
+- [x] `tools/audits/app/audit_shared_warehouse_policy.py` 75/75 PASS
 - [x] `tests/test_domain_room_allocation.py` 69/69 PASS
 - [x] `tests/test_shared_warehouse_policy.py` 65/65 PASS
 - [x] `tests/test_shared_warehouse_physical_skeleton.py` 33/33 PASS

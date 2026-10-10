@@ -6,13 +6,13 @@ business map. It does not click buttons or submit forms.
 
 from __future__ import annotations
 
-import json
 import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
+from scripts.eum.report_io import save_json
 
 ROOT = repo_root()
 
@@ -35,7 +35,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "title": "Device install inventory",
         "code": "WEBMAN390M00",
         "risk": "read",
-        "command": "python scripts/cdp_client.py eum extract",
+        "command": "python scripts/entry/cdp_cli.py eum extract",
         "auto_execute": True,
     },
     {
@@ -44,7 +44,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "title": "New site discovery",
         "code": "WEBMAN380M00",
         "risk": "read",
-        "command": "python scripts/cdp_client.py eum new-sites",
+        "command": "python scripts/entry/cdp_cli.py eum new-sites",
         "auto_execute": True,
     },
     {
@@ -53,7 +53,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "title": "Sales mail draft and queue preparation",
         "code": "WEBMAN370M00",
         "risk": "read",
-        "command": "python scripts/cdp_client.py eum sales-mail",
+        "command": "python scripts/entry/cdp_cli.py eum sales-mail",
         "auto_execute": True,
     },
     {
@@ -62,7 +62,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "title": "Device history lookup",
         "code": "WEBMAN400M00",
         "risk": "read",
-        "command": "python scripts/cdp_client.py eum history <device_id>",
+        "command": "python scripts/entry/cdp_cli.py eum history <device_id>",
         "auto_execute": True,
     },
     {
@@ -71,7 +71,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "title": "Removal/demolition lookup",
         "code": "WEBMAN382M00",
         "risk": "read",
-        "command": "python scripts/cdp_client.py eum demolition",
+        "command": "python scripts/entry/cdp_cli.py eum demolition",
         "auto_execute": True,
     },
     {
@@ -80,7 +80,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "title": "Device registration",
         "code": "WEBMAN381M00",
         "risk": "approval",
-        "command": "python scripts/cdp_client.py eum registration <project_code> <device_id> [location]",
+        "command": "python scripts/entry/cdp_cli.py eum registration <project_code> <device_id> [location]",
         "auto_execute": False,
     },
     {
@@ -89,7 +89,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "title": "Device deregistration/removal request",
         "code": "WEBMAN382M00",
         "risk": "approval",
-        "command": "python scripts/cdp_client.py eum deregistration <device_id> [date]",
+        "command": "python scripts/entry/cdp_cli.py eum deregistration <device_id> [date]",
         "auto_execute": False,
     },
     {
@@ -98,7 +98,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "title": "Device usage monitor",
         "code": None,
         "risk": "read",
-        "command": "python scripts/cdp_client.py eum monitor",
+        "command": "python scripts/entry/cdp_cli.py eum monitor",
         "auto_execute": True,
     },
     {
@@ -107,7 +107,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "title": "Labor tag test record lookup",
         "code": "WEBMAN460M00",
         "risk": "read",
-        "command": "python scripts/cdp_client.py eum labor-test",
+        "command": "python scripts/entry/cdp_cli.py eum labor-test",
         "auto_execute": True,
     },
     {
@@ -116,7 +116,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "title": "Registered test worker list",
         "code": "WEBMAN470M00",
         "risk": "read",
-        "command": "python scripts/cdp_client.py eum test-workers",
+        "command": "python scripts/entry/cdp_cli.py eum test-workers",
         "auto_execute": True,
     },
     {
@@ -125,7 +125,7 @@ WORKFLOWS: list[dict[str, Any]] = [
         "title": "Per-site device list (raw cells, headers do not map 1:1)",
         "code": "WEBMAN380M00",
         "risk": "read",
-        "command": "python scripts/cdp_client.py eum site-devices",
+        "command": "python scripts/entry/cdp_cli.py eum site-devices",
         "auto_execute": True,
     },
 ]
@@ -354,10 +354,7 @@ def build_work_index(page) -> dict[str, Any]:
 
 
 def save_work_index(index: dict[str, Any], path: Path | None = None) -> Path:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    out = path or (DATA_DIR / "eum_work_index.json")
-    out.write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
-    return out
+    return save_json(index, DATA_DIR, "eum_work_index.json", path)
 
 
 def print_summary(index: dict[str, Any], path: Path | None = None) -> None:

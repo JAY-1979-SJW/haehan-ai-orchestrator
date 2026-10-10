@@ -183,14 +183,14 @@ def test_spec_states_desktop_ui_unchanged():
 
 
 def test_audit_pass_on_real_spec():
-    from scripts.ops import audit_local_agent_gui_ux_design_spec as a
+    from tools.audits.agent import audit_local_agent_gui_ux_design_spec as a
 
     v = a.judge_spec(desktop_ui_unchanged=True)
     assert v.code == "PASS_AGENT_GUI_UX_DESIGN_SPEC", v.reasons
 
 
 def test_audit_fail_user_flow_missing(tmp_path):
-    from scripts.ops import audit_local_agent_gui_ux_design_spec as a
+    from tools.audits.agent import audit_local_agent_gui_ux_design_spec as a
 
     p = tmp_path / "minimal.md"
     p.write_text("# Spec\n내용 짧음", encoding="utf-8")
@@ -199,7 +199,7 @@ def test_audit_fail_user_flow_missing(tmp_path):
 
 
 def test_audit_fail_desktop_ui_violation():
-    from scripts.ops import audit_local_agent_gui_ux_design_spec as a
+    from tools.audits.agent import audit_local_agent_gui_ux_design_spec as a
 
     v = a.judge_spec(desktop_ui_unchanged=False)
     assert v.code == "FAIL_DESKTOP_UI_SCOPE_VIOLATION"
@@ -212,13 +212,13 @@ def test_audit_fail_desktop_ui_violation():
 
 
 def test_regression_field_test_audit_unchanged():
-    from scripts.ops import audit_local_agent_user_field_test as a
+    from tools.audits.agent import audit_local_agent_user_field_test as a
 
     assert hasattr(a, "judge_field_test")
 
 
 def test_regression_gui_state_unchanged():
-    from local_agent import gui_state as gs
+    from core.agent_runtime.gui import gui_state as gs
 
     assert hasattr(gs, "GuiController")
     assert hasattr(gs, "transition")

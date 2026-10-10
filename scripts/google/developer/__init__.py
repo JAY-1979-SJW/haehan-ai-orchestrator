@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from scripts.google.android_app_dev_labels import build_android_app_dev_labels
 from scripts.google.android_app_dev_report import build_android_app_dev_report
-from scripts.google.tab_logic import build_tab_logic_catalog, classify_tab_operation, get_tab_summary
+from scripts.google.common.tab_logic import build_tab_logic_catalog, classify_tab_operation, get_tab_summary
 
 TAB_KEY = "developer"
 

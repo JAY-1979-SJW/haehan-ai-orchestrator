@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import requests
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.naver.searchad.auth import build_headers, load_credentials
 
 _log = get_logger(__name__)
@@ -33,7 +33,7 @@ def _to_int(v) -> int:
 def _fetch_batch(keywords: list[str]) -> list[dict]:
     cred = load_credentials()
     if not all([cred["customer_id"], cred["secret_key"], cred["access_license"]]):
-        raise RuntimeError("naver_searchad 자격증명이 없습니다. scripts.credentials.set_cred로 먼저 등록하세요.")
+        raise RuntimeError("naver_searchad 자격증명이 없습니다. scripts.auth.credentials.set_cred로 먼저 등록하세요.")
 
     headers = build_headers(
         method="GET",
@@ -74,3 +74,38 @@ def get_keyword_stats(keywords: list[str]) -> list[dict]:
         except Exception as e:  # noqa: BLE001 - 네이버 검색광고 키워드 무료 조회 배치(_fetch_batch) 실패를 경고 로그로 남기고 다음 배치로 계속 진행하는 읽기전용 API 호출.
             _log.warning("[searchad] 키워드 조회 실패 %s: %s", batch, e)
     return results
+
+
+def keyword_search_volume(candidates: list[tuple[str, int]], freq_key: str) -> list[dict]:
+    """(키워드, 빈도) 후보의 월간 검색량을 붙여 총검색량 내림차순으로 돌려준다(조회 안 된 키워드는 뺌).
+
+    research_blog_topics·research_blog_topics_lighting 의 _search_volume 이 빈도 열 이름
+    (cafe_freq/ohou_freq)만 다르게 똑같이 복사해 쓰던 본문을 한 곳으로 모았다.
+    후보 키워드는 공백을 뺀 값으로 조회 결과 keyword 와 맞춘다.
+    """
+    keywords = [w for w, _ in candidates]
+    stats = get_keyword_stats(keywords)
+
+    by_kw: dict[str, dict] = {}
+    for s in stats:
+        for orig in keywords:
+            if orig.replace(" ", "") == s["keyword"]:
+                by_kw[orig] = s
+
+    rows = []
+    for w, freq in candidates:
+        stat = by_kw.get(w)
+        if not stat:
+            continue
+        rows.append(
+            {
+                "keyword": w,
+                freq_key: freq,
+                "pc": stat["pc_count"],
+                "mobile": stat["mobile_count"],
+                "total_search": stat["pc_count"] + stat["mobile_count"],
+                "competition": stat["competition"],
+            }
+        )
+    rows.sort(key=lambda r: -r["total_search"])
+    return rows

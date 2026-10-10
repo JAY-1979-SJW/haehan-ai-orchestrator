@@ -7,7 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends
 
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
 from ._helpers import audit, duration_ms
 
@@ -20,7 +20,7 @@ def get_subdomain_catalog(
 ) -> dict[str, Any]:
     """등록된 Google 서브도메인 32개 카탈로그 반환."""
     t0 = time.monotonic()
-    from scripts.google.subdomain_logic import build_google_subdomain_logic_catalog
+    from scripts.google.common.subdomain_logic import build_google_subdomain_logic_catalog
 
     catalog = build_google_subdomain_logic_catalog()
     audit("GOOGLE_SUBDOMAIN_CATALOG_READ", user, status="ok", note=f"count={catalog['subdomain_count']}")
@@ -33,8 +33,8 @@ def get_google_status(
 ) -> dict[str, Any]:
     """Google 도구 전체 상태 요약."""
     t0 = time.monotonic()
-    from scripts.google.domain_taxonomy import build_google_page_tab_catalog
-    from scripts.google.subdomain_logic import build_google_subdomain_logic_catalog
+    from scripts.google.common.domain_taxonomy import build_google_page_tab_catalog
+    from scripts.google.common.subdomain_logic import build_google_subdomain_logic_catalog
 
     catalog = build_google_subdomain_logic_catalog()
     build_google_page_tab_catalog("all")

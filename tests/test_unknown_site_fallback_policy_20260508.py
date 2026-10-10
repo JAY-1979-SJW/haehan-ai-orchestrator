@@ -1,12 +1,12 @@
 """tests/test_unknown_site_fallback_policy_20260508.py"""
 
-from ai_orchestrator.local_agent.site_capability_matrix import (
+from core.agent_runtime.runtime.site_profile.site_capability_matrix import (
     GRADE_AUTO_ALLOWED,
     GRADE_BLOCKED,
     GRADE_USER_DELEGATED,
     GRADE_USER_DIRECT,
 )
-from ai_orchestrator.local_agent.unknown_site_fallback_policy import (
+from core.agent_runtime.runtime.universal.unknown_site_fallback_policy import (
     evaluate_unknown_site,
     get_action_grade_for_unknown_site,
     is_blocked_on_unknown_site,

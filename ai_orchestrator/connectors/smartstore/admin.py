@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
 from .agent_ws import get_connected_agents
 from .license import issue, list_all, revoke, verify

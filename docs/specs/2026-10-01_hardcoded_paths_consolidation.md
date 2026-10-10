@@ -16,9 +16,9 @@
 - 사이트와 무관한 공통 부분만 처리한다.
   1. **Chrome/Edge/ffmpeg 위치 탐색을 한 곳으로**: `scripts/browser_paths.py` (표준 라이브러리만). `scripts/common/` 에 두면 루트 스크립트가 가져다 쓸 때 폴더 순환(`scripts ↔ scripts/common`, common 이 이미 scripts/logger.py 를 import)이 생겨 `scripts/` 최상위에 둔다.
      - 후보 목록·순서는 기존과 동일하게 유지(Program Files → Program Files (x86) → `%LOCALAPPDATA%`; Edge 는 기존 순서).
-     - 사용처 3곳: `scripts/cdp_daemon.py`(`_find_browser`), `scripts/cdp_force_start.py`(`_find_chrome`), `scripts/local_agent/start_chrome_with_cdp.py`(`_find_chrome_exe`).
+     - 사용처 3곳: `scripts/cdp_daemon.py`(`_find_browser`), `scripts/cdp_force_start.py`(`_find_chrome`), `scripts/browser/cdp/start_chrome_with_cdp.py`(`_find_chrome_exe`).
      - `start_chrome_with_cdp.py` 는 `C:\Users\skyjw\AppData\...` 를 하드코딩해 다른 계정에서 Chrome 을 못 찾는 결함이 있다 → `%LOCALAPPDATA%` 로 바뀐다(현재 컴퓨터에서는 같은 경로).
-     - `scripts/ops/record_promo_video.py` 의 ffmpeg 경로(WinGet 패키지 폴더에 계정명·버전 하드코딩) → 환경변수 `FFMPEG_PATH` → PATH 의 `ffmpeg` → WinGet 패키지 폴더 탐색 순.
+     - `scripts/ops/record_promo_video.py/record_promo_video.py` 의 ffmpeg 경로(WinGet 패키지 폴더에 계정명·버전 하드코딩) → 환경변수 `FFMPEG_PATH` → PATH 의 `ffmpeg` → WinGet 패키지 폴더 탐색 순.
   2. **새 하드코딩 방지 게이트**: `codebase_layer_audit.py` 에 `HARDCODED_USER_PATH` 검사 추가 — `C:\Users\<이름>` 또는 `C:\work` 리터럴이 **알려진 부채 목록 밖의 파일**에 새로 생기면 경고. 기존 파일은 known debt 로 등재(STORAGE_BOUNDARY 와 같은 방식).
 - `__file__` 기준 ROOT 계산 453개 파일은 일괄 치환하지 않는다: 많은 스크립트가 `sys.path` 를 설정하기 **전에** ROOT 가 필요해서 공용 모듈 import 로 바꿀 수 없고, 변경량 대비 이득이 작다. 신규 코드는 `scripts/common/data_paths.py` / `ai_orchestrator/config.py` 를 쓰도록 규칙으로 남긴다.
 

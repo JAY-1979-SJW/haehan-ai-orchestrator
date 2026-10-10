@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator.local_agent.task_protocol import (
+from ai_orchestrator.contracts.local_task_protocol import (
     ALLOWED_TASK_ACTIONS,
     EXEC_MODE_LOCAL_PLAYWRIGHT,
     STATUS_COMPLETED,

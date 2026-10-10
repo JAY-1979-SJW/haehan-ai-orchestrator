@@ -28,8 +28,8 @@ import urllib.request
 
 from dotenv import load_dotenv
 
-from scripts.logger import get_logger
-from scripts.publish_guard import guarded
+from scripts.common.logger import get_logger
+from scripts.common.publish_guard import guarded
 
 _log = get_logger(__name__)
 
@@ -98,7 +98,7 @@ def wait_ready(container_id: str) -> None:
 def _require_publish_approval(confirmed: bool, approval: str | None, via: str) -> None:
     """실제 게시(confirmed=True)는 사용자가 직접 입력한 승인 문구가 있어야 한다. 컨테이너 생성 전에 확인한다."""
     if confirmed:
-        from scripts.gate import require_approved
+        from scripts.common.gate import require_approved
 
         require_approved("instagram_publish", approval, via=via)
 

@@ -13,7 +13,7 @@ g2b	ai_orchestrator/browser_tool/g2b_public_notice_dryrun_adapter.py	구현	기�
 g2b	ai_orchestrator/browser_tool/g2b_public_notice_execution_gate.py	구현	기반연동(T4)	scripts/g2b/g2b_public_notice_execution_gate.py	2	5
 g2b	ai_orchestrator/browser_tool/g2b_public_notice_local_live_runner.py	구현	기반연동(T4)	scripts/g2b/g2b_public_notice_local_live_runner.py	2	4
 g2b	ai_orchestrator/browser_tool/g2b_public_notice_workflow.py	구현	기반연동(T4)	scripts/g2b/g2b_public_notice_workflow.py	2	3
-g2b	scripts/local_agent/g2b/run_readonly_local_e2e.py	구현	기반연동(T4)	scripts/g2b/run_readonly_local_e2e.py	0	0
+g2b	scripts/g2b/run_readonly_local_e2e.py	구현	기반연동(T4)	scripts/g2b/run_readonly_local_e2e.py	0	0
 gabia	scripts/gabia_login_watch.py	구현	이동	scripts/gabia/login_watch.py	1	0
 gabia	scripts/ops/login_gabia_datago.py	구현	이동	scripts/gabia/ops/login_gabia_datago.py	0	0
 gabia	ai_orchestrator/connectors/gabia_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/gabia/router.py	0	0
@@ -73,22 +73,22 @@ naver_blog	ai_orchestrator/connectors/gonobi_scheduler.py	API	폴더화(API 평�
 naver_blog	ai_orchestrator/connectors/naver_blog_collectors.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_blog/collectors.py	0	0
 naver_blog	ai_orchestrator/connectors/naver_blog_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_blog/router.py	0	2
 naver_blog	ai_orchestrator/routers/blog_automation_router.py	API	폴더화(routers/ → connectors/)	ai_orchestrator/connectors/naver_blog/automation_router.py	1	1
-naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_comments.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_comments.js	-	-
-naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_images.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_images.js	-	-
-naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_neighbors.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_neighbors.js	-	-
-naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_posts.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_posts.js	-	-
-naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_posts_mobile.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_posts_mobile.js	-	-
-naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_search.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_search.js	-	-
-naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_stats.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_stats.js	-	-
-naver_blog	ai_orchestrator/local_agent/browser/_js/extract_blog_tags.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_tags.js	-	-
-naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin.py	0	0
-naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin_collect.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_collect.py	0	0
-naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin_common.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_common.py	0	0
-naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin_download.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_download.py	0	0
-naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin_neighbor.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_neighbor.py	0	0
-naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin_read.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_read.py	0	0
-naver_blog	ai_orchestrator/local_agent/browser/mixins/blog_mixin_write.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_write.py	0	0
-naver_blog	ai_orchestrator/local_agent/naver_blog_workflow.py	구현	기반연동(T4)	scripts/naver/blog/naver_blog_workflow.py	1	1
+naver_blog	scripts/browser/agent/_js/extract_blog_comments.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_comments.js	-	-
+naver_blog	scripts/browser/agent/_js/extract_blog_images.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_images.js	-	-
+naver_blog	scripts/browser/agent/_js/extract_blog_neighbors.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_neighbors.js	-	-
+naver_blog	scripts/browser/agent/_js/extract_blog_posts.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_posts.js	-	-
+naver_blog	scripts/browser/agent/_js/extract_blog_posts_mobile.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_posts_mobile.js	-	-
+naver_blog	scripts/browser/agent/_js/extract_blog_search.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_search.js	-	-
+naver_blog	scripts/browser/agent/_js/extract_blog_stats.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_stats.js	-	-
+naver_blog	scripts/browser/agent/_js/extract_blog_tags.js	구현	기반연동(T4)	scripts/naver/blog/extract_blog_tags.js	-	-
+naver_blog	scripts/naver/blog/blog_mixin.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin.py	0	0
+naver_blog	scripts/naver/blog/blog_mixin_collect.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_collect.py	0	0
+naver_blog	scripts/naver/blog/blog_mixin_common.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_common.py	0	0
+naver_blog	scripts/naver/blog/blog_mixin_download.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_download.py	0	0
+naver_blog	scripts/naver/blog/blog_mixin_neighbor.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_neighbor.py	0	0
+naver_blog	scripts/naver/blog/blog_mixin_read.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_read.py	0	0
+naver_blog	scripts/naver/blog/blog_mixin_write.py	구현	기반연동(T4)	scripts/naver/blog/blog_mixin_write.py	0	0
+naver_blog	scripts/naver/blog/naver_blog_workflow.py	구현	기반연동(T4)	scripts/naver/blog/naver_blog_workflow.py	1	1
 naver_blog	scripts/local_agent/naver/blog_explorer.py	구현	기반연동(T4)	scripts/naver/blog/blog_explorer.py	1	0
 naver_blog	scripts/local_agent/naver/blog_scraper.py	구현	기반연동(T4)	scripts/naver/blog/blog_scraper.py	1	0
 naver_blog	apps/marketing-standalone/connectors/blog_accounts.py	구현	독립앱(결정)	scripts/naver/blog/blog_accounts.py	0	0
@@ -111,16 +111,16 @@ naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/tabs/MyCafesChangesPanel.ts
 naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/tabs/MyCafesTab.tsx	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
 naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/tabs/ReportTab.tsx	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
 naver_cafe	admin-web/src/app/assistant/(legacy)/cafe/tabs/SummaryTab.tsx	화면	화면 집 이동	admin-web/src/app/naver/cafe/…	-	-
-naver_cafe	ai_orchestrator/local_agent/browser/_js/extract_cafe_posts.js	구현	기반연동(T4)	scripts/naver/cafe/extract_cafe_posts.js	-	-
-naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin.py	0	0
-naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin_activity.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_activity.py	0	0
-naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin_article.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_article.py	0	0
-naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin_common.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_common.py	0	0
-naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin_media.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_media.py	0	0
-naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin_member.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_member.py	0	0
-naver_cafe	ai_orchestrator/local_agent/browser/mixins/cafe_mixin_read.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_read.py	0	0
-naver_cafe	ai_orchestrator/local_agent/naver_cafe_workflow.py	구현	기반연동(T4)	scripts/naver/cafe/naver_cafe_workflow.py	1	1
-naver_cafe	scripts/local_agent/run_naver_cafe_to_blog_workflow.py	구현	기반연동(T4)	scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py	0	0
+naver_cafe	scripts/browser/agent/_js/extract_cafe_posts.js	구현	기반연동(T4)	scripts/naver/cafe/extract_cafe_posts.js	-	-
+naver_cafe	scripts/naver/cafe/cafe_mixin.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin.py	0	0
+naver_cafe	scripts/naver/cafe/cafe_mixin_activity.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_activity.py	0	0
+naver_cafe	scripts/naver/cafe/cafe_mixin_article.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_article.py	0	0
+naver_cafe	scripts/naver/cafe/cafe_mixin_common.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_common.py	0	0
+naver_cafe	scripts/naver/cafe/cafe_mixin_media.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_media.py	0	0
+naver_cafe	scripts/naver/cafe/cafe_mixin_member.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_member.py	0	0
+naver_cafe	scripts/naver/cafe/cafe_mixin_read.py	구현	기반연동(T4)	scripts/naver/cafe/cafe_mixin_read.py	0	0
+naver_cafe	scripts/naver/cafe/naver_cafe_workflow.py	구현	기반연동(T4)	scripts/naver/cafe/naver_cafe_workflow.py	1	1
+naver_cafe	scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py	구현	기반연동(T4)	scripts/naver/cafe/run_naver_cafe_to_blog_workflow.py	0	0
 naver_mail	scripts/naver/automation/integration/mail_automation.py	구현	이동	scripts/naver/mail/mail_automation.py	1	0
 naver_mail	scripts/naver/automation/mail_automation.py	구현	이동	scripts/naver/mail/mail_automation.py	0	0
 naver_mail	scripts/naver/mail_imap/__init__.py	구현	이동	scripts/naver/mail/imap/__init__.py	9	7
@@ -145,7 +145,7 @@ naver_mail	scripts/naver_mail/settings_panel.py	구현	이동	scripts/naver/mail
 naver_mail	ai_orchestrator/connectors/naver_mail_router.py	API	폴더화(API 평면 파일)	ai_orchestrator/connectors/naver_mail/router.py	0	0
 naver_mail	ai_orchestrator/routers/naver_mail_bulk_router.py	API	폴더화(routers/ → connectors/)	ai_orchestrator/connectors/naver_mail/bulk_router.py	1	0
 naver_mail	ai_orchestrator/routers/naver_mailbox_router.py	API	폴더화(routers/ → connectors/)	ai_orchestrator/connectors/naver_mail/mailbox_router.py	1	2
-naver_mail	ai_orchestrator/local_agent/browser/mixins/mail_mixin.py	구현	기반연동(T4)	scripts/naver/mail/mail_mixin.py	0	0
+naver_mail	scripts/naver/mail/mail_mixin.py	구현	기반연동(T4)	scripts/naver/mail/mail_mixin.py	0	0
 naver_mail	scripts/ops/audit_naver_mail_action_item_dashboard.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_action_item_dashboard.py	1	1
 naver_mail	scripts/ops/audit_naver_mail_body_pipeline_batch.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_body_pipeline_batch.py	1	1
 naver_mail	scripts/ops/audit_naver_mail_body_pipeline_v2.py	구현	일회성·감사(archive 후보)	scripts/naver/mail/ops/audit_naver_mail_body_pipeline_v2.py	1	1
@@ -221,4 +221,4 @@ youtube	apps/youtube-analyzer-standalone/core/__init__.py	구현	독립앱(결�
 youtube	apps/youtube-analyzer-standalone/core/report_builder.py	구현	독립앱(결정)	scripts/youtube/report_builder.py	0	0
 youtube	apps/youtube-analyzer-standalone/core/url_parser.py	구현	독립앱(결정)	scripts/youtube/url_parser.py	0	0
 youtube	apps/youtube-analyzer-standalone/core/viral_score.py	구현	독립앱(결정)	scripts/youtube/viral_score.py	0	0
-youtube	scripts/ops/guard_youtube_upload.py	구현	제외(.claude 훅 — 이동 금지)	(이동 안 함)	0	0
+youtube	scripts/ops/hooks/guard_youtube_upload.py	구현	제외(.claude 훅 — 이동 금지)	(이동 안 함)	0	0

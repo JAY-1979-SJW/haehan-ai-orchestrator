@@ -31,7 +31,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 from scripts.hanafax.kras_campaign_template import build_docx
 from scripts.hanafax.sender import send_fax
 

@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
+from ai_orchestrator.contracts.user_present_ws_contract import (
     MSG_USER_PRESENT_TASK,
     STATUS_CANCELLED,
     STATUS_USER_CONFIRMED,
@@ -23,12 +23,12 @@ from ai_orchestrator.browser_tool.local_agent_user_present_ws_contract import (
     validate_user_present_ws_status_event,
     validate_user_present_ws_task_message,
 )
-from local_agent.user_present_state_store import (
+from core.agent_runtime.user_present.user_present_state_store import (
     STATE_BLOCKED,
     STATE_WAITING_FOR_USER,
     UserPresentStateStore,
 )
-from local_agent.user_present_ws_adapter import (
+from core.agent_runtime.user_present.user_present_ws_adapter import (
     create_local_user_present_task_from_ws,
     mark_local_user_cancelled_and_build_event,
     mark_local_user_confirmed_and_build_event,
@@ -374,7 +374,7 @@ class TestInMemoryTransport:
 
 class TestCompatibility:
     def test_compatible_with_dispatch_dryrun(self):
-        from ai_orchestrator.browser_tool.browser_engine_routing_dispatch_dryrun import (
+        from ai_orchestrator.browser_tool.routing.browser_engine_routing_dispatch_dryrun import (
             DISPATCH_LOCAL_SYSTEM_BROWSER_USER_PRESENT_REQUIRED,
             evaluate_browser_engine_routing_dispatch_dryrun,
         )
@@ -413,7 +413,7 @@ class TestCompatibility:
         assert task["state"] == STATE_WAITING_FOR_USER
 
     def test_ws_schema_no_conflict_with_browser_websocket_schema(self):
-        from local_agent.browser_websocket_schema import VALID_TASK_STATUS
+        from core.agent_runtime.browser.bridge.browser_websocket_schema import VALID_TASK_STATUS
 
         # browser_websocket_schema의 task status와 user_present status는 별개 enum
         assert "USER_CONFIRMED" not in VALID_TASK_STATUS
@@ -441,7 +441,7 @@ class TestSecurityPrinciples:
     def test_no_real_websocket_in_contract_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_ws_contract as mod
+        import ai_orchestrator.contracts.user_present_ws_contract as mod
 
         src = inspect.getsource(mod)
         assert "websockets.connect" not in src
@@ -451,7 +451,7 @@ class TestSecurityPrinciples:
     def test_no_real_websocket_in_adapter_source(self):
         import inspect
 
-        import local_agent.user_present_ws_adapter as mod
+        import core.agent_runtime.user_present.user_present_ws_adapter as mod
 
         src = inspect.getsource(mod)
         assert "websockets.connect" not in src
@@ -460,7 +460,7 @@ class TestSecurityPrinciples:
     def test_no_db_write_in_contract_source(self):
         import inspect
 
-        import ai_orchestrator.browser_tool.local_agent_user_present_ws_contract as mod
+        import ai_orchestrator.contracts.user_present_ws_contract as mod
 
         src = inspect.getsource(mod)
         assert "INSERT INTO" not in src
@@ -469,7 +469,7 @@ class TestSecurityPrinciples:
     def test_no_browser_action_in_adapter_source(self):
         import inspect
 
-        import local_agent.user_present_ws_adapter as mod
+        import core.agent_runtime.user_present.user_present_ws_adapter as mod
 
         src = inspect.getsource(mod)
         forbidden = ["page.click(", "page.fill(", "page.goto(", "page.type("]
@@ -479,7 +479,7 @@ class TestSecurityPrinciples:
     def test_no_task_executor_in_adapter_source(self):
         import inspect
 
-        import local_agent.user_present_ws_adapter as mod
+        import core.agent_runtime.user_present.user_present_ws_adapter as mod
 
         src = inspect.getsource(mod)
         assert "TaskExecutor(" not in src

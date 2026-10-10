@@ -12,7 +12,7 @@
 | `core/content_rules.py` | 완전 독립 (seo_check, split_body) |
 | `core/topic_dedup.py` | 완전 독립 (발행 이력 캐시) |
 | `connectors/blog_images.py` | 완전 독립 (Unsplash) |
-| `connectors/blog_accounts.py` | 완전 독립 — **단, 값은 전부 템플릿**. 실제 회사 계정 정보 없음 |
+| `core/blog_accounts.py` | 완전 독립 — **단, 값은 전부 템플릿**. 실제 회사 계정 정보 없음 |
 | `connectors/cdp_helper.py` | 완전 독립 |
 | `connectors/instagram_graph_api.py` | 완전 독립 (Graph API) |
 | `connectors/naver_blog_cdp.py` | ⚠️ **Phase 1b 대상 — 원본 저장소에 브리지됨** |
@@ -21,7 +21,7 @@
 ## 남은 작업 (Phase 1b — 별도 승인 후)
 
 `connectors/naver_blog_cdp.py`가 아직 `scripts.naver.blog.core.writer`
-(에디터 DOM 조작, 1,348줄), `scripts.naver.auth`(599줄), `scripts.credentials`
+(에디터 DOM 조작, 1,348줄), `scripts.naver.common.auth`(599줄), `scripts.auth.credentials`
 (356줄)를 원본 저장소에서 그대로 import한다. 총 2,300줄 넘는 셀렉터
 코드라 이번 작업에서 검증 없이 통째로 복사하지 않았다. 실제 배포
 전에는 이 세 파일도 포팅하고, 반드시 라이브 발행 1건으로 검증해야 한다.

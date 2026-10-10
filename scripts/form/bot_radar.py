@@ -29,7 +29,7 @@ import contextlib
 import re
 from typing import Any
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 

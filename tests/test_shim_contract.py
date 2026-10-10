@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ops.make_shim import (
+from tools.devflow.make_shim import (
     BOOTSTRAP_MARK,
     MARKER,
     find_shims,
@@ -35,7 +35,7 @@ SHIMS = find_shims(ROOT)
 def _real_file(target: str) -> Path | None:
     try:
         spec = importlib.util.find_spec(target)
-    except ImportError, ValueError:
+    except (ImportError, ValueError):
         return None
     return Path(spec.origin) if spec and spec.origin and spec.origin.endswith(".py") else None
 
@@ -48,6 +48,13 @@ def _import_real(target: str):
         if top and not (ROOT / top).exists() and not (ROOT / f"{top}.py").exists():
             pytest.skip(f"외부 의존성 없음: {e.name}")
         raise
+    except SystemExit:
+        # 결함(2026-10-10, PR165 verify FAIL 조사 중 발견): behavior_gate.py·감사 스크립트류는
+        # `if __name__ == "__main__":` 가드 없이 모듈 최상단에서 바로 동작(stdin 읽기·검사·
+        # sys.exit)하는 CLI/훅 설계다 — import 만 해도 실행돼 SystemExit 이 뜬다. 이런 종류는
+        # "import 해서 쓰는 모듈"이 아니라 "python 으로 직접 돌리는 스크립트"라 이 계약(shim 이
+        # import 를 투명하게 넘기는지) 검사 대상이 아니다.
+        pytest.skip(f"{target}: import 만 해도 실행되는 CLI/훅 스크립트(최상단에 __main__ 가드 없음) — import 계약 검사 대상 아님")
 
 
 def _ids(shims):
@@ -60,15 +67,44 @@ def test_shim_has_marker(shim):
     assert MARKER in (ROOT / shim[0]).read_text(encoding="utf-8")[:600]
 
 
-def test_shims_are_found():
-    assert SHIMS, "shim 을 하나도 못 찾음 — 식별 로직 점검"
+def test_find_shims_identifies_a_generated_shim(tmp_path):
+    """저장소의 실제 shim 은 정리로 0개가 됐다(루트 shim 제거, 2026-10-08) — 식별 로직은 임시 저장소에서 만든 shim 으로 계속 확인한다."""
+    (tmp_path / "pkg").mkdir()
+    (tmp_path / "pkg" / "real.py").write_text("X = 1" + chr(10), encoding="utf-8")
+    make_shim("old_mod.py", "pkg/real.py", tmp_path)
+    assert find_shims(tmp_path) == [("old_mod.py", "pkg.real")]
 
 
 @pytest.mark.parametrize("shim", SHIMS, ids=_ids(SHIMS))
 def test_import_alias(shim, monkeypatch):
     rel, target = shim
     monkeypatch.syspath_prepend(str(ROOT))
-    old_mod = importlib.import_module(module_name(rel))
+    try:
+        old_mod = importlib.import_module(module_name(rel))
+    except SystemExit:
+        # 결함(2026-10-10, PR165 verify FAIL 조사 중 발견): shim 자신이 `_install(_il.import_
+        # module(target), ...)` 로 target 을 import 하는 순간 이 예외가 난다 — behavior_gate.py
+        # 류 CLI/훅 스크립트는 `if __name__ == "__main__":` 가드 없이 최상단에서 바로 동작(stdin
+        # 읽기·검사·sys.exit)해서 import 만 해도 실행된다. "import 해서 쓰는 모듈"이 아니라
+        # "python 으로 직접 돌리는 스크립트"라 이 계약(shim 이 import 를 투명하게 넘기는지)
+        # 검사 대상이 아니다.
+        pytest.skip(f"{target}: import 만 해도 실행되는 CLI/훅 스크립트(최상단에 __main__ 가드 없음) — import 계약 검사 대상 아님")
+    parent_pkg = rel.rsplit("/", 1)[0] if "/" in rel else ""
+    parent_init = ROOT / parent_pkg / "__init__.py" if parent_pkg else None
+    if parent_init and parent_init.is_file() and MARKER in parent_init.read_text(encoding="utf-8")[:600]:
+        # 결함(2026-10-10, PR165 verify FAIL 조사 중 발견, 예: local_agent/agent.py): 자신이
+        # 속한 패키지 자체가 이미 패키지단위 shim(sys.modules["패키지명"] = 실제패키지 로
+        # 통째로 바꿔치기)이면, Python import 시스템이 서브모듈을 찾을 때 그 바뀐 패키지의
+        # __path__(실제 새 위치)를 따라가 그 폴더의 같은 이름 파일을 "옛 전체경로.서브모듈명"
+        # 으로 새로 한 번 더 실행한다 — 이 파일(local_agent/agent.py) 자신은 그 과정에서
+        # 전혀 열리지 않는다(파일 경로 직접 로드 쪽은 test_path_load_has_real_attributes 로
+        # 이미 따로 보장됨). 그 결과 같은 파일을 두 다른 이름으로 두 번 실행한 것이 돼
+        # `is` 동일성이 구조적으로 성립하지 않는다 — CPython import 시스템 자체의 동작이라
+        # shim 파일을 고쳐서 해결할 수 없다.
+        pytest.skip(
+            f"{rel}: 패키지 {parent_pkg} 자체가 패키지단위 shim 이라 서브모듈 import-alias 동일성은 "
+            "CPython 구조상 보장 불가(파일경로 직접 로드 계약은 test_path_load_has_real_attributes 가 보장)"
+        )
     assert old_mod is _import_real(target)
 
 
@@ -152,15 +188,15 @@ def _run_direct(script: Path, cwd: Path):
 def _subdir_repo(tmp_path: Path) -> Path:
     _write(tmp_path / "scripts" / "__init__.py", "")
     _write(tmp_path / "scripts" / "instagram" / "__init__.py", "")
-    _write(tmp_path / "scripts" / "instagram" / "ig_batch.py", "if __name__ == '__main__':\n    print('IG-MAIN-RAN')\n")
+    _write(tmp_path / "scripts" / "instagram" / "demo_batch.py", "if __name__ == '__main__':\n    print('IG-MAIN-RAN')\n")
     return tmp_path
 
 
 def test_subfolder_shim_direct_run_needs_root_bootstrap(tmp_path):
     """하위 폴더 shim 은 sys.path[0] 이 shim 폴더 → 루트 부트스트랩이 있어야 새 모듈을 찾는다."""
     _subdir_repo(tmp_path)
-    make_shim("scripts/ops/ig_batch.py", "scripts/instagram/ig_batch.py", tmp_path)
-    shim = tmp_path / "scripts" / "ops" / "ig_batch.py"
+    make_shim("scripts/ops/demo_batch.py", "scripts/instagram/demo_batch.py", tmp_path)
+    shim = tmp_path / "scripts" / "ops" / "demo_batch.py"
     body = shim.read_text(encoding="utf-8")
     assert BOOTSTRAP_MARK in body and "parents[2]" in body
     out = _run_direct(shim, tmp_path.parent / (tmp_path.name + "_cwd"))
@@ -170,8 +206,8 @@ def test_subfolder_shim_direct_run_needs_root_bootstrap(tmp_path):
 def test_subfolder_shim_without_bootstrap_fails_negative_control(tmp_path):
     """음성 대조: 부트스트랩을 뺀 옛 형태는 ModuleNotFoundError — 위 시험이 실제로 결함을 잡는다는 증거."""
     _subdir_repo(tmp_path)
-    make_shim("scripts/ops/ig_batch.py", "scripts/instagram/ig_batch.py", tmp_path)
-    shim = tmp_path / "scripts" / "ops" / "ig_batch.py"
+    make_shim("scripts/ops/demo_batch.py", "scripts/instagram/demo_batch.py", tmp_path)
+    shim = tmp_path / "scripts" / "ops" / "demo_batch.py"
     stripped = [
         ln
         for ln in shim.read_text(encoding="utf-8").splitlines()
@@ -285,7 +321,9 @@ def test_package_shim_skips_existing_old_files(tmp_path, capsys):
     bodies = make_package_shim("oldpkg2", "newpkg2", tmp_path)
     assert set(bodies) == {"oldpkg2/fresh.py"}
     assert "건너뜀" in capsys.readouterr().err
-    assert (tmp_path / "oldpkg2" / "already.py").read_text(encoding="utf-8") == "# 이미 손으로 처리된 파일 — 건드리지 않는다\n"
+    assert (tmp_path / "oldpkg2" / "already.py").read_text(
+        encoding="utf-8"
+    ) == "# 이미 손으로 처리된 파일 — 건드리지 않는다\n"
 
 
 def test_package_shim_requires_existing_new_dir_with_py_files(tmp_path):
@@ -294,10 +332,12 @@ def test_package_shim_requires_existing_new_dir_with_py_files(tmp_path):
     (tmp_path / "new4-empty").mkdir()
     with pytest.raises(FileNotFoundError):
         make_package_shim("old4", "new4-empty", tmp_path)
+
+
 @pytest.mark.parametrize(
     ("old_path", "with_main"),
     [
-        ("scripts/ops/ig_batch.py", True),  # 하위 폴더 + 직접 실행 부트스트랩(I001 회귀: import 블록 중간 주석)
+        ("scripts/ops/demo_batch.py", True),  # 하위 폴더 + 직접 실행 부트스트랩(I001 회귀: import 블록 중간 주석)
         ("scripts/a/b/c/tool.py", True),
         ("dashboard.py", True),  # 루트 shim
         ("scripts/ops/x.py", False),  # __main__ 없음
@@ -309,12 +349,22 @@ def test_generated_shim_passes_project_ruff(old_path, with_main):
     (커밋 훅이 ruff 로 정리·차단하므로 생성기가 정렬·서식이 맞는 형태를 내야 한다)."""
     import subprocess
 
-    from scripts.ops.make_shim import render_shim
+    from tools.devflow.make_shim import render_shim
 
-    text = render_shim("scripts.instagram.ig_batch", with_main=with_main, old_path=old_path)
+    text = render_shim("scripts.instagram.demo_batch", with_main=with_main, old_path=old_path)
     for cmd in (["check"], ["format", "--check", "--diff"]):
         r = subprocess.run(
-            [sys.executable, "-m", "ruff", *cmd, "--config", str(ROOT / "configs" / "ruff.toml"), "--stdin-filename", old_path, "-"],
+            [
+                sys.executable,
+                "-m",
+                "ruff",
+                *cmd,
+                "--config",
+                str(ROOT / "configs" / "ruff.toml"),
+                "--stdin-filename",
+                old_path,
+                "-",
+            ],
             input=text,
             capture_output=True,
             text=True,

@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from scripts.site_engine.action_planner import ActionPlan, ActionPlanStatus
-from scripts.site_engine.types import GateDecision
+from scripts.site_engine.site_types import GateDecision
 from scripts.site_engine.workflow_runner import WorkflowRunPlan
 
 _SENSITIVE_PATTERNS = frozenset(
@@ -142,3 +142,15 @@ def validate_action_plan_steps(plan: ActionPlan) -> ValidationResult:
             )
 
     return ValidationResult(is_valid=len(issues) == 0, issues=issues)
+
+
+def validate_action_plan_safety(plan: ActionPlan) -> ValidationResult:
+    """도구별 action plan 공용 검증 — steps·차단 단계 실행 불가·민감 단계 게이트 3종의 issue 를 합친다.
+
+    gabia/google/hiworks/youtube validators 의 validate_<tool>_action_plan 이 똑같이 복사해 쓰던 본문을 한 곳으로 모았다.
+    """
+    r1 = validate_action_plan_steps(plan)
+    r2 = validate_no_blocked_step_executable(plan)
+    r3 = validate_no_executable_sensitive_step_without_gate(plan)
+    issues = r1.issues + r2.issues + r3.issues
+    return ValidationResult(is_valid=not issues, issues=issues)

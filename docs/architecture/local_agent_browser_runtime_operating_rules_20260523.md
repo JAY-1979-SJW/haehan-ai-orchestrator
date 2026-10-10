@@ -80,7 +80,7 @@ routine refactor.
 Before changing local-agent browser runtime behavior, run:
 
 ```text
-python scripts/ops/dry_run_local_agent_cdp_attach.py
+python tools/verify/dry_run_local_agent_cdp_attach.py
 python -m pytest tests/test_local_agent_browser_runtime_operating_rules.py tests/test_local_agent_cdp_attach.py tests/test_dry_run_local_agent_cdp_attach.py -q
 ```
 

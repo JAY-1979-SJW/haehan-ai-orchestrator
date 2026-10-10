@@ -17,7 +17,7 @@ from __future__ import annotations
 import os
 
 from scripts.form.discovery import discover_form, FormDiscovery, FormField
-from scripts.form.profile import (
+from scripts.form.personal_profile import (
     get_profile, set_profile, get_value, set_override, delete_field, list_fields,
 )
 from scripts.form.events import (

@@ -147,7 +147,7 @@ def refresh_session_status():
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
     try:
-        from scripts.ops.session_probe import probe_all
+        from tools.runtime.session_probe import probe_all
 
         data = probe_all()
     except Exception as exc:  # noqa: BLE001 - 세션 상태 조회 라우터 -- 읽기 전용, 파일 파싱 실패는 None, 프로버 실패는 마지막 저장 결과 파일로 폴백

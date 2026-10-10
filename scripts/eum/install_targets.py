@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 from scripts.eum.menu_actions import open_menu_page
 from scripts.eum.sales_mail import DEFAULT_SOURCE, load_new_site_projects
 

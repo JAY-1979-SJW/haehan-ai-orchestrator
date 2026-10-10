@@ -1,6 +1,6 @@
 """tests/test_security_program_install_completion_detector_20260508.py"""
 
-from ai_orchestrator.local_agent.security_program_install_completion_detector import (
+from core.agent_runtime.runtime.security_program.security_program_install_completion_detector import (
     DETECTION_HEADLESS_REQUIRES_HEADED,
     DETECTION_INSTALL_COMPLETED,
     DETECTION_INSTALL_NOT_DETECTED,

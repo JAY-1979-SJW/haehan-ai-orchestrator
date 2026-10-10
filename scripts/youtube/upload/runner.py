@@ -1,9 +1,12 @@
 """YouTube Studio 업로드 — 단일 CDP 연결 유지, 단계별 실행."""
-import sys, time, threading
+import sys
+import threading
+import time
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
-from scripts.cdp_helper import CDP
-from scripts.app_paths import resolve_external, sibling_project
+from scripts.browser.cdp.cdp_helper import CDP
+from scripts.common.app_paths import resolve_external, sibling_project
 
 VIDEO = str(
     resolve_external(
@@ -13,12 +16,14 @@ VIDEO = str(
 TITLE = "bumper_v"
 PRIVACY = "PUBLIC"  # PUBLIC / PRIVATE / UNLISTED
 
-STEP = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-
-import atexit
-cdp = CDP()
-atexit.register(cdp.close)  # 어떤 종료 방식이든 반드시 연결 닫기
-time.sleep(0.5)
+cdp = None  # main() 에서 생성 — import 만으로 CDP 브라우저 연결이 생기지 않게 한다
+# (2026-10-10, IMPORT_TIME_SIDE_EFFECTS.md 조사 중 발견: 예전엔 모듈 최상단에서 바로
+# CDP() 를 만들고 atexit.register 까지 했다 — 이 파일을 import 만 해도 실제 브라우저
+# 연결·종료시 close 등록이 실행됨. __main__ 가드 없이도 이 레포 안에서 import 하는
+# 코드가 없어 지금까지 재발은 안 했지만, 같은 안티패턴이라 다른 건과 함께 고친다.
+# 같은 이유로 `STEP = int(sys.argv[1])`(모듈 최상단에서 CLI 인자 읽기 — pytest 등 다른
+# 실행 맥락에서 sys.argv[1]이 숫자가 아니면 import 자체가 ValueError 로 깨짐)도 main()
+# 안으로 옮긴다.
 
 
 # ── STEP 1 ────────────────────────────────────────────────────────────────────
@@ -174,13 +179,26 @@ def step5():
 # ── 실행 ─────────────────────────────────────────────────────────────────────
 steps = {1: step1, 2: step2, 3: step3, 4: step4, 5: step5}
 
-try:
-    for n in range(1, STEP + 1):
-        ok = steps[n]()
-        if not ok:
-            print(f"\n❌ STEP {n} 실패 — 중단")
-            break
-        if n < STEP:
-            time.sleep(1)
-finally:
-    cdp.close()
+
+def main() -> None:
+    global cdp
+    import atexit
+
+    step = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    cdp = CDP()
+    atexit.register(cdp.close)  # 어떤 종료 방식이든 반드시 연결 닫기
+    time.sleep(0.5)
+    try:
+        for n in range(1, step + 1):
+            ok = steps[n]()
+            if not ok:
+                print(f"\n❌ STEP {n} 실패 — 중단")
+                break
+            if n < step:
+                time.sleep(1)
+    finally:
+        cdp.close()
+
+
+if __name__ == "__main__":
+    main()

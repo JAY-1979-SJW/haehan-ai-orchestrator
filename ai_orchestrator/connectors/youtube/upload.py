@@ -11,17 +11,29 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from ai_orchestrator.gates.auth import require_role
+from ai_orchestrator.paths.runtime import data_dir, storage_dir
 from scripts.youtube import uploader as _uploader
+from tools.gates.auth import require_role
 
 from ._helpers import audit
 
 router = APIRouter()
 
-_TOKEN_FILE = os.getenv(
-    "YOUTUBE_OAUTH_TOKEN_FILE",
-    "ai_orchestrator/storage/secrets/youtube_oauth_authorized_user.json",
-)
+_TOKEN_NAME = "youtube_oauth_authorized_user.json"  # noqa: S105 - 파일 이름이지 비밀 값이 아니다
+
+
+def _default_token_file() -> str:
+    """OAuth 토큰 기본 위치 — 예전 기본값은 cwd 상대 문자열이라 데스크톱(포터블은 실행마다 TEMP 에 풀림)에서는 번들 안을 가리켰다.
+    storage_dir()/secrets(서버 볼륨·데스크톱 userData/storage 와 같은 위치)를 기본으로 하되, scripts.youtube.oauth 가 쓰는
+    data_dir()/secrets 에 이미 토큰이 있으면 그쪽을 쓴다. 예전 위치의 파일은 paths.migrate/legacy_import 가 새 위치로 복사한다."""
+    primary = storage_dir() / "secrets" / _TOKEN_NAME
+    if primary.exists():
+        return str(primary)
+    alt = data_dir() / "secrets" / _TOKEN_NAME
+    return str(alt if alt.exists() else primary)
+
+
+_TOKEN_FILE = os.getenv("YOUTUBE_OAUTH_TOKEN_FILE") or _default_token_file()
 
 
 class ExecuteRequest(BaseModel):

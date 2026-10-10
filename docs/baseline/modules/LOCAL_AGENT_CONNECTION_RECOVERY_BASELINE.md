@@ -106,15 +106,15 @@ python verify_live_task_dispatch.py --server https://haehan-ai.kr/orchestrator -
 Baseline verification:
 
 ```text
-python scripts/ops/audit_local_agent_connection_recovery_baseline.py
+python tools/audits/agent/audit_local_agent_connection_recovery_baseline.py
 python -m pytest tests/test_local_agent_connection_recovery_baseline.py -q
 ```
 
 Module verification:
 
 ```text
-python scripts/module_quality_gate.py --module local_agent_connection_recovery
-python scripts/required_quality_gate.py
+python tools/quality/module_quality_gate.py --module local_agent_connection_recovery
+python tools/quality/required_quality_gate.py
 ```
 
 ## 8. Known WARN

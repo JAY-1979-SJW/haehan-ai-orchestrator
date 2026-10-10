@@ -15,17 +15,21 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from ai_orchestrator.paths.runtime import data_dir
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
+from scripts.common.sqlite_helpers import execute_one_change, init_sqlite_schema
 
 _log = get_logger(__name__)
 ROOT = Path(__file__).resolve().parents[4]
-DB_PATH = ROOT / "data" / "cdp.db"
+DB_PATH = data_dir() / "cdp.db"
 
 
 def _init_db():
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.execute("""
+    init_sqlite_schema(
+        DB_PATH,
+        (
+            """
         CREATE TABLE IF NOT EXISTS blog_schedule (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             scheduled_at TEXT NOT NULL,
@@ -39,10 +43,10 @@ def _init_db():
             published_at TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
-    """)
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_blogsch_at ON blog_schedule(scheduled_at)")
-    conn.commit()
-    conn.close()
+    """,
+            "CREATE INDEX IF NOT EXISTS idx_blogsch_at ON blog_schedule(scheduled_at)",
+        ),
+    )
 
 
 class BlogSchedule:
@@ -108,7 +112,7 @@ class BlogSchedule:
         """예약 시간 도래한 글 자동 발행. approval 은 사용자가 직접 입력한 승인 문구(없으면 GateBlocked)."""
         import json
 
-        from scripts.gate import require_approved
+        from scripts.common.gate import require_approved
 
         require_approved("blog_publish", approval, via="blog_schedule_process_due")
 
@@ -164,11 +168,4 @@ class BlogSchedule:
         return {"ok": True, "processed": len(results), "results": results}
 
     def cancel(self, schedule_id: int) -> dict:
-        conn = sqlite3.connect(str(DB_PATH))
-        cur = conn.execute(
-            "UPDATE blog_schedule SET status = 'cancelled' WHERE id = ?",
-            (schedule_id,),
-        )
-        conn.commit()
-        conn.close()
-        return {"ok": cur.rowcount > 0}
+        return execute_one_change(DB_PATH, "UPDATE blog_schedule SET status = 'cancelled' WHERE id = ?", (schedule_id,))

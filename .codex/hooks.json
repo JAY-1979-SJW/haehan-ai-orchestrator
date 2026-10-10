@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\prewrite_capability_check.py\"",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\tools\\hooks\\prewrite_capability_check.py\"",
             "statusMessage": "기존 구현 조회 중 (capability-gate)..."
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','log_code_change.py')],stdin=sys.stdin).returncode)\""
+            "command": "python -c \"import subprocess,sys,os;r=subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip();sys.exit(subprocess.run([sys.executable,os.path.join(r,'scripts','ops','quality','log_code_change.py')],stdin=sys.stdin).returncode)\""
           }
         ]
       }
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\install_git_hooks.py\"",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\tools\\hooks\\install_git_hooks.py\"",
             "statusMessage": "git hook 설치 중 (ruff + AI 검수)..."
           }
         ]
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\scripts\\ops\\behavior_gate.py\"",
+            "command": "python \"C:\\work\\01. haehan-ai-orchestrator\\tools\\hooks\\behavior_gate.py\"",
             "statusMessage": "행동 게이트 검사 중..."
           }
         ]

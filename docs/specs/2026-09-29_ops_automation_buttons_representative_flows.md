@@ -119,7 +119,7 @@ UI는 2026-09-23 정리 때 삭제됨(`docs/deleted_code_index.md`). 즉 "비활
         │    "max_budget_usd": <도메인별 상한>
         │ }}
         ▼
-[local_agent/agent.py] (기존, 신규 코드 없음) → claude -p 헤드리스 실행
+[core/agent_runtime/agent.py] (기존, 신규 코드 없음) → claude -p 헤드리스 실행
         │
         ▼
 [Claude가 Bash/MCP로 §2의 기존 API·CLI를 직접 호출]

@@ -30,10 +30,10 @@ def _isolated_storage(tmp_path, monkeypatch):
     # auth/local_agent_router 를 reload 하지 않는다: reload 하면 get_current_user 가 시험마다 새 객체가 되는데
     # 하위 라우터는 처음 import 된 옛 객체에 묶여 있어 dependency_overrides 가 두 번째 시험부터 안 먹혀
     # 파일 전체 실행 시 등록이 401 이 되고 KeyError: 'agent_id' 가 난다(단독 실행만 통과, 2026-10-04 확인).
-    import ai_orchestrator.audit_logger as _al
-    import ai_orchestrator.gates.approval as _ap
-    import ai_orchestrator.local_agent_registry as _reg
-    import ai_orchestrator.local_agent_registry_common as _reg_common
+    import ai_orchestrator.agent_hub.registry.common as _reg_common
+    import ai_orchestrator.agent_hub.registry.facade as _reg
+    import ai_orchestrator.audit.audit_logger as _al
+    import tools.gates.approval as _ap
 
     monkeypatch.setattr(_al, "_LOG_PATH", tmp_path / "audit.jsonl")
     monkeypatch.setattr(_ap, "_STORE_PATH", tmp_path / "approval_tokens.jsonl")
@@ -61,8 +61,8 @@ def _make_test_client(user_override: dict):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from ai_orchestrator.gates.auth import get_current_user
-    from ai_orchestrator.local_agent_router import local_agent_router
+    from ai_orchestrator.agent_hub.router.root import local_agent_router
+    from tools.gates.auth import get_current_user
 
     app = FastAPI()
     app.include_router(local_agent_router, prefix="/api/v1")
@@ -322,7 +322,7 @@ def test_client_process_task_open_url_scheme_guard(monkeypatch):
 
     monkeypatch.setattr(webbrowser, "open", fake_open)
 
-    from local_agent.websocket_client import process_task
+    from core.agent_runtime.connection.websocket_client import process_task
 
     # 기본값: dry_run=true (명시적으로 지정하지 않음)
     result = process_task(
@@ -369,7 +369,7 @@ def test_client_process_task_open_url_scheme_guard(monkeypatch):
     ],
 )
 def test_client_process_task_forbidden_action(action):
-    from local_agent.websocket_client import process_task
+    from core.agent_runtime.connection.websocket_client import process_task
 
     r = process_task(
         {
@@ -384,7 +384,7 @@ def test_client_process_task_forbidden_action(action):
 
 
 def test_client_process_task_unknown_auto_exec_action():
-    from local_agent.websocket_client import process_task
+    from core.agent_runtime.connection.websocket_client import process_task
 
     r = process_task(
         {
@@ -435,7 +435,7 @@ def test_ws_high_risk_task_not_delivered(admin_user):
 
 
 def test_client_process_task_high_risk_returns_not_implemented_stage2():
-    from local_agent.websocket_client import process_task
+    from core.agent_runtime.connection.websocket_client import process_task
 
     r = process_task(
         {
@@ -453,7 +453,7 @@ def test_client_process_task_high_risk_returns_not_implemented_stage2():
 
 
 def test_ws_device_token_never_in_audit_log(admin_user):
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -475,7 +475,7 @@ def test_ws_device_token_never_in_audit_log(admin_user):
 
 
 def test_ws_connected_and_disconnected_audit_events(admin_user):
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -490,7 +490,7 @@ def test_ws_connected_and_disconnected_audit_events(admin_user):
 
 
 def test_ws_auth_failure_audit_event(admin_user):
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     client = _make_test_client(admin_user)
     agent_id, _ = _register(client)
@@ -511,8 +511,8 @@ def test_ws_auth_failure_audit_event(admin_user):
 
 def test_server_and_client_auto_exec_sets_match():
     """서버와 클라이언트의 AUTO_EXECUTE_VIA_AGENT 집합은 동일해야 한다."""
-    from ai_orchestrator.local_agent_registry import AUTO_EXECUTE_VIA_AGENT as _S
-    from local_agent.websocket_client import _AUTO_EXECUTE_VIA_AGENT as _C
+    from ai_orchestrator.agent_hub.registry.facade import AUTO_EXECUTE_VIA_AGENT as _S
+    from core.agent_runtime.connection.websocket_client import _AUTO_EXECUTE_VIA_AGENT as _C
 
     assert set(_S) == set(_C)
 
@@ -522,7 +522,7 @@ def test_server_and_client_auto_exec_sets_match():
 
 def test_agent_registered_at_set_on_registration():
     """agent 등록 시 registered_at이 설정되어야 한다."""
-    from ai_orchestrator.local_agent_registry import list_agents, register_agent
+    from ai_orchestrator.agent_hub.registry.facade import list_agents, register_agent
 
     list_agents()
     result = register_agent(host="mon-test", os_name="Windows", version="0.1", requested_by="test")
@@ -712,7 +712,7 @@ def test_delivered_timeout_via_registry(admin_user):
     """delivered 상태 task가 DELIVERED_TIMEOUT_SECONDS 초과 시 failed로 전환된다."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -740,7 +740,7 @@ def test_delivered_timeout_failure_reason(admin_user):
     """delivered timeout 후 failure_reason = delivered_timeout."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -762,7 +762,7 @@ def test_running_timeout_via_registry(admin_user):
     """running 상태 task가 RUNNING_TIMEOUT_SECONDS 초과 시 failed로 전환된다."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -791,7 +791,7 @@ def test_running_timeout_failure_reason(admin_user):
     """running timeout 후 failure_reason = running_timeout."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -816,7 +816,7 @@ def test_completed_failed_not_expired(admin_user):
     """completed / failed task는 expire_stale_tasks로 변경되지 않는다."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -869,11 +869,11 @@ def test_ws_idle_timeout_triggers_expire_and_audit(admin_user, monkeypatch):
     """WS idle 처리 시 expire_stale_tasks가 호출되고 timeout audit이 기록된다."""
     from datetime import datetime, timedelta
 
-    import ai_orchestrator.audit_logger as _al
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     # 수신 timeout 상수는 WS 엔드포인트를 분리한 local_agent_router_ws 모듈이 소유한다(결함 #111)
-    import ai_orchestrator.local_agent_router_ws as _lar
+    import ai_orchestrator.agent_hub.router.ws as _lar
+    import ai_orchestrator.audit.audit_logger as _al
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -913,7 +913,7 @@ def test_ws_idle_timeout_triggers_expire_and_audit(admin_user, monkeypatch):
 
 def test_delivered_task_requeued_on_first_disconnect(admin_user):
     """delivered 상태 task는 첫 WS disconnect 후 재큐잉(queued, retry_count=1)된다."""
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -934,7 +934,7 @@ def test_delivered_task_requeued_on_first_disconnect(admin_user):
 
 def test_running_task_failed_on_disconnect_not_requeued(admin_user):
     """running 상태 task는 이미 실행됐을 수 있어 disconnect 시 재큐잉 없이 failed 된다."""
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -957,7 +957,7 @@ def test_running_task_failed_on_disconnect_not_requeued(admin_user):
 
 def test_requeued_task_redelivered_on_reconnect(admin_user):
     """재큐잉된 task는 같은 agent가 재연결하면 자동으로 다시 delivered 된다."""
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -985,8 +985,8 @@ def test_requeued_task_redelivered_on_reconnect(admin_user):
 
 def test_disconnect_fails_after_retries_exhausted(admin_user):
     """MAX_WS_DISCONNECT_RETRIES 만큼 재큐잉 후 또 disconnect되면 최종 failed가 된다."""
-    import ai_orchestrator.local_agent_registry as _reg
-    from ai_orchestrator.local_agent_registry_common import MAX_WS_DISCONNECT_RETRIES
+    import ai_orchestrator.agent_hub.registry.facade as _reg
+    from ai_orchestrator.agent_hub.registry.common import MAX_WS_DISCONNECT_RETRIES
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -1009,7 +1009,7 @@ def test_disconnect_fails_after_retries_exhausted(admin_user):
 
 def test_queued_task_unchanged_on_disconnect(admin_user):
     """queued 상태 task는 disconnect 후 그대로 queued이다."""
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     # agent A로 auth 후 disconnect → queued task가 남아야 함
@@ -1028,7 +1028,7 @@ def test_queued_task_unchanged_on_disconnect(admin_user):
 
 def test_completed_task_unchanged_on_disconnect(admin_user):
     """completed 상태 task는 disconnect 후 그대로 completed이다."""
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -1059,7 +1059,7 @@ def test_completed_task_unchanged_on_disconnect(admin_user):
 
 def test_failed_task_unchanged_on_disconnect(admin_user):
     """already-failed task는 disconnect 후 그대로 failed이다 (failure_reason 불변)."""
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -1093,7 +1093,7 @@ def test_disconnect_audit_task_requeued_event(admin_user):
     도입 후 첫 disconnect는 REQUEUED로 기록되고 FAILED는 재시도 소진 후에만 발생한다
     (재시도 소진 케이스는 test_disconnect_fails_after_retries_exhausted 참고).
     """
-    import ai_orchestrator.audit_logger as _al
+    import ai_orchestrator.audit.audit_logger as _al
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -1122,7 +1122,7 @@ def test_disconnect_audit_task_requeued_event(admin_user):
 
 def test_ws_auth_success_sets_last_seen_at(admin_user):
     """WS auth 성공 시 last_seen_at 갱신."""
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -1141,7 +1141,7 @@ def test_ws_auth_success_sets_last_seen_at(admin_user):
 
 def test_ws_heartbeat_updates_last_seen_at(admin_user):
     """heartbeat 수신 시 last_seen_at 갱신."""
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -1160,7 +1160,7 @@ def test_ws_heartbeat_updates_last_seen_at(admin_user):
 
 def test_ws_disconnect_sets_disconnected_at(admin_user):
     """WS disconnect 시 disconnected_at 설정."""
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -1178,35 +1178,35 @@ def test_ws_disconnect_sets_disconnected_at(admin_user):
 
 def test_ws_noop_in_action_risk():
     """ws_noop 이 ACTION_RISK 에 low 로 등록되어 있어야 한다."""
-    from ai_orchestrator.local_agent_registry import ACTION_RISK
+    from ai_orchestrator.agent_hub.registry.facade import ACTION_RISK
 
     assert ACTION_RISK.get("ws_noop") == "low"
 
 
 def test_ws_noop_not_in_server_auto_complete():
     """ws_noop 은 _SERVER_AUTO_COMPLETE 에 절대 포함되면 안 된다."""
-    import ai_orchestrator.local_agent_registry as _reg
+    import ai_orchestrator.agent_hub.registry.facade as _reg
 
     assert "ws_noop" not in _reg._SERVER_AUTO_COMPLETE
 
 
 def test_ws_noop_in_auto_execute_via_agent():
     """ws_noop 은 서버 측 AUTO_EXECUTE_VIA_AGENT 에 포함되어야 한다."""
-    from ai_orchestrator.local_agent_registry import AUTO_EXECUTE_VIA_AGENT
+    from ai_orchestrator.agent_hub.registry.facade import AUTO_EXECUTE_VIA_AGENT
 
     assert "ws_noop" in AUTO_EXECUTE_VIA_AGENT
 
 
 def test_ws_noop_in_client_auto_execute():
     """ws_noop 은 클라이언트 _AUTO_EXECUTE_VIA_AGENT 에 포함되어야 한다."""
-    from local_agent.websocket_client import _AUTO_EXECUTE_VIA_AGENT
+    from core.agent_runtime.connection.websocket_client import _AUTO_EXECUTE_VIA_AGENT
 
     assert "ws_noop" in _AUTO_EXECUTE_VIA_AGENT
 
 
 def test_ws_noop_action_handler_no_side_effect():
     """ws_noop handler 는 외부 동작 없이 success=True, summary='ws_noop_ok' 반환."""
-    from local_agent.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action("ws_noop", {})
     assert result.success is True
@@ -1217,7 +1217,7 @@ def test_ws_noop_action_handler_no_side_effect():
 
 def test_ws_noop_action_handler_ignores_payload():
     """ws_noop handler 는 임의 payload 가 있어도 동일한 결과를 반환한다."""
-    from local_agent.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     result = execute_action("ws_noop", {"arbitrary_key": "arbitrary_value"})
     assert result.success is True
@@ -1226,7 +1226,7 @@ def test_ws_noop_action_handler_ignores_payload():
 
 def test_client_process_task_ws_noop_returns_success():
     """process_task 에서 ws_noop 이 success=True result 메시지를 반환한다."""
-    from local_agent.websocket_client import process_task
+    from core.agent_runtime.connection.websocket_client import process_task
 
     r = process_task(
         {
@@ -1294,7 +1294,7 @@ def test_ws_noop_enqueue_does_not_auto_complete(admin_user):
 
 def test_existing_actions_unchanged():
     """ping/system_info/list_allowed_apps 동작이 ws_noop 추가 후에도 불변이다."""
-    from local_agent.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     assert execute_action("ping", {}).summary == "pong"
     assert execute_action("system_info", {}).success is True
@@ -1325,7 +1325,7 @@ def test_ws_enqueue_pushes_immediately_without_pull(admin_user):
 
 
 def test_ws_wake_registry_cleared_on_disconnect(admin_user):
-    import ai_orchestrator.local_agent_router_ws as _ws
+    import ai_orchestrator.agent_hub.router.ws as _ws
 
     client = _make_test_client(admin_user)
     agent_id, token = _register(client)
@@ -1339,8 +1339,8 @@ def test_ws_wake_registry_cleared_on_disconnect(admin_user):
 
 
 def test_enqueue_listener_failure_does_not_block_enqueue(admin_user):
-    import ai_orchestrator.local_agent_registry as _reg
-    import ai_orchestrator.local_agent_registry_task_queue as _tq
+    import ai_orchestrator.agent_hub.registry.facade as _reg
+    import ai_orchestrator.agent_hub.registry.task_queue as _tq
 
     def _boom(_agent_id: str) -> None:
         raise RuntimeError("listener down")

@@ -1,11 +1,18 @@
 """도메인 프로필 레지스트리 테스트 (LOCAL_BROWSER_DEFAULT 아키텍처 반영)"""
 from __future__ import annotations
+
 import pytest
-from ai_orchestrator.browser_tool.domain_profile_registry import (
-    get_domain_profile, is_domain_registered, get_all_registered_domains,
-    is_action_blocked_for_domain, is_user_direct_action_for_domain,
-    get_login_execution, register_domain_profile,
+
+from ai_orchestrator.browser_tool.policy.domain_profile_registry import (
+    get_all_registered_domains,
+    get_domain_profile,
+    get_login_execution,
+    is_action_blocked_for_domain,
+    is_domain_registered,
+    is_user_direct_action_for_domain,
+    register_domain_profile,
 )
+
 
 # B-1: g2b.go.kr 등록 확인
 def test_g2b_registered():

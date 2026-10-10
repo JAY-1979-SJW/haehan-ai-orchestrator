@@ -81,8 +81,8 @@ repository=DB / adapter=외부 연동.
 
 ## 6. 게이트 강제
 
-- `python scripts/ops/codebase_layer_audit.py` → FORBIDDEN_IMPORT / CIRCULAR_IMPORT / SECURITY_PATTERN = 0
-- `python scripts/quality_gate.py --staged --enforce --allow-existing-code-change` → errors = 0
+- `python tools/repo_gates/codebase_layer_audit.py` → FORBIDDEN_IMPORT / CIRCULAR_IMPORT / SECURITY_PATTERN = 0
+- `python tools/quality/quality_gate.py --staged --enforce --allow-existing-code-change` → errors = 0
 - (옵션 신설) **파일 크기 게이트** — 800 LOC+ 신규 유입 차단. 분리 완료 모듈은 화이트리스트.
 - (적용됨) 데스크톱 `LEAF_COUPLING` 게이트 — leaf 간 직접 import 차단. 백엔드 도메인에도 동형 규칙 확장 검토.
 
@@ -92,13 +92,13 @@ repository=DB / adapter=외부 연동.
 
 | 순위 | 모듈 | LOC | 성격 |
 |------|------|-----|------|
-| 1 | `ai_orchestrator/local_agent_router.py` | 1763 | L8 라우터 비대 — 핸들러 책임별 분리 |
-| 2 | `scripts/google/live_inputs.py` | 1684 | L5 사이트 — 입력 종류별 분리 |
-| 3 | `ai_orchestrator/local_agent/browser/mixins/cafe_mixin.py` | 1592 | L4 믹스인 — 능력별 분리 |
+| 1 | `ai_orchestrator/agent_hub/router/root.py` | 1763 | L8 라우터 비대 — 핸들러 책임별 분리 |
+| 2 | `scripts/google/common/live_inputs.py` | 1684 | L5 사이트 — 입력 종류별 분리 |
+| 3 | `scripts/naver/cafe/cafe_mixin.py` | 1592 | L4 믹스인 — 능력별 분리 |
 | 4 | `scripts/page_helper.py` | 1475 | L4 범용 — 헬퍼군 분리 |
 | 5 | `scripts/google/youtube/search.py` | 1451 | L5 — 검색/분석/수집 분리 |
 | 6 | `scripts/youtube/research.py` | 1429 | L6 — 수집/분석/리포트 분리 |
-| 7 | `ai_orchestrator/local_agent/browser/mixins/blog_mixin.py` | 1416 | L4 믹스인 |
+| 7 | `scripts/naver/blog/blog_mixin.py` | 1416 | L4 믹스인 |
 | 8 | `scripts/naver/router.py` | 1155 | L5 라우터 |
 | 9 | `scripts/naver/smartstore/navigation/cdp_popup_manager.py` | 1000 | L4 |
 | 10 | `scripts/naver/blog/core/writer.py` | 928 | L6 |

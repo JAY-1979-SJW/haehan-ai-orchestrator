@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 

@@ -7,13 +7,13 @@ input() / 터미널 대기 없음. AI가 모든 단계를 자동 수행.
   2) confirm → 사용자 승인 후 호출 → 확인 버튼 클릭 → 발행 완료
 
 CLI 사용 예:
-  python scripts/cdp_client.py naver blog write \\
+  python scripts/entry/cdp_cli.py naver blog write \\
       --title="제목" --body="본문" --tags="태그1,태그2" \\
       --category="일상" --visibility=public
 
-  python scripts/cdp_client.py naver blog confirm   # 승인 후 발행 확정
+  python scripts/entry/cdp_cli.py naver blog confirm   # 승인 후 발행 확정
 
-  python scripts/cdp_client.py naver blog draft \\
+  python scripts/entry/cdp_cli.py naver blog draft \\
       --title="제목" --body="본문"
 """
 from __future__ import annotations
@@ -65,7 +65,7 @@ def _task_write(args: list[str], save_draft_only: bool = False,
     require_approval=True(기본): 발행 패널 열어둔 채로 awaiting_approval 반환.
     save_draft_only=True: 임시저장만.
     """
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.naver.blog.writer import write_post
 
     # 인수 파싱
@@ -151,7 +151,7 @@ def _task_confirm(args: list[str]) -> None:
     write_post(..., require_approval=True) 결과 확인 후 호출.
     브라우저는 동일 세션이어야 한다.
     """
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.naver.blog.writer import confirm_publish
 
     dry_run = _flag(args, "--dry-run")

@@ -10,7 +10,7 @@ import pathlib
 
 import pytest
 
-from local_agent.browser_readonly_runtime import (
+from core.agent_runtime.browser.browser_readonly_runtime import (
     DECISION_BLOCK,
     DECISION_FAILED,
     DECISION_READONLY_ALLOWED,
@@ -31,7 +31,7 @@ from local_agent.browser_readonly_runtime import (
 )
 
 FIXTURE_PATH = pathlib.Path(__file__).parent / "fixtures" / "local_agent_browser_readonly_runtime_20260507.json"
-MODULE_PATH = pathlib.Path(__file__).parent.parent / "local_agent" / "browser_readonly_runtime.py"
+MODULE_PATH = pathlib.Path(__file__).parent.parent / "core" / "agent_runtime" / "browser" / "browser_readonly_runtime.py"
 
 REQUIRED_CASE_FIELDS = ["case_id", "input", "expected_runtime_policy", "expected_detection", "expected_security_policy"]
 REQUIRED_POLICY_FIELDS = [
@@ -405,7 +405,7 @@ def test_no_db_write_code():
 
 def test_compatible_with_user_present_flow():
     user_present_path = (
-        pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "local_agent_user_present_flow.py"
+        pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "agent_hub" / "user_present_flow.py"
     )
     assert user_present_path.exists(), "local_agent_user_present_flow.py 없음"
     source = MODULE_PATH.read_text(encoding="utf-8")
@@ -423,6 +423,7 @@ def test_compatible_with_site_access_compatibility_auditor():
         pathlib.Path(__file__).parent.parent
         / "ai_orchestrator"
         / "browser_tool"
+        / "policy"
         / "site_access_compatibility_auditor.py"
     )
     assert auditor_path.exists(), "site_access_compatibility_auditor.py 없음"
@@ -433,7 +434,7 @@ def test_compatible_with_site_access_compatibility_auditor():
 
 def test_compatible_with_site_compliance_policy():
     compliance_path = (
-        pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "site_compliance_policy.py"
+        pathlib.Path(__file__).parent.parent / "ai_orchestrator" / "browser_tool" / "policy" / "site_compliance_policy.py"
     )
     assert compliance_path.exists(), "site_compliance_policy.py 없음"
 

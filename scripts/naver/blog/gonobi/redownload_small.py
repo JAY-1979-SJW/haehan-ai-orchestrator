@@ -8,7 +8,7 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
-from ai_orchestrator.config import get_local_data_dir
+from ai_orchestrator.core.config import get_local_data_dir
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 logger = logging.getLogger(__name__)

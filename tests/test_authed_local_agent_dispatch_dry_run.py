@@ -1,4 +1,4 @@
-from scripts.ops import audit_authed_local_agent_dispatch_dry_run as audit
+from tools.audits.agent import audit_authed_local_agent_dispatch_dry_run as audit
 
 
 def test_authed_local_agent_dispatch_dry_run_passes_static_contract():

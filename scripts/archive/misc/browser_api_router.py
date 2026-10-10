@@ -75,7 +75,7 @@ async def naver_blog_write(req: ActionRequest) -> ActionResponse:
 @router.get("/google/session-check")
 async def google_session_check() -> ActionResponse:
     def _check():
-        from scripts.google.base import check_session
+        from scripts.google.common.base import check_session
 
         return check_session()
 
@@ -90,7 +90,7 @@ async def google_session_check() -> ActionResponse:
 @router.post("/google/mail/list")
 async def google_mail_list(req: ActionRequest) -> ActionResponse:
     def _run():
-        from scripts.google.gmail import run
+        from scripts.google.common.gmail import run
 
         run("list", req.args)
 
@@ -106,7 +106,7 @@ async def google_mail_compose(req: ActionRequest) -> ActionResponse:
     """args: [수신자, 제목, 본문]"""
 
     def _run():
-        from scripts.google.gmail import run
+        from scripts.google.common.gmail import run
 
         run("compose", req.args)
 
@@ -120,7 +120,7 @@ async def google_mail_compose(req: ActionRequest) -> ActionResponse:
 @router.post("/google/calendar/today")
 async def google_calendar_today(req: ActionRequest) -> ActionResponse:
     def _run():
-        from scripts.google.calendar import run
+        from scripts.google.common.calendar_tasks import run
 
         run("today", req.args)
 
@@ -197,8 +197,8 @@ async def generic_fetch_text(req: FetchTextRequest) -> ActionResponse:
     def _run():
         import time
 
-        from scripts.page_helper import page_goto
-        from scripts.web_connector import browser_session
+        from scripts.browser.page.page_helper import page_goto
+        from scripts.browser.page.web_connector import browser_session
 
         with browser_session() as page:
             page_goto(page, req.url)
@@ -213,7 +213,7 @@ async def generic_fetch_text(req: FetchTextRequest) -> ActionResponse:
             }
 
     try:
-        from scripts.web_connector import run_on_browser_thread
+        from scripts.browser.cdp.connection import run_on_browser_thread
 
         result = await run_in_threadpool(lambda: run_on_browser_thread(_run))
         return _ok("페이지 조회 완료", **result)
@@ -228,8 +228,8 @@ async def generic_screenshot(req: FetchTextRequest) -> ActionResponse:
     def _run():
         import time
 
-        from scripts.page_helper import page_goto
-        from scripts.web_connector import browser_session
+        from scripts.browser.page.page_helper import page_goto
+        from scripts.browser.page.web_connector import browser_session
 
         with browser_session() as page:
             page_goto(page, req.url)
@@ -245,7 +245,7 @@ async def generic_screenshot(req: FetchTextRequest) -> ActionResponse:
             }
 
     try:
-        from scripts.web_connector import run_on_browser_thread
+        from scripts.browser.cdp.connection import run_on_browser_thread
 
         result = await run_in_threadpool(lambda: run_on_browser_thread(_run))
         return _ok("스크린샷 완료", **result)

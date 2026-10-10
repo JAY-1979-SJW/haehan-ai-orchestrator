@@ -2,8 +2,8 @@
 
 import pytest
 
-import ai_orchestrator.local_agent.actions  # noqa: F401  (액션 핸들러 등록 트리거)
-from ai_orchestrator.local_agent.action_registry import (
+import ai_orchestrator.agent_hub.actions  # noqa: F401  (액션 핸들러 등록 트리거)
+from ai_orchestrator.agent_hub.action_registry import (
     get_action_spec,
     has_handler,
     list_implemented_actions,
@@ -13,14 +13,14 @@ from ai_orchestrator.local_agent.action_registry import (
     requires_pre_execution_summary,
     requires_user_approval,
 )
-from ai_orchestrator.local_agent.action_risk_policy import (
+from ai_orchestrator.contracts.action_risk_policy import (
     GRADE_AUTO_ALLOWED,
     GRADE_USER_DELEGATED,
     GRADE_USER_DIRECT,
 )
-from ai_orchestrator.local_agent.action_schemas import all_specs
+from ai_orchestrator.agent_hub.action_schemas import all_specs
 
-# 액션 모듈 import 트리거 (registry 등록) — 위 import 블록의 `import ai_orchestrator.local_agent.actions`
+# 액션 모듈 import 트리거 (registry 등록) — 위 import 블록의 `import ai_orchestrator.agent_hub.actions`
 
 
 def test_all_specs_defined():

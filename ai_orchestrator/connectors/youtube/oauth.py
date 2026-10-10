@@ -9,8 +9,8 @@ import urllib.request
 
 from fastapi import APIRouter, Depends, Query
 
-from ai_orchestrator.gates.auth import require_role
 from scripts.youtube import oauth as _oauth_svc
+from tools.gates.auth import require_role
 
 from ._helpers import token_path
 

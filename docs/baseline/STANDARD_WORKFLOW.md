@@ -286,7 +286,7 @@ Google domain/module management uses the fixed `google` lane. Its latest state
 and visible history can be reviewed with:
 
 ```text
-python scripts/cdp_client.py google records --limit=10
+python scripts/browser/cdp/cdp_client.py google records --limit=10
 ```
 
 Before a new AI session continues operational work, it must inspect the latest
@@ -380,8 +380,8 @@ gate when the change affects shared contracts.
 syntax: python -m py_compile targeted files
 unit: python -m pytest targeted tests -q
 contract: module-specific audit script
-module gate: python scripts/module_quality_gate.py --module <module>
-required gate: python scripts/required_quality_gate.py
+module gate: python tools/quality/module_quality_gate.py --module <module>
+required gate: python tools/quality/required_quality_gate.py
 live smoke: only when explicitly approved
 ```
 

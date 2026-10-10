@@ -24,7 +24,7 @@ import os
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
 admin_ui_router = APIRouter(prefix="/admin", tags=["admin-ui"])
 

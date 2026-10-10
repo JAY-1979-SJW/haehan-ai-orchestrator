@@ -1,6 +1,6 @@
 """tests/test_universal_safe_result_20260508.py - universal_safe_result 단위 테스트"""
 
-from ai_orchestrator.local_agent.universal_safe_result import (
+from core.agent_runtime.runtime.universal.universal_safe_result import (
     STATUS_BLOCKED,
     STATUS_COMPLETED,
     STATUS_FAILED,

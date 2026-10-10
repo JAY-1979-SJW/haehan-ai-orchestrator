@@ -11,8 +11,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.cdp_console import connect
-from scripts.google import surfaces, tab_logic
+from scripts.browser.cdp.cdp_console import connect
+from scripts.google.common import surfaces, tab_logic
 from scripts.google.cloud.live_console_explorer import (
     _extract_visible_console_snapshot,
     _redact_text,
@@ -20,6 +20,7 @@ from scripts.google.cloud.live_console_explorer import (
     _risk_controls,
     load_latest_cloud_console_live_report,
 )
+from scripts.google.common.report_io import save_json_with_latest
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORT_DIR = ROOT / "data" / "google_surface_live"
@@ -148,13 +149,7 @@ def explore_google_surfaces_direct_cdp(
 
 
 def save_google_surface_live_report(report: dict[str, Any], path: Path | None = None) -> tuple[dict[str, Any], Path]:
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    LATEST_REPORT.parent.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
-    target = path or REPORT_DIR / f"google_surface_live_{timestamp}.json"
-    text = json.dumps(report, ensure_ascii=True, indent=2)
-    target.write_text(text, encoding="utf-8")
-    LATEST_REPORT.write_text(text, encoding="utf-8")
+    target = save_json_with_latest(report, REPORT_DIR, LATEST_REPORT, "google_surface_live", path, ensure_ascii=True)
     return report, target
 
 

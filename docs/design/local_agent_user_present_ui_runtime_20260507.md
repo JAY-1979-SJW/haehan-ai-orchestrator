@@ -128,10 +128,10 @@ USER_CONFIRMED → 재확인: 불가 (final 상태)
 
 | 역할 | 경로 |
 |---|---|
-| 상태 store | local_agent/user_present_state_store.py |
-| 로컬 웹 UI 서버 | local_agent/user_present_ui_server.py |
-| 정책 판정 | ai_orchestrator/browser_tool/local_agent_user_present_flow.py |
-| read-only 런타임 | local_agent/browser_readonly_runtime.py |
+| 상태 store | core/agent_runtime/user_present/user_present_state_store.py |
+| 로컬 웹 UI 서버 | core/agent_runtime/user_present/user_present_ui_server.py |
+| 정책 판정 | ai_orchestrator/agent_hub/user_present_flow.py |
+| read-only 런타임 | core/agent_runtime/browser/browser_readonly_runtime.py |
 | 테스트 | tests/test_local_agent_user_present_ui_runtime_20260507.py |
 | fixture | tests/fixtures/local_agent_user_present_ui_runtime_20260507.json |
 | 이 문서 | docs/design/local_agent_user_present_ui_runtime_20260507.md |

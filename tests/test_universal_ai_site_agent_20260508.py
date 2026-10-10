@@ -1,7 +1,7 @@
 """tests/test_universal_ai_site_agent_20260508.py"""
 
-from ai_orchestrator.local_agent.learned_site_profile_store import clear_all
-from ai_orchestrator.local_agent.universal_ai_site_agent import run_agent
+from core.agent_runtime.runtime.universal.learned_site_profile_store import clear_all
+from core.agent_runtime.runtime.universal.universal_ai_site_agent import run_agent
 
 _SAFE_FIELDS = [
     "cookie_exported",
@@ -207,7 +207,7 @@ def test_dry_run_no_side_effects():
 
 
 def test_learned_profile_saved_after_success():
-    from ai_orchestrator.local_agent.learned_site_profile_store import has_learned_profile
+    from core.agent_runtime.runtime.universal.learned_site_profile_store import has_learned_profile
 
     run_agent("공지사항 찾아줘", _NOTICE_PAGE, runner_fn=_dummy_runner, save_learned=True)
     # notice.unknown.kr에 learned profile 저장되어야 함
@@ -215,7 +215,7 @@ def test_learned_profile_saved_after_success():
 
 
 def test_learned_profile_no_sensitive_data():
-    from ai_orchestrator.local_agent.learned_site_profile_store import get_learned_profile
+    from core.agent_runtime.runtime.universal.learned_site_profile_store import get_learned_profile
 
     clear_all()
     run_agent("공지사항 요약해줘", _NOTICE_PAGE, runner_fn=_dummy_runner, save_learned=True)

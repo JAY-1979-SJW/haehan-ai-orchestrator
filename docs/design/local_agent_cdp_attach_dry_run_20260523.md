@@ -14,7 +14,7 @@ browser, navigate, click, type, download, build, deploy, or push.
 - `existing`: attach only to an already-running loopback CDP endpoint. The
   local agent must not start Chrome in this mode.
 - `dedicated`: use a dedicated Chrome profile managed by the existing
-  `scripts/cdp_daemon.py` flow. This is preferred for automated execution
+  `scripts/browser/cdp/cdp_daemon.py` flow. This is preferred for automated execution
   because it avoids mixing automation state with a user's personal profile.
 
 ## Boundary

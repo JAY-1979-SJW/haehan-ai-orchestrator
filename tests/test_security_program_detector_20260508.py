@@ -1,6 +1,6 @@
 """tests/test_security_program_detector_20260508.py"""
 
-from ai_orchestrator.local_agent.security_program_detector import (
+from core.agent_runtime.runtime.security_program.security_program_detector import (
     SIGNAL_ADMIN_PERMISSION_REQUIRED,
     SIGNAL_CERT_MODULE_REQUIRED,
     SIGNAL_INSTALL_GUIDE_PAGE_DETECTED,

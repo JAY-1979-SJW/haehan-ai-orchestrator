@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import win32com.client as win32
 
-from ai_orchestrator.audit_logger import log_event
+from ai_orchestrator.audit.audit_logger import log_event
 from scripts.eum.shared.layout_engine import (
     print_verify,
     render,

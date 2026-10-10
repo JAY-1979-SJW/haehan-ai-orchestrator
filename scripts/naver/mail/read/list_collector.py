@@ -8,7 +8,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from . import cdp
+from scripts.naver.mail.read import cdp
 
 LIST_EXPR = r"""
 JSON.stringify((function(){

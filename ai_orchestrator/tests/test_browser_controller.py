@@ -11,7 +11,7 @@ Tests cover:
 import tempfile
 from pathlib import Path
 
-from local_agent.browser_controller import (
+from core.agent_runtime.browser.browser_controller import (
     BrowserController,
     BrowserControllerError,
     InspectResult,

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from ai_orchestrator import local_agent_registry as _reg
-from ai_orchestrator import local_agent_registry_common as _reg_common
+from ai_orchestrator.agent_hub.registry import facade as _reg
+from ai_orchestrator.agent_hub.registry import common as _reg_common
 
 # ── 공통 fixture ──────────────────────────────────────────────────────────
 

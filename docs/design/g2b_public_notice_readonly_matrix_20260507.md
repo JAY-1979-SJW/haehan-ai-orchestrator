@@ -66,5 +66,5 @@
 
 ## 관련 정책 모듈
 
-- `ai_orchestrator/browser_tool/site_compliance_policy.py`: `evaluate_site_compliance()`
-- `ai_orchestrator/browser_tool/server_browser_boundary_policy.py`: `evaluate_server_browser_allowed()`
+- `ai_orchestrator/browser_tool/policy/site_compliance_policy.py`: `evaluate_site_compliance()`
+- `ai_orchestrator/browser_tool/policy/server_browser_boundary_policy.py`: `evaluate_server_browser_allowed()`

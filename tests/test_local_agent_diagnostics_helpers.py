@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ai_orchestrator.local_agent_diagnostics_helpers import (
+from ai_orchestrator.agent_hub.registry.diagnostics_helpers import (
     count_agents_by_status,
     count_task_summaries,
     count_tasks_by_status,
@@ -220,7 +220,7 @@ def test_determine_diagnostics_status_multiple_warnings():
 
 def test_diagnostics_helpers_module_importable():
     """진단 헬퍼 모듈이 정상적으로 임포트 가능한지 검증."""
-    import ai_orchestrator.local_agent_diagnostics_helpers as helpers_module
+    import ai_orchestrator.agent_hub.registry.diagnostics_helpers as helpers_module
 
     assert hasattr(helpers_module, "count_agents_by_status")
     assert hasattr(helpers_module, "count_tasks_by_status")
@@ -231,7 +231,7 @@ def test_diagnostics_helpers_module_importable():
 def test_no_circular_import_with_diagnostics():
     """진단 헬퍼 모듈과 진단 모듈 간 순환 참조 없음을 검증."""
     try:
-        from ai_orchestrator.local_agent_diagnostics import build_local_agent_diagnostics
+        from ai_orchestrator.agent_hub.registry.diagnostics import build_local_agent_diagnostics
 
         assert build_local_agent_diagnostics is not None
     except ImportError:

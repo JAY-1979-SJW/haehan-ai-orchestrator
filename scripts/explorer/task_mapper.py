@@ -2,7 +2,7 @@
 
 기준서: docs/specs/2026-10-03_site_task_map.md (M1)
 
-- 분류·병합 규칙은 `ai_orchestrator.domain.site_task_map`(순수), 저장은 `persistence.site_task_map_store`.
+- 분류·병합 규칙은 `ai_orchestrator.site_work.site_task_map`(순수), 저장은 `persistence.site_task_map_store`.
 - 이 모듈은 기존 탐색기 산출물(`page_snapshot.collect` 결과, `auto_explorer` 결과 JSON)을 업무 지도에 합치는 연결만 한다.
 - 브라우저를 직접 열지 않는다: `record_page(page)` 는 호출자가 넘긴 현재 탭을 **읽기만** 한다(이동·클릭·제출 없음).
 - 지도에는 구조만 저장한다(필드 이름·라벨·URL). 입력값·표 데이터·쿠키는 읽지도 저장하지도 않는다.
@@ -19,11 +19,11 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_orchestrator.domain import site_map_labels as lab
-from ai_orchestrator.domain import site_map_menu as menu
-from ai_orchestrator.domain import site_map_sources as sources
-from ai_orchestrator.domain import site_task_map as tm
-from ai_orchestrator.persistence import site_task_map_store as store
+from ai_orchestrator.site_work import site_map_labels as lab
+from ai_orchestrator.site_work import site_map_menu as menu
+from ai_orchestrator.site_work import site_map_sources as sources
+from ai_orchestrator.site_work import site_task_map as tm
+from ai_orchestrator.site_work import site_task_map_store as store
 
 
 def _now() -> str:
@@ -277,7 +277,7 @@ def open_private_tab(
     `ctx.new_page()+goto` 는 쓰지 않는다 — 환경에 따라 goto 가 멈추는 것이 실측됐고(cdp_tabs 문서, 2026-10-03 localhost 화면),
     `get_task_page` 는 같은 호스트의 기존 탭을 재사용해 사용자 탭을 이동시킨다. 페이지를 못 찾으면 만든 탭을 닫고 오류를 낸다.
     """
-    from scripts import cdp_tabs
+    from scripts.browser.cdp import cdp_tabs
 
     opener = opener or cdp_tabs.open_tab
     closer = closer or cdp_tabs.close_tab
@@ -292,8 +292,8 @@ def open_private_tab(
 
 def run_request(request: dict[str, Any]) -> dict[str, Any]:
     """승인된 탐색 요청 실행기(서비스에 주입). 새 전용 탭에서 탐색하고, 끝나면 **그 탭만** 닫는다. 사용자 탭은 건드리지 않는다."""
-    from scripts import cdp_tabs
-    from scripts.web_connector import get_context, run_on_browser_thread
+    from scripts.browser.cdp import cdp_tabs
+    from scripts.browser.cdp.connection import get_context, run_on_browser_thread
 
     def work() -> dict[str, Any]:
         page, handle = open_private_tab(get_context(), request["start_url"])

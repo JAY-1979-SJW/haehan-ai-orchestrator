@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from scripts.ops.codebase_layer_audit import (
+from tools.repo_gates.codebase_layer_audit import (
     AuditIssue,
     ClassifiedFile,
     audit,
@@ -23,10 +23,10 @@ def test_classify_site_module_layers():
 
 
 def test_classify_core_layers():
-    assert classify_path("scripts/gate.py")[0] == "L2"
-    assert classify_path("scripts/web_connector.py")[0] == "L3"
-    assert classify_path("scripts/cdp_client.py")[0] == "L4"
-    assert classify_path("scripts/cdp_db.py")[0] == "L3"  # S1 정정: 저수준 IO 래퍼
+    assert classify_path("scripts/common/gate.py")[0] == "L2"
+    assert classify_path("scripts/browser/page/web_connector.py")[0] == "L3"
+    assert classify_path("scripts/browser/cdp_client.py")[0] == "L4"
+    assert classify_path("scripts/browser/cdp/cdp_db.py")[0] == "L3"  # S1 정정: 저수준 IO 래퍼
     assert classify_path("admin-web/src/app/page.tsx")[0] == "L9"
     assert classify_path("agent/excel/workflows.py")[0] == "L10"
     assert classify_path("docs/layer_classification.md")[0] == "L12"
@@ -178,7 +178,7 @@ def test_check_consistency_validates_summary_counts():
 def test_strip_jsonc_line_and_block_comments():
     import json
 
-    from scripts.ops.codebase_layer_audit import _strip_jsonc
+    from tools.repo_gates.codebase_layer_audit import _strip_jsonc
 
     src = """// header comment
 {
@@ -195,7 +195,7 @@ def test_strip_jsonc_line_and_block_comments():
 def test_strip_jsonc_preserves_comment_like_strings():
     import json
 
-    from scripts.ops.codebase_layer_audit import _strip_jsonc
+    from tools.repo_gates.codebase_layer_audit import _strip_jsonc
 
     src = '{"url": "http://example.com/path", "alias": "@/*", "blk": "/* not a comment */"}'
     data = json.loads(_strip_jsonc(src))
@@ -207,7 +207,7 @@ def test_strip_jsonc_preserves_comment_like_strings():
 def test_strip_jsonc_allows_trailing_commas():
     import json
 
-    from scripts.ops.codebase_layer_audit import _strip_jsonc
+    from tools.repo_gates.codebase_layer_audit import _strip_jsonc
 
     src = '{"arr": [1, 2, 3,], "obj": {"k": "v",},}'
     data = json.loads(_strip_jsonc(src))
@@ -221,7 +221,7 @@ def test_import_time_nodes_excludes_function_local():
     """함수 본문 안 import 는 import-time 엣지로 세지 않는다(순환 false-positive 방지)."""
     import ast
 
-    from scripts.ops.codebase_layer_audit import _import_time_nodes
+    from tools.repo_gates.codebase_layer_audit import _import_time_nodes
 
     src = (
         "import a\n"
@@ -244,7 +244,7 @@ def test_import_time_nodes_excludes_function_local():
 
 def test_package_containment_excluded_from_cycles():
     """부모-자식(패키지 containment) 관계는 cross-component 순환에서 제외."""
-    from scripts.ops.codebase_layer_audit import _is_package_containment
+    from tools.repo_gates.codebase_layer_audit import _is_package_containment
 
     assert _is_package_containment("a.b", "a.b.c") is True
     assert _is_package_containment("a.b.c", "a.b") is True
@@ -281,7 +281,7 @@ def test_hardcoded_user_path_flags_new_file_as_warn(tmp_path):
 
 def test_hardcoded_user_path_known_debt_is_info(tmp_path, monkeypatch):
     # 알려진 부채 목록은 현재 비어 있다(2026-10-01 전부 해소). 메커니즘만 검증하려고 임시 항목을 넣는다.
-    from scripts.ops import codebase_layer_audit as audit_module
+    from tools.repo_gates import codebase_layer_audit as audit_module
 
     monkeypatch.setattr(audit_module, "_HARDCODED_USER_PATH_KNOWN_DEBT", {"scripts/legacy_tool.py"})
     rows = _hardcoded_rows_and_source(
@@ -293,7 +293,7 @@ def test_hardcoded_user_path_known_debt_is_info(tmp_path, monkeypatch):
 
 def test_hardcoded_user_path_known_debt_list_is_empty():
     # 신규 하드코딩은 전부 경고여야 한다 — 부채 목록이 다시 늘어나지 않게 고정
-    from scripts.ops import codebase_layer_audit as audit_module
+    from tools.repo_gates import codebase_layer_audit as audit_module
 
     assert audit_module._HARDCODED_USER_PATH_KNOWN_DEBT == set()
 
@@ -329,7 +329,7 @@ def test_storage_boundary_known_debt_entries_still_match_a_pattern():
     import re
     from pathlib import Path
 
-    from scripts.ops import codebase_layer_audit as audit
+    from tools.repo_gates import codebase_layer_audit as audit
 
     root = Path(audit.ROOT)
     patterns = [re.compile(pat, re.IGNORECASE | re.MULTILINE) for pat, _ in audit._DB_DIRECT_ACCESS_PATTERNS]

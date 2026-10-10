@@ -65,7 +65,7 @@ def record_google_module_check(payload: dict[str, Any], path: Path | str | None 
             f"page_tabs={payload.get('page_tab_module_count')}, "
             f"actions={payload.get('work_action_module_count')}"
         ),
-        command="python scripts/cdp_client.py google check",
+        command="python scripts/entry/cdp_cli.py google check",
         verification=f"google_module_check ok={payload.get('ok')}",
         report=report,
         touched=[

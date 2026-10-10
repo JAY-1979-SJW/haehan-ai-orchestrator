@@ -1,4 +1,4 @@
-# 검증된 환경의 버전 집합 — scripts/ops/make_constraints.py 로 생성(직접 고치지 않는다). 설치: pip install -r requirements.txt -c constraints.txt
+# 검증된 환경의 버전 집합 — tools/devflow/make_constraints.py 로 생성(직접 고치지 않는다). 설치: pip install -r requirements.txt -c constraints.txt
 # 생성: 2026-10-05 / Python 3.14.7 / win32
 # requirements.txt 에서 닿는 패키지(간접 의존성 포함)만 담는다. 개발 도구(pytest·ruff 등)는 들어가지 않는다.
 annotated-doc==0.0.5

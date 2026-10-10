@@ -29,7 +29,7 @@
 
 사용 예:
   from scripts.naver.blog.writer import BlogWriter
-  from scripts.web_connector import get_page
+  from scripts.browser.cdp.connection import get_page
 
   page = get_page()
   bw = BlogWriter(page)
@@ -55,19 +55,19 @@ from pathlib import Path
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
-from scripts.naver.blog.selectors import (
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
+from scripts.naver.blog.page_selectors import (
     EDITOR_BODY as BODY_SEL,
 )
-from scripts.naver.blog.selectors import (
+from scripts.naver.blog.page_selectors import (
     EDITOR_DRAFT_CANCEL,
     EDITOR_DRAFT_POPUP,
 )
-from scripts.naver.blog.selectors import (
+from scripts.naver.blog.page_selectors import (
     EDITOR_TITLE as TITLE_SEL,
 )
-from scripts.naver.blog.selectors import (
+from scripts.naver.blog.page_selectors import (
     EDITOR_VISIBILITY_MAP as VISIBILITY_MAP,
 )
 
@@ -122,7 +122,7 @@ class BlogWriter:
         # 로그인 확인 — 글쓰기 페이지 접근 실패 시 자동 로그인
         if auto_login and "유효하지 않은" in (self.page.content() or ""):
             try:
-                from scripts.naver.auth import ensure_naver_login
+                from scripts.naver.common.auth import ensure_naver_login
 
                 result = ensure_naver_login(self.page)
                 if not result.get("ok"):
@@ -1121,7 +1121,7 @@ def _install_dialog_handler(page: Page) -> None:
 
 def _login_failure(page: Page) -> dict | None:
     """네이버 로그인 확인. 실패하면 오류 dict, 성공이면 None."""
-    from scripts.naver.auth import ensure_naver_login
+    from scripts.naver.common.auth import ensure_naver_login
 
     login_result = ensure_naver_login(page)
     if not login_result.get("ok"):

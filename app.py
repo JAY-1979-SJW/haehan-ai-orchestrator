@@ -11,14 +11,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-import audit_logger
-import task_store
-from approval_manager import approve_token, build_execution_plan, is_token_valid, issue_token
-from logger import get_logger, log_event
-from models import TaskRequest
-from policy_engine import load_policy
+import orchestrator_v1.core.audit_logger as audit_logger
+import orchestrator_v1.tasks.task_store as task_store
+from orchestrator_v1.core.logger import get_logger, log_event
+from orchestrator_v1.core.models import TaskRequest
+from orchestrator_v1.monitoring.telegram_notifier import send_approval_request
+from orchestrator_v1.tasks.approval_manager import (
+    approve_token,
+    build_execution_plan,
+    is_token_valid,
+    issue_token,
+)
+from orchestrator_v1.tasks.policy_engine import load_policy
 from orchestrator_v1.tasks.risk_assessor import assess_risk
-from telegram_notifier import send_approval_request
 from orchestrator_v1.tasks.whitelist_executor import execute_allowed
 
 log = get_logger("app")
@@ -328,13 +333,13 @@ def _parse_args():
 if __name__ == "__main__":
     args = _parse_args()
     if args.monitor:
-        from monitor import run_monitor
+        from orchestrator_v1.monitoring.monitor import run_monitor
 
         run_monitor()
     elif args.dashboard:
         if args.seed:
             main()
-        from dashboard import run_dashboard
+        from orchestrator_v1.monitoring.dashboard import run_dashboard
 
         run_dashboard(host=args.host, port=args.port)
     else:

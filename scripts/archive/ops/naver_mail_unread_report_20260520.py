@@ -18,7 +18,7 @@ from pathlib import Path
 
 import websocket
 
-from local_agent import site_entry_policy as sep
+from core.agent_runtime.policy import site_entry_policy as sep
 
 CDP_PORT = 9222
 CAP_DIR = Path("data/inspection/mail_20260520")

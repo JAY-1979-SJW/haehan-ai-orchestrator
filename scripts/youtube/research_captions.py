@@ -6,7 +6,7 @@ import urllib.parse
 from pathlib import Path
 from typing import Any
 
-from scripts.youtube.research_common import (
+from scripts.common.youtube_api_common import (
     CAPTION_DOWNLOAD_FORMATS,
     LATEST_CAPTION_DOWNLOAD,
     LATEST_CAPTION_LIST,
@@ -26,7 +26,7 @@ from scripts.youtube.research_common import (
     _stamp,
     _write_report,
 )
-from security_utils import safe_preview
+from ai_orchestrator.core.security_utils import safe_preview
 
 
 def build_transcript_collection_plan(video_id: str, *, owned: bool = False) -> tuple[dict[str, Any], Path]:
@@ -301,7 +301,7 @@ def collect_script_from_url(
 ) -> tuple[dict[str, Any], Path]:
     """Collect a transcript from a YouTube URL through approved sources only."""
     from scripts.youtube.research_analysis import analyze_transcript
-    from scripts.youtube.research_common import parse_youtube_video_id
+    from scripts.common.youtube_api_common import parse_youtube_video_id
 
     video_id = parse_youtube_video_id(url_or_video_id)
     if not video_id:

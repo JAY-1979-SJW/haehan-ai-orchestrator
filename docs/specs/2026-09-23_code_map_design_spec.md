@@ -89,7 +89,7 @@
 | `data/code_map/summary.md` | 사람용 요약(커버리지 → 분류 개수 → 상위 후보) | 미추적 |
 | `docs/defect_index.json` | 결함 목차(번호 고정, 코드맵 노드 id 링크) | 추적 |
 
-위치 사유: 읽기 전용 운영 감사 도구 = 기존 `scripts/ops/codebase_layer_audit.py` 와 같은 자리. 원본 코드·DB 에 쓰지 않는다.
+위치 사유: 읽기 전용 운영 감사 도구 = 기존 `tools/repo_gates/codebase_layer_audit.py` 와 같은 자리. 원본 코드·DB 에 쓰지 않는다.
 
 ## 6. 단계 계획과 합격 기준
 
@@ -117,7 +117,7 @@
   - CLI = `__main__` 파일에서만 도달. TEST_ONLY = 테스트에서만 도달.
   - 미도달 중 파일명(stem)이 코드·설정(docs/·data/ 제외, 자기 자신 제외)에 단어로 등장 = MENTIONED(수동 확인), 아니면 UNREACHED.
 - **드라이런 판단 기준**: 파싱 실패 ≤1 · import 해석 실패율 보고 · UNREACHED 표본 20건 수작업 검수 오탐 ≤10% · 2회 실행 결과(메타 제외) 동일.
-- **검증 명령**: `python scripts/ops/code_map/build.py` → `data/code_map/map.json`, `summary.md`; `--determinism` 2회 비교.
+- **검증 명령**: `python tools/code_map/build.py` → `data/code_map/map.json`, `summary.md`; `--determinism` 2회 비교.
 - **롤백**: 신규 파일 삭제만으로 원복(원본·DB 쓰기 없음).
 
 ## 7. 한계(정적 분석이 못 보는 것)

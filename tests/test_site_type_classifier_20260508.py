@@ -1,8 +1,15 @@
 """tests/test_site_type_classifier_20260508.py"""
-from ai_orchestrator.local_agent.site_type_classifier import (
-    classify_site, get_site_type_for_profile,
-    SITE_GOVERNMENT, SITE_FINANCIAL, SITE_BLOG, SITE_CAFE_OR_FORUM,
-    SITE_ECOMMERCE, SITE_NOTICE_BOARD, SITE_UNKNOWN, SITE_CONTENT_PLATFORM,
+from core.agent_runtime.runtime.site_profile.site_type_classifier import (
+    SITE_BLOG,
+    SITE_CAFE_OR_FORUM,
+    SITE_CONTENT_PLATFORM,
+    SITE_ECOMMERCE,
+    SITE_FINANCIAL,
+    SITE_GOVERNMENT,
+    SITE_NOTICE_BOARD,
+    SITE_UNKNOWN,
+    classify_site,
+    get_site_type_for_profile,
 )
 
 

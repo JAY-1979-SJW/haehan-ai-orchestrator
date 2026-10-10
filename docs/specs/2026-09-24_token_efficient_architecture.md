@@ -6,10 +6,10 @@ spec:
   status: planned
   files:
     add:
-      - scripts/ops/code_map/query.py
+      - tools/code_map/query.py
       - scripts/ops/agent_brief.py
       - configs/agent_roles.json
-      - scripts/ops/agent_usage.py
+      - tools/hooks/agent_usage.py
 ```
 
 ## 문제 (2026-09-24 실측)

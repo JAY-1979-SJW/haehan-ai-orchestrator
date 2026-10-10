@@ -138,5 +138,5 @@
 - USER_DIRECT_REQUIRED / LOCAL_AGENT_REQUIRED / BLOCKED 정책 명시 여부
 - cross-domain 직접 import 금지 문구 존재 여부
 
-감사 스크립트: `scripts/ops/audit_domain_room_allocation.py`  
+감사 스크립트: `tools/audits/app/audit_domain_room_allocation.py`  
 감사 테스트: `tests/test_domain_room_allocation.py`

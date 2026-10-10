@@ -1,4 +1,5 @@
 "use client";
+import { registerDomainChat } from "@/components/chat/domainChatRegistry";
 /**
  * SmartStoreChat — 2026-09-24: 앱 런타임 채팅(구 /api/smartstore/chat, Anthropic/OpenAI
  * 백엔드) 제거. AI 작업은 Claude Code(MCP: haehan-orchestrator)로 수행한다.
@@ -22,3 +23,5 @@ export default function SmartStoreChat() {
     </div>
   );
 }
+
+registerDomainChat("smartstore", SmartStoreChat); // 공용 AI 패널(AiDock)이 이 화면을 직접 import 하지 않도록 등록한다

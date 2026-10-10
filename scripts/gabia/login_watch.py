@@ -7,9 +7,9 @@ GABIA_LOGIN_WATCH_01
   로그인 확인 즉시 DNS 관리 화면으로 자동 이동한다.
 
 실행:
-  python scripts/gabia_login_watch.py
-  python scripts/gabia_login_watch.py --timeout 600
-  python scripts/gabia_login_watch.py --no-navigate   # 로그인 감지만, DNS 이동 없음
+  python scripts/gabia/login_watch.py
+  python scripts/gabia/login_watch.py --timeout 600
+  python scripts/gabia/login_watch.py --no-navigate   # 로그인 감지만, DNS 이동 없음
 
 금지:
   비밀번호/OTP 자동 입력 금지
@@ -67,7 +67,7 @@ _GABIA_LOGGED_IN_JS = r"""
 
 
 def _get_page():
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     return get_page()
 
@@ -138,7 +138,7 @@ def watch_gabia_login(timeout_s: int = DEFAULT_TIMEOUT_S, navigate_after: bool =
                         print()
                         print("  → DNS 관리 화면으로 이동 중...")
                         try:
-                            from scripts.navigator import goto
+                            from scripts.browser.navigator.navigator import goto
 
                             goto(GABIA_DNS_MGMT_URL)
                             dns_navigated = True

@@ -20,7 +20,7 @@
 - 위치: 기존 `scripts/login_detector.py` 안에 함수 추가(새 파일 만들지 않음). 다른 사이트 호출자(google/auth 등)는 프로필이 없으면 **종전 동작 그대로**.
 
 ## 3. 변경 B — 사이트맵 확인 게이트 (훅)
-기존 `prewrite_capability_check.py` 의 등록형 구조에 게이트 1개 추가: `scripts/ops/write_gates/sitemap_gate.py`.
+기존 `prewrite_capability_check.py` 의 등록형 구조에 게이트 1개 추가: `tools/write_gates/sitemap_gate.py`.
 | 항목 | 내용 |
 |---|---|
 | 발동 | 사이트 자동화 경로(`scripts/naver/`, `scripts/eum`, `scripts/browser_agent/`, `ai_orchestrator/connectors/`)의 .py 를 **작성/수정**하면서 내용에 셀렉터·로그인 판정 코드(`query_selector`, `locator(`, `login`, `logged_in`)가 있을 때 |

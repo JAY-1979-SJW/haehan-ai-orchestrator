@@ -15,7 +15,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 
@@ -341,13 +341,13 @@ def prepare_sales_mail(
         encoding="utf-8",
     )
     try:
-        from scripts import cdp_db
+        from scripts.browser.cdp import cdp_db
 
         cdp_db.init_db()
         run_id = cdp_db.log_automation_run(
             "eum",
             "sales_mail_prepare",
-            command="python scripts/cdp_client.py eum sales-mail",
+            command="python scripts/entry/cdp_cli.py eum sales-mail",
             status="success",
             risk_level="auto",
             input_ref=str(Path(source)),

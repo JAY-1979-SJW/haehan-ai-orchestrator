@@ -3,7 +3,7 @@
 실제 CDP/Playwright 실행은 없다. plan 객체만 생성한다.
 실제 실행은 반드시 execution_gate decision을 거친 후 진행해야 한다.
 
-기존 scripts/cdp_client.py를 대체하지 않는다.
+기존 scripts/browser/cdp/cdp_client.py를 대체하지 않는다.
 이 모듈은 site_engine 구조에서의 추상화 계층이다.
 """
 
@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from scripts.site_engine.types import GateDecision, SiteCapability
+from scripts.site_engine.site_types import GateDecision, SiteCapability
 
 
 class BrowserActionKind(str, Enum):

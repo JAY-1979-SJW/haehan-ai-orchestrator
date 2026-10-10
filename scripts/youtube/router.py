@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from . import browser_transcript, oauth, recording, research, uploader
 from .gates import gate_youtube_upload_plan, gate_youtube_publish_plan  # noqa: F401
-from .profile import YOUTUBE_PROFILE  # noqa: F401
+from .site_profile import YOUTUBE_PROFILE  # noqa: F401
 from .validators import validate_youtube_no_plain_secret  # noqa: F401
 
 __status__ = {
@@ -61,7 +61,7 @@ def _cmd_record(sub: str, args: list[str]) -> None:
         print(f"output: {plan['recording']['output_path']}")
         print(f"ffmpeg_found: {plan['recording']['ffmpeg_found']}")
         print(f"saved: {path}")
-        print(f"execute: python scripts\\cdp_client.py youtube record execute {path} --approved --confirm={recording.APPROVAL_PHRASE}")
+        print(f"execute: python scripts\\entry\\cdp_cli.py youtube record execute {path} --approved --confirm={recording.APPROVAL_PHRASE}")
         return
     if sub == "execute":
         if not args:
@@ -98,7 +98,7 @@ def _cmd_upload(sub: str, args: list[str]) -> None:
         print(f"privacy: {plan['metadata']['privacy_status']}")
         print(f"missing: {', '.join(plan['missing_requirements']) or '-'}")
         print(f"saved: {path}")
-        print(f"dry-run execute: python scripts\\cdp_client.py youtube upload execute {path} --approved --confirm={uploader.APPROVAL_PHRASE} --dry-run")
+        print(f"dry-run execute: python scripts\\entry\\cdp_cli.py youtube upload execute {path} --approved --confirm={uploader.APPROVAL_PHRASE} --dry-run")
         return
     if sub == "execute":
         if not args:
@@ -165,7 +165,7 @@ def _cmd_oauth(sub: str, args: list[str]) -> None:
         if result["status"] == "ready_for_user_approval":
             print("auth_url:")
             print(result["auth_url"])
-            print("exchange: python scripts\\cdp_client.py youtube oauth exchange code=<returned_code> client_file=<client_secret.json>")
+            print("exchange: python scripts\\entry\\cdp_cli.py youtube oauth exchange code=<returned_code> client_file=<client_secret.json>")
         return
     if sub in ("exchange", "token"):
         result, path = oauth.exchange_code(values)

@@ -11,17 +11,8 @@ Future backends:
 - cad: CAD application automation
 
 In current stage (BROWSER-ARCH-2A), only mock backend is active.
+
+이 패키지는 재수출을 하지 않는다(재수출은 순환 import 의 원인) — 필요한 이름은 하위 모듈에서 직접 import 한다:
+- `ai_orchestrator.browser_tool.router`: route_browser_task, route_browser_task_with_params
+- `ai_orchestrator.browser_tool.schemas`: BrowserTask, BrowserResult, BrowserActionName, BrowserBackendName
 """
-from __future__ import annotations
-
-from .router import route_browser_task, route_browser_task_with_params
-from .schemas import BrowserActionName, BrowserBackendName, BrowserResult, BrowserTask
-
-__all__ = [
-    "BrowserTask",
-    "BrowserResult",
-    "BrowserActionName",
-    "BrowserBackendName",
-    "route_browser_task",
-    "route_browser_task_with_params",
-]

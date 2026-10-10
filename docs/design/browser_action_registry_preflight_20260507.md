@@ -22,7 +22,7 @@ browser action을 실행하기 전에, action registry metadata와 gate approval
 
 ## 2. Action Registry Preflight 위치
 
-- 모듈: `ai_orchestrator/browser_tool/action_registry_preflight.py`
+- 모듈: `ai_orchestrator/browser_tool/preflight/action_registry_preflight.py`
 - 테스트: `tests/test_browser_action_registry_preflight_20260507.py`
 - Fixture: `tests/fixtures/browser_action_registry_preflight_20260507.json`
 - 설계 문서: 현재 파일

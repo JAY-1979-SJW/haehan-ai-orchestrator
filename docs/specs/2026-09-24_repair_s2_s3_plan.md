@@ -8,8 +8,8 @@
 |---|---|---|---|---|---|---|---|
 | 1 | scripts/google/workflows.py (L6 조율이 L5 하위모듈에서 역참조) | L5->L6 11 | workflows가 import되는 것이 문제: 하위모듈이 workflows의 공용 상수/함수를 쓰므로 공용부를 scripts/google/_shared.py(L5)로 추출, workflows는 이를 import | workflows에 re-export 유지 | 17(1) | 없음 | -11 |
 | 2 | scripts/naver/smartstore/product/description_editor.py | L4->L5 (+_tmp_* 3건) | 사이트 종속 코드를 L5 폴더 유지, L4 쪽 호출자(general_product 등)를 L5로 재라벨 또는 _tmp_* 스크립트 정리(삭제는 allow-delete) | 불필요(경로 유지) | 6(0) | 없음 | -5 |
-| 3 | ai_orchestrator/local_agent/security_program_detector.py | L4->L6 (auto_resume, install_discovery 등 5) | detector를 L6로 재분류(서비스 성격) 또는 순수 판정부만 L2로 분리 | 분리 시 필요 | 4(1) | 없음 | -5 |
-| 4 | ai_orchestrator/local_agent/result_sanitizer.py 및 safe_write/universal_safe_result | L2/L4->L6 약 9 | sanitizer류는 정책=L2로 재라벨(위치 유지)이 최선. 이동 불요 | 불필요 | 7(2) | 없음 | -9 (라벨성, S1로 이관 권장) |
+| 3 | local_agent/runtime/security_program_detector.py | L4->L6 (auto_resume, install_discovery 등 5) | detector를 L6로 재분류(서비스 성격) 또는 순수 판정부만 L2로 분리 | 분리 시 필요 | 4(1) | 없음 | -5 |
+| 4 | core/agent_runtime/runtime/result_sanitizer.py 및 safe_write/universal_safe_result | L2/L4->L6 약 9 | sanitizer류는 정책=L2로 재라벨(위치 유지)이 최선. 이동 불요 | 불필요 | 7(2) | 없음 | -9 (라벨성, S1로 이관 권장) |
 | 5 | ai_orchestrator/browser_tool/g2b_public_notice_workflow.py | L4->L6, L2->L6 | workflow(L6)를 dryrun_adapter/execution_gate가 import → 어댑터가 쓰는 부분(타입/상수)을 workflow에서 g2b_public_notice_models.py로 추출 | workflow에 re-export | 5(3) | 없음 | -3 |
 | 6 | scripts/hanafax/batch.py, hiworks/{mail_batch,workflows}.py, mk_catalog/pipeline.py, naver/cafe/{pipeline,list_background_runner}.py (router L5가 L6 import) | L5->L6 약 10 | 라우터->서비스 방향은 정상이므로 파일을 L6 라벨로 정정(이동 불요). 실제 위반은 라벨 | 불필요 | 각 1~3 | 없음 | -10 (라벨성, S1 이관) |
 | 7 | apps/marketing-standalone connectors/core (blog_router가 core/* import) | L5->L6 9 | 독립 앱=규칙 제외 대상으로 이미 분리 여부 확인 후 제외 | 불필요 | 2~3 | 없음 | -9 (제외규칙, S1) |

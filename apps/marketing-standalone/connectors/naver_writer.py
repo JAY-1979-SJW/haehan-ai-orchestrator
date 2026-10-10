@@ -1,10 +1,10 @@
 """네이버 블로그 글쓰기 — 독립 앱 전용 사본 (원본: scripts/naver/blog/core/writer.py).
 
 원본 대비 변경점(전부 "고객 비밀번호를 저장하지 않는다"는 이 앱의 설계 원칙 때문):
-  - get_logger: 회사 scripts.logger 대신 _bootstrap.get_logger 사용.
+  - get_logger: 회사 scripts.common.logger 대신 _bootstrap.get_logger 사용.
   - selectors: connectors.naver_selectors (사본, 0줄 변경) 사용.
   - log_critical(회사 내부 감사 DB 기록) 전부 제거 — 대신 _log.info 로만 남김.
-  - ensure_naver_login(자동 재로그인, scripts.credentials 저장 비밀번호로 로그인)
+  - ensure_naver_login(자동 재로그인, scripts.auth.credentials 저장 비밀번호로 로그인)
     → connectors.naver_login_check.check_login(로그인 여부만 확인, 자동 로그인
     시도 안 함 — 안 됐으면 "직접 로그인해주세요" 안내만 반환).
   - DOM 조작/발행 로직(BlogWriter 클래스, write_post/edit_post/confirm_publish

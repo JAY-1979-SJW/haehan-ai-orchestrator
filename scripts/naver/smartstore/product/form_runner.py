@@ -26,7 +26,7 @@ from typing import Any, ClassVar
 
 from playwright.sync_api import Page
 
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 from scripts.naver.smartstore.product.general_product import GeneralProductRegister
 from scripts.naver.smartstore.product.register_form import (
     CategorySection,

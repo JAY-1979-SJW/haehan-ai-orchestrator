@@ -17,7 +17,7 @@
 
 사용:
     python scripts/eum/full_explorer.py
-    python scripts/cdp_client.py eum explore
+    python scripts/entry/cdp_cli.py eum explore
 """
 
 from __future__ import annotations
@@ -40,10 +40,10 @@ except ImportError:
     pass
 
 from scripts.eum.access_handler import detect_and_handle, is_access_blocked  # noqa: E402
-from scripts.logger import get_logger  # noqa: E402
-from scripts.op_log import log_op, op_context  # noqa: E402
-from scripts.popup_classifier import classify  # noqa: E402
-from scripts.popup_watcher import install_watcher, poll_events  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
+from scripts.common.op_log import log_op, op_context  # noqa: E402
+from scripts.browser.popup.popup_classifier import classify  # noqa: E402
+from scripts.browser.navigator.popup_watcher import install_watcher, poll_events  # noqa: E402
 
 log = get_logger(__name__)
 
@@ -643,7 +643,7 @@ def explore_all(page) -> dict[str, Any]:
 def main() -> None:
     """CLI 실행."""
     from scripts.eum.auth import is_logged_in, login
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     print("=" * 70)
     print("  EUM 전체 사이트 세밀 탐색")

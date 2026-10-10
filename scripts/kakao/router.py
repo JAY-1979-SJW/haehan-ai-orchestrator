@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 
 from . import dev_console
 from .base import check_session
@@ -47,13 +47,13 @@ def _cmd_session_check() -> None:
         print("✓ 로그인 상태 정상")
     else:
         print("✗ 로그인 필요")
-        print("  python scripts/cdp_client.py kakao login")
+        print("  python scripts/entry/cdp_cli.py kakao login")
     print("=" * 60)
 
 
 def _cmd_login() -> None:
     from scripts.kakao.auth import login
-    from scripts.web_connector import browser_session
+    from scripts.browser.page.web_connector import browser_session
 
     print("=" * 60)
     print("카카오 로그인")
@@ -65,7 +65,7 @@ def _cmd_login() -> None:
             print("✓ 이미 로그인 상태입니다")
         else:
             print("\n브라우저에서 카카오 계정으로 로그인하세요 (최대 5분 대기)")
-            from scripts.login_detector import monitor_for_login
+            from scripts.auth.login_detector import monitor_for_login
 
             detected = monitor_for_login(page, check_interval=2, timeout_s=300)
             if detected.get("detected"):

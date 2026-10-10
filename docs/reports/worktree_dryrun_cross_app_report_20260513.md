@@ -87,7 +87,7 @@ Direct Python dependencies:
 | source | relationship | impact |
 | --- | --- | --- |
 | `scripts/ops/worktree_change_index.py` | imports `scripts.ops.codebase_layer_audit.classify_path` | Classification changes affect worktree summaries and owner/category counts. |
-| `scripts/app_realtime_check.py` | reads `data/logs/pre_change_dry_run_latest.json` and `data/worktree_change_index_latest.json` | App health board depends on latest dry-run and index artifacts, not on implementation internals. |
+| `scripts/ops/app_realtime_check.py` | reads `data/logs/pre_change_dry_run_latest.json` and `data/worktree_change_index_latest.json` | App health board depends on latest dry-run and index artifacts, not on implementation internals. |
 | `tests/test_worktree_change_index.py` | imports `scripts.ops.worktree_change_index` | Regression coverage for worktree classification. |
 | `tests/test_codebase_layer_audit.py` | imports `scripts.ops.codebase_layer_audit` | Regression coverage for layer classification. |
 | `tests/test_pre_change_dry_run.py` | imports `scripts.ops.pre_change_dry_run` | Regression coverage for dry-run evidence recording. |

@@ -27,7 +27,7 @@ ChatGPT 웹은 검색 기능이 있고, 무엇보다 **출력물을 Claude가 �
   전송은 `button[data-testid="send-button"]` 클릭
 
 사용:
-    from scripts.cdp_helper import CDP
+    from scripts.browser.cdp.cdp_helper import CDP
     from scripts.naver.blog.marketing.gpt_writer import generate_draft
 
     cdp = CDP(port=9222)
@@ -45,9 +45,10 @@ import re
 import time
 from pathlib import Path
 
-from scripts.cdp_helper import CDP
-from scripts.logger import get_logger
+from scripts.browser.cdp.cdp_helper import CDP
+from scripts.common.logger import get_logger
 from scripts.naver.blog.accounts import DEFAULT_ACCOUNT
+from scripts.naver.blog.marketing.chatgpt_prompt import send_chatgpt_prompt
 from scripts.naver.blog.marketing.competitor import research_competitors, summarize_for_prompt
 from scripts.naver.blog.marketing.content import (
     MIN_BODY_CHARS,
@@ -245,23 +246,7 @@ _LAST_ASSISTANT_JS = """(function(){
 
 
 def _send_prompt(cdp: CDP, prompt: str) -> str:
-    focus = cdp.js("""(function(){
-      var ta = document.querySelector('#prompt-textarea');
-      if (!ta) return 'textarea not found';
-      ta.focus();
-      return 'focused';
-    })()""")
-    if focus != "focused":
-        return focus
-    time.sleep(0.3)
-    cdp.send("Input.insertText", {"text": prompt})
-    time.sleep(0.8)
-    return cdp.js("""(function(){
-      var b = document.querySelector('button[data-testid="send-button"]');
-      if (!b) return 'send button not found';
-      b.click();
-      return 'clicked';
-    })()""")
+    return send_chatgpt_prompt(cdp, prompt, 0.8)
 
 
 def _wait_for_response(

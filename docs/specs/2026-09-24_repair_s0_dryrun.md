@@ -7,7 +7,7 @@
 - 결론: 51 은 "선언된 층 기준 위반", 280 은 "경로 추측 기준 위반(=라벨 오류 포함)". 51 로 낮춘 건 레이블 정정 효과이고 실제 의존은 그대로.
 
 ## 정본
-- scripts/ops/code_map/layer_count.py → data/code_map/layer_baseline.json (primary_management_metric = 관리 기준, secondary = 레지스트리 기준).
+- tools/code_map/layer_count.py → data/code_map/layer_baseline.json (primary_management_metric = 관리 기준, secondary = 레지스트리 기준).
 - 신규 파일 1개, 기존 코드 수정 0. 게이트/라우트 영향 없음.
 
 ## 기준값 스냅샷 (master 683669cf 기준)

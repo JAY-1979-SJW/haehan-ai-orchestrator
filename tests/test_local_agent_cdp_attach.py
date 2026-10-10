@@ -1,6 +1,6 @@
 import pytest
 
-from local_agent.cdp_attach import (
+from core.agent_runtime.browser.cdp_attach import (
     CDPAttachValidationError,
     build_cdp_list_url,
     build_cdp_version_url,

@@ -1,4 +1,4 @@
-"""local_agent.browser_login_probe 검증 (수동 로그인 확인 모드).
+"""core.agent_runtime.browser.browser_login_probe 검증 (수동 로그인 확인 모드).
 
 실제 네이버/외부 웹사이트 접속 금지. 실제 Playwright 실행 금지. 모든 테스트는
 fake Playwright 팩토리 + fake time 모듈을 주입해 deterministic 하게 수행.
@@ -223,7 +223,7 @@ _POST_LOGIN_HTML = (
 
 
 def test_url_outside_allowed_hosts_blocked():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     factory, log, _ = _make_probe_factory(
         [
@@ -255,7 +255,7 @@ def test_url_outside_allowed_hosts_blocked():
     ],
 )
 def test_naver_hosts_reach_factory(url):
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     factory, log, _ = _make_probe_factory(
         [
@@ -292,7 +292,7 @@ def test_naver_hosts_reach_factory(url):
     ],
 )
 def test_dangerous_scheme_blocked(url):
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     factory, log, _ = _make_probe_factory(
         [
@@ -330,7 +330,7 @@ def test_dangerous_scheme_blocked(url):
     ],
 )
 def test_private_host_blocked(url):
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     factory, log, _ = _make_probe_factory(
         [
@@ -354,7 +354,7 @@ def test_private_host_blocked(url):
 
 
 def test_initial_password_input_detected():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "네이버 로그인", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
@@ -380,7 +380,7 @@ def test_initial_password_input_detected():
 
 
 def test_password_disappeared_sets_completed_hint():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "네이버 로그인", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
@@ -407,7 +407,7 @@ def test_password_disappeared_sets_completed_hint():
 
 
 def test_url_changed_sets_completed_hint():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "네이버 로그인", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
@@ -430,7 +430,7 @@ def test_url_changed_sets_completed_hint():
 
 
 def test_success_url_contains_match():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://nid.naver.com/nidlogin.login", "html": "<html><body></body></html>"},
@@ -455,7 +455,7 @@ def test_success_url_contains_match():
 
 
 def test_success_text_hints_match():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://nid.naver.com/x", "html": "<html><body></body></html>"},
@@ -480,7 +480,7 @@ def test_success_text_hints_match():
 
 
 def test_timeout_returns_login_timeout():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://nid.naver.com/login", "html": _LOGIN_HTML},
@@ -503,7 +503,7 @@ def test_timeout_returns_login_timeout():
 
 
 def test_result_has_no_password_value():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     html = (
         "<html><body><form>"
@@ -530,7 +530,7 @@ def test_result_has_no_password_value():
 
 
 def test_result_has_no_hidden_value():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     html = (
         "<html><body><form>"
@@ -557,7 +557,7 @@ def test_result_has_no_hidden_value():
 
 
 def test_no_cookie_or_storage_calls_in_log():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://nid.naver.com/login", "html": _LOGIN_HTML},
@@ -583,7 +583,7 @@ def test_no_cookie_or_storage_calls_in_log():
 
 
 def test_no_interaction_methods_called():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://nid.naver.com/login", "html": _LOGIN_HTML},
@@ -622,7 +622,7 @@ def test_no_interaction_methods_called():
 
 
 def test_no_session_state_api_calls():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://nid.naver.com/login", "html": _LOGIN_HTML},
@@ -651,7 +651,7 @@ def test_no_session_state_api_calls():
 
 
 def test_close_methods_called():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "t", "url": "https://nid.naver.com/login", "html": _LOGIN_HTML},
@@ -675,7 +675,7 @@ def test_close_methods_called():
 
 
 def test_action_web_probe_manual_login_returns_result():
-    from local_agent.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     script = [
         {"title": "Naver Login", "url": "https://nid.naver.com/nidlogin.login", "html": _LOGIN_HTML},
@@ -699,7 +699,7 @@ def test_action_web_probe_manual_login_returns_result():
 
 
 def test_action_probe_blocks_non_allowed_host():
-    from local_agent.actions import execute_action
+    from core.agent_runtime.connection.actions import execute_action
 
     # allowed_hosts=[naver.com] 에 걸리지 않는 호스트 → HOST_NOT_ALLOWED.
     # 실제 브라우저는 실행되지 않는다 (factory 도 주입하지 않음).
@@ -720,8 +720,8 @@ def test_action_probe_blocks_non_allowed_host():
 
 
 def test_playwright_missing_graceful():
-    from local_agent.browser_login_probe import probe_manual_login_flow
-    from local_agent.browser_reader import BrowserDependencyMissing
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_reader import BrowserDependencyMissing
 
     def bad_factory():
         raise BrowserDependencyMissing("playwright not installed")
@@ -743,7 +743,7 @@ def test_playwright_missing_graceful():
 
 def test_smoke_script_not_auto_executed():
     """pytest import 만으로 실제 네이버 접속이 발생하지 않아야 한다."""
-    smoke_path = Path(__file__).resolve().parent.parent.parent / "scripts" / "smoke_naver_manual_login_probe.py"
+    smoke_path = Path(__file__).resolve().parent.parent.parent / "scripts" / "naver" / "smoke_naver_manual_login_probe.py"
     assert smoke_path.exists(), "smoke script missing"
     src = smoke_path.read_text(encoding="utf-8")
     # 실제 실행은 __main__ 가드 뒤에서만 일어난다.
@@ -763,8 +763,8 @@ def test_smoke_script_not_auto_executed():
 
 def test_no_credentials_hardcoded():
     root = Path(__file__).resolve().parent.parent.parent
-    probe_src = (root / "local_agent" / "browser_login_probe.py").read_text(encoding="utf-8")
-    smoke_src = (root / "scripts" / "smoke_naver_manual_login_probe.py").read_text(encoding="utf-8")
+    probe_src = (root / "core" / "agent_runtime" / "browser" / "browser_login_probe.py").read_text(encoding="utf-8")
+    smoke_src = (root / "scripts" / "naver" / "smoke_naver_manual_login_probe.py").read_text(encoding="utf-8")
 
     forbidden_tokens = (
         "NAVER_ID",
@@ -822,7 +822,7 @@ class _RecordingInput:
 
 
 def test_require_visible_confirm_blocks_polling_until_user_presses_enter():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     # 사용자가 Ctrl+C 로 중단하면 polling 은 시작되지 않아야 한다.
     fake_input = _RecordingInput(raise_on=[0])
@@ -852,7 +852,7 @@ def test_require_visible_confirm_blocks_polling_until_user_presses_enter():
 
 
 def test_require_visible_confirm_sets_flag_when_user_confirms():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=[""])
     clock = _FakeTime()
@@ -879,7 +879,7 @@ def test_require_visible_confirm_sets_flag_when_user_confirms():
 
 
 def test_keep_open_waits_for_enter_before_close():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=[""])
     script = [
@@ -910,7 +910,7 @@ def test_keep_open_waits_for_enter_before_close():
 
 
 def test_success_url_match_alone_does_not_mark_completed():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     # 초기부터 target URL 에 있고, password input 도 없고, URL 도 변하지 않으면
     # success_url_match 는 애초에 발생하지 않으며, 완료로 판정되지도 않는다.
@@ -938,7 +938,7 @@ def test_success_url_match_alone_does_not_mark_completed():
 
 
 def test_already_logged_in_state_detected():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     # 초기 URL 이 target 토큰에 매칭 + password input 없음 +
     # login_required_hint 없음 → already_logged_in_or_public_page 로 분류.
@@ -965,7 +965,7 @@ def test_already_logged_in_state_detected():
 
 
 def test_user_confirmed_login_adds_reason_and_completes():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=[""])
     script = [
@@ -992,7 +992,7 @@ def test_user_confirmed_login_adds_reason_and_completes():
 
 
 def test_user_login_confirm_n_response_does_not_mark_completed():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     # 사용자가 "n" 응답 → login_confirmed_by_user=False, hint=False.
     fake_input = _RecordingInput(responses=["n"])
@@ -1017,7 +1017,7 @@ def test_user_login_confirm_n_response_does_not_mark_completed():
 
 
 def test_require_user_login_confirm_suppresses_auto_completion():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     # 강한 구조 근거 (password_input_disappeared) 가 있어도 사용자가
     # 확인하지 않으면 login_completed_hint=True 로 단정하지 않는다.
@@ -1048,7 +1048,7 @@ def test_require_user_login_confirm_suppresses_auto_completion():
 
 
 def test_browser_channel_chrome_forwarded_to_launch():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "Naver", "url": "https://www.naver.com/", "html": _POST_LOGIN_HTML},
@@ -1071,7 +1071,7 @@ def test_browser_channel_chrome_forwarded_to_launch():
 
 
 def test_browser_channel_chromium_does_not_set_channel_kwarg():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "Naver", "url": "https://www.naver.com/", "html": _POST_LOGIN_HTML},
@@ -1092,7 +1092,7 @@ def test_browser_channel_chromium_does_not_set_channel_kwarg():
 
 
 def test_invalid_browser_channel_returns_error():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     script = [
         {"title": "Naver", "url": "https://www.naver.com/", "html": "<html></html>"},
@@ -1117,7 +1117,7 @@ def test_invalid_browser_channel_returns_error():
 
 
 def test_no_auto_login_or_cookie_collection_with_new_options():
-    from local_agent.browser_login_probe import probe_manual_login_flow
+    from core.agent_runtime.browser.browser_login_probe import probe_manual_login_flow
 
     fake_input = _RecordingInput(responses=["", "", ""])
     script = [

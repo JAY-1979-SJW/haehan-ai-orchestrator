@@ -6,7 +6,7 @@
   추가한다(GPT 폴백은 2026-09-12 유료 API 사용 중단으로 제거됨).
 
 사용:
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
     from scripts.community.universal_extractor import extract_posts
     result = extract_posts(get_page(), "https://example.com/board")
 """

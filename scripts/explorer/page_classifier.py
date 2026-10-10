@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 from scripts.form.discovery import discover_form
-from scripts.logger import get_logger
+from scripts.common.logger import get_logger
 
 log = get_logger(__name__)
 
@@ -114,7 +114,7 @@ def _rule_modal(snap: dict, disc: dict):
             "modal_popup",
             0.85,
             [f"modal_signs={len(snap['modal_signs'])}"],
-            ["scripts.popup_watcher / popup_classifier"],
+            ["scripts.browser.navigator.popup_watcher / popup_classifier"],
         )
     return None
 

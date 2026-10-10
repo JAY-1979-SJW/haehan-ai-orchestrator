@@ -128,6 +128,8 @@ session*
 !session_status_router.py
 !session_probe.py
 !session_tracker.py
+!scripts/browser/session/
+!scripts/browser/session/*.py
 !session_probe_fix.md
 !session_guard.py
 !session_handoff.py
@@ -274,7 +276,7 @@ data/mk_catalog/crops/
 data/mk_catalog/detail/
 
 # 정리 작업 중 새로 발견된 산출물 (2026-09-28) — 스크랩 결과/초안/영상/스크린샷/
-# 수동 백업/audit-kit 리포트. code_map/은 scripts/ops/code_map/build.py 가
+# 수동 백업/audit-kit 리포트. code_map/은 tools/code_map/build.py 가
 # 재생성하는 캐시(정본은 configs/module_registry.json, 이미 추적 중).
 data/code_map/
 data/community/

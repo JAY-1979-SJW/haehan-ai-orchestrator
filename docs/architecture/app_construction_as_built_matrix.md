@@ -17,8 +17,8 @@
 
 | 항목 | 레이어 | 상태 | 증거 파일 |
 |------|--------|------|-----------|
-| Layer Audit (P0 게이트) | L2 | ✅ | `scripts/ops/codebase_layer_audit.py` |
-| Quality Gate | L2 | ✅ | `scripts/quality_gate.py` |
+| Layer Audit (P0 게이트) | L2 | ✅ | `tools/repo_gates/codebase_layer_audit.py` |
+| Quality Gate | L2 | ✅ | `tools/quality/quality_gate.py` |
 | Governance Gate Matrix | L12 | ✅ | `docs/architecture/governance_gate_matrix.md` |
 | Domain Room Allocation Rule | L12 | ✅ | `docs/architecture/domain_room_allocation_rule.md` |
 | Shared Warehouse Model | L12 | ✅ | `docs/architecture/shared_warehouse_model.md` |
@@ -32,9 +32,9 @@
 
 | 시설 | 레이어 | 상태 | 위치 |
 |------|--------|------|------|
-| CDP Client | L4 | ✅ | `ai_orchestrator/local_agent/browser/cdp_client.py` |
-| Popup Watcher | L4 | ✅ | `ai_orchestrator/local_agent/browser/popup_watcher.py` |
-| Browser Navigator | L4 | ✅ | `ai_orchestrator/local_agent/browser/navigator.py` |
+| CDP Client | L4 | ✅ | `scripts/browser/agent/cdp_client.py` |
+| Popup Watcher | L4 | ✅ | `scripts/browser/agent/popup_watcher.py` |
+| Browser Navigator | L4 | ✅ | `scripts/browser/agent/navigator.py` |
 | App Logger | L7 | ✅ | `data/logs/app.log` + `data/cdp.db` |
 | Ops Logger | L7 | ✅ | `data/logs/ops.log` |
 | Action Registry | L2 | ⬜ | 미구현 |

@@ -14,7 +14,7 @@ def main() -> None:
 
     2026-10-05: 이 코드가 모듈 최상위에 있어 pytest 가 파일을 수집(import)하기만 해도 사용자 9222 브라우저에 붙고 마지막 탭을 닫았다.
     """
-    from scripts.web_connector import get_page
+    from scripts.browser.cdp.connection import get_page
 
     print("=" * 60)
     print("Context & Page 상태 진단")

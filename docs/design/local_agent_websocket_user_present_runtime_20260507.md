@@ -5,7 +5,7 @@
 ## 1. 목적
 
 USER_PRESENT_TASK / USER_PRESENT_STATUS contract를
-실제 local_agent/websocket_client.py 런타임 흐름에 연결한다.
+실제 core/agent_runtime/connection/websocket_client.py 런타임 흐름에 연결한다.
 
 실제 브라우저 action 실행 없음. safe_to_execute=False 유지.
 
@@ -38,7 +38,7 @@ USER_PRESENT_TASK / USER_PRESENT_STATUS contract를
 - local state_store에 WAITING_FOR_USER task 생성
 - 서버에 `{"type": "user_present_ack", "workflow_run_id": ..., "status": "WAITING_FOR_USER"}` 회신
 
-**연결 위치**: `local_agent/websocket_client.py` 메시지 루프 `else` 분기 앞에 삽입
+**연결 위치**: `core/agent_runtime/connection/websocket_client.py` 메시지 루프 `else` 분기 앞에 삽입
 
 ## 4. local state_store 등록 흐름
 
@@ -71,7 +71,7 @@ USER_PRESENT_TASK / USER_PRESENT_STATUS contract를
 - `handle_user_present_status_event(event)` 검증 및 응답
 
 **서버 측 handler 위치**:
-`ai_orchestrator/browser_tool/local_agent_user_present_status_handler.py`
+`ai_orchestrator/agent_hub/user_present_status_handler.py`
 
 ## 7. 민감정보 미전송 정책
 

@@ -1,11 +1,17 @@
 """tests/test_universal_agent_session_20260508.py"""
 import pytest
-from ai_orchestrator.local_agent.universal_agent_session import (
-    create_session, get_session, run_task_in_session,
-    grant_session_permission, revoke_session_permission,
-    get_session_history, close_session, clear_all_sessions,
+
+from core.agent_runtime.runtime.universal.natural_language_task_api import check_result_safety
+from core.agent_runtime.runtime.universal.universal_agent_session import (
+    clear_all_sessions,
+    close_session,
+    create_session,
+    get_session,
+    get_session_history,
+    grant_session_permission,
+    revoke_session_permission,
+    run_task_in_session,
 )
-from ai_orchestrator.local_agent.natural_language_task_api import check_result_safety
 
 _SAFE_FIELDS = [
     "cookie_exported", "session_exported", "password_collected",

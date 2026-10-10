@@ -18,8 +18,8 @@ import json
 import os
 import urllib.request
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
 
 _log = get_logger(__name__)
 
@@ -95,7 +95,7 @@ class NotificationHub:
     def send_talk(self, partner: str, message: str) -> dict:
         if not self.page:
             return {"ok": False, "error": "page_required"}
-        from scripts.naver.talk import NaverTalk
+        from scripts.naver.common.talk import NaverTalk
 
         talk = NaverTalk(self.page)
         return talk.send_message(partner, message, confirm=True)

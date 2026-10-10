@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ai_orchestrator.browser_tool.security_signal_detector import (
+from ai_orchestrator.browser_tool.policy.security_signal_detector import (
     SIG_BID_SUBMIT,
     SIG_CAPTCHA,
     SIG_CERT_AUTH,

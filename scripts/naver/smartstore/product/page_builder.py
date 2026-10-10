@@ -42,6 +42,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from ai_orchestrator.paths.runtime import data_dir
+
 ROOT = Path(__file__).resolve().parents[4]
 
 
@@ -773,7 +775,7 @@ class ProductPageBuilder:
 
     def save(self, html: str, path: str | None = None) -> str:
         """HTML을 파일로 저장 (브라우저 미리보기용 래퍼 포함)."""
-        out = Path(path) if path else ROOT / "data" / "smartstore" / "description_preview.html"
+        out = Path(path) if path else data_dir() / "smartstore" / "description_preview.html"
         out.parent.mkdir(parents=True, exist_ok=True)
         full = (
             "<!DOCTYPE html><html lang='ko'><head>"

@@ -4,14 +4,14 @@
 
 | 파일 | 전 -> 후 | 근거 |
 |---|---|---|
-| ai_orchestrator/local_agent/browser/mixins/cafe_mixin_article.py | L5 -> L4 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
+| scripts/naver/cafe/cafe_mixin_article.py | L5 -> L4 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
 | scripts/g2b/discover_valid_public_notice_urls.py | L5 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
-| scripts/local_agent/g2b/run_readonly_local_e2e.py | L5 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
-| scripts/local_agent/router.py | L4 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
-| scripts/local_agent/run_playwright_smoke.py | L4 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
-| scripts/local_agent/run_universal_ai_real_site_smoke.py | L4 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
+| scripts/g2b/run_readonly_local_e2e.py | L5 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
+| scripts/sites/local_cli_router.py | L4 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
+| tools/smoke/run_playwright_smoke.py | L4 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
+| tools/smoke/run_universal_ai_real_site_smoke.py | L4 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
 | scripts/module_quality_gate.py | L2 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
-| scripts/naver/automation/platform/error_recovery.py | L7 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
+| scripts/naver/automation/error_recovery.py | L7 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
 | scripts/naver/blog/management/post_cache.py | L7 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
 | scripts/naver/smartstore/product/bulk.py | L7 -> L6 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |
 | scripts/popup_monitor.py | L7 -> L4 | 실행 스크립트/러너(업무흐름 조립) 또는 실체 확인 |

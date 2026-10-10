@@ -18,7 +18,7 @@
 | ① | **배포 데몬이 저장소에 없다.** `scripts/ops/deploy_trigger_daemon.py`는 2026-06-02 커밋 `d7d84390`("좀비 스크립트" 정리, 171줄 삭제)에서 삭제됐다. 결함 #6 본문의 `b4ad2f70`은 히스토리 재작성 전 해시로 같은 커밋이다 | `git ls-files`에 없음, `git log --diff-filter=D -- scripts/ops/deploy_trigger_daemon.py`로 삭제 이력 확인 |
 | ② | **systemd 유닛이 삭제된 데몬을 가리킨다.** `scripts/ops/ai-orchestrator-deploy-trigger.service`의 `ExecStart`가 `.../scripts/ops/deploy_trigger_daemon.py` | 유닛 파일 `ExecStart` 줄. 서버에 같은 유닛이 켜져 있으면 데몬 파일이 없어 재시작 루프(`Restart=always`)일 것 |
 | ③ | **webhook이 리슨하는 이가 없는 곳으로 전달한다.** `deploy_router.py`의 `POST /api/v1/deploy/webhook`은 서명 검증 뒤 `http://host.docker.internal:8401/trigger`로 전달(`TRIGGER_URL`, `:37-40`). 이 포트를 열던 게 ①의 데몬 | `ai_orchestrator/routers/deploy_router.py:37-40,59-80,83-107`. 데몬이 없으면 `503 trigger_daemon_unreachable` |
-| ④ | **`server_deploy.py`는 호출자가 없다.** 이 스크립트는 `--approved`가 있어야 도는데(`server_deploy.py:97`), 그것을 부르던 데몬이 ①로 사라졌다. 스크립트 자체는 정상(`git fetch` → `merge --ff-only` → `docker compose up -d --build` → nginx reload) | `scripts/ops/server_deploy.py` |
+| ④ | **`server_deploy.py`는 호출자가 없다.** 이 스크립트는 `--approved`가 있어야 도는데(`server_deploy.py:97`), 그것을 부르던 데몬이 ①로 사라졌다. 스크립트 자체는 정상(`git fetch` → `merge --ff-only` → `docker compose up -d --build` → nginx reload) | `tools/server_deploy.py` |
 | ⑤ | **배포 전 검증이 배포 흐름에 연결돼 있지 않다.** CI(`.github/workflows/ci.yml`)는 push마다 verify_change를 돌지만, `server_deploy.py`는 CI 결과를 확인하지 않는다 | 결함 #4(status fixed지만 "연결하는 두 번째 절반은 미해결"이라고 evidence에 적힘), `server_deploy.py`에 테스트·게이트 호출 0 |
 | ⑥ | **운영 반영 여부를 볼 수단이 없었다.** health에 SHA 없음 | **이번 커밋으로 해소**(§4). 단 값이 채워지려면 서버가 새 `server_deploy.py`로 빌드해야 한다 |
 | ⑦ | 문서가 낡았다. `CLAUDE.md` 52줄의 "git push 후 서버가 자체 처리"와 `DEPLOY_PIPELINE_REPAIR.md`의 "데몬 경로 1줄 수정"은 현재 코드와 맞지 않는다 | 결함 #6의 fix_note(2026-09-29)에 이미 "데몬 복구/재설계는 별도 승인"이라고 적힘 |
@@ -35,8 +35,8 @@
 | 안 | 내용 | 장점 | 단점·위험 | 서버 측 작업 |
 |---|---|---|---|---|
 | **A. 호스트 데몬 복구** | `deploy_trigger_daemon.py`를 새로 작성(HMAC `X-Deploy-Signature` 검증, 8401, 동시 실행 방지 409, `server_deploy.py --approved` 호출, 상태 파일 `server_deploy_latest.json` 기록)하고 systemd로 상시 실행. GitHub webhook → nginx → API(`/deploy/webhook`) → 데몬 | 기존 `deploy_router.py`·`.service` 설계를 그대로 살림. push 즉시 자동 | **구성요소가 가장 많다**: 데몬·systemd·webhook 등록·nginx 공개 예외(webhook 경로)·시크릿 3종. 외부에 열린 배포 트리거 엔드포인트가 생김(공격면). 6월에 "좀비"로 삭제된 전례. CI 결과와 무관하게 push면 배포(#4 ⑤ 미해결) | 데몬 설치, 유닛 교체, nginx에 webhook 경로 공개 예외, GitHub webhook 등록, `DEPLOY_WEBHOOK_SECRET` 설정 |
-| **B. GitHub Actions → SSH 배포 (승인 게이트 포함)** | `ci.yml`과 같은 저장소의 `deploy` 워크플로. `master`에서 CI 통과 후 `environment: production`(필수 검토자=대표님 승인)을 거쳐 SSH로 `python3 scripts/ops/server_deploy.py --approved` 실행. 끝나면 §5 절차로 health SHA 대조까지 워크플로가 수행 | 데몬·webhook·nginx 예외가 **모두 필요 없다**. CI 통과를 배포 조건으로 만들 수 있어 ⑤가 해소된다. 승인이 GitHub UI에 기록으로 남는다. 서버에 상주 프로세스가 늘지 않는다 | 서버가 GitHub 러너의 SSH 접속을 받아야 한다(포트 22 공개 또는 허용 대역 관리). **SSH 개인키가 GitHub Secrets에 들어간다** — 이 저장소는 PUBLIC(`ci.yml` 주석 2026-09-30)이므로 환경 보호 규칙·`master` 한정이 필수. 키 유출·워크플로 변조 시 서버 접속 위험 | 배포 전용 SSH 계정/키(명령 제한 `authorized_keys`: `command=` 로 `server_deploy.py`만 허용), GitHub environment·secrets 설정, (필요 시) 방화벽 |
-| **C. 수동 `server_deploy.py` + SHA 확인** | 운영자가 서버에 SSH로 접속해 `python3 scripts/ops/server_deploy.py --approved`를 직접 실행하고, §5로 확인 | **지금 바로 가능.** 새로 만들 것이 없고 공격면이 늘지 않는다. 대표님이 매번 승인하는 현행 정책(CLAUDE.md '서버 배포는 승인')과 일치 | 사람이 잊으면 뒤처진다(2026-06의 23커밋 지연이 이 유형). 자동 검증 없음 | 없음(운영자가 하는 일) |
+| **B. GitHub Actions → SSH 배포 (승인 게이트 포함)** | `ci.yml`과 같은 저장소의 `deploy` 워크플로. `master`에서 CI 통과 후 `environment: production`(필수 검토자=대표님 승인)을 거쳐 SSH로 `python3 tools/server_deploy.py --approved` 실행. 끝나면 §5 절차로 health SHA 대조까지 워크플로가 수행 | 데몬·webhook·nginx 예외가 **모두 필요 없다**. CI 통과를 배포 조건으로 만들 수 있어 ⑤가 해소된다. 승인이 GitHub UI에 기록으로 남는다. 서버에 상주 프로세스가 늘지 않는다 | 서버가 GitHub 러너의 SSH 접속을 받아야 한다(포트 22 공개 또는 허용 대역 관리). **SSH 개인키가 GitHub Secrets에 들어간다** — 이 저장소는 PUBLIC(`ci.yml` 주석 2026-09-30)이므로 환경 보호 규칙·`master` 한정이 필수. 키 유출·워크플로 변조 시 서버 접속 위험 | 배포 전용 SSH 계정/키(명령 제한 `authorized_keys`: `command=` 로 `server_deploy.py`만 허용), GitHub environment·secrets 설정, (필요 시) 방화벽 |
+| **C. 수동 `server_deploy.py` + SHA 확인** | 운영자가 서버에 SSH로 접속해 `python3 tools/server_deploy.py --approved`를 직접 실행하고, §5로 확인 | **지금 바로 가능.** 새로 만들 것이 없고 공격면이 늘지 않는다. 대표님이 매번 승인하는 현행 정책(CLAUDE.md '서버 배포는 승인')과 일치 | 사람이 잊으면 뒤처진다(2026-06의 23커밋 지연이 이 유형). 자동 검증 없음 | 없음(운영자가 하는 일) |
 
 ## 4. 권장안
 
@@ -83,17 +83,17 @@ curl -s https://haehan-ai.kr/orchestrator/api/v1/health
 - 값이 `unknown`이어도 컨테이너 healthcheck는 통과한다(200만 본다). 가시성 정보일 뿐 기동 조건이 아니다.
 
 ### 5-5. 자동 대조 (선택, 후속)
-`scripts/ops/deploy_diagnose.py`가 이미 `PROD/health`를 조회한다. 거기에 "응답의 `git_sha`가 `git ls-remote` 결과와 일치하는가"를 추가하면 §5-2~5-3이 한 명령이 된다(코드 변경이라 이번 범위에는 넣지 않았다). 1단계(B)를 택하면 워크플로 마지막 단계가 같은 대조를 수행해 불일치 시 실패 처리한다.
+`tools/deploy/deploy_diagnose.py`가 이미 `PROD/health`를 조회한다. 거기에 "응답의 `git_sha`가 `git ls-remote` 결과와 일치하는가"를 추가하면 §5-2~5-3이 한 명령이 된다(코드 변경이라 이번 범위에는 넣지 않았다). 1단계(B)를 택하면 워크플로 마지막 단계가 같은 대조를 수행해 불일치 시 실패 처리한다.
 
 ## 6. 서버 측 필요 작업 (전부 대표님 승인 대상 — 이번에 하나도 실행하지 않음)
 
 | # | 작업 | 필요한 안 | 위험 | 비고 |
 |---|---|---|---|---|
-| 1 | **새 코드 반영**: 서버에서 `python3 scripts/ops/server_deploy.py --approved` 1회 실행(= `git fetch`·`merge --ff-only`·`docker compose up -d --build api admin-web`·nginx reload) | A·B·C 공통 첫 단계 | 중간(컨테이너 재생성 중 순간 중단). 서버 로컬 변경이 있으면 ff-only가 exit 4로 멈춤 → 수동 확인 필요. `users.db` 백업 선행 권장(`PROD_DEPLOY_PLAN.md` §5) | 완료 확인은 §5 |
+| 1 | **새 코드 반영**: 서버에서 `python3 tools/server_deploy.py --approved` 1회 실행(= `git fetch`·`merge --ff-only`·`docker compose up -d --build api admin-web`·nginx reload) | A·B·C 공통 첫 단계 | 중간(컨테이너 재생성 중 순간 중단). 서버 로컬 변경이 있으면 ff-only가 exit 4로 멈춤 → 수동 확인 필요. `users.db` 백업 선행 권장(`PROD_DEPLOY_PLAN.md` §5) | 완료 확인은 §5 |
 | 2 | **서버 현황 읽기 전용 점검**: `git rev-parse HEAD`, `git status --porcelain`, `systemctl status ai-orchestrator-deploy-trigger`, 데몬 파일 존재, `.env`의 `DEPLOY_WEBHOOK_SECRET` **설정 여부만**(값은 보지 않음), GitHub webhook 설정 URL | 모든 안의 전제(§2-2 추정을 사실로 바꿈) | 낮음(읽기 전용) | SSH 접속 자체가 승인 대상 |
 | 3 | 낡은 데몬 유닛 정리: `ai-orchestrator-deploy-trigger.service` 중지·비활성화·제거 | B·C 선택 시 | 낮음~중간 | 유닛이 재시작 루프 중이면 로그가 쌓이고 있음 |
 | 4 | **nginx**: `location = /orchestrator/api/v1/health` 공개 예외(외부에서 SHA 확인용), 또는 A안이면 webhook 경로 공개 예외 | C의 외부 확인(선택), A | **높음**(오설정 시 사이트 다운) — 백업 → `nginx -t` → `reload`(restart 금지)가 `PROD_DEPLOY_PLAN.md` §4 단계 C의 기존 규칙 | health는 비밀 정보가 없어 공개 예외 위험이 낮지만 나머지 `/orchestrator/api/` 잠금은 유지해야 함 |
-| 5 | (B) 배포 전용 SSH 계정/키: `authorized_keys`에 `command="python3 /home/ubuntu/apps/haehan-ai-orchestrator/scripts/ops/server_deploy.py --approved",no-pty,no-port-forwarding` 형태로 **명령 제한**, GitHub `production` environment(필수 검토자)·secrets 등록, 22번 포트 허용 범위 결정 | B | **높음**(서버 접근 경로 신설) | 공개 저장소이므로 environment 보호·`master` 한정 필수 |
+| 5 | (B) 배포 전용 SSH 계정/키: `authorized_keys`에 `command="python3 /home/ubuntu/apps/haehan-ai-orchestrator/tools/server_deploy.py --approved",no-pty,no-port-forwarding` 형태로 **명령 제한**, GitHub `production` environment(필수 검토자)·secrets 등록, 22번 포트 허용 범위 결정 | B | **높음**(서버 접근 경로 신설) | 공개 저장소이므로 environment 보호·`master` 한정 필수 |
 | 6 | (A) 데몬 재작성·설치, 유닛 교체, webhook 등록, `DEPLOY_WEBHOOK_SECRET` 설정, nginx webhook 경로 예외 | A | **높음** | 권장하지 않음(§4) |
 | 7 | 결함 #29: 서버에 남은 `file-map-executor` 컨테이너 수동 정리 | 공통(독립 정리) | 낮음~중간 | 삭제 전 컨테이너 내용 확인 |
 

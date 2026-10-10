@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, asdict, field
 from typing import Any, Protocol
 
-from scripts.gate import check as gate_check
+from scripts.common.gate import check as gate_check
 
 
 SETTINGS_MENU_NAMES = frozenset({

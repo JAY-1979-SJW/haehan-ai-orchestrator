@@ -13,12 +13,12 @@ import urllib.request  # noqa: F401
 from .search_common import (  # noqa: F401
     build_public_signal_model, build_search_url,
     _api_key, _get_json, _oauth_access_token, _now, _stamp, _write_report,
-    _urlopen_with_dead_proxy_fallback, _should_retry_without_proxy,
+    _urlopen_with_dead_proxy_fallback,
     ROOT, REPORT_DIR, LATEST_SEARCH, LATEST_ANALYSIS,
     LATEST_TOPIC_ANALYSIS, LATEST_MARKET_RESEARCH, MARKET_RESEARCH_REPORT_DIR,
     YOUTUBE_SEARCH_URL,
 )
-from scripts.cdp_console import connect  # noqa: F401 — tests monkeypatch search.connect
+from scripts.browser.cdp.cdp_console import connect  # noqa: F401 — tests monkeypatch search.connect
 from .search_search import (  # noqa: F401
     search_videos, search_videos_official, search_videos_browser,
     extract_browser_search_results,

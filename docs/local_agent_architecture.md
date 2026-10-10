@@ -63,7 +63,7 @@
 - **HTTP 폴링** + 작업 큐 (인메모리 + JSONL append-log)
 - 에이전트는 `GET /api/v1/local-agents/{agent_id}/tasks/{task_id}` 로 자기에게
   할당된 작업 상태를 조회한다 (실행 자체는 단일 프로세스 데모 단계)
-- WebSocket 인터페이스는 `local_agent/websocket_client.py` 에 스텁만 존재
+- WebSocket 인터페이스는 `core/agent_runtime/connection/websocket_client.py` 에 스텁만 존재
 
 ### 2단계 (예정)
 - 에이전트 ↔ 서버 영구 WebSocket 연결 (`/ws/local-agent/{agent_id}`)

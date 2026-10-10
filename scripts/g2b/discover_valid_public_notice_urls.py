@@ -39,20 +39,20 @@ _repo_root = Path(__file__).resolve().parent.parent.parent
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-from ai_orchestrator.browser_tool.g2b_public_notice_content_validator import (  # noqa: E402
+from ai_orchestrator.connectors.g2b.g2b_public_notice_content_validator import (  # noqa: E402
     CONTENT_INVALID,
     CONTENT_VALID_PASS,
     REACHABLE_BUT_NOT_CONTENT_VALID,
     enrich_live_result_with_content_verdict,
 )
-from ai_orchestrator.browser_tool.g2b_public_notice_dryrun_adapter import (  # noqa: E402
+from ai_orchestrator.connectors.g2b.g2b_public_notice_dryrun_adapter import (  # noqa: E402
     evaluate_g2b_public_notice_dryrun,
 )
-from ai_orchestrator.browser_tool.g2b_public_notice_execution_gate import (  # noqa: E402
+from ai_orchestrator.connectors.g2b.g2b_public_notice_execution_gate import (  # noqa: E402
     GATE_READONLY_EXECUTION_CANDIDATE,
     evaluate_g2b_public_notice_execution_gate,
 )
-from ai_orchestrator.browser_tool.g2b_public_notice_local_live_runner import (  # noqa: E402
+from ai_orchestrator.connectors.g2b.g2b_public_notice_local_live_runner import (  # noqa: E402
     _check_playwright_available,
     run_g2b_public_notice_readonly_live,
 )

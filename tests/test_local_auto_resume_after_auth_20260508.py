@@ -2,14 +2,14 @@
 auto_resume_after_auth 테스트
 """
 
-from ai_orchestrator.local_agent.auto_resume_after_auth import (
+from ai_orchestrator.contracts.local_task_protocol import (
+    STATUS_COMPLETED,
+    STATUS_USER_ACTION_REQUIRED,
+)
+from core.agent_runtime.runtime.auth.auto_resume_after_auth import (
     can_auto_resume,
     classify_resume_eligibility,
     resume_after_auth,
-)
-from ai_orchestrator.local_agent.task_protocol import (
-    STATUS_COMPLETED,
-    STATUS_USER_ACTION_REQUIRED,
 )
 
 

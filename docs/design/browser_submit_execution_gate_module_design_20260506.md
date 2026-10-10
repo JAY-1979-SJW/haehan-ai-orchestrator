@@ -169,7 +169,7 @@ class GateModuleResult:
 ## 10. 구현 예정 파일 (다음 단계)
 
 ```
-ai_orchestrator/browser_tool/submit_execution_gate.py (기존 v1.0 확장)
+ai_orchestrator/browser_tool/submit/submit_execution_gate.py (기존 v1.0 확장)
   → action_name, operation_type 필드 추가
   → allowlist_domain 필드 추가
   → DENY_BY_DEFAULT 판정 추가 (submit operation)

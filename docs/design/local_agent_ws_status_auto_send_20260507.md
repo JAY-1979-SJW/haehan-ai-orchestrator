@@ -5,7 +5,7 @@ date: 2026-05-07
 ## 1. 목적
 
 로컬 UI에서 사용자가 "인증 완료" 또는 "중단"을 누른 뒤,
-`local_agent/websocket_client.py`가 상태 변화를 감지하여
+`core/agent_runtime/connection/websocket_client.py`가 상태 변화를 감지하여
 `USER_PRESENT_STATUS` 메시지를 서버 WebSocket으로 자동 전송한다.
 
 ## 2. 상태 변화 감지 방식
@@ -81,7 +81,7 @@ state_store.list_user_present_tasks()
 ## 10. 구현 범위
 
 ### 신규 파일
-- `local_agent/user_present_status_sender.py`
+- `core/agent_runtime/user_present/user_present_status_sender.py`
 
 ### 수정 파일
-- `local_agent/websocket_client.py` — heartbeat loop에 `run_user_present_status_send_once()` 연결
+- `core/agent_runtime/connection/websocket_client.py` — heartbeat loop에 `run_user_present_status_send_once()` 연결

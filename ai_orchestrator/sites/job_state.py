@@ -1,6 +1,6 @@
 """사이트 자동화 작업의 상태 머신 (pause/resume 지원).
 
-기존 `ai_orchestrator/task_state.py` 는 승인 토큰 기반 control-plane 상태(pending/approved/
+기존 `ai_orchestrator/core/task_state.py` 는 승인 토큰 기반 control-plane 상태(pending/approved/
 rejected/executed)를 다룬다. 이 모듈은 **사이트 자동화 실행(job) 레벨**의 일시정지/재개를 위한
 별도 상태 저장소다. 두 상태는 직교한다.
 
@@ -30,7 +30,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import Literal
 
-from ..config import LOG_DIR
+from ..core.config import LOG_DIR
 
 logger = logging.getLogger(__name__)
 

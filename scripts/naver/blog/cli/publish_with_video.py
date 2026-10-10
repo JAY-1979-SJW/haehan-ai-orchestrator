@@ -20,7 +20,7 @@ _ROOT = Path(__file__).resolve().parents[4]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from scripts.logger import get_logger  # noqa: E402
+from scripts.common.logger import get_logger  # noqa: E402
 from scripts.naver.blog.core.writer import BlogWriter  # noqa: E402
 from scripts.naver.blog.marketing import TARGET_BLOG_ID  # noqa: E402
 

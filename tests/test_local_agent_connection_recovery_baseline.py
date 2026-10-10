@@ -1,4 +1,4 @@
-from scripts.ops import audit_local_agent_connection_recovery_baseline as audit
+from tools.audits.agent import audit_local_agent_connection_recovery_baseline as audit
 
 
 def test_local_agent_connection_recovery_baseline_passes():
@@ -8,7 +8,7 @@ def test_local_agent_connection_recovery_baseline_passes():
 
 
 def test_auth_failed_recovery_is_user_confirmed_reregister():
-    from local_agent import connection_diagnostics as cd
+    from core.agent_runtime.connection import connection_diagnostics as cd
 
     plan = cd.build_recovery_plan(
         state=cd.STATE_AUTH_FAILED,
@@ -23,7 +23,7 @@ def test_auth_failed_recovery_is_user_confirmed_reregister():
 
 
 def test_heartbeat_recovery_allows_auto_reconnect():
-    from local_agent import connection_diagnostics as cd
+    from core.agent_runtime.connection import connection_diagnostics as cd
 
     plan = cd.build_recovery_plan(
         state=cd.STATE_DISCONNECTED,
@@ -37,7 +37,7 @@ def test_heartbeat_recovery_allows_auto_reconnect():
 
 
 def test_connection_recovery_rendering_redacts_sensitive_words():
-    from local_agent import connection_diagnostics as cd
+    from core.agent_runtime.connection import connection_diagnostics as cd
 
     plan = cd.build_recovery_plan(
         state=cd.STATE_AUTH_FAILED,

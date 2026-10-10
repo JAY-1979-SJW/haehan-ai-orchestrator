@@ -26,7 +26,7 @@ cross-domain 직접 import 금지: 각 도메인 간 직접 import 금지. 공�
 | 방 | 파일 | 현황 |
 |----|------|------|
 | router | `scripts/hiworks/router.py` | ✅ |
-| profile | `scripts/hiworks/profile.py` | ✅ |
+| profile | `scripts/hiworks/site_profile.py` | ✅ |
 | gates | `scripts/hiworks/gates.py` | ✅ |
 | validators | `scripts/hiworks/validators.py` | ✅ |
 | usecase | `scripts/hiworks/actions.py`, `service_explorer.py` | ✅ |
@@ -56,10 +56,10 @@ cross-domain 직접 import 금지: 각 도메인 간 직접 import 금지. 공�
 | 방 | 파일 | 현황 |
 |----|------|------|
 | router | `scripts/google/router.py` | ✅ |
-| profile | `scripts/google/profile.py` | ✅ |
+| profile | `scripts/google/site_profile.py` | ✅ |
 | gates | `scripts/google/gates.py` | ✅ |
 | validators | `scripts/google/validators.py` | ✅ |
-| usecase | `scripts/google/workflows.py`, `surfaces.py` | ✅ |
+| usecase | `scripts/google/common/workflows.py`, `surfaces.py` | ✅ |
 | adapter | `scripts/google/*_api.py` (gmail_api, drive_api 등) | ✅ |
 | storage | `data/google/` | ❌ (미정) |
 | test | `tests/test_google_*.py` | ✅ |
@@ -84,7 +84,7 @@ cross-domain 직접 import 금지: 각 도메인 간 직접 import 금지. 공�
 | 방 | 파일 | 현황 |
 |----|------|------|
 | router | `scripts/youtube/router.py` | ✅ |
-| profile | `scripts/youtube/profile.py` | ✅ |
+| profile | `scripts/youtube/site_profile.py` | ✅ |
 | gates | `scripts/youtube/gates.py` | ✅ |
 | validators | `scripts/youtube/validators.py` | ✅ |
 | usecase | `scripts/youtube/recording.py`, `uploader.py` | ✅ |

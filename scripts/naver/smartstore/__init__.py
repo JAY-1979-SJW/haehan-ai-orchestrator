@@ -16,7 +16,7 @@ URL: https://sell.smartstore.naver.com/
   쇼핑커넥트 / 판매자정보
 
 사용:
-  from scripts.naver import NaverServices
+  from scripts.naver.services import NaverServices
   n = NaverServices(page)
   n.login()
   n.smartstore.open_dashboard()                 # 대시보드
@@ -34,11 +34,11 @@ import time
 
 from playwright.sync_api import Page
 
-from scripts.critical_logger import log_critical
-from scripts.logger import get_logger
-from scripts.naver.auth import ensure_naver_login
-from scripts.popup_detector import close_popup_windows, handle_page_popups
-from scripts.site_session_safety import assert_session_integrity
+from scripts.common.critical_logger import log_critical
+from scripts.common.logger import get_logger
+from scripts.naver.common.auth import ensure_naver_login
+from scripts.browser.popup.popup_detector import close_popup_windows, handle_page_popups
+from scripts.site_engine.site_session_safety import assert_session_integrity
 
 _log = get_logger(__name__)
 
@@ -654,7 +654,7 @@ class SmartStore:
     def orders(self):
         """주문 자동 처리."""
         if self._orders is None:
-            from scripts.naver.automation.order_automation import OrderAutomation
+            from .automation.order_automation import OrderAutomation
 
             self._orders = OrderAutomation(self.page)
         return self._orders
@@ -663,7 +663,7 @@ class SmartStore:
     def inventory(self):
         """재고 모니터링."""
         if self._inventory is None:
-            from scripts.naver.automation.inventory_monitor import InventoryMonitor
+            from .automation.inventory_monitor import InventoryMonitor
 
             self._inventory = InventoryMonitor(self.page)
         return self._inventory
@@ -672,7 +672,7 @@ class SmartStore:
     def analytics(self):
         """매출/방문 분석 대시보드."""
         if self._analytics is None:
-            from scripts.naver.automation.analytics_dashboard import AnalyticsDashboard
+            from .automation.analytics_dashboard import AnalyticsDashboard
 
             self._analytics = AnalyticsDashboard(self.page)
         return self._analytics
@@ -681,7 +681,7 @@ class SmartStore:
     def csv(self):
         """CSV/Excel 일괄 가져오기."""
         if self._csv is None:
-            from scripts.naver.automation.csv_import import CSVImporter
+            from .automation.csv_import import CSVImporter
 
             self._csv = CSVImporter(self.page)
         return self._csv
@@ -690,7 +690,7 @@ class SmartStore:
     def reviews(self):
         """리뷰 자동 응답."""
         if self._reviews is None:
-            from scripts.naver.automation.review_automation import ReviewAutoResponder
+            from .automation.review_automation import ReviewAutoResponder
 
             self._reviews = ReviewAutoResponder(self.page)
         return self._reviews
@@ -699,7 +699,7 @@ class SmartStore:
     def ai(self):
         """AI 기반 응답/생성 (Claude/OpenAI)."""
         if self._ai is None:
-            from scripts.naver.automation.ai_responder import AIResponder
+            from scripts.naver.automation.integration.ai_responder import AIResponder
 
             self._ai = AIResponder()
         return self._ai
@@ -708,7 +708,7 @@ class SmartStore:
     def seo(self):
         """SEO 최적화."""
         if self._seo is None:
-            from scripts.naver.automation.seo_optimizer import SEOOptimizer
+            from scripts.naver.automation.content.seo_optimizer import SEOOptimizer
 
             self._seo = SEOOptimizer(self.page)
         return self._seo
@@ -717,7 +717,7 @@ class SmartStore:
     def competitor(self):
         """경쟁사 분석."""
         if self._competitor is None:
-            from scripts.naver.automation.competitor_analysis import CompetitorAnalysis
+            from .automation.competitor_analysis import CompetitorAnalysis
 
             self._competitor = CompetitorAnalysis(self.page)
         return self._competitor
@@ -735,7 +735,9 @@ class SmartStore:
     def notifier(self):
         """다중 채널 알림."""
         if self._notifier is None:
-            from scripts.naver.automation.notification_hub import NotificationHub
+            from scripts.naver.automation.integration.notification_hub import (
+                NotificationHub,
+            )
 
             self._notifier = NotificationHub(self.page)
         return self._notifier

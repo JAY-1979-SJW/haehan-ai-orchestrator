@@ -22,8 +22,7 @@
       "allowed_submit_button_ids": [
         "submit_btn",
         "send_btn",
-        "contact_submit",
-        "submit_button_id"
+        "contact_submit"
       ],
       "allowed_intents": [
         "submit_contact_form",

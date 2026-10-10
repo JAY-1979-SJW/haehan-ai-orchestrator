@@ -1,11 +1,15 @@
 """tests/test_selector_pack_registry_20260508.py - selector_pack_registry 단위 테스트"""
 import pytest
-from ai_orchestrator.local_agent.selector_pack_registry import (
-    get_selector_pack, get_selectors, register_selector_pack,
-    generate_skeleton_pack, validate_selector_pack,
-    _FORBIDDEN_SELECTOR_KEYS, _PACKS,
-)
 
+from core.agent_runtime.runtime.site_profile.selector_pack_registry import (
+    _FORBIDDEN_SELECTOR_KEYS,
+    _PACKS,
+    generate_skeleton_pack,
+    get_selector_pack,
+    get_selectors,
+    register_selector_pack,
+    validate_selector_pack,
+)
 
 _BUILTIN_PACKS = ["naver_blog", "naver_cafe", "g2b_public", "generic_content_site"]
 

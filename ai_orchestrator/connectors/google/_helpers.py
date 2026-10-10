@@ -12,7 +12,7 @@ def duration_ms(t0: float) -> int:
 
 
 def audit(event: str, user: dict, *, status: str, note: str = "") -> None:
-    from ai_orchestrator.audit_logger import log_event
+    from ai_orchestrator.audit.audit_logger import log_event
     log_event(
         event,
         task_id="-",

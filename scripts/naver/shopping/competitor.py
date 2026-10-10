@@ -22,7 +22,7 @@ def analyze_competitor(keyword: str, display: int = 20) -> dict:
 def price_summary(keyword: str) -> dict:
     """수집된 데이터에서 가격 통계 반환."""
     gate_competitor(keyword)
-    from ai_orchestrator.connectors import naver_search_queries as q
+    from scripts.naver.shopping import naver_search_queries as q
 
     page = q.search_shopping_items(query=keyword, limit=100, offset=0)
     items = page.items

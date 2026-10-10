@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.ops import audit_local_agent_ip_allowlist_policy as audit
+from tools.audits.agent import audit_local_agent_ip_allowlist_policy as audit
 
 POLICY_DOC = Path("docs/ops/local_agent_ip_allowlist_policy.md")
 NGINX_PLAN = Path("docs/ops/local_agent_public_ws_nginx_plan.md")
@@ -225,7 +225,7 @@ def test_audit_fail_rollback_missing(tmp_path):
 
 
 def test_regression_connection_diagnostics_imports():
-    from local_agent import connection_diagnostics as cd
+    from core.agent_runtime.connection import connection_diagnostics as cd
 
     assert hasattr(cd, "normalize_ws_url")
     assert hasattr(cd, "build_diagnostics")
@@ -238,8 +238,8 @@ def test_regression_proxy_checklist_doc_exists():
 
 
 def test_regression_local_agent_router_imports():
-    from ai_orchestrator import local_agent_router as r
-    from ai_orchestrator import local_agent_router_registration as reg
+    from ai_orchestrator.agent_hub.router import registration as reg
+    from ai_orchestrator.agent_hub.router import root as r
 
     assert hasattr(r, "local_agent_router")
     assert hasattr(reg, "register_with_code")

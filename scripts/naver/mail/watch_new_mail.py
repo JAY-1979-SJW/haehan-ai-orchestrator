@@ -22,13 +22,13 @@ import argparse
 import json
 import sys
 
-from scripts.app_paths import repo_root
+from scripts.common.app_paths import repo_root
 
 ROOT = repo_root()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from ai_orchestrator.local_agent.user_notification_adapter import notify_new_mail  # noqa: E402
+from core.agent_runtime.runtime.notify.user_notification_adapter import notify_new_mail  # noqa: E402
 from scripts.naver.mail.collection.background_runner import (  # noqa: E402
     create_isolated_mail_target,
     select_naver_session,

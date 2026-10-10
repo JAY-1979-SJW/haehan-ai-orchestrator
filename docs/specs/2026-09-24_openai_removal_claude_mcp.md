@@ -4,7 +4,7 @@
 "클로드를 mcp로 연결해서 open ai 삭제해"
 - 앱 안에서 GPT 를 부르는 모든 경로를 없앤다. 앱 런타임의 유료 AI API 호출 = 0.
 - AI(판단·글쓰기·에이전트)는 **Claude Code 가 MCP 로 앱에 붙어서** 한다.
-  앱은 도구·데이터만 제공: `ai_orchestrator/mcp_server.py`(`.mcp.json` 의 `haehan-orchestrator`) — 전용 도구 + `list_api_endpoints`/`call_api`(앱 API 전체).
+  앱은 도구·데이터만 제공: `ai_orchestrator/server/mcp_server.py`(`.mcp.json` 의 `haehan-orchestrator`) — 전용 도구 + `list_api_endpoints`/`call_api`(앱 API 전체).
 - 앱 경계 원칙(`app_llm.py`/`tests/test_app_llm_boundary.py`: 앱 런타임에서 Anthropic 호출 금지)은 그대로 — Claude 는 앱 밖(MCP 클라이언트)에서만.
 
 ## 범위
@@ -21,9 +21,9 @@
 | config.py OPENAI_* 설정, config_router 노출 | 제거 |
 
 ## 제외 (건드리지 않음)
-- `scripts/ops/guard_openai_call.py` 훅, CLAUDE.md 승인제 규칙, `ai_orchestrator/openai_guard.py` — 재유입 방지 장치
+- `tools/hooks/guard_openai_call.py` 훅, CLAUDE.md 승인제 규칙, `ai_orchestrator/openai_guard.py` — 재유입 방지 장치
 - `apps/marketing-standalone/**` — 판매 준비 중인 별도 제품 + 미커밋 작업 중(사용자 결정 필요 시 별도)
-- 미커밋 WIP 파일(.githooks/commit_checklist.py, scripts/ops/ai_check_a4.py 등) — 커밋 후 별도 정리
+- 미커밋 WIP 파일(.githooks/commit_checklist.py, scripts/ops/office/ai_check_a4.py[2026-10-08 삭제됨: 실행 불가 유료 OpenAI 호출 코드, docs/deleted_code_index.md] 등) — 커밋 후 별도 정리
 - `.env` 의 키 값(파일은 손대지 않음)
 
 ## 절차 (검증 파이프라인)

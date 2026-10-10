@@ -1,6 +1,6 @@
 """tests/test_security_installer_policy_20260508.py"""
 
-from ai_orchestrator.local_agent.security_installer_policy import (
+from core.agent_runtime.runtime.security_program.security_installer_policy import (
     POLICY_ALLOWED,
     POLICY_BLOCKED,
     POLICY_NEEDS_PERMISSION,

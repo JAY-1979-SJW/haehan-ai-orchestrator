@@ -1,7 +1,7 @@
 """A4 서식 검사에 사용되는 상수 모음.
 
 이식 출처: "42. excel-ai-agent" 저장소의 excel_ai_agent/constants.py.
-scripts/ops/check_a4.py 가 `from shared.constants import ...` 로 이 저장소에 없는
+tools/office/check_a4.py 가 `from shared.constants import ...` 로 이 저장소에 없는
 `shared` 패키지를 참조해 매 xlsx 편집마다 도는 PostToolUse 훅이 100% 실패하던
 문제(docs/defect_index.json #32)를 고치기 위해 2026-09-29 이식. 값은 원본과 동일.
 """

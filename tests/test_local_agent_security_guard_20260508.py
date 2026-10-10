@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from ai_orchestrator.local_agent.security_guard import (
+from ai_orchestrator.contracts.local_task_protocol import build_task
+from core.agent_runtime.runtime.security_guard import (
     block_forbidden_action,
     detect_user_direct_required,
     sanitize_runtime_result,
     validate_task_before_run,
 )
-from ai_orchestrator.local_agent.task_protocol import build_task
 
 
 def _task(action: str = "open_url", **kw) -> dict:

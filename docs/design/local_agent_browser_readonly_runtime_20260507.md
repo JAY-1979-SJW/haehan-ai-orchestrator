@@ -8,7 +8,7 @@
 - 사용자 PC 로컬 Agent에서 실제 브라우저를 read-only로 실행
 - 로그인/입력/제출 없이 페이지 상태(title, url, text snippet)만 확인
 - 사용자 직접 인증이 필요한 화면이 감지되면 USER_PRESENT_REQUIRED로 멈춤
-- 기존 `local_agent/browser_reader.py`의 `open_url_readonly()`를 조율하는 정책 계층
+- 기존 `core/agent_runtime/browser/browser_reader.py`의 `open_url_readonly()`를 조율하는 정책 계층
 
 ---
 
@@ -135,10 +135,10 @@
 
 | 역할 | 경로 |
 |---|---|
-| 런타임 모듈 | local_agent/browser_readonly_runtime.py |
-| 기존 read-only 브라우저 실행 | local_agent/browser_reader.py (open_url_readonly) |
-| 기존 수동 로그인 감지 | local_agent/browser_login_probe.py |
-| 정책 판정 (실행 위치) | ai_orchestrator/browser_tool/local_agent_user_present_flow.py |
+| 런타임 모듈 | core/agent_runtime/browser/browser_readonly_runtime.py |
+| 기존 read-only 브라우저 실행 | core/agent_runtime/browser/browser_reader.py (open_url_readonly) |
+| 기존 수동 로그인 감지 | core/agent_runtime/browser/browser_login_probe.py |
+| 정책 판정 (실행 위치) | ai_orchestrator/agent_hub/user_present_flow.py |
 | 테스트 | tests/test_local_agent_browser_readonly_runtime_20260507.py |
 | fixture | tests/fixtures/local_agent_browser_readonly_runtime_20260507.json |
 | 이 문서 | docs/design/local_agent_browser_readonly_runtime_20260507.md |

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from scripts.g2b.profile import (
+from scripts.g2b.site_profile import (
     BLOCKED_ACTIONS,
     DOWNLOAD_ACTIONS,
     DRAFT_ACTIONS,

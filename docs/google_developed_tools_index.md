@@ -37,46 +37,46 @@ developed, gated, or verified in this repo. Check this index and
 
 | Area | Command | Risk | Status | Main Files | Output |
 | --- | --- | --- | --- | --- | --- |
-| Session check | `python scripts\cdp_client.py google session-check` | read | implemented | `scripts/google/base.py`, `scripts/google/router.py` | console status |
-| User-present login | `python scripts\cdp_client.py google login` | user-present | implemented | `scripts/google/auth.py`, `scripts/google/router.py` | console status |
-| Basic feature catalog | `python scripts\cdp_client.py google basic catalog` | read | implemented | `scripts/google/workspace_basic.py` | console JSON |
-| Basic feature plan | `python scripts\cdp_client.py google basic plan <surface> <operation> ... --google-work-mode=main` | read/prepare/approval/user-only | implemented | `scripts/google/workspace_basic.py`, `scripts/gates/work_mode_gate.py` | console JSON |
-| Gmail list/analyze/compose | `python scripts\cdp_client.py google mail <list|analyze|compose>` | read/prepare | implemented | `scripts/google/workspace/gmail.py`, `scripts/google/gmail_analysis.py` | console/data |
-| Gmail send gate | `python scripts\cdp_client.py google mail send ...` | approval/user-only | gated | `scripts/google/workspace/gmail.py`, `scripts/gate.py` | approval-gated action |
-| Drive wrapper | `python scripts\cdp_client.py google drive <list|search|file_info>` | read/partial | implemented partial | `scripts/google/workspace/drive.py`, `scripts/google/drive.py` | console/data |
-| Calendar wrapper | `python scripts\cdp_client.py google calendar <today|search>` | read/partial | implemented partial | `scripts/google/workspace/calendar.py`, `scripts/google/calendar.py` | console/data |
-| Docs wrapper | `python scripts\cdp_client.py google docs <recent|create_prepare>` | read/prepare partial | implemented partial | `scripts/google/workspace/docs.py`, `scripts/google/docs.py` | console/data |
-| Sheets wrapper | `python scripts\cdp_client.py google sheets <recent|update_prepare>` | read/prepare partial | implemented partial | `scripts/google/workspace/sheets.py`, `scripts/google/sheets.py` | console/data |
+| Session check | `python scripts\entry\cdp_cli.py google session-check` | read | implemented | `scripts/google/common/base.py`, `scripts/google/router.py` | console status |
+| User-present login | `python scripts\entry\cdp_cli.py google login` | user-present | implemented | `scripts/google/auth.py`, `scripts/google/router.py` | console status |
+| Basic feature catalog | `python scripts\entry\cdp_cli.py google basic catalog` | read | implemented | `scripts/google/workspace_basic.py` | console JSON |
+| Basic feature plan | `python scripts\entry\cdp_cli.py google basic plan <surface> <operation> ... --google-work-mode=main` | read/prepare/approval/user-only | implemented | `scripts/google/workspace_basic.py`, `scripts/common/gates/work_mode_gate.py` | console JSON |
+| Gmail list/analyze/compose | `python scripts\entry\cdp_cli.py google mail <list|analyze|compose>` | read/prepare | implemented | `scripts/google/workspace/gmail.py`, `scripts/google/common/gmail_analysis.py` | console/data |
+| Gmail send gate | `python scripts\entry\cdp_cli.py google mail send ...` | approval/user-only | gated | `scripts/google/workspace/gmail.py`, `scripts/common/gate.py` | approval-gated action |
+| Drive wrapper | `python scripts\entry\cdp_cli.py google drive <list|search|file_info>` | read/partial | implemented partial | `scripts/google/workspace/drive.py`, `scripts/google/common/drive.py` | console/data |
+| Calendar wrapper | `python scripts\entry\cdp_cli.py google calendar <today|search>` | read/partial | implemented partial | `scripts/google/workspace/calendar_tasks.py`, `scripts/google/common/calendar_tasks.py` | console/data |
+| Docs wrapper | `python scripts\entry\cdp_cli.py google docs <recent|create_prepare>` | read/prepare partial | implemented partial | `scripts/google/workspace/docs.py`, `scripts/google/common/docs.py` | console/data |
+| Sheets wrapper | `python scripts\entry\cdp_cli.py google sheets <recent|update_prepare>` | read/prepare partial | implemented partial | `scripts/google/workspace/sheets.py`, `scripts/google/common/sheets.py` | console/data |
 | Workspace wrappers | Workspace router for Slides, Forms, Meet, Chat, Contacts, Keep, Tasks | read/prepare | implemented | `scripts/google/workspace/*`, `scripts/google/workspace/router.py` | console/data |
-| Surface catalog | `python scripts\cdp_client.py google surfaces catalog` | read | implemented | `scripts/google/surfaces.py`, `scripts/google/surface_explorer.py` | `data/google_surface_catalog_latest.json` |
-| Surface live read | `python scripts\cdp_client.py google surfaces live-read --limit=...` | read | verified read-only | `scripts/google/live_surface_explorer.py` | `data/google_surface_live_latest.json` |
-| Subdomain catalog/classify | `python scripts\cdp_client.py google subdomains catalog`, `classify <host> <operation>` | read/policy | implemented | `scripts/google/subdomain_logic.py` | console JSON |
-| Tab catalog/classify | `python scripts\cdp_client.py google tabs catalog`, `classify <tab> <host> <operation>` | read/policy | implemented | `scripts/google/tab_logic.py` | console JSON |
-| Cloud Console read | `python scripts\cdp_client.py google cloud live-read --limit=...` | read | verified read-only | `scripts/google/cloud/live_console_explorer.py` | `data/google_cloud_console_live_latest.json` |
-| Managed Console OAuth plan | `python scripts\cdp_client.py google console youtube-oauth-plan` | prepare | implemented | `scripts/google/managed_console.py`, `scripts/youtube/oauth.py` | console JSON |
-| Managed Console OAuth open/fill | `python scripts\cdp_client.py google console youtube-oauth-open --dry-run`, `youtube-oauth-fill --dry-run` | prepare/no-final-submit | gated | `scripts/google/managed_console.py`, `scripts/google/oauth_console_fill.py` | `data/google_console_oauth_fill_latest.json` |
-| YouTube OAuth preapproval | `python scripts\cdp_client.py youtube oauth preapproval` | prepare | implemented | `scripts/youtube/oauth.py`, `scripts/youtube/router.py` | callback/preapproval plan |
-| YouTube catalog/tabs/classify | `python scripts\cdp_client.py google youtube catalog`, `tabs`, `classify` | read/policy | implemented | `scripts/google/youtube/`, `scripts/google/router.py` | console JSON |
-| YouTube video search | `python scripts\cdp_client.py google youtube search --query=... [--source=auto|official|browser] [--limit=10]` | read | implemented | `scripts/google/youtube/search.py`, `scripts/google/router.py` | `data/google_youtube_search_latest.json` |
-| YouTube rank/transcript analysis | `python scripts\cdp_client.py google youtube rank --query=... [--limit=5] [--collect-transcripts=true]` | read | implemented | `scripts/google/youtube/search.py`, `scripts/google/router.py` | `data/google_youtube_rank_analysis_latest.json` |
-| YouTube keyword topic market analysis | `python scripts\cdp_client.py google youtube topic --keywords=...,... [--per-keyword-limit=10] [--collect-transcripts=false]` | read | implemented | `scripts/google/youtube/search.py`, `scripts/google/router.py` | `data/google_youtube_topic_analysis_latest.json` |
-| YouTube upload prepare | `python scripts\cdp_client.py google youtube upload-prepare ...` | prepare | implemented | `scripts/google/youtube_upload.py`, `scripts/google/workflows.py` | `data/google_youtube_upload_plan_latest.json` |
-| YouTube upload live fill | `python scripts\cdp_client.py google youtube upload-live-fill <plan_path> --no-final-submit` | prepare/no-final-submit | gated | `scripts/google/live_inputs.py`, `scripts/google/youtube_upload.py` | live-fill report |
-| Google Ads signup plan | `python scripts\cdp_client.py google ads signup-plan --google-work-mode=main --ads-signup-approved` | approval/no-paid-action | implemented gate | `scripts/google/ads_signup.py` | console JSON |
-| Google Ads screen classify | `python scripts\cdp_client.py google ads classify <screen text>` | policy | implemented | `scripts/google/ads_signup.py` | console JSON |
-| Google AI labels | `python scripts\cdp_client.py google ai catalog` | read | implemented | `scripts/google/ai_usage_labels.py` | console JSON |
-| Google Vision free gate | `python scripts\cdp_client.py google vision gate --images=... --features=...` | read/cost-gated | implemented | `scripts/google/vision_usage_gate.py` | `data/google_vision_usage_gate_latest.json` |
-| Android app dev report | `python scripts\cdp_client.py google android report` | read/report | implemented | `scripts/google/android_app_dev_report.py`, `scripts/google/android_app_dev_labels.py` | `docs/reports/google_android_app_dev_report_*.md` |
-| Domain taxonomy | `python scripts\cdp_client.py google domains report` | read/report | implemented | `scripts/google/domain_taxonomy.py` | `data/google_domain_taxonomy_latest.json` |
-| Precision report | `python scripts\cdp_client.py google precision build` | read/report | implemented | `scripts/google/precision_report.py` | `data/google_precision_report_latest.json` |
-| Work action catalog | `python scripts\cdp_client.py google work catalog` | read | implemented | `scripts/google/workflows.py` | `data/google_work_action_catalog_latest.json` |
-| Work adapter catalog | `python scripts\cdp_client.py google work adapters` | read | implemented | `scripts/google/workflows.py` | `data/google_execution_adapter_catalog_latest.json` |
-| Work prepare | `python scripts\cdp_client.py google work prepare <action_key> key=value ...` | prepare | implemented | `scripts/google/workflows.py` | `data/google_prepare_latest.json` |
-| Work execute | `python scripts\cdp_client.py google work execute <plan_path> --approved --confirm=GOOGLE_APPROVED_EXECUTE` | approval | gated | `scripts/google/workflows.py` | execution result JSON |
-| Work verify | `python scripts\cdp_client.py google work verify <result_path>` | read | implemented | `scripts/google/workflows.py` | verification JSON |
-| Work live fill | `python scripts\cdp_client.py google work live-fill <plan_path> --no-final-submit` | prepare/no-final-submit | gated | `scripts/google/live_inputs.py` | `data/google_live_input_latest.json` |
-| Work live-fill manifest | `python scripts\cdp_client.py google work live-fill-manifest <manifest_path> --no-final-submit` | prepare/no-final-submit | gated | `scripts/google/live_inputs.py` | `data/google_live_input_manifest_latest.json` |
-| Work coverage/gaps | `python scripts\cdp_client.py google work live-coverage`, `undeveloped` | read/report | implemented | `scripts/google/live_inputs.py`, `scripts/google/workflows.py` | `data/google_live_input_coverage_latest.json`, `data/google_work_undeveloped_latest.json` |
+| Surface catalog | `python scripts\entry\cdp_cli.py google surfaces catalog` | read | implemented | `scripts/google/common/surfaces.py`, `scripts/google/common/surface_explorer.py` | `data/google_surface_catalog_latest.json` |
+| Surface live read | `python scripts\entry\cdp_cli.py google surfaces live-read --limit=...` | read | verified read-only | `scripts/google/live_surface_explorer.py` | `data/google_surface_live_latest.json` |
+| Subdomain catalog/classify | `python scripts\entry\cdp_cli.py google subdomains catalog`, `classify <host> <operation>` | read/policy | implemented | `scripts/google/common/subdomain_logic.py` | console JSON |
+| Tab catalog/classify | `python scripts\entry\cdp_cli.py google tabs catalog`, `classify <tab> <host> <operation>` | read/policy | implemented | `scripts/google/common/tab_logic.py` | console JSON |
+| Cloud Console read | `python scripts\entry\cdp_cli.py google cloud live-read --limit=...` | read | verified read-only | `scripts/google/cloud/live_console_explorer.py` | `data/google_cloud_console_live_latest.json` |
+| Managed Console OAuth plan | `python scripts\entry\cdp_cli.py google console youtube-oauth-plan` | prepare | implemented | `scripts/google/managed_console.py`, `scripts/youtube/oauth.py` | console JSON |
+| Managed Console OAuth open/fill | `python scripts\entry\cdp_cli.py google console youtube-oauth-open --dry-run`, `youtube-oauth-fill --dry-run` | prepare/no-final-submit | gated | `scripts/google/managed_console.py`, `scripts/google/oauth_console_fill.py` | `data/google_console_oauth_fill_latest.json` |
+| YouTube OAuth preapproval | `python scripts\entry\cdp_cli.py youtube oauth preapproval` | prepare | implemented | `scripts/youtube/oauth.py`, `scripts/youtube/router.py` | callback/preapproval plan |
+| YouTube catalog/tabs/classify | `python scripts\entry\cdp_cli.py google youtube catalog`, `tabs`, `classify` | read/policy | implemented | `scripts/google/youtube/`, `scripts/google/router.py` | console JSON |
+| YouTube video search | `python scripts\entry\cdp_cli.py google youtube search --query=... [--source=auto|official|browser] [--limit=10]` | read | implemented | `scripts/google/youtube/search.py`, `scripts/google/router.py` | `data/google_youtube_search_latest.json` |
+| YouTube rank/transcript analysis | `python scripts\entry\cdp_cli.py google youtube rank --query=... [--limit=5] [--collect-transcripts=true]` | read | implemented | `scripts/google/youtube/search.py`, `scripts/google/router.py` | `data/google_youtube_rank_analysis_latest.json` |
+| YouTube keyword topic market analysis | `python scripts\entry\cdp_cli.py google youtube topic --keywords=...,... [--per-keyword-limit=10] [--collect-transcripts=false]` | read | implemented | `scripts/google/youtube/search.py`, `scripts/google/router.py` | `data/google_youtube_topic_analysis_latest.json` |
+| YouTube upload prepare | `python scripts\entry\cdp_cli.py google youtube upload-prepare ...` | prepare | implemented | `scripts/google/common/youtube_upload.py`, `scripts/google/common/workflows.py` | `data/google_youtube_upload_plan_latest.json` |
+| YouTube upload live fill | `python scripts\entry\cdp_cli.py google youtube upload-live-fill <plan_path> --no-final-submit` | prepare/no-final-submit | gated | `scripts/google/common/live_inputs.py`, `scripts/google/common/youtube_upload.py` | live-fill report |
+| Google Ads signup plan | `python scripts\entry\cdp_cli.py google ads signup-plan --google-work-mode=main --ads-signup-approved` | approval/no-paid-action | implemented gate | `scripts/google/ads_signup.py` | console JSON |
+| Google Ads screen classify | `python scripts\entry\cdp_cli.py google ads classify <screen text>` | policy | implemented | `scripts/google/ads_signup.py` | console JSON |
+| Google AI labels | `python scripts\entry\cdp_cli.py google ai catalog` | read | implemented | `scripts/google/ai_usage_labels.py` | console JSON |
+| Google Vision free gate | `python scripts\entry\cdp_cli.py google vision gate --images=... --features=...` | read/cost-gated | implemented | `scripts/google/vision_usage_gate.py` | `data/google_vision_usage_gate_latest.json` |
+| Android app dev report | `python scripts\entry\cdp_cli.py google android report` | read/report | implemented | `scripts/google/android_app_dev_report.py`, `scripts/google/android_app_dev_labels.py` | `docs/reports/google_android_app_dev_report_*.md` |
+| Domain taxonomy | `python scripts\entry\cdp_cli.py google domains report` | read/report | implemented | `scripts/google/common/domain_taxonomy.py` | `data/google_domain_taxonomy_latest.json` |
+| Precision report | `python scripts\entry\cdp_cli.py google precision build` | read/report | implemented | `scripts/google/precision_report.py` | `data/google_precision_report_latest.json` |
+| Work action catalog | `python scripts\entry\cdp_cli.py google work catalog` | read | implemented | `scripts/google/common/workflows.py` | `data/google_work_action_catalog_latest.json` |
+| Work adapter catalog | `python scripts\entry\cdp_cli.py google work ai_orchestrator.connectors.g2b` | read | implemented | `scripts/google/common/workflows.py` | `data/google_execution_adapter_catalog_latest.json` |
+| Work prepare | `python scripts\entry\cdp_cli.py google work prepare <action_key> key=value ...` | prepare | implemented | `scripts/google/common/workflows.py` | `data/google_prepare_latest.json` |
+| Work execute | `python scripts\entry\cdp_cli.py google work execute <plan_path> --approved --confirm=GOOGLE_APPROVED_EXECUTE` | approval | gated | `scripts/google/common/workflows.py` | execution result JSON |
+| Work verify | `python scripts\entry\cdp_cli.py google work verify <result_path>` | read | implemented | `scripts/google/common/workflows.py` | verification JSON |
+| Work live fill | `python scripts\entry\cdp_cli.py google work live-fill <plan_path> --no-final-submit` | prepare/no-final-submit | gated | `scripts/google/common/live_inputs.py` | `data/google_live_input_latest.json` |
+| Work live-fill manifest | `python scripts\entry\cdp_cli.py google work live-fill-manifest <manifest_path> --no-final-submit` | prepare/no-final-submit | gated | `scripts/google/common/live_inputs.py` | `data/google_live_input_manifest_latest.json` |
+| Work coverage/gaps | `python scripts\entry\cdp_cli.py google work live-coverage`, `undeveloped` | read/report | implemented | `scripts/google/common/live_inputs.py`, `scripts/google/common/workflows.py` | `data/google_live_input_coverage_latest.json`, `data/google_work_undeveloped_latest.json` |
 
 ## Basic Feature Surfaces
 
@@ -92,7 +92,7 @@ research areas such as `스마트스토어`, `쇼핑몰`, `구매대행`, `마�
 Example:
 
 ```powershell
-python scripts\cdp_client.py google youtube topic --topic=스마트스토어 --auto-keywords --per-keyword-limit=10 --collect-transcripts=false
+python scripts\entry\cdp_cli.py google youtube topic --topic=스마트스토어 --auto-keywords --per-keyword-limit=10 --collect-transcripts=false
 ```
 
 `scripts/google/workspace_basic.py` currently locks 22 surfaces and 59 feature
@@ -162,7 +162,7 @@ Latest focused verification:
 ```powershell
 python -m pytest tests\test_google_workspace_basic.py -q
 python scripts\ops\audit_google_automation_baseline_contract.py
-python scripts\required_quality_gate.py
+python tools\quality\required_quality_gate.py
 ```
 
 Latest result:
@@ -170,7 +170,7 @@ Latest result:
 - `tests\test_google_workspace_basic.py`: `23 passed`
 - `scripts\ops\audit_google_automation_baseline_contract.py`:
   `RESULT=PASS_GOOGLE_AUTOMATION_BASELINE_CONTRACT`
-- `scripts\required_quality_gate.py`: `RESULT=PASS_REQUIRED_QUALITY_GATE`
+- `tools\quality\required_quality_gate.py`: `RESULT=PASS_REQUIRED_QUALITY_GATE`
 
 ## Remaining Work
 

@@ -138,9 +138,9 @@ Baseline and gate work may modify:
 ```text
 docs/baseline/modules/PLAYWRIGHT_AI_BASELINE.md
 docs/baseline/MODULE_BASELINE.md
-scripts/ops/audit_playwright_ai_baseline_contract.py
-scripts/module_quality_gate.py
-scripts/required_quality_gate.py
+tools/audits/agent/audit_playwright_ai_baseline_contract.py
+tools/quality/module_quality_gate.py
+tools/quality/required_quality_gate.py
 tests/test_playwright_ai_baseline_contract.py
 tests/test_module_quality_gate.py
 tests/test_required_quality_gate.py
@@ -151,16 +151,16 @@ tests/test_required_quality_gate.py
 Baseline verification:
 
 ```text
-python scripts/ops/audit_playwright_ai_baseline_contract.py
+python tools/audits/agent/audit_playwright_ai_baseline_contract.py
 python -m pytest tests/test_playwright_ai_baseline_contract.py -q
 ```
 
 Runtime/browser verification:
 
 ```text
-python scripts/ops/dry_run_local_agent_cdp_attach.py
-python scripts/module_quality_gate.py --module repo_guard
-python scripts/required_quality_gate.py
+python tools/verify/dry_run_local_agent_cdp_attach.py
+python tools/quality/module_quality_gate.py --module repo_guard
+python tools/quality/required_quality_gate.py
 ```
 
 Live browser verification is separate and requires explicit approval.

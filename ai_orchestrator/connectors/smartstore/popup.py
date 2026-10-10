@@ -6,9 +6,9 @@ import sys
 
 from fastapi import APIRouter, Depends
 
-from ai_orchestrator.gates.auth import require_role
+from tools.gates.auth import require_role
 
-from ...audit_logger import log_event
+from ...audit.audit_logger import log_event
 from ._helpers import ROOT, run_with_cdp_context
 
 router = APIRouter()

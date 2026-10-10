@@ -33,7 +33,7 @@ from manim import (  # type: ignore[import-not-found]  # 선택적 무거운 의
 )
 
 ROOT = Path(__file__).resolve().parents[2]
-from ai_orchestrator.config import get_local_data_dir  # noqa: E402
+from ai_orchestrator.core.config import get_local_data_dir  # noqa: E402
 
 DEMO_DIR = get_local_data_dir() / "video" / "ig_dm_bot_ep01" / "demo_frames"
 

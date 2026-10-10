@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from ai_orchestrator.browser_tool.site_access_compatibility_auditor import (
+from ai_orchestrator.browser_tool.policy.site_access_compatibility_auditor import (
     classify_auth_methods,
     classify_remote_access_restriction,
     evaluate_site_access_policy,
@@ -224,7 +224,7 @@ class TestNoForbiddenImports:
         import ast
         import inspect
 
-        from ai_orchestrator.browser_tool import site_access_compatibility_auditor
+        from ai_orchestrator.browser_tool.policy import site_access_compatibility_auditor
 
         source = inspect.getsource(site_access_compatibility_auditor)
         tree = ast.parse(source)
@@ -242,7 +242,7 @@ class TestNoForbiddenImports:
         """Module should not contain credential input operations."""
         import inspect
 
-        from ai_orchestrator.browser_tool import site_access_compatibility_auditor
+        from ai_orchestrator.browser_tool.policy import site_access_compatibility_auditor
 
         source = inspect.getsource(site_access_compatibility_auditor)
 

@@ -124,7 +124,7 @@ def get_gabia_status():
 @gabia_router.get("/dns/tasks", response_model=list[DnsTaskItem])
 def list_dns_tasks():
     """가비아 DNS 업무 레지스트리 목록."""
-    from ai_orchestrator.gabia.gabia_dns_work_registry import list_gabia_external_works
+    from ai_orchestrator.connectors.gabia.dns_work_registry import list_gabia_external_works
 
     works = list_gabia_external_works()
     return [
@@ -169,7 +169,7 @@ def start_login_watch():
 @gabia_router.get("/nav-plan", response_model=list[NavStep])
 def get_nav_plan():
     """가비아 DNS 업무 브라우저 네비게이션 계획."""
-    from ai_orchestrator.gabia.gabia_browser_task import GABIA_NAV_PLAN
+    from ai_orchestrator.connectors.gabia.browser_task import GABIA_NAV_PLAN
 
     return [
         NavStep(

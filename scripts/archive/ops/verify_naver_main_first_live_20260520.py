@@ -11,7 +11,7 @@ import urllib.request
 
 import websocket
 
-from local_agent import site_entry_policy as sep
+from core.agent_runtime.policy import site_entry_policy as sep
 
 CDP_PORT = 9222
 SITES = ["naver", "naver_blog", "naver_cafe"]

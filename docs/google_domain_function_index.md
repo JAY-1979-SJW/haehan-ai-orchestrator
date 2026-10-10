@@ -91,9 +91,9 @@ one-to-one to a single public domain:
 ## Verification Commands
 
 ```powershell
-python scripts\cdp_client.py google domains report
-python scripts\cdp_client.py google subdomains catalog
-python scripts\cdp_client.py google basic catalog
+python scripts\entry\cdp_cli.py google domains report
+python scripts\entry\cdp_cli.py google subdomains catalog
+python scripts\entry\cdp_cli.py google basic catalog
 ```
 
 Current locked counts:

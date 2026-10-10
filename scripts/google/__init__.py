@@ -35,7 +35,7 @@ class Google:
     @property
     def gmail(self):
         if self._gmail is None:
-            from scripts.google.gmail_api import GmailAPI
+            from scripts.google.common.gmail_api import GmailAPI
 
             self._gmail = GmailAPI(self.page)
         return self._gmail

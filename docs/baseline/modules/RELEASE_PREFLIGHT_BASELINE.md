@@ -150,8 +150,8 @@ Baseline and gate work may modify:
 docs/baseline/modules/RELEASE_PREFLIGHT_BASELINE.md
 docs/baseline/MODULE_BASELINE.md
 scripts/ops/audit_release_preflight_baseline_contract.py
-scripts/module_quality_gate.py
-scripts/required_quality_gate.py
+tools/quality/module_quality_gate.py
+tools/quality/required_quality_gate.py
 tests/test_release_preflight_baseline_contract.py
 tests/test_module_quality_gate.py
 tests/test_required_quality_gate.py
@@ -169,14 +169,14 @@ python -m pytest tests/test_release_preflight_baseline_contract.py -q
 Preflight command identification:
 
 ```text
-python scripts/module_quality_gate.py --module release_preflight --dry-run
+python tools/quality/module_quality_gate.py --module release_preflight --dry-run
 ```
 
 Required repository verification:
 
 ```text
-python scripts/module_quality_gate.py --module repo_guard
-python scripts/required_quality_gate.py
+python tools/quality/module_quality_gate.py --module repo_guard
+python tools/quality/required_quality_gate.py
 ```
 
 Actual release_preflight execution is separate and requires explicit approval

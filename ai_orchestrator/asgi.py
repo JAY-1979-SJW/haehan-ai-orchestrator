@@ -6,14 +6,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from ai_orchestrator.connectors.naver_search.naver_search_runner import schedule_loop
 from ai_orchestrator.paths import (
     bootstrap as _runtime_bootstrap,  # noqa: F401 - 저장소(DB)가 열리기 전에 데이터 폴더 준비·이행(맨 먼저 실행돼야 함)
 )
 
-from . import config
-from .config import APP_HOST, APP_PORT
-from .connectors.naver_search_runner import schedule_loop
-from .logging_setup import setup_logging
+from .core import config
+from .core.config import APP_HOST, APP_PORT
+from .core.logging_setup import setup_logging
+from .routers import app_actions
 from .routers.registry import router
 
 logger = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ def _write_server_discovery_file() -> None:
 
 def _start_scheduled_job_loop() -> asyncio.Task | None:
     try:
-        from .routers.scheduled_job_loop import scheduled_job_loop
+        from .scheduler.scheduled_job_loop import scheduled_job_loop
 
         return asyncio.create_task(scheduled_job_loop())
     except Exception as e:  # noqa: BLE001 - FastAPI 서버 기동 시 백그라운드 스케줄러 시작 실패 처리 - 로그만 남기고 해당 기능 비활성화, 보안 판정과 무관
@@ -81,9 +82,10 @@ def _start_scheduled_job_loop() -> asyncio.Task | None:
 def _resume_agent_dispatch() -> None:
     """서버 재시작 전에 승인된 채 끝나지 않은 AI 작업 분배가 있으면 러너를 다시 띄운다(실패해도 기동을 막지 않음)."""
     try:
-        from .routers.agent_dispatch_router import resume_on_startup
+        # 등록 모듈(routers/registry)을 거쳐 부른다 — asgi(최상위)가 기능 폴더를 직접 import 하면 최상위 ↔ agent_dispatch 순환이 생긴다
+        from .routers.registry import resume_agent_dispatch_on_startup
 
-        if resume_on_startup():
+        if resume_agent_dispatch_on_startup():
             logger.info("AI 작업 분배 러너 재개(승인된 진행 중 분배안 있음)")
     except Exception as e:  # noqa: BLE001 - FastAPI 서버 기동 시 작업 분배 러너 재개 실패 처리 - 로그만 남기고 기동 계속, 보안 판정과 무관
         logger.warning("AI 작업 분배 러너 재개 실패 (무시): %s", e)
@@ -129,12 +131,12 @@ def _connect_gate_audit() -> None:
     """게이트 판정 감사 기록(op_log)을 앱 시작점에서 연결한다.
 
     게이트 핵심(gate_core)은 scripts 를 import 하지 않으므로(R2d-2 설계서 §4, 순환 해소) 감사 싱크를 여기서 주입한다.
-    scripts.gate(shim)를 import 하는 CLI·스크립트 경로는 shim 이 같은 싱크를 등록한다.
+    scripts.common.gate(shim)를 import 하는 CLI·스크립트 경로는 shim 이 같은 싱크를 등록한다.
     """
-    from ai_orchestrator.gates.gate_core import set_audit_sink
+    from tools.gates.gate_core import set_audit_sink
 
     def _audit(name: str, **fields) -> None:
-        from scripts.op_log import log_op
+        from scripts.common.op_log import log_op
 
         log_op(name, **fields)
 
@@ -167,7 +169,7 @@ async def lifespan(app: FastAPI):
 
     # gonobi 블로그 주기적 수집 스케줄러
     try:
-        from .connectors.gonobi_scheduler import gonobi_schedule_loop
+        from .connectors.naver_blog.gonobi_scheduler import gonobi_schedule_loop
 
         gonobi_task = asyncio.create_task(gonobi_schedule_loop())
     except Exception as e:  # noqa: BLE001 - FastAPI 서버 기동/종료 시 백그라운드 스케줄러(커뮤니티/gonobi/CDP폴러) 시작 실패 처리 - 로그만 남기고 해당 기능 비활성화, 보안 판정과 무관
@@ -215,8 +217,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="haehan-ai-orchestrator", version="1.0.0", lifespan=lifespan)
 app.include_router(router)
+app_actions.configure_app(app)  # 앱 액션 목록이 라우트를 훑을 앱을 주입(routers 가 asgi 를 import 하지 않는다)
 
-from .gates.browser_gate_middleware import BrowserGateMiddleware  # noqa: E402
+from tools.gates.browser_gate_middleware import BrowserGateMiddleware  # noqa: E402
 
 app.add_middleware(BrowserGateMiddleware)
 
