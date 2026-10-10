@@ -94,12 +94,13 @@
 
 ## ⑨ 배포는 NAS만
 
-- 설치 파일은 **GitHub Releases 에 게시하지 않는다**(대표님 결정 2026-10-08). 공개 저장소의 아티팩트는 GitHub 로그인 사용자 누구나 받을 수 있으므로 **보관 3일**(`retention-days: 3`)만 둔다.
+- **정책(대표님 지시 2026-10-10 13:0x): 설치 파일(setup.exe)은 GitHub 에 올리지 않는다** — Releases 뿐 아니라 Actions 아티팩트에도 설치 파일 본체를 포함하지 않는다(종전 "Releases 금지, 아티팩트 3일 보관"에서 강화). GitHub Actions 는 빌드·설치본 내용물 점검·E2E 까지만 검증하고, 아티팩트는 unpacked 빌드와 로그만 남긴다(보관 기간은 워크플로 설정값 그대로, 설치 파일 보관 자체가 없으므로 "3일" 조항은 설치 파일에는 더 이상 적용 안 됨).
+- 실배포용 설치 파일은 GitHub 검증을 통과한 **같은 커밋 sha** 로 이 PC(또는 지정 빌드 PC)에서 로컬로 다시 빌드한다. 로컬 빌드 절차는 `C:\work\_coordination\LOCAL_BUILD_PLAN.md`(참조 구현, 작성 중).
 - 배포는 `scripts/ops/publish_release_to_nas.py <산출물 폴더> --version <yyyymmdd-sha7> [--execute]` 로 NAS(Nextcloud `배포/Haehan AI/<버전>/`)에만 한다. 옵션 없으면 dry-run 이고, 같은 버전 폴더가 이미 있으면 중단(덮어쓰기 금지)한다.
-- 체크섬 동봉: 워크플로 단계 `SHA256 checksums` 가 `checksums.txt` 를 만들고, 게시 도구는 `HaehanAI-*.exe` 와 `checksums.txt` 를 필수로 요구하며 업로드 뒤 서버에서 SHA256 을 다시 계산해 대조한다(불일치 시 실패).
+- 체크섬 동봉: 로컬 빌드에서 직접 `checksums.txt` 를 만들고, 게시 도구는 `HaehanAI-*.exe` 와 `checksums.txt` 를 필수로 요구하며 업로드 뒤 서버에서 SHA256 을 다시 계산해 대조한다(불일치 시 실패).
 - 함께 올라가는 파일: `latest.yml`·`*.blockmap`(자동 업데이트용), `RELEASE_NOTES.md`, `설치_및_사용_안내.md`.
-- 자동으로 막는 장치: `publish_release_to_nas.py`, 시험 `tests/test_publish_release_to_nas.py`, 워크플로 `retention-days: 3` 과 "설치 파일은 GitHub(Releases)에 게시하지 않는다" 설정(`--publish never`).
-- 게시 전 조건: ①~⑥ 통과, E2E 실패 빌드(`UNVERIFIED-`) 아님.
+- 자동으로 막는 장치: `publish_release_to_nas.py`, 시험 `tests/test_publish_release_to_nas.py`, 워크플로의 설치 파일 미업로드 설정, "설치 파일은 GitHub(Releases·Actions 아티팩트 모두)에 올리지 않는다" 설정.
+- 게시 전 조건: ①~⑥ 통과(GitHub 검증 + 로컬 실설치 시뮬레이션), E2E 실패 빌드(`UNVERIFIED-`) 아님.
 
 ## ⑩ 설치 안내서 — 미자동화
 
@@ -114,8 +115,8 @@
 
 ## 출시 체크 순서 (요약)
 
-1. Actions 에서 `Desktop Release Build` 성공(② 내용물 점검 통과, ③ E2E 통과) 확인.
-2. 아티팩트 `HaehanAI-Desktop-<버전>`(UNVERIFIED 아님) 의 `setup.exe` 를 실제 PC 에 설치해 ⑤⑥ 확인.
+1. Actions 에서 `Desktop Release Build` 성공(② 내용물 점검 통과, ③ E2E 통과) 확인(설치 파일은 아티팩트에 없음 — 검증 전용).
+2. 같은 커밋 sha 로 로컬 빌드한 `setup.exe` 를 실제 PC 에 설치해 ⑤⑥ 확인.
 3. ④ 전 화면 점검 실행, C 등급은 실행하지 않음.
 4. ⑦⑧ 사람 확인(미자동화).
 5. ⑩ 안내서 확인 후 ⑨ NAS 게시(`--execute`), 아티팩트는 3일 뒤 삭제.
