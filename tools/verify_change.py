@@ -754,15 +754,15 @@ def _audit_kit_new_findings(
         if old and (base_tree / old).exists():
             return old
         return None
-    from scripts.ops.hooks.audit_kit_gate import (
+    from tools.hooks.audit_kit_gate import (
         BATCH_SCRIPT,
         _new_typed,
         batch_raw_findings,
+        excess_findings,
         find_audit_kit,
         is_real_kit,
         mypy_keys_batch,
         mypy_python,
-        new_findings,
         raw_findings,
     )
 
@@ -823,7 +823,7 @@ def _audit_kit_new_findings(
             base: list[str] | None = []
         else:
             base = base_batch[base_rel] if base_rel in base_batch else raw_findings(kit, base_tree / base_rel, base_tree)
-        out = [f"{rel}: {x}" for x in new_findings(head, base or [])]
+        out = [f"{rel}: {x}" for x in excess_findings(head, base or [])]
         if py is not None:  # mypy: 기준 트리의 같은 파일(이동했으면 옛 경로)에 없던 타입 오류만
             typed, why = _new_typed(
                 head_tree / rel,

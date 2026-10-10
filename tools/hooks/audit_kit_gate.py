@@ -112,7 +112,7 @@ def finding_key(line: str) -> str:
     return re.sub(r"^(\[[^\]]+\])\s+\S+:\d+\s+", r"\1 ", line.removesuffix("(기존)").strip())
 
 
-def new_findings(head: list[str], base: list[str]) -> list[str]:
+def excess_findings(head: list[str], base: list[str]) -> list[str]:
     """`head` 중 `base` 에는 없던(개수가 넘치는) 항목만 — `finding_key()` 로 정규화한 뒤 Counter 로 비교한다.
 
     set 이 아니라 Counter 를 쓰는 이유: 파일 이동으로 `finding_key()` 가 경로:줄번호를 지우면, 같은 메시지가
