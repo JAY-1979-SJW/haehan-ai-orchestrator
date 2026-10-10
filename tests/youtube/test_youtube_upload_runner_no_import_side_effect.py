@@ -31,3 +31,38 @@ def test_import_does_not_create_cdp_connection(monkeypatch):
     assert module.cdp is None, "import 직후 모듈 전역 cdp 는 아직 None 이어야 한다(main() 에서 생성)"
 
     sys.modules.pop("scripts.youtube.upload.runner", None)
+
+
+def test_main_wires_the_real_cdp_instance_into_step_functions(monkeypatch):
+    """main() 실행 경로에서 step 함수가 참조하는 전역 cdp 가 실제로 main() 이 만든
+    인스턴스인지(모킹으로) 확인 — `global cdp` 선언이 없으면 main() 안 대입이 지역
+    변수로만 끝나 step 함수가 여전히 import 시점의 None 을 보게 된다(총괄 지적)."""
+    fake_cdp_cls = MagicMock(name="CDP")
+    fake_cdp_instance = MagicMock(name="cdp_instance")
+    fake_cdp_cls.return_value = fake_cdp_instance
+    monkeypatch.setitem(
+        sys.modules,
+        "scripts.browser.cdp.cdp_helper",
+        type(sys)("scripts.browser.cdp.cdp_helper"),
+    )
+    sys.modules["scripts.browser.cdp.cdp_helper"].CDP = fake_cdp_cls
+    sys.modules.pop("scripts.youtube.upload.runner", None)
+    module = importlib.import_module("scripts.youtube.upload.runner")
+
+    seen_cdp = []
+
+    def fake_step1():
+        seen_cdp.append(module.cdp)  # step 함수가 보는 모듈 전역 cdp 를 그대로 기록
+        return True
+
+    module.steps[1] = fake_step1
+    monkeypatch.setattr(sys, "argv", ["runner.py", "1"])
+    monkeypatch.setattr(module.time, "sleep", lambda *_a: None)
+
+    module.main()
+
+    assert module.cdp is fake_cdp_instance, "main() 이 만든 인스턴스가 모듈 전역 cdp 로 안 남음(global cdp 누락 의심)"
+    assert seen_cdp == [fake_cdp_instance], "step1() 이 본 cdp 가 main() 이 만든 인스턴스와 다름"
+    assert fake_cdp_instance.close.called, "finally 블록에서 cdp.close() 가 안 불림"
+
+    sys.modules.pop("scripts.youtube.upload.runner", None)
