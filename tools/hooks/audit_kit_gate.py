@@ -18,6 +18,7 @@ audit-kit 위치(이 PC 전용 경로를 고정하지 않는다): 환경변수 `
 from __future__ import annotations
 
 import contextlib
+import io
 import json
 import os
 import re
@@ -29,6 +30,7 @@ from collections import Counter
 from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
 ROOT = next(
     p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file()
@@ -36,6 +38,16 @@ ROOT = next(
 sys.path.insert(0, str(ROOT))
 from scripts.common.no_window import no_window_kwargs  # noqa: E402
 from tools.code_map.proc_tree import run_tree_killed  # noqa: E402
+
+
+def _nw_kwargs() -> dict[str, Any]:
+    """no_window_kwargs() 는 dict[str, int] 로 좁게 선언돼 있어, subprocess.run(**...) 에
+    그대로 풀면 mypy 가 여러 오버로드 중 하나로 못 좁혀 "No overload variant" 오류가 난다
+    (dict[str, int] 가 run() 의 str/bool 종류 인자들과도 매칭을 시도하다 실패) — 값 타입을
+    Any 로 넓혀 풀어주는 지점만 여기 한 곳으로 모은다(scripts/common/no_window.py 자체는
+    안 건드림, 그 함수의 실제 동작·반환값은 그대로)."""
+    return no_window_kwargs()
+
 
 PER_FILE_TIMEOUT_S = 60
 _MYPY_LOCK = (
@@ -146,7 +158,7 @@ def raw_findings(kit: list[str], path: Path, root: Path | None = None) -> list[s
             timeout=PER_FILE_TIMEOUT_S,
             cwd=str(root),
             env=_utf8_env(),
-            **no_window_kwargs(),
+            **_nw_kwargs(),
         )
     except (OSError, subprocess.TimeoutExpired):
         return None
@@ -193,7 +205,7 @@ def batch_raw_findings(
                 timeout=timeout_s,
                 cwd=str(root),
                 env=_utf8_env(),
-                **no_window_kwargs(),
+                **_nw_kwargs(),
             )
             data = json.loads(proc.stdout.decode("utf-8")) if proc.returncode == 0 else {}
         except (OSError, subprocess.TimeoutExpired, ValueError):
@@ -257,7 +269,7 @@ def mypy_keys(py: str, path: Path, root: Path | None = None) -> set[str] | None:
                     cwd=str(root),
                     env=_utf8_env(),
                     check=False,
-                    **no_window_kwargs(),
+                    **_nw_kwargs(),
                 )
             except (OSError, subprocess.TimeoutExpired):
                 return None
@@ -327,7 +339,7 @@ def _mypy_group(py: str, group: list[Path], root: Path) -> dict[Path, set[str] |
                     cwd=str(root),
                     env=_utf8_env(),
                     check=False,
-                    **no_window_kwargs(),
+                    **_nw_kwargs(),
                 )
             except (OSError, subprocess.TimeoutExpired):
                 return dict.fromkeys(group)
@@ -407,7 +419,7 @@ def _mypy_against_head(py: str, path: Path, root: Path, old_rel: str | None = No
     """
     rel = old_rel or path.resolve().relative_to(root.resolve()).as_posix()
     shown = subprocess.run(
-        ["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False, **no_window_kwargs()
+        ["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False, **_nw_kwargs()
     )
     if shown.returncode != 0:
         return mypy_new(py, path, None, root)
@@ -447,7 +459,7 @@ def _head_blobs(root: Path, rels: list[str]) -> dict[str, bytes | None]:
     if len(blobs) != len(unique):  # 출력을 다 못 읽었으면 예전 방식으로
         for rel in unique:
             shown = subprocess.run(
-                ["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False, **no_window_kwargs()
+                ["git", "show", f"HEAD:{rel}"], capture_output=True, cwd=str(root), check=False, **_nw_kwargs()
             )
             blobs[rel] = shown.stdout if shown.returncode == 0 else None
     return blobs
@@ -492,7 +504,7 @@ def _kit_hook_raw(kit: list[str], path: Path, root: Path) -> tuple[list[str] | N
             timeout=PER_FILE_TIMEOUT_S,
             cwd=str(root),
             env=_utf8_env(),
-            **no_window_kwargs(),
+            **_nw_kwargs(),
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return None, f"{type(exc).__name__}: {exc}"
@@ -532,7 +544,7 @@ def _kit_hook_against_head(kit: list[str], path: Path, root: Path, old_rel: str 
     if not old_rel:
         return [f"{path.name}: {item}" for item in current if not item.endswith("(기존)")], ""
     shown = subprocess.run(
-        ["git", "show", f"HEAD:{old_rel}"], capture_output=True, cwd=str(root), check=False, **no_window_kwargs()
+        ["git", "show", f"HEAD:{old_rel}"], capture_output=True, cwd=str(root), check=False, **_nw_kwargs()
     )
     if shown.returncode != 0:
         return [f"{path.name}: {item}" for item in current if not item.endswith("(기존)")], ""
@@ -619,8 +631,9 @@ def _eligible(path: Path, root: Path | None = None) -> bool:
 
 def _utf8_streams() -> None:
     for stream in (sys.stdout, sys.stderr):
-        with contextlib.suppress(Exception):
-            stream.reconfigure(encoding="utf-8", errors="replace")
+        if isinstance(stream, io.TextIOWrapper):
+            with contextlib.suppress(Exception):
+                stream.reconfigure(encoding="utf-8", errors="replace")
 
 
 def _required(env: Mapping[str, str] | None = None) -> bool:
@@ -736,7 +749,7 @@ def _staged_python_changes() -> list[tuple[Path, str | None]]:
         encoding="utf-8",
         errors="replace",
         check=False,
-        **no_window_kwargs(),
+        **_nw_kwargs(),
     ).stdout
     parts = [x for x in out.split("\0") if x]
     changes: list[tuple[Path, str | None]] = []

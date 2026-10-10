@@ -26,6 +26,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = next(
     p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file()
@@ -34,6 +35,14 @@ sys.path.insert(0, str(ROOT))
 from scripts.common.no_window import no_window_kwargs  # noqa: E402
 
 _HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+
+
+def _nw_kwargs() -> dict[str, Any]:
+    """no_window_kwargs() 는 dict[str, int] 로 좁게 선언돼 있어, subprocess.run(**...) 에
+    그대로 풀면 mypy 가 여러 오버로드 중 하나로 못 좁혀 "No overload variant" 오류가 난다 —
+    값 타입을 Any 로 넓혀 풀어주는 지점만 여기 한 곳으로 모은다(scripts/common/no_window.py
+    자체는 안 건드림, 그 함수의 실제 동작·반환값은 그대로)."""
+    return no_window_kwargs()
 
 
 def _run_git(args: list[str]) -> subprocess.CompletedProcess:
@@ -46,7 +55,7 @@ def _run_git(args: list[str]) -> subprocess.CompletedProcess:
         errors="replace",
         timeout=30,
         check=False,
-        **no_window_kwargs(),
+        **_nw_kwargs(),
     )
 
 
@@ -105,7 +114,7 @@ def run_ruff_json(cfg: str, files: list[str]) -> list[dict]:
         errors="replace",
         timeout=60,
         check=False,
-        **no_window_kwargs(),
+        **_nw_kwargs(),
     )
     try:
         return json.loads(p.stdout or "[]")

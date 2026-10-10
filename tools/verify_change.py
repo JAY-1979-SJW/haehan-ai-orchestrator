@@ -115,7 +115,7 @@ CONFIG = ROOT / "configs" / "verify_change.json"
 CFG = {"route_check": None, "ruff_config": None, "test_timeout": 120}
 if CONFIG.exists():
     CFG.update(json.loads(CONFIG.read_text(encoding="utf-8")))
-TEST_TIMEOUT = int(CFG["test_timeout"])  # 테스트 파일 하나당 상한(멈추는 테스트 차단)
+TEST_TIMEOUT = int(CFG.get("test_timeout") or 120)  # 테스트 파일 하나당 상한(멈추는 테스트 차단) — None 이면 기본 120
 CHUNK = int(CFG.get("test_chunk", 25))  # 한 pytest 프로세스에 묶는 테스트 파일 수
 CODE_EXT = tuple(CFG.get("code_ext", [".py"]))  # 분류 정본에 있어야 하는 코드 파일 확장자
 
