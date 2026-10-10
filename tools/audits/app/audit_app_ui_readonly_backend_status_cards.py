@@ -13,6 +13,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
+from tools.audits.app.audit_app_ui_shell_readonly_api_wiring import _route_page
+
 REPO_ROOT = next(
     p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file()
 )  # haehan-root-bootstrap: 폴더 깊이와 무관 — pyproject.toml 이 있는 상위 폴더를 찾는다
@@ -26,17 +28,6 @@ VERDICT_BLOCKED = "APP_UI_READONLY_BACKEND_STATUS_CARDS_BLOCKED"
 ASSISTANT_APP = FRONTEND_ROOT / "app" / "assistant"
 ASSISTANT_COMP = FRONTEND_ROOT / "components" / "assistant"
 
-
-def _route_page(rel: str) -> Path:
-    """`app/assistant/tasks/page.tsx` 형태의 경로를 찾는다.
-
-    Next.js 의 라우트 그룹 `(legacy)` 는 URL 에 나타나지 않으므로, 그 안으로 옮겨진 화면도 같은 화면이다.
-    """
-    direct = FRONTEND_ROOT / rel
-    if direct.exists():
-        return direct
-    grouped = FRONTEND_ROOT / rel.replace("app/assistant/", "app/assistant/(legacy)/", 1)
-    return grouped if grouped.exists() else direct
 
 
 API_CLIENT = FRONTEND_ROOT / "lib" / "assistant" / "api.ts"

@@ -228,3 +228,21 @@ def test_check_all_ignores_exempt_folders(repo):
     _git_add_all(repo)
     _run_gate(repo, "build-baseline")
     assert _run_gate(repo, "check", "--all").returncode == 0
+
+
+def test_no_warning_on_matching_python_version(capsys, monkeypatch):
+    sys.path.insert(0, str(ROOT))
+    from tools.repo_gates import dup_gate as gate
+
+    monkeypatch.setattr(gate.sys, "version_info", (3, 14, 7, "final", 0))
+    gate._warn_if_wrong_python_version()
+    assert "경고" not in capsys.readouterr().err
+
+
+def test_warning_fires_for_other_python_version(capsys, monkeypatch):
+    sys.path.insert(0, str(ROOT))
+    from tools.repo_gates import dup_gate as gate
+
+    monkeypatch.setattr(gate.sys, "version_info", (3, 12, 10, "final", 0))
+    gate._warn_if_wrong_python_version()
+    assert "경고" in capsys.readouterr().err

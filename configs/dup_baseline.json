@@ -2,16 +2,8 @@
  "generated_by": "tools/repo_gates/dup_gate.py build-baseline",
  "source_algorithm": "dupscan extractor.py (구조 해시 동일 로직 이전, tools/repo_gates/_dup_structure_hash.py)",
  "min_statements": 4,
- "hash_count": 30,
+ "hash_count": 25,
  "hashes": {
-  "0375546e7217dda427468b770a6de139d41462c6": [
-   "ai_orchestrator/connectors/naver_mail/bulk_service.py:_read_rows",
-   "ai_orchestrator/gongmu/gongmu_service.py:_read_rows"
-  ],
-  "1c3787c65ac5010655eec0046e605c8bce5cf100": [
-   "orchestrator_v1/inbox/notice_radar/browser_collector.py:_find_near_date",
-   "orchestrator_v1/inbox/notice_radar/collector.py:_find_near_date"
-  ],
   "2a680e0f94b41e4cb814b289c9104964760a160e": [
    "scripts/common/youtube_api_common.py:_write_report",
    "scripts/youtube/oauth.py:_write_report"
@@ -23,10 +15,6 @@
   "3a206e750dedc94764bb59afad4ef3ad988fab6d": [
    "scripts/google/vision_usage_gate.py:save_vision_monthly_free_gate",
    "scripts/youtube/browser_transcript.py:_write_report"
-  ],
-  "3b98604be243aa0b1973738181e9aa36acaded45": [
-   "core/agent_runtime/browser/site_mapper.py:_is_sensitive_name",
-   "core/agent_runtime/browser/web_reader.py:_is_sensitive_name"
   ],
   "3bd89a273c4d15fb3674b39da45fd8f10666602f": [
    "tools/audits/app/audit_app_api_contract_endpoints_prep.py:AuditReport.summary",
@@ -78,15 +66,6 @@
   "76a31dc5575f6481b80fa19eec4be8d386273459": [
    "tools/smoke/live_parallel_task_dispatch_smoke.py:_request_json",
    "tools/verify/verify_live_task_dispatch.py:_request_json"
-  ],
-  "7977b42cf3bf386ad6ca7c4479c72ddb04dcbae0": [
-   "orchestrator_v1/inbox/inbox_store.py:_load_all",
-   "orchestrator_v1/tasks/candidate_store.py:_load_all",
-   "orchestrator_v1/tasks/email_task_store.py:_load_all"
-  ],
-  "8051340d49f4053a369da34c66a976ee564c8609": [
-   "tools/audits/app/audit_app_ui_readonly_backend_status_cards.py:_route_page",
-   "tools/audits/app/audit_app_ui_shell_readonly_api_wiring.py:_route_page"
   ],
   "936fbd68ef6ce7fbb209475fabbec4b2765e9f2d": [
    "ai_orchestrator/agent_dispatch/agent_dispatch_store.py:_conn",

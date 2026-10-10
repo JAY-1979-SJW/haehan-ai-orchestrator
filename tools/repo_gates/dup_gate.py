@@ -129,7 +129,7 @@ def load_baseline_hashes() -> set[str]:
         return set()
     try:
         data = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
-    except OSError, ValueError:
+    except (OSError, ValueError):
         return set()
     return set(data.get("hashes", {}).keys())
 
@@ -228,6 +228,20 @@ def cmd_check(args: argparse.Namespace) -> int:
     return 0
 
 
+def _warn_if_wrong_python_version() -> None:
+    """structure_hash() 는 ast.dump() 출력에 의존하는데, 그 포맷이 파이썬 버전마다 달라
+    같은 코드도 다른 해시가 나온다(2026-10-09, dup_baseline 재검토 중 python 3.12 와
+    py -3.14 사이에서 실제로 재현). 기준선은 constraints.txt 가 고정한 3.14 로 만들어졌으므로
+    다른 버전으로 돌리면 전부 "새 중복"으로 보이는 거짓 대량 diff 가 난다."""
+    if sys.version_info[:2] != (3, 14):
+        print(
+            f"[dup-gate/G12] 경고: 이 파이썬({sys.version_info[0]}.{sys.version_info[1]})"
+            " 은 기준선을 만든 버전(3.14)과 다릅니다 — structure_hash 가 달라져 거짓 diff 가"
+            " 날 수 있습니다. `py -3.14 ...` 로 다시 실행하세요.",
+            file=sys.stderr,
+        )
+
+
 def main(argv: list[str] | None = None) -> int:
     for stream in (
         sys.stdout,
@@ -235,6 +249,7 @@ def main(argv: list[str] | None = None) -> int:
     ):  # 참고·차단 메시지는 stderr 로도 나간다 — 콘솔 코드페이지(cp949)에서 한글이 깨지지 않게 둘 다 고정
         with contextlib.suppress(AttributeError, ValueError):
             stream.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+    _warn_if_wrong_python_version()
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
 
