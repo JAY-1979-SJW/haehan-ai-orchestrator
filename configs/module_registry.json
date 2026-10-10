@@ -25544,6 +25544,14 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "tools/verify/app_smoke_all.py": {
+   "layer": "L4",
+   "role": "browser_engine",
+   "domain": "common",
+   "reason": "범용 브라우저·CDP",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
