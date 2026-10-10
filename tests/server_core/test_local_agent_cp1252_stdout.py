@@ -39,6 +39,7 @@ def _run_agent_briefly(env_overrides: dict[str, str]) -> str:
         errors="replace",
     )
     try:
+        assert proc.stdout is not None  # stdout=PIPE 로 열었으므로 None 일 수 없다
         out = proc.stdout.readline()  # "[에이전트] 서버 연결 중: ..." 한 줄만 보면 충분
     finally:
         proc.terminate()
