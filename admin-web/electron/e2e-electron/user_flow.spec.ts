@@ -2,26 +2,13 @@ import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
-import { launchApp, waitForShell } from "./launch_helper";
+import { launchApp, waitForShell, getUiPage } from "./launch_helper";
 
 // 사용자가 앱에서 직접 클릭하듯 진행하는 E2E.
 // 부작용 액션(메일 발송 / EUM 수집 / 주문 변경)은 제외 — 탐색·렌더·로그인·GPT 경로만 검증.
 const SS = path.resolve(__dirname, "../../../../data/e2e_user_flow");
 
 test.setTimeout(240_000);
-
-// webview(Next UI) 페이지 획득: app.windows() 중 localhost:3000
-async function getUiPage(app: any): Promise<Page> {
-  for (let i = 0; i < 90; i++) {
-    for (const p of app.windows() as Page[]) {
-      let u = "";
-      try { u = p.url(); } catch { /* */ }
-      if (/(localhost|127\.0\.0\.1):3000/.test(u)) return p;
-    }
-    await new Promise((r) => setTimeout(r, 1000));
-  }
-  throw new Error("webview(Next UI) 페이지를 찾지 못함 (서버 미기동 또는 webview 미노출)");
-}
 
 async function shot(ui: Page, name: string) {
   try { await ui.screenshot({ path: path.join(SS, name), timeout: 30_000 }); console.log("📸", name); }
