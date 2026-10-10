@@ -21,7 +21,6 @@ G2B 도메인 정규화 정책 테스트
 
 import inspect
 import json
-import os
 import sys
 import unittest
 from pathlib import Path
@@ -31,7 +30,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 import warnings
 
 warnings.filterwarnings("ignore")
-os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
 from ai_orchestrator.browser_tool.policy.site_compliance_policy import evaluate_site_compliance  # noqa: E402
 from ai_orchestrator.browser_tool.preflight.allowlist_preflight import evaluate_allowlist_preflight  # noqa: E402

@@ -20,7 +20,6 @@ G2B 공개 공고 Read-Only 워크플로우 테스트
 
 import inspect
 import json
-import os
 import sys
 import unittest
 from pathlib import Path
@@ -30,7 +29,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 import warnings
 
 warnings.filterwarnings("ignore")
-os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
 from ai_orchestrator.connectors.g2b.g2b_public_notice_workflow import (  # noqa: E402
     FORBIDDEN_OPERATIONS,

@@ -20,7 +20,6 @@ G2B 공개 공고 Dry-Run Workflow Integration 테스트
 """
 
 import inspect
-import os
 import sys
 import unittest
 from pathlib import Path
@@ -30,7 +29,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 import warnings
 
 warnings.filterwarnings("ignore")
-os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
 from ai_orchestrator.connectors.g2b.g2b_public_notice_dryrun_adapter import (  # noqa: E402 - 위 sys.path 부트스트랩 이후에만 import 가능(이동 전부터 존재)
     ADAPTER_G2B_BLOCKED,

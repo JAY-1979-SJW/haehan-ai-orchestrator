@@ -19,7 +19,6 @@ G2B 공개 업무 읽기 전용 접근 매트릭스 테스트
 """
 
 import json
-import os
 import sys
 import unittest
 from pathlib import Path
@@ -29,7 +28,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 import warnings
 
 warnings.filterwarnings("ignore")
-os.environ.setdefault("HAEHAN_AGENT_WS_ENABLED", "false")
 
 from ai_orchestrator.browser_tool.policy.server_browser_boundary_policy import (  # noqa: E402
     evaluate_server_browser_allowed,
