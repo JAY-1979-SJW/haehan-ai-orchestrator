@@ -575,7 +575,16 @@ def _pytest(tree: Path, files: list[str], timeout: int, reasons: dict[str, str] 
             if reason:
                 reasons[test_id] = reason
     if p.returncode not in (0, 1, 5) and not out:
-        out.append(f"{files[0]}..(+{len(files) - 1})::<rc={p.returncode}>")
+        synthetic_id = f"{files[0]}..(+{len(files) - 1})::<rc={p.returncode}>"
+        out.append(synthetic_id)
+        if reasons is not None:
+            # pytest 요약 줄이 안 남는 비정상 종료(INTERNALERROR 등, rc=3)는 id 만으론 원인을
+            # 전혀 못 찾는다(2026-10-10, run38009465088 tests/google rc=3 재현 조사 중 CI 로그에
+            # 트레이스백이 안 남아 원인 추적이 막혔음) — 재발 대비로 출력 꼬리(최대 30줄)를 남긴다.
+            tail = (p.stdout or "").splitlines()[-30:]
+            if (p.stderr or "").strip():
+                tail += ["--- stderr ---", *p.stderr.splitlines()[-10:]]
+            reasons[synthetic_id] = " | ".join(tail)[:2000]
     return out
 
 

@@ -56,13 +56,27 @@ def test_pytest_reasons_none_by_default_does_not_crash(tmp_path, monkeypatch):
     assert out == ["tests/x.py::test_y"]
 
 
-def test_pytest_synthetic_rc_id_has_no_reason(tmp_path, monkeypatch):
-    """수집 자체가 안 된 rc 실패는 합성 id 라 요약 줄이 없다 — reasons 에 안 채워져도 안전."""
+def test_pytest_synthetic_rc_id_has_no_reason_when_output_empty(tmp_path, monkeypatch):
+    """수집 자체가 안 된 rc 실패는 합성 id 라 요약 줄이 없다 — 출력도 비어있으면 사유도 빈 문자열."""
     monkeypatch.setattr(vc, "run", lambda cmd, cwd, timeout=900: _completed("", returncode=2))
     reasons: dict[str, str] = {}
     out = vc._pytest(tmp_path, ["tests/x.py", "tests/y.py"], 60, reasons)
     assert out == ["tests/x.py..(+1)::<rc=2>"]
-    assert reasons == {}
+    assert reasons == {"tests/x.py..(+1)::<rc=2>": ""}
+
+
+def test_pytest_synthetic_rc_id_captures_output_tail(tmp_path, monkeypatch):
+    """pytest 요약 줄이 안 남는 비정상 종료(INTERNALERROR 등)는 id 만으론 원인을 못 찾는다
+    (2026-10-10, run38009465088 tests/google rc=3 재현 조사 중 CI 로그에 트레이스백이 안 남아
+    원인 추적이 막혔음) — 출력 꼬리(최대 30줄)를 reasons 에 남겨 재발 시 바로 원인이 보이게 한다."""
+    stdout = "\n".join(f"line{i}" for i in range(40))
+    monkeypatch.setattr(vc, "run", lambda cmd, cwd, timeout=900: _completed(stdout, returncode=3))
+    reasons: dict[str, str] = {}
+    out = vc._pytest(tmp_path, ["tests/x.py"], 60, reasons)
+    sid = out[0]
+    assert "<rc=3>" in sid
+    assert "line39" in reasons[sid]
+    assert "line9" not in reasons[sid]  # 마지막 30줄만(line10..line39)
 
 
 # ── _build_verify_report — 보고서에 사유가 붙는지 ──────────────────────────────
