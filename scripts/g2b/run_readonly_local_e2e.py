@@ -32,9 +32,13 @@ import json
 import pathlib
 import sys
 
-_REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+_BOOTSTRAP_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+if str(_BOOTSTRAP_ROOT) not in sys.path:
+    sys.path.insert(0, str(_BOOTSTRAP_ROOT))
+
+from scripts.common.app_paths import repo_root as _repo_root  # noqa: E402
+
+_REPO_ROOT = _repo_root()
 
 from ai_orchestrator.contracts.local_task_protocol import (  # noqa: E402
     STATUS_FAILED,

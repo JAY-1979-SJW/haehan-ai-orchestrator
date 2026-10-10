@@ -25616,6 +25616,14 @@
    "reason": "정책·게이트 이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/naver_search/test_naver_openapi_setup_router_root_path.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "naver_search",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

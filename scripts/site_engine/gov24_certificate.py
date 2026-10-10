@@ -33,8 +33,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(_ROOT))
+_BOOTSTRAP_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(_BOOTSTRAP_ROOT))
+
+from scripts.common.app_paths import repo_root as _repo_root  # noqa: E402
+
+_ROOT = _repo_root()
 
 from scripts.browser.agent.actions import (  # noqa: E402
     GateApprovalRequired,

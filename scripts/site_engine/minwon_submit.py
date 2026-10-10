@@ -26,8 +26,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
 
-_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(_ROOT))
+_BOOTSTRAP_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(_BOOTSTRAP_ROOT))
+
+from scripts.common.app_paths import repo_root as _repo_root  # noqa: E402
+
+_ROOT = _repo_root()
 
 from scripts.browser.agent.actions import (  # noqa: E402 - sys.path.insert 이후 로컬 import (레거시, 이번 작업과 무관)
     click,

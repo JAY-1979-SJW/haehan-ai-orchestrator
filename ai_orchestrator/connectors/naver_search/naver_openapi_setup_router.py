@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import logging
 import sys
-from pathlib import Path
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -23,8 +22,9 @@ from pydantic import BaseModel
 from tools.gates.auth import require_role
 
 from ...audit.audit_logger import log_event
+from ai_orchestrator.paths import repo_root
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = repo_root()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
