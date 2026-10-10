@@ -96,14 +96,31 @@ def test_pre_edit_dup_check_fails_open_on_bad_input():
 # ---- post_edit_fast_gate.py ---------------------------------------------
 
 
+def _tmp_copy_of_community_router(tmp_path) -> Path:
+    """community_router.py 를 임시 사본으로 — 원본(추적 파일)은 손대지 않는다.
+
+    예전엔 원본을 직접 write_bytes 로 고쳐 쓰고 try/finally 로 복원했는데, 시험이
+    타임아웃·강제종료로 중단되면 finally 가 못 돌아 원본(운영 소스)에 시험용 더미 함수
+    (`_clean_noop_test_marker` 등)가 그대로 남는 결함이 있었다(실측 발견, 2026-10-10).
+    사본은 post_edit_fast_gate.py 가 `file_path.resolve().relative_to(ROOT)` 로 저장소
+    루트 안의 실제 경로를 요구해서(post_edit_fast_gate.py:383) pytest 기본 tmp_path(저장소
+    밖)에는 못 둔다 — 같은 디렉터리(ruff 설정도 그대로 위로 찾아짐)에 따로 만든다. 중단돼도
+    사본(추적 안 됨)만 남고 원본은 전혀 안 건드린다.
+    """
+    real = ROOT / "ai_orchestrator" / "connectors" / "community_router.py"
+    copy_path = real.parent / f"_tmp_test_copy_{tmp_path.name}_community_router.py"
+    copy_path.write_bytes(real.read_bytes())
+    return copy_path
+
+
 @requires_ruff
 def test_post_edit_fast_gate_blocks_new_ruff_error(tmp_path):
-    target = ROOT / "ai_orchestrator" / "connectors" / "community_router.py"
-    # 바이트로 다룬다 — read_text/write_text 는 윈도우에서 줄바꿈(CRLF/LF)을 바꿔 추적 파일을 더럽힌다
-    original = target.read_bytes()
+    target = _tmp_copy_of_community_router(tmp_path)
     try:
+        # 바이트로 다룬다 — read_text/write_text 는 윈도우에서 줄바꿈(CRLF/LF)을 바꿀 수 있다
         target.write_bytes(
-            original + b"\n\ndef _unused_var_demo_test_marker():\n    unused_local_var = 123\n    return True\n"
+            target.read_bytes()
+            + b"\n\ndef _unused_var_demo_test_marker():\n    unused_local_var = 123\n    return True\n"
         )
         proc = _run_hook(
             POST_EDIT,
@@ -115,14 +132,13 @@ def test_post_edit_fast_gate_blocks_new_ruff_error(tmp_path):
         assert proc.returncode == 2
         assert "F841" in proc.stderr or "unused" in proc.stderr.lower()
     finally:
-        target.write_bytes(original)
+        target.unlink(missing_ok=True)
 
 
 def test_post_edit_fast_gate_passes_clean_edit(tmp_path):
-    target = ROOT / "ai_orchestrator" / "connectors" / "community_router.py"
-    original = target.read_bytes()
+    target = _tmp_copy_of_community_router(tmp_path)
     try:
-        target.write_bytes(original + b"\n\ndef _clean_noop_test_marker():\n    return True\n")
+        target.write_bytes(target.read_bytes() + b"\n\ndef _clean_noop_test_marker():\n    return True\n")
         proc = _run_hook(
             POST_EDIT,
             {
@@ -136,7 +152,7 @@ def test_post_edit_fast_gate_passes_clean_edit(tmp_path):
         # does not mention a rule code for our added function.
         assert "_clean_noop_test_marker" not in proc.stderr
     finally:
-        target.write_bytes(original)
+        target.unlink(missing_ok=True)
 
 
 def test_post_edit_fast_gate_skips_missing_file():
