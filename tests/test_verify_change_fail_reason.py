@@ -79,6 +79,34 @@ def test_pytest_synthetic_rc_id_captures_output_tail(tmp_path, monkeypatch):
     assert "line9" not in reasons[sid]  # 마지막 30줄만(line10..line39)
 
 
+def test_pytest_synthetic_rc_id_keeps_the_end_not_the_start_when_over_2000_chars(tmp_path, monkeypatch):
+    """[:2000](앞자르기) 버그 재발 방지(2026-10-10, run38015451820) — 30줄 합친 문자열이
+    2000자를 넘으면 가장 중요한 끝부분(실제 크래시 사유)이 남아야 한다, 앞부분이 아니라."""
+    lines = [f"filler line {i} " + "x" * 60 for i in range(30)]
+    lines[-1] = "THE_ACTUAL_CRASH_REASON_AT_THE_END"
+    stdout = "\n".join(lines)
+    assert len(" | ".join(lines)) > 2000
+    monkeypatch.setattr(vc, "run", lambda cmd, cwd, timeout=900: _completed(stdout, returncode=3))
+    reasons: dict[str, str] = {}
+    out = vc._pytest(tmp_path, ["tests/x.py"], 60, reasons)
+    sid = out[0]
+    assert "THE_ACTUAL_CRASH_REASON_AT_THE_END" in reasons[sid]
+
+
+def test_pytest_synthetic_rc_id_surfaces_crash_marker_line_first(tmp_path, monkeypatch):
+    """crashed/INTERNALERROR/worker 'gw 가 들어간 줄이 있으면 2000자 예산 안에서도 맨 앞에
+    한 번 더 보이게 한다 — 그 줄이 30줄 중간에 있어도 잘려 사라지지 않게."""
+    lines = ["filler " + "x" * 60 for _ in range(28)]
+    lines.insert(5, "Replacing crashed worker gw3")
+    lines.append("tail line")
+    stdout = "\n".join(lines)
+    monkeypatch.setattr(vc, "run", lambda cmd, cwd, timeout=900: _completed(stdout, returncode=3))
+    reasons: dict[str, str] = {}
+    out = vc._pytest(tmp_path, ["tests/x.py"], 60, reasons)
+    sid = out[0]
+    assert reasons[sid].startswith("[crash] Replacing crashed worker gw3")
+
+
 # ── _build_verify_report — 보고서에 사유가 붙는지 ──────────────────────────────
 
 

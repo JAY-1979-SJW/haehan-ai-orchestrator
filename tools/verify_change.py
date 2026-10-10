@@ -584,7 +584,17 @@ def _pytest(tree: Path, files: list[str], timeout: int, reasons: dict[str, str] 
             tail = (p.stdout or "").splitlines()[-30:]
             if (p.stderr or "").strip():
                 tail += ["--- stderr ---", *p.stderr.splitlines()[-10:]]
-            reasons[synthetic_id] = " | ".join(tail)[:2000]
+            joined = " | ".join(tail)
+            # [:2000] 로 앞을 자르면 가장 중요한 끝부분(진짜 크래시 사유)이 잘려나간다
+            # (2026-10-10, run38015451820 재발 — 2000자 꽉 채우고 xdist 내부 트레이스백
+            # 중간에서 끊겨 crashitem 이 안 보임, 뒤를 남기도록 수정). "worker 'gw"·
+            # crashed·INTERNALERROR·Error 가 들어간 줄이 있으면 그 중 마지막 줄을 맨 앞에
+            # 한 번 더 붙여, 2000자 안에서도 꼭 보이게 한다.
+            crash_markers = ("crashed", "worker 'gw", "INTERNALERROR", "Error")
+            crash_lines = [ln for ln in tail if any(m in ln for m in crash_markers)]
+            prefix = f"[crash] {crash_lines[-1]} || " if crash_lines else ""
+            budget = max(0, 2000 - len(prefix))
+            reasons[synthetic_id] = prefix + joined[-budget:]
     return out
 
 
