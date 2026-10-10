@@ -25632,6 +25632,14 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/youtube/test_youtube_upload_runner_no_import_side_effect.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "youtube",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }
