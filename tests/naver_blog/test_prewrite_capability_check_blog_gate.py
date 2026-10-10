@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-HOOK = ROOT / "scripts" / "ops" / "prewrite_capability_check.py"
+HOOK = ROOT / "tools" / "hooks" / "prewrite_capability_check.py"
 
 
 def _run_hook(file_path: str, content: str) -> subprocess.CompletedProcess:

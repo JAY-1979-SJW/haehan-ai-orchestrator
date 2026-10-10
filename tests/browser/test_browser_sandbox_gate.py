@@ -9,6 +9,7 @@ def test_sandbox_gate_detects_codex_sandbox(monkeypatch):
     monkeypatch.delenv("CODEX_SANDBOX_NETWORK_DISABLED", raising=False)
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     monkeypatch.delenv("CODEX_MANAGED_BY_NPM", raising=False)
+    monkeypatch.delenv("HAEHAN_NO_BROWSER_LAUNCH", raising=False)
     assert gate.is_sandboxed_runtime() is False
 
     monkeypatch.setenv("CODEX_SANDBOX_NETWORK_DISABLED", "1")
