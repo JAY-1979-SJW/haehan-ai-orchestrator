@@ -25536,6 +25536,14 @@
    "reason": "테스트 경로·이름",
    "confidence": "high",
    "source": "rule"
+  },
+  "tests/test_local_agent_edit_product_guard.py": {
+   "layer": "L11",
+   "role": "test",
+   "domain": "local_agent",
+   "reason": "테스트 경로·이름",
+   "confidence": "high",
+   "source": "rule"
   }
  }
 }

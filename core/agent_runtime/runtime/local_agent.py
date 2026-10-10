@@ -175,16 +175,17 @@ def _tool_edit_product(page, ctx, inputs: dict) -> dict:
     from scripts.naver.smartstore.product.form_runner import ProductFormRunner
 
     product_id = inputs.get("product_id")
+    # ws tool_call 메시지의 inputs 는 검증 없이 그대로 들어온다 — ai_orchestrator/server/
+    # mcp_server.py 의 자매 구현 _edit_product() 는 product_id 누락을 미리 막는데(MCP
+    # inputSchema 도 required 선언) 이 local_agent 경로엔 그 가드가 없어 누락되면 그대로
+    # ProductFormRunner.edit(None, ...) 까지 흘러갔다(앱 결함). 같은 가드를 추가.
+    if not product_id:
+        return {"ok": False, "error": "product_id 필수"}
     fields = {k: v for k, v in inputs.items() if k != "product_id"}
     fields["save"] = False
     ed_page = next((p for p in ctx.pages if f"products/{product_id}" in p.url), None) or ctx.new_page()
     ed_page.bring_to_front()
-    # product_id 는 실제로 None 일 수 있다(이 호출 경로는 ws tool_call 메시지의 inputs 를 검증
-    # 없이 그대로 받음 — ai_orchestrator/server/mcp_server.py 의 자매 구현 _edit_product() 는
-    # `if not product_id: return {"ok": False, ...}` 로 미리 막지만, 이 local_agent 경로엔
-    # 그 가드가 없다). 기존 동작을 바꾸지 않기 위해(총괄 지시) 여기서 새로 막지 않고 mypy 경고만
-    # 억제 — product_id 누락 시 동작이 불안정한 건 사전부터의 결함이라 별도로 검토가 필요하다.
-    result = ProductFormRunner(ed_page).edit(product_id, fields)  # type: ignore[arg-type]
+    result = ProductFormRunner(ed_page).edit(product_id, fields)
     return {**result, "dry_run": True}
 
 
