@@ -3,8 +3,8 @@
 오늘 손으로 한 검증을 자동화 우선 원칙에 따라 한 명령으로 묶는다:
   1. 네이버 블로그 AI 일괄작성 dry-run (c4, APP_VERIFY_c4.md)
   2. 승인된 브라우저 지시 API dry-run (c4, APP_VERIFY_browser.md)
-  3. 격리 서버 기동 + /health (W2, APP_VERIFY_server.md — 여기선 health 만. WS 핸드셰이크는
-     HAEHAN_AGENT_WS_ONCE 미구현 결함 때문에 자리만 두고 SKIP, W2 수정 후 채운다)
+  3. 격리 서버 기동 + /health, 실제 WS 핸드셰이크(auth_ok) (W2, APP_VERIFY_server.md —
+     핸드셰이크는 tools/verify/smoke_ws_handshake.py 를 그대로 호출)
   4. apps/ 독립 실행 앱 3종 기동 (W1, APP_VERIFY_apps.md)
 
 모든 항목을 HAEHAN_DATA_DIR/임시 포트로 격리해서 돌리고, 실행 전후 운영 data/*.json·
@@ -192,12 +192,14 @@ def check_isolated_server_health() -> dict[str, str]:
 
 
 def check_ws_handshake() -> dict[str, str]:
-    """APP_VERIFY_server.md 의 실제 WS 핸드셰이크(auth_ok) — HAEHAN_AGENT_WS_ONCE 가 아직
-    구현 안 돼 있어(agent.py 가 값을 setdefault 만 하고 읽는 코드가 없음, W2 발견) 자동
-    스모크에서 돌리면 --once 로 끝내지 못하고 멈춘다. W2 가 websocket_client.py 의 수신
-    루프에 그 체크를 넣은 뒤 이 자리를 채운다 — 지금은 자리만 두고 SKIP.
+    """APP_VERIFY_server.md 의 실제 WS 핸드셰이크(auth_ok) — 8ba71a67 로 HAEHAN_AGENT_WS_ONCE 를
+    실제 구현한 뒤, tools/verify/smoke_ws_handshake.py(독립 스크립트, 빈 포트 자동선택+
+    임시 config/agent_id+서버 기동→핸드셰이크→정리)로 옮겨졌다. 여기서는 그 run() 을 그대로
+    호출만 한다(이름만 이 파일 컨벤션에 맞춰 _result 로 다시 감싸지 않고 그대로 반환).
     """
-    return _result("ws_handshake", "SKIP", "HAEHAN_AGENT_WS_ONCE 미구현(W2 수정 대기) — 자리만 둠")
+    from tools.verify.smoke_ws_handshake import run as _ws_handshake_run
+
+    return _ws_handshake_run()
 
 
 def check_standalone_apps() -> dict[str, str]:
