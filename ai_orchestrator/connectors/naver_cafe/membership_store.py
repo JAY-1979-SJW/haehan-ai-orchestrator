@@ -46,7 +46,7 @@ def latest_snapshot() -> list[dict[str, str]] | None:
         return None
     try:
         data = json.loads(files[-1].read_text(encoding="utf-8"))
-    except OSError, ValueError:
+    except (OSError, ValueError):
         return None
     cafes = data.get("cafes") if isinstance(data, dict) else None
     return cafes if isinstance(cafes, list) else None
@@ -72,7 +72,7 @@ def history_totals(limit: int = 30) -> list[dict[str, Any]]:
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
             out.append({"at": str(data.get("at", "")), "total": int(data.get("total", 0))})
-        except OSError, ValueError, TypeError:
+        except (OSError, ValueError, TypeError):
             continue
     return out
 

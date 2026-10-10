@@ -70,7 +70,7 @@ def _load(path: Path | None = None) -> list[VendorAPI]:
         return []
     try:
         raw = json.loads(f.read_text(encoding="utf-8"))
-    except OSError, ValueError:
+    except (OSError, ValueError):
         return []
     out: list[VendorAPI] = []
     for v in raw.get("vendors") or []:

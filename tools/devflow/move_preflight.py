@@ -384,7 +384,7 @@ def _acked(root: Path) -> set[str]:
         return set()
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
-    except OSError, ValueError:
+    except (OSError, ValueError):
         return set()
     return {e["file"].replace("\\", "/") for e in data.get("acked", []) if e.get("file") and e.get("reason")}
 

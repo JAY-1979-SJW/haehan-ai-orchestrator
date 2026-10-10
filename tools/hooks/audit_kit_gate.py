@@ -122,7 +122,7 @@ def raw_findings(kit: list[str], path: Path, root: Path | None = None) -> list[s
             env=_utf8_env(),
             **no_window_kwargs(),
         )
-    except OSError, subprocess.TimeoutExpired:
+    except (OSError, subprocess.TimeoutExpired):
         return None
     if proc.returncode == 0:
         return []
@@ -170,7 +170,7 @@ def batch_raw_findings(
                 **no_window_kwargs(),
             )
             data = json.loads(proc.stdout.decode("utf-8")) if proc.returncode == 0 else {}
-        except OSError, subprocess.TimeoutExpired, ValueError:
+        except (OSError, subprocess.TimeoutExpired, ValueError):
             return {}
         return {rel: _hook_lines(msgs) for rel, msgs in data.items() if isinstance(msgs, list)}
 
@@ -233,7 +233,7 @@ def mypy_keys(py: str, path: Path, root: Path | None = None) -> set[str] | None:
                     check=False,
                     **no_window_kwargs(),
                 )
-            except OSError, subprocess.TimeoutExpired:
+            except (OSError, subprocess.TimeoutExpired):
                 return None
             if proc.returncode in (0, 1):
                 break
@@ -303,7 +303,7 @@ def _mypy_group(py: str, group: list[Path], root: Path) -> dict[Path, set[str] |
                     check=False,
                     **no_window_kwargs(),
                 )
-            except OSError, subprocess.TimeoutExpired:
+            except (OSError, subprocess.TimeoutExpired):
                 return dict.fromkeys(group)
             if proc.returncode in (0, 1):
                 break

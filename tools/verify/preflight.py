@@ -78,7 +78,7 @@ def _http_get(url: str) -> tuple[int, str] | None:
     try:
         with urllib.request.urlopen(url, timeout=2) as resp:
             return resp.status, resp.read(4000).decode("utf-8", errors="replace")
-    except urllib.error.URLError, OSError, ValueError:
+    except (urllib.error.URLError, OSError, ValueError):
         return None
 
 

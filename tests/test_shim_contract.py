@@ -35,7 +35,7 @@ SHIMS = find_shims(ROOT)
 def _real_file(target: str) -> Path | None:
     try:
         spec = importlib.util.find_spec(target)
-    except ImportError, ValueError:
+    except (ImportError, ValueError):
         return None
     return Path(spec.origin) if spec and spec.origin and spec.origin.endswith(".py") else None
 

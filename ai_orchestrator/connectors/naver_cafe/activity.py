@@ -30,7 +30,7 @@ def _count(value: Any) -> int:
     """새 글 수 같은 건수: 정수로 바꿀 수 없거나 음수면 0."""
     try:
         return max(0, int(value or 0))
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return 0
 
 

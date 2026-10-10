@@ -49,7 +49,7 @@ def _load_worktree_summary() -> dict[str, Any]:
     try:
         data = json.loads(WORKTREE_INDEX_PATH.read_text(encoding="utf-8"))
         return data.get("summary") or {}
-    except OSError, json.JSONDecodeError:
+    except (OSError, json.JSONDecodeError):
         return {}
 
 
@@ -113,7 +113,7 @@ def load_latest(path: Path = LATEST_PATH) -> dict[str, Any] | None:
         return None
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except OSError, json.JSONDecodeError:
+    except (OSError, json.JSONDecodeError):
         return None
 
 

@@ -103,7 +103,7 @@ def _all_entries_decrypt_with(key: bytes) -> bool:
         if token:
             try:
                 f.decrypt(token.encode("ascii"))
-            except InvalidToken, ValueError:
+            except (InvalidToken, ValueError):
                 return False
     return True
 

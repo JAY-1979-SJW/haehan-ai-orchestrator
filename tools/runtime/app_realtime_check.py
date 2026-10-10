@@ -74,7 +74,7 @@ def _load_json(path: Path) -> dict[str, Any]:
         return {}
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except OSError, json.JSONDecodeError:
+    except (OSError, json.JSONDecodeError):
         return {}
 
 

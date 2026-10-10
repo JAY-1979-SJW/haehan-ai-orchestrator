@@ -129,7 +129,7 @@ def find_body_duplicates(files: list[Path], min_lines: int) -> list[UnitDup]:
     for path in files:
         try:
             src = path.read_text(encoding="utf-8")
-        except UnicodeDecodeError, OSError:
+        except (UnicodeDecodeError, OSError):
             continue
         try:
             tree = ast.parse(src)

@@ -38,7 +38,7 @@ def _decode_header_value(raw) -> str:
         if isinstance(part, bytes):
             try:
                 decoded.append(part.decode(charset or "utf-8", errors="replace"))
-            except LookupError, UnicodeDecodeError:
+            except (LookupError, UnicodeDecodeError):
                 decoded.append(part.decode("utf-8", errors="replace"))
         else:
             decoded.append(part)

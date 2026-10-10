@@ -91,7 +91,7 @@ def _read_recent(window_sec: int) -> list[dict]:
                     continue
                 try:
                     ts = datetime.fromisoformat(entry.get("timestamp", "")).timestamp()
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     continue
                 if ts >= threshold:
                     out.append(entry)

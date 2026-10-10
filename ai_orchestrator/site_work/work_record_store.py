@@ -730,7 +730,7 @@ class WorkRecordStore:
         try:
             resolved, rel = self._resolve_artifact_path(art.path)
             digest, size = _sha256_of(resolved)
-        except ValidationError, OSError:
+        except (ValidationError, OSError):
             return False
         return rel == art.path and digest == art.sha256 and size == art.size_bytes
 

@@ -158,7 +158,7 @@ def registry_paths_at(root: Path, ref: str) -> set[str] | None:
         return None
     try:
         return {_norm(e["path"]) for e in json.loads(r.stdout).get("folders", [])}
-    except json.JSONDecodeError, KeyError, TypeError:
+    except (json.JSONDecodeError, KeyError, TypeError):
         return None
 
 

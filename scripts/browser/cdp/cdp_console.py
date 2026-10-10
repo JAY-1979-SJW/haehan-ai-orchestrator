@@ -567,7 +567,7 @@ def _cli_repl():
         while True:
             try:
                 line = input(">>> ").strip()
-            except EOFError, KeyboardInterrupt:
+            except (EOFError, KeyboardInterrupt):
                 print("\n종료")
                 break
             if not line:

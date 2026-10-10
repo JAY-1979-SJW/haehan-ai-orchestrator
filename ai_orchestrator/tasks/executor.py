@@ -43,7 +43,7 @@ def _fetch_web_page_audit_extras(action_type: str, result: str) -> str:
         return f" blocked_reason={result[len('BLOCKED:') :]}"
     try:
         parsed = json.loads(result)
-    except json.JSONDecodeError, ValueError:
+    except (json.JSONDecodeError, ValueError):
         return ""
     if not isinstance(parsed, dict):
         return ""

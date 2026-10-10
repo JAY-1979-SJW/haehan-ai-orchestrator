@@ -109,7 +109,7 @@ def _load_map() -> dict:
 def _tree(rel: str) -> ast.Module | None:
     try:
         return ast.parse((ROOT / rel).read_text(encoding="utf-8-sig", errors="replace"))
-    except SyntaxError, ValueError, OSError:
+    except (SyntaxError, ValueError, OSError):
         return None
 
 

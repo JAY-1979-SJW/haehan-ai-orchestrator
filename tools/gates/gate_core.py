@@ -389,7 +389,7 @@ def opt_out_list() -> set[str] | None:
         data = json.loads(_opt_out_path().read_text(encoding="utf-8"))
     except FileNotFoundError:
         return set()
-    except OSError, ValueError:
+    except (OSError, ValueError):
         _log.warning("[gate] 수신거부 목록 읽기 실패 — 발송 차단: %s", _opt_out_path())
         return None
     return {str(a).strip().lower() for a in data}

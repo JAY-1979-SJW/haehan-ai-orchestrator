@@ -308,7 +308,7 @@ def test_artifact_symlink_escape_rejected(store, tmp_path):
     link = tmp_path / "data" / "work_records" / "ln.bin"
     try:
         link.symlink_to(target)
-    except OSError, NotImplementedError:
+    except (OSError, NotImplementedError):
         pytest.skip("symlink 생성 불가 환경")
     with pytest.raises(ValidationError):
         store.attach_artifact(jid, ArtifactSpec(kind="report", src_path=str(link)))

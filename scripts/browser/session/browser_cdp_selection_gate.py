@@ -312,7 +312,7 @@ def discover_sessions(
     for port in ports:
         try:
             pages = _read_cdp_pages(host, int(port), timeout)
-        except OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError:
+        except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
             continue
         sessions.append(CdpSession(host=host, port=int(port), pages=pages))
     return sessions

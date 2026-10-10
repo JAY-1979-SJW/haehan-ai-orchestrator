@@ -199,7 +199,7 @@ def _deploy_dry_run_evidence(config: dict[str, Any]) -> dict[str, Any] | None:
         return None
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except OSError, json.JSONDecodeError:
+    except (OSError, json.JSONDecodeError):
         return None
 
 

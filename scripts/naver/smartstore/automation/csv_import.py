@@ -63,7 +63,7 @@ def normalize_row(row: dict) -> dict:
         if key in ("price", "stock"):
             try:
                 v = int(str(v).replace(",", "").strip())
-            except ValueError, TypeError:
+            except (ValueError, TypeError):
                 continue
         elif key == "minor_purchase":
             v = str(v).strip().lower() in ("true", "1", "y", "yes", "가능")

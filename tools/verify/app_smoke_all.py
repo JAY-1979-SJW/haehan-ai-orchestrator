@@ -178,7 +178,7 @@ def check_isolated_server_health() -> dict[str, str]:
                         if resp.status == 200 and json.loads(resp.read()).get("status") == "ok":
                             ok = True
                             break
-                except urllib.error.URLError, ConnectionError, OSError:
+                except (urllib.error.URLError, ConnectionError, OSError):
                     continue
             if ok:
                 return _result("isolated_server_health", "PASS", f"port={port} /api/v1/health 200")

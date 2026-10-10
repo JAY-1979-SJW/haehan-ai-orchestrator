@@ -163,7 +163,7 @@ async def check_ws_heartbeat(report: Report, server_url: str, agent_id: str, tok
             report.fail("websocket auth", "AUTH_FAILED_4401")
         else:
             report.fail("websocket", f"closed code={code or 'unknown'}")
-    except TypeError, json.JSONDecodeError:
+    except (TypeError, json.JSONDecodeError):
         report.fail("websocket", "invalid json")
     except OSError as exc:
         report.fail("websocket", type(exc).__name__)

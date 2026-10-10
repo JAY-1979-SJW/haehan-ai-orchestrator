@@ -81,7 +81,7 @@ def get_diff() -> str:
             timeout=30,
         )
         diff = result.stdout.strip()
-    except OSError, subprocess.TimeoutExpired:
+    except (OSError, subprocess.TimeoutExpired):
         diff = ""
 
     if not diff:

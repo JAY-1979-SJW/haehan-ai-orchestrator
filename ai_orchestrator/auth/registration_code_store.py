@@ -102,7 +102,7 @@ class RegistrationCode:
         ts_now = now if now is not None else _now()
         try:
             exp = datetime.fromisoformat(self.expires_at)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return "expired"
         if ts_now >= exp:
             return "expired"

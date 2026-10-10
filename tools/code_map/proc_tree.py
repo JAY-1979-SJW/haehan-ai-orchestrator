@@ -26,7 +26,7 @@ def kill_tree(pid: int) -> None:
             subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)], capture_output=True, timeout=30, check=False)
         else:
             os.killpg(pid, signal.SIGKILL)
-    except OSError, subprocess.SubprocessError:
+    except (OSError, subprocess.SubprocessError):
         pass
 
 

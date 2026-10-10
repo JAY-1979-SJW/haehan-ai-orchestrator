@@ -146,7 +146,7 @@ def collect_processes(top_n: int = 50) -> list[dict[str, Any]]:
                     "exe": exe,
                 }
             )
-        except psutil.NoSuchProcess, psutil.AccessDenied:
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
     # CPU + 메모리 기준 상위 N개
     procs.sort(key=lambda x: x["mem_mb"], reverse=True)

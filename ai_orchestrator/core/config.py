@@ -31,7 +31,7 @@ def _env_int(name: str, default: int, lo: int = 1, hi: int = 3600) -> int:
     try:
         v = int(os.environ.get(name, str(default)))
         return v if lo <= v <= hi else default
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return default
 
 
@@ -69,7 +69,7 @@ try:
     CAD_PROXY_TIMEOUT_SEC = float(os.environ.get("CAD_PROXY_TIMEOUT_SEC", "60"))
     if CAD_PROXY_TIMEOUT_SEC <= 0 or CAD_PROXY_TIMEOUT_SEC > 600:
         raise ValueError()
-except TypeError, ValueError:
+except (TypeError, ValueError):
     CAD_PROXY_TIMEOUT_SEC = 60.0
 
 # APP_HOST — 데스크톱(frozen) 앱만 loopback 강제(외부 접근 차단). 서버/개발은 명시값 존중.
@@ -92,7 +92,7 @@ try:
     APP_PORT = int(os.environ.get("APP_PORT", "8401"))
     if not (1 <= APP_PORT <= 65535):
         raise ValueError(f"포트 범위 초과: {APP_PORT}")
-except ValueError, TypeError:
+except (ValueError, TypeError):
     APP_PORT = 8401
 
 # ── JWT 인증 ────────────────────────────────────────────────────────────────

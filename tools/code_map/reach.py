@@ -64,7 +64,7 @@ class Resolver:
             return self._inert_cache[init_path]
         try:
             tree = ast.parse(scan._read(init_path))
-        except OSError, SyntaxError, ValueError:
+        except (OSError, SyntaxError, ValueError):
             inert = False
         else:
             inert = all(

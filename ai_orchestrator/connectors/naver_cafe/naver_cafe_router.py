@@ -306,7 +306,7 @@ def api_ai_analyze(
     def _views(a: dict) -> int:
         try:
             return int(str(a.get("view_count", "0")).replace(",", "") or 0)
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             return 0
 
     articles_sorted = sorted(articles, key=_views, reverse=True)
@@ -474,7 +474,7 @@ def _pick_blog_topics(articles: list[dict]) -> list[str]:
     def _views(a: dict) -> int:
         try:
             return int(str(a.get("view_count", "0")).replace(",", "") or 0)
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             return 0
 
     top_articles = sorted(articles, key=_views, reverse=True)[:200]

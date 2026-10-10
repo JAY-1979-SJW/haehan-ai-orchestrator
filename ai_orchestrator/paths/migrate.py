@@ -112,7 +112,7 @@ def _migrate() -> dict:  # noqa: C901 - 이행 전제 조건(환경·번들 여�
     if marker.is_file():
         try:
             prior = json.loads(marker.read_text(encoding="utf-8"))
-        except OSError, ValueError:
+        except (OSError, ValueError):
             prior = {}
         if prior.get("complete") is True:
             return {"status": "already_done", "migrated_at": prior.get("migrated_at")}

@@ -428,7 +428,7 @@ def _check_typescript(file_path: Path, start: float) -> int:
     admin_web = ROOT / "admin-web"
     try:
         file_path.resolve().relative_to(admin_web.resolve())
-    except ValueError, OSError:
+    except (ValueError, OSError):
         return 0  # admin-web 밖의 .ts 파일은 스킵
 
     if _tsc_cache_fresh():

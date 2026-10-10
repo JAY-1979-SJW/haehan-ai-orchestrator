@@ -56,7 +56,7 @@ def _readonly_connect(path: Path) -> sqlite3.Connection | None:
 def _clamp(v: int | None, lo: int, hi: int, default: int) -> int:
     try:
         i = int(v) if v is not None else default
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         i = default
     return max(lo, min(i, hi))
 

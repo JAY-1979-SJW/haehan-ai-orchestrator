@@ -33,7 +33,7 @@ def load_settings() -> dict[str, Any]:
         return dict(_DEFAULT)
     try:
         data = json.loads(_FILE.read_text(encoding="utf-8"))
-    except OSError, ValueError:
+    except (OSError, ValueError):
         return dict(_DEFAULT)  # 파일이 깨졌을 때는 꺼짐으로 처리
     if not isinstance(data, dict) or not isinstance(data.get("enabled"), bool):
         return dict(_DEFAULT)

@@ -139,7 +139,7 @@ def scan() -> tuple[set[str], set[str]]:
     for path in _py_files():
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"))
-        except SyntaxError, UnicodeDecodeError, OSError:
+        except (SyntaxError, UnicodeDecodeError, OSError):
             continue
         visit(tree, path.relative_to(ROOT).as_posix(), [], False)
     return sinks, unguarded

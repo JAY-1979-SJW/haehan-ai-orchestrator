@@ -44,7 +44,7 @@ def _parse_received_at(created_at_ms: int | None) -> str:
         try:
             ts = int(created_at_ms) / 1000
             return datetime.fromtimestamp(ts, tz=UTC).strftime("%Y-%m-%dT%H:%M:%S")
-        except ValueError, OSError:
+        except (ValueError, OSError):
             pass
     return _now_iso()
 
