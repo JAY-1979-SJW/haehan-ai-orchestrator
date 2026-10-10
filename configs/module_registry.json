@@ -7042,12 +7042,12 @@
    "source": "rule"
   },
   "core/agent_runtime/common/redaction.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "contract",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR165 layer-violation 조사(2026-10-10, sonnet 서브에이전트): 민감키 상수(SENSITIVE_KEYS)·순수 마스킹 함수만 포함, 엔진 로직·IO 없음 — 공용 계약 성격. classify.py 근거부족 기본값(L4) 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "core/agent_runtime/connection/__init__.py": {
    "layer": "L4",
@@ -7066,12 +7066,12 @@
    "source": "rule"
   },
   "core/agent_runtime/connection/connection_diagnostics.py": {
-   "layer": "L4",
-   "role": "browser_engine",
+   "layer": "L1",
+   "role": "contract",
    "domain": "common",
-   "reason": "범용 브라우저·CDP",
+   "reason": "PR165 layer-violation 조사(2026-10-10): 상태 상수·마스킹·진단 텍스트 포맷팅만 수행하는 순수 함수 모음(docstring: 원시 비밀값 안 건드림), 네트워크/브라우저 엔진 로직 없음 — \"connection\" 경로 키워드로 browser_engine 오분류",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "core/agent_runtime/connection/controller.py": {
    "layer": "L4",
@@ -7098,12 +7098,12 @@
    "source": "rule"
   },
   "core/agent_runtime/connection/registration_client.py": {
-   "layer": "L1",
-   "role": "contract",
+   "layer": "L4",
+   "role": "browser_engine",
    "domain": "common",
-   "reason": "정의 위주(모델·스키마·dataclass)",
+   "reason": "PR165 layer-violation 조사(2026-10-10): register_with_code() 가 urllib 로 실제 HTTP 등록 요청을 보냄(network_bypass.urlopen_for_server 호출) — dataclass 2개 외에 진짜 네트워크 엔진 로직 포함, L1 계약 전용 파일 아님",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "core/agent_runtime/connection/status_store.py": {
    "layer": "L7",
@@ -9714,12 +9714,12 @@
    "source": "rule"
   },
   "scripts/common/no_window.py": {
-   "layer": "L4",
-   "role": "generic",
+   "layer": "L1",
+   "role": "contract",
    "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
+   "reason": "PR165 layer-violation 조사(2026-10-10): CREATE_NO_WINDOW 플래그 딕셔너리 반환하는 1줄짜리 순수 유틸(no_window_kwargs) — 도메인 로직 없는 공용 헬퍼, classify.py 근거부족 기본값(L4) 오분류",
+   "confidence": "high",
+   "source": "confirmed"
   },
   "scripts/common/op_log.py": {
    "layer": "L7",
@@ -24698,12 +24698,12 @@
    "source": "rule"
   },
   "tools/hooks/capability_check.py": {
-   "layer": "L4",
-   "role": "browser_engine",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "common",
-   "reason": "범용 브라우저·CDP",
+   "reason": "PR165 layer-violation 조사(2026-10-10): 여러 사이트 모듈의 FEATURE_CATALOG 를 읽어 CLI 기능목록을 보여주는 cross-domain 조회 도구 — \"browser_engine\" 근거부족 기본값 오분류, 실제론 여러 도메인을 가로지르는 business-workflow 성격",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "tools/hooks/duplicate_code_check.py": {
    "layer": "L1",
@@ -24826,12 +24826,12 @@
    "source": "rule"
   },
   "tools/local_cli_router.py": {
-   "layer": "L4",
-   "role": "browser_engine",
+   "layer": "L6",
+   "role": "workflow",
    "domain": "common",
-   "reason": "범용 브라우저·CDP",
+   "reason": "PR165 layer-violation 조사(2026-10-10): 사이트별 모듈 5개의 main() 을 명령줄 서브커맨드로 묶는 중앙 CLI 라우터/디스패처 — 설계상 여러 도메인(L4/L5)을 가로질러 의존하는 게 정상. \"browser_engine\" 근거부족 기본값 오분류, 실제론 business-workflow 성격",
    "confidence": "high",
-   "source": "rule"
+   "source": "confirmed"
   },
   "tools/login_session_monitor.py": {
    "layer": "L4",

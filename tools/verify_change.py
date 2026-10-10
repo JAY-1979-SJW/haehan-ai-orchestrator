@@ -314,9 +314,19 @@ def _is_shim_file(tree: Path, rel: str) -> bool:
         return False
 
 
+def _is_smoke_or_verify_script(rel: str) -> bool:
+    """tools/smoke/·tools/verify/ 의 한번용 스모크·드라이런 스크립트는 설계상 런타임 내부를
+    깊이 가로질러 가져와 실제 동작을 끝까지 exercise 한다(사람/CI 가 직접 돌리는 진입점,
+    프로덕션 코드에서 import 되지 않음) — 층 규칙과 무관하게 항상 위반으로 잡힌다(PR165
+    layer-violation 조사, 2026-10-10, sonnet 서브에이전트 확인: tools/smoke 10개·tools/verify
+    13개 중 실제로 깊은 import 를 하는 것만 걸림, 디렉터리 전체 오분류 아님) — 위반 판정의
+    소스로만 제외(다른 코드가 이 스크립트를 import 하는 경우는 그대로 검사)."""
+    return rel.startswith("tools/smoke/") or rel.startswith("tools/verify/")
+
+
 def _measure_violations(tree: Path, m: dict) -> list[str]:
-    """층간 위반 — configs/module_registry.json 의 allowed_deps 기준. 호환 shim 파일은 제외
-    (위 _is_shim_file 참고)."""
+    """층간 위반 — configs/module_registry.json 의 allowed_deps 기준. 호환 shim 파일과
+    smoke/verify 스크립트는 제외(위 _is_shim_file·_is_smoke_or_verify_script 참고)."""
     reg_p = tree / "configs/module_registry.json"
     viol = set()
     if reg_p.exists():
@@ -328,6 +338,7 @@ def _measure_violations(tree: Path, m: dict) -> list[str]:
                 and not s.endswith("__init__.py")
                 and files[s]["layer"] in allowed
                 and not _is_shim_file(tree, s)
+                and not _is_smoke_or_verify_script(s)
             ):
                 for t in ts:
                     if t in files and not t.endswith("__init__.py"):
