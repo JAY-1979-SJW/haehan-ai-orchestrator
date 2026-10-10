@@ -8209,22 +8209,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/app_paths.py": {
-   "layer": "L1",
-   "role": "shared",
-   "domain": "common",
-   "reason": "공용 기반 이름(app_paths)",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/app_paths_migrate.py": {
-   "layer": "L4",
-   "role": "generic",
-   "domain": "common",
-   "reason": "근거 부족 — 기본값",
-   "confidence": "low",
-   "source": "rule"
-  },
   "scripts/archive/__init__.py": {
    "layer": "L12",
    "role": "archive",
@@ -8838,14 +8822,6 @@
    "role": "browser_engine",
    "domain": "common",
    "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/auth_session.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "common",
-   "reason": "정책·게이트 이름",
    "confidence": "high",
    "source": "rule"
   },
@@ -9545,14 +9521,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/browser_cdp_selection_gate.py": {
-   "layer": "L2",
-   "role": "policy",
-   "domain": "browser",
-   "reason": "정책·게이트 이름",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/browser_rpc_server.py": {
    "layer": "L4",
    "role": "browser_engine",
@@ -9569,47 +9537,7 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/cdp_console.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/cdp_daemon.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/cdp_db.py": {
-   "layer": "L7",
-   "role": "persistence",
-   "domain": "browser",
-   "reason": "DB·저장 신호",
-   "confidence": "low",
-   "source": "rule"
-  },
-  "scripts/cdp_force_start.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/cdp_lane_start.py": {
-   "layer": "L4",
-   "role": "browser_engine",
-   "domain": "browser",
-   "reason": "범용 브라우저·CDP",
-   "confidence": "high",
-   "source": "rule"
-  },
-  "scripts/cdp_tab_manager.py": {
    "layer": "L4",
    "role": "browser_engine",
    "domain": "browser",

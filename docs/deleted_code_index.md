@@ -1108,3 +1108,23 @@ git checkout pre-openai-removal -- <경로>
 
 보존(사용처 0 아님): `tests/fixtures/browser_submit_execution_gate_fixture_20260506.json` — 남아있는 `tests/test_browser_gate_module_design_20260506.py` 가 여전히 참조(파일 없으면 skip 처리되어 삭제해도 안 깨지지만, 다른 시험이 참조 중이라 보존).
 - `scripts/web_connector.py` — `shutdown_browser_session`(탭·브라우저 전체 종료 — 로그인 세션 보존 정책과 반대)
+
+## 2026-10-09 W2(flat_root_baseline 55건 재분류) 수동 삭제 — 기준 커밋 `f383f912ebc1fc57020460663fcfc72fcad5aa9a`
+참조 0(①~⑤, unused_code_check.py 북키핑 노이즈 필터 수정 후 재확인)·⑥(--confirm-no-scheduled-task, shim은 예약작업/서버등록 진입점 성격 아님) 확인된 호환 shim 6건.
+- `ai_orchestrator/planner.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- ai_orchestrator/planner.py`
+- `ai_orchestrator/web_task_templates.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- ai_orchestrator/web_task_templates.py`
+- `scripts/browser_cdp_selection_gate.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/browser_cdp_selection_gate.py`
+- `scripts/browser_rpc_server.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/browser_rpc_server.py`
+- `scripts/browser_task_session.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/browser_task_session.py`
+- `scripts/cdp_tab_manager.py` — 참조 0(①~⑤)·shim 확인, 복원: `git checkout f383f912ebc1fc57020460663fcfc72fcad5aa9a -- scripts/cdp_tab_manager.py`
+
+## 2026-10-10 W2(flat_root_baseline 55건 재분류) 수동 삭제 2차 — 기준 커밋 `7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12`
+참조 0(①~⑤, 새 경로 오탐 제외하고 히트 내용 직접 확인)·⑥(a:schtasks 0건, c:배포설정 0건, b:Sysmon 비관리자권한으로 확인불가 — 총괄 승인(사전승인 범위) 적용) 확인된 호환 shim 8건.
+- `scripts/app_paths.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/app_paths.py`
+- `scripts/app_paths_migrate.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/app_paths_migrate.py`
+- `scripts/auth_session.py` — 참조 0(새경로 오탐 제외), 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/auth_session.py`
+- `scripts/browser_paths.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/browser_paths.py`
+- `scripts/cdp_console.py` — 참조 0(worklog 과거기록뿐), 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/cdp_console.py`
+- `scripts/cdp_db.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/cdp_db.py`
+- `scripts/cdp_force_start.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/cdp_force_start.py`
+- `scripts/cdp_lane_start.py` — 참조 0, 복원: `git checkout 7234b15b7adf61f48c9c5d2a1fa0df8d0097fa12 -- scripts/cdp_lane_start.py`
