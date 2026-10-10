@@ -8,8 +8,9 @@
   4. apps/ 독립 실행 앱 3종 기동 (W1, APP_VERIFY_apps.md)
 
 모든 항목을 HAEHAN_DATA_DIR/임시 포트로 격리해서 돌리고, 실행 전후 운영 data/*.json·
-~/.haehan_agent 의 md5 를 대조해 운영 상태를 안 건드렸는지 확인한다. 네트워크·사전조건
-(신선한 리서치 데이터 등) 이 없는 항목은 SKIP 으로 표시(실패로 보지 않음).
+~/.haehan_agent 의 md5 를 대조해 운영 상태를 안 건드렸는지 확인한다. 진짜 네트워크
+필요한 항목(네이버 리서치 재수집 등)만 SKIP — "리서치 파일이 없는 신규설치 상태" 자체는
+4dfa8267 의 폴백 경로를 실제로 타는지 보는 핵심 시험조건이라 SKIP 하지 않고 돌린다.
 
 사용: python tools/verify/app_smoke_all.py [--json]
 종료코드: 0 = FAIL 없음(SKIP 은 무방), 1 = FAIL 1개 이상.
@@ -17,9 +18,11 @@
 
 from __future__ import annotations
 
+import datetime
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -65,38 +68,65 @@ def _result(name: str, status: str, detail: str = "") -> dict[str, str]:
 
 
 def check_naver_blog_dry_run() -> dict[str, str]:
-    """APP_VERIFY_c4.md — blog_ai_batch_20.py --dry-run. 리서치 데이터가 없거나 오래되면 SKIP.
+    """APP_VERIFY_c4.md — blog_ai_batch_20.py --dry-run, 리서치 파일 없는 신규설치 상태(핵심 시험조건).
 
-    c4 의 조사(APP_VERIFY_c4.md)에 따르면 리서치 30일초과/누락 시 '주제 선정 실패'로 그냥
-    멈추는 게 의도된 안전장치(F2) — 그 상태를 FAIL 로 보지 않고, 자동화 스모크는 사전조건
-    (신선한 리서치 파일) 이 있을 때만 실제로 돌리고 없으면 SKIP 한다(운영 파일을 건드리거나
-    타임스탬프를 조작해 억지로 통과시키지 않음 — 그건 사람이 c4 방식대로 격리 복사본에서
-    하는 일이지 범용 자동 스모크가 할 일이 아니다).
+    4dfa8267(c4) 이전에는 리서치 파일이 없으면 dry-run 이 늘 "주제 선정 실패"로 끝났다
+    (generate_topics() 의 dry-run 조기 return 이 get_topic_seed() 폴백에 전혀 안 닿음).
+    그 결함을 고친 지금은 "파일 없음" 자체가 핵심 시험조건 — SKIP 이 아니라, 격리된 빈
+    HAEHAN_DATA_DIR 로 돌려 폴백 경로가 실제로 주제를 ≥1개 만들어내는지가 PASS 기준이다.
+    운영 data/ 는 전혀 건드리지 않음(임시폴더만 씀).
     """
-    research = ROOT / "data" / "blog_topic_research_latest.json"
-    if not research.is_file():
-        return _result(
-            "naver_blog_dry_run", "SKIP", "data/blog_topic_research_latest.json 없음 — 네트워크로 재생성 필요"
-        )
-    try:
-        payload = json.loads(research.read_text(encoding="utf-8"))
-        generated_at = payload.get("generated_at", "")
-        age_days = (
-            (time.time() - time.mktime(time.strptime(generated_at[:10], "%Y-%m-%d"))) / 86400 if generated_at else 999
-        )
-    except ValueError, OSError:
-        age_days = 999
-    if age_days > 30:
-        return _result(
-            "naver_blog_dry_run", "SKIP", f"리서치 데이터 {age_days:.0f}일 경과(30일 제한) — 네트워크로 재생성 필요"
-        )
-
     script = ROOT / "scripts" / "naver" / "blog" / "cli" / "blog_ai_batch_20.py"
-    proc = _run([PY, str(script), "--dry-run", "--count", "1"], env={"HAEHAN_NO_BROWSER_LAUNCH": "1"}, timeout=120)
-    out = proc.stdout + proc.stderr
-    if proc.returncode == 0 and "[DRY-RUN]" in out and "완료 요약" in out:
-        return _result("naver_blog_dry_run", "PASS", "DRY-RUN 완료 요약 확인")
-    return _result("naver_blog_dry_run", "FAIL", f"exit={proc.returncode} tail={out[-300:]!r}")
+
+    def _run_case(data_dir: str) -> tuple[int, str]:
+        proc = _run(
+            [PY, str(script), "--dry-run", "--count", "1"],
+            env={"HAEHAN_NO_BROWSER_LAUNCH": "1", "HAEHAN_DATA_DIR": data_dir},
+            timeout=120,
+        )
+        out = proc.stdout + proc.stderr
+        return proc.returncode, out
+
+    def _success_count(out: str) -> int:
+        # "  성공: N/M" — 이미지 파일명에도 "[DRY]" 가 섞여 있어(image1.jpg 등) 그 토큰은
+        # 못 쓴다(실측: count("[DRY]") 가 이미지 3장+요약 1줄로 4가 나와 틀림).
+        m = re.search(r"성공:\s*(\d+)/\d+", out)
+        return int(m.group(1)) if m else 0
+
+    with tempfile.TemporaryDirectory(prefix="app_smoke_naver_empty_") as empty_dir:
+        rc1, out1 = _run_case(empty_dir)
+    n1 = _success_count(out1)
+    ok1 = rc1 == 0 and "[DRY-RUN]" in out1 and "완료 요약" in out1 and n1 >= 1
+
+    # 두 번째 케이스: 리서치 파일이 있을 때 "리서치 결과 직접 사용" 경로(폴백이 아닌 쪽)도
+    # 깨지지 않았는지 — 최소 fixture(실제 스키마: generated_at·topics[].question_title/
+    # keyword/question_description, get_researched_topics() 참고) 1건으로 확인.
+    with tempfile.TemporaryDirectory(prefix="app_smoke_naver_fixture_") as fixture_dir:
+        fixture = {
+            "generated_at": datetime.datetime.now().isoformat(),
+            "topics": [
+                {
+                    "question_title": "스모크 고정 주제 — 지식iN 질문 예시",
+                    "keyword": "건설실무",
+                    "question_description": "스모크 전용 최소 fixture",
+                }
+            ],
+        }
+        (Path(fixture_dir) / "blog_topic_research_latest.json").write_text(
+            json.dumps(fixture, ensure_ascii=False), encoding="utf-8"
+        )
+        rc2, out2 = _run_case(fixture_dir)
+    n2 = _success_count(out2)
+    ok2 = rc2 == 0 and "리서치 매칭: 1개" in out2 and n2 >= 1
+
+    if ok1 and ok2:
+        return _result(
+            "naver_blog_dry_run",
+            "PASS",
+            f"폴백경로(빈 데이터) 주제 {n1}건 + 리서치경로(fixture 1건) 주제 {n2}건 — 둘 다 생성",
+        )
+    detail = f"폴백케이스 ok={ok1}(exit={rc1}, 건수={n1}); 리서치케이스 ok={ok2}(exit={rc2}, 건수={n2})"
+    return _result("naver_blog_dry_run", "FAIL", f"{detail}; tail={(out1 if not ok1 else out2)[-300:]!r}")
 
 
 def check_browser_dry_run() -> dict[str, str]:
