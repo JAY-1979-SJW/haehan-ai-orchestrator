@@ -33,3 +33,47 @@ def test_dry_run_skips_already_used_fallback_titles(tmp_path, monkeypatch):
     result = T.generate_topics(cache, count=len(T.FALLBACK_TOPIC_SEED), dry_run=True)
 
     assert used_title not in [t["topic"] for t in result]
+
+
+def test_real_run_falls_back_to_seed_when_ai_call_fails(tmp_path, monkeypatch):
+    """회귀 시험: AI 보충 호출이 실패해도(ok=False) real-run 이 dry-run 과 같은
+    고정/리서치 폴백으로 주제를 보충해야 한다 — 그러지 않으면 dry-run 은
+    성공(폴백으로 count개 채움)하는데 real-run 만 "주제 선정 실패"로 끝나는
+    비대칭이 생긴다(AI 호출 실패 시 조기 return 하던 이전 코드의 결함).
+    AI 호출 자체는 모킹해서 외부 호출 없이 검증한다.
+    """
+    monkeypatch.setattr(T, "RESEARCH_FILE", tmp_path / "no_such_research_file.json")
+
+    class _FakeAIResponder:
+        def _call(self, *args, **kwargs):
+            return {"ok": False, "error": "simulated API failure"}
+
+    monkeypatch.setattr(T, "AIResponder", _FakeAIResponder)
+    cache = {"posted": []}
+
+    result = T.generate_topics(cache, count=3, dry_run=False)
+
+    assert len(result) > 0
+    assert len(result) <= 3
+    for t in result:
+        assert t["topic"] in T.FALLBACK_TOPIC_SEED
+
+
+def test_real_run_falls_back_to_seed_when_ai_json_unparseable(tmp_path, monkeypatch):
+    """AI 호출은 성공(ok=True)했지만 응답이 JSON 배열로 파싱되지 않는 경우에도
+    같은 폴백 경로로 보충해야 한다."""
+    monkeypatch.setattr(T, "RESEARCH_FILE", tmp_path / "no_such_research_file.json")
+
+    class _FakeAIResponder:
+        def _call(self, *args, **kwargs):
+            return {"ok": True, "text": "이것은 JSON이 아닌 응답입니다."}
+
+    monkeypatch.setattr(T, "AIResponder", _FakeAIResponder)
+    cache = {"posted": []}
+
+    result = T.generate_topics(cache, count=3, dry_run=False)
+
+    assert len(result) > 0
+    assert len(result) <= 3
+    for t in result:
+        assert t["topic"] in T.FALLBACK_TOPIC_SEED

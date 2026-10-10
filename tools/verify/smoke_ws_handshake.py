@@ -98,7 +98,7 @@ def run() -> dict[str, str]:
                     if resp.status == 200 and json.loads(resp.read()).get("status") == "ok":
                         healthy = True
                         break
-            except urllib.error.URLError, ConnectionError, OSError:
+            except (urllib.error.URLError, ConnectionError, OSError):
                 continue
         if not healthy:
             return {"name": name, "status": "FAIL", "detail": "격리 서버 health 200 못 받음(타임아웃)"}

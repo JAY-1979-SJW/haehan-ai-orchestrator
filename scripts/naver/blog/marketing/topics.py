@@ -259,6 +259,35 @@ def get_topic_seed() -> list[str]:
 # ── 주제 선정 ─────────────────────────────────────────────────────────────
 
 
+def _fill_with_fallback_seed(result: list[dict], count: int, cache: dict) -> int:
+    """리서치 결과가 부족할 때 고정/리서치 폴백 주제로 보충(외부 호출 없음).
+
+    dry-run 뿐 아니라 AI 보충 호출이 실패했을 때 real-run 에서도 쓴다 —
+    AI 호출 실패로 주제 선정 자체가 실패하는 것(2026-10 c4 실행 기록)을
+    막기 위함. get_topic_seed()는 이미 로드된 로컬 데이터만 사용하므로
+    외부 호출 0 제약을 깨지 않는다.
+
+    반환값은 새로 보충한 개수.
+    """
+    existing = {r["topic"] for r in result}
+    added = 0
+    for title in get_topic_seed():
+        if len(result) >= count:
+            break
+        if title and title not in existing and not is_duplicate(title, cache):
+            result.append(
+                {
+                    "topic": title,
+                    "keywords": ["건설실무", "건설업"],
+                    "angle": "고정 폴백 주제(리서치 결과 부족)",
+                    "source_description": "",
+                }
+            )
+            existing.add(title)
+            added += 1
+    return added
+
+
 def generate_topics(cache: dict, count: int, dry_run: bool = False) -> list[dict]:
     """캐시에 없는 건설 실무 주제 count개 생성.
 
@@ -290,21 +319,8 @@ def generate_topics(cache: dict, count: int, dry_run: bool = False) -> list[dict
         if len(result) < count:
             # 리서치 결과가 부족해도 real-run 과 같은 주제-선정 경로를 타야
             # dry-run 이 리허설로서 의미가 있다 — AI 호출 없는 고정 폴백만 보충.
-            existing = {r["topic"] for r in result}
-            for title in get_topic_seed():
-                if len(result) >= count:
-                    break
-                if title and title not in existing and not is_duplicate(title, cache):
-                    result.append(
-                        {
-                            "topic": title,
-                            "keywords": ["건설실무", "건설업"],
-                            "angle": "고정 폴백 주제(리서치 결과 부족)",
-                            "source_description": "",
-                        }
-                    )
-                    existing.add(title)
-            print(f"  폴백 보충: {len(result) - matched}개")
+            added = _fill_with_fallback_seed(result, count, cache)
+            print(f"  폴백 보충: {added}개")
         return result[:count]
 
     remaining = count - len(result)
@@ -344,21 +360,24 @@ def generate_topics(cache: dict, count: int, dry_run: bool = False) -> list[dict
         max_tokens=2000,
     )
     if not r.get("ok"):
-        _log.error("주제 생성 실패: %s", r)
-        return result
+        _log.error("주제 생성 실패, 고정/리서치 폴백으로 보충: %s", r)
+        _fill_with_fallback_seed(result, count, cache)
+        return result[:count]
 
     text = r["text"].strip()
     start = text.find("[")
     end = text.rfind("]") + 1
     if start == -1 or end == 0:
-        _log.error("JSON 파싱 실패: %s", text[:200])
-        return result
+        _log.error("JSON 파싱 실패, 고정/리서치 폴백으로 보충: %s", text[:200])
+        _fill_with_fallback_seed(result, count, cache)
+        return result[:count]
 
     try:
         topics = json.loads(text[start:end])
     except Exception as e:  # noqa: BLE001 - 블로그 주제 리서치 파일 로드/AI 보충 JSON 파싱 — 파일 로드나 JSON 파싱 실패 시 빈 리스트로 안전 폴백하고 경고/에러 로그 남길 뿐 쓰기 없음
-        _log.error("JSON 파싱 오류: %s | %s", e, text[start:end][:200])
-        return result
+        _log.error("JSON 파싱 오류, 고정/리서치 폴백으로 보충: %s | %s", e, text[start:end][:200])
+        _fill_with_fallback_seed(result, count, cache)
+        return result[:count]
 
     # 중복 필터 (AI 보충분에는 인용 근거가 없음)
     filtered = [t for t in topics if not is_duplicate(t.get("topic", ""), cache)]
