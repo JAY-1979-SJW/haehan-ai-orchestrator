@@ -1,6 +1,7 @@
 """설치본 내용물 점검(scripts/ops/verify_desktop_bundle.py) — 빠진 파일을 실제로 잡는지 고정 입력으로 확인."""
 
 import json
+import subprocess
 
 import pytest
 
@@ -60,6 +61,87 @@ def test_bad_build_version_fails(tmp_path):
     unpacked = _make_bundle(tmp_path)
     (unpacked / "resources" / "build-info.json").write_text(json.dumps({"version": "dev"}), encoding="utf-8")
     assert vdb.main([str(unpacked)]) == 1
+
+
+def _make_smoke_exes(unpacked):
+    res = unpacked / "resources"
+    local_agent = res / "local-agent" / "local-agent.exe"
+    haehan_mcp = res / "mcp" / "haehan-mcp" / "haehan-mcp.exe"
+    local_agent.parent.mkdir(parents=True, exist_ok=True)
+    haehan_mcp.parent.mkdir(parents=True, exist_ok=True)
+    local_agent.write_bytes(b"x")  # 실제 실행은 run() 을 모킹하므로 내용은 안 쓰임
+    haehan_mcp.write_bytes(b"x")
+    return local_agent, haehan_mcp
+
+
+def test_smoke_passes_when_exes_behave_correctly(tmp_path):
+    unpacked = _make_bundle(tmp_path)
+    local_agent, haehan_mcp = _make_smoke_exes(unpacked)
+
+    def fake_run(cmd, **kwargs):
+        exe = cmd[0]
+        if exe == str(local_agent):
+            return subprocess.CompletedProcess(cmd, returncode=2, stdout=b"usage: local-agent.exe ...", stderr=b"")
+        if exe == str(haehan_mcp):
+            return subprocess.CompletedProcess(cmd, returncode=0, stdout=b"", stderr=b"")
+        raise AssertionError(f"unexpected exe: {exe}")
+
+    problems = vdb.check_smoke(unpacked / "resources", run=fake_run)
+    assert problems == []
+
+
+def test_smoke_fails_when_mcp_prints_import_error(tmp_path):
+    unpacked = _make_bundle(tmp_path)
+    local_agent, haehan_mcp = _make_smoke_exes(unpacked)
+
+    def fake_run(cmd, **kwargs):
+        exe = cmd[0]
+        if exe == str(local_agent):
+            return subprocess.CompletedProcess(cmd, returncode=2, stdout=b"usage: local-agent.exe ...", stderr=b"")
+        if exe == str(haehan_mcp):
+            return subprocess.CompletedProcess(
+                cmd, returncode=1, stdout=b"", stderr=b"ModuleNotFoundError: No module named 'ai_orchestrator'\n"
+            )
+        raise AssertionError(f"unexpected exe: {exe}")
+
+    problems = vdb.check_smoke(unpacked / "resources", run=fake_run)
+    assert any("ModuleNotFoundError" in p for p in problems)
+
+
+def test_smoke_fails_when_local_agent_does_not_reach_argparse_usage(tmp_path):
+    unpacked = _make_bundle(tmp_path)
+    local_agent, haehan_mcp = _make_smoke_exes(unpacked)
+
+    def fake_run(cmd, **kwargs):
+        exe = cmd[0]
+        if exe == str(local_agent):
+            # shim 진입점이 정본 모듈 없이 즉시 죽는 경우 흔히 보이는 종료코드 1
+            return subprocess.CompletedProcess(cmd, returncode=1, stdout=b"", stderr=b"Traceback ...")
+        if exe == str(haehan_mcp):
+            return subprocess.CompletedProcess(cmd, returncode=0, stdout=b"", stderr=b"")
+        raise AssertionError(f"unexpected exe: {exe}")
+
+    problems = vdb.check_smoke(unpacked / "resources", run=fake_run)
+    assert any("종료코드 2" in p for p in problems)
+
+
+def test_smoke_off_by_default(tmp_path, monkeypatch):
+    """--smoke 를 안 주면 check_smoke 가 전혀 안 불려야 한다(기존 호출 안 깨짐)."""
+    unpacked = _make_bundle(tmp_path)
+    _make_smoke_exes(unpacked)
+    called = []
+    monkeypatch.setattr(vdb, "check_smoke", lambda *a, **k: (called.append(1), [])[1])
+    assert vdb.main([str(unpacked)]) == 0
+    assert called == []
+
+
+def test_smoke_flag_invokes_check_smoke(tmp_path, monkeypatch):
+    unpacked = _make_bundle(tmp_path)
+    _make_smoke_exes(unpacked)
+    called = []
+    monkeypatch.setattr(vdb, "check_smoke", lambda *a, **k: (called.append(1), [])[1])
+    assert vdb.main([str(unpacked), "--smoke"]) == 0
+    assert called == [1]
 
 
 def test_dist_requires_setup_exe(tmp_path):

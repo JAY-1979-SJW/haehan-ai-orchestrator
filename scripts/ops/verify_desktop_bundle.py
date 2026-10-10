@@ -5,8 +5,15 @@
 도구는 설정대로만 묶고 빠진 것을 알려 주지 않으므로, 앱이 실행 때 찾는 경로를 여기서 직접 확인한다.
 경로 기준은 admin-web/electron/lib/{fastapi_server,agent,nextjs_server,claude_mcp}.js 의 process.resourcesPath 사용처.
 
-사용: python scripts/ops/verify_desktop_bundle.py <win-unpacked 폴더> [--dist <산출물 폴더>]
+사용: python scripts/ops/verify_desktop_bundle.py <win-unpacked 폴더> [--dist <산출물 폴더>] [--smoke]
 종료코드: 0 = 통과, 1 = 빠진 것 있음, 2 = 사용법 오류
+
+`--smoke`(기본 꺼짐, 기존 호출 안 깨지게): exe "존재"만으론 못 잡는 결함을 추가로 본다
+(2026-10-10 실측: local-agent.exe·haehan-mcp.exe 가 정본 모듈이 빠진 shim 진입점인 채로도
+"파일이 있다"는 이유로 통과했다, W2 가 e25dd442 로 수정). local-agent.exe 는 인자 없이
+실행해 argparse usage(종료코드 2)까지 도달하는지, haehan-mcp.exe 는 stdin 을 닫고 실행해
+출력에 ModuleNotFoundError·ImportError·"Failed to execute script" 가 없는지 본다(각 30초
+타임아웃). haehan-server.exe 는 E2E(HTTP 기동까지 실제로 확인)가 다루므로 여기선 제외.
 """
 
 from __future__ import annotations
@@ -14,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -65,6 +73,50 @@ def check_resources(resources: Path) -> list[str]:
     return problems
 
 
+SMOKE_TIMEOUT_S = 30
+
+
+def check_smoke(resources: Path, run=subprocess.run) -> list[str]:
+    """`--smoke`: exe "존재"만으론 못 잡는 결함(정본 모듈 누락 등)을 실제로 한 번 실행해 본다.
+
+    local-agent.exe 는 인자 없이 실행 — argparse usage 로 바로 끝나면(종료코드 2) 정본
+    모듈이 로드된 것(모듈이 없으면 보통 트레이스백·다른 종료코드). haehan-mcp.exe 는
+    stdin 을 바로 닫고 실행(MCP 서버는 stdio 로 명령을 기다리므로 안 닫으면 걸림) —
+    출력에 ModuleNotFoundError·ImportError·"Failed to execute script"(PyInstaller 번들
+    자체 로드 실패 메시지)가 있으면 FAIL. haehan-server.exe 는 E2E 가 실제 HTTP 기동까지
+    보므로 여기선 안 본다. 두 exe 모두 없으면(이식 전 등) 조용히 넘어간다(존재 점검은
+    REQUIRED 쪼가 이미 함).
+    """
+    problems: list[str] = []
+    bad_markers = ("ModuleNotFoundError", "ImportError", "Failed to execute script")
+
+    local_agent = resources / "local-agent" / "local-agent.exe"
+    if local_agent.is_file():
+        try:
+            proc = run([str(local_agent)], capture_output=True, timeout=SMOKE_TIMEOUT_S, input=b"")
+        except subprocess.TimeoutExpired:
+            problems.append(f"local-agent.exe 가 {SMOKE_TIMEOUT_S}초 안에 안 끝남(인자 없이 실행 — argparse usage 로 바로 끝나야 함)")
+        else:
+            if proc.returncode != 2:
+                text = ((proc.stdout or b"") + (proc.stderr or b"")).decode("utf-8", errors="replace")
+                problems.append(
+                    f"local-agent.exe 가 인자 없이 실행했을 때 종료코드 2(argparse usage)가 아님: {proc.returncode} — {text[:200]!r}"
+                )
+
+    haehan_mcp = resources / "mcp" / "haehan-mcp" / "haehan-mcp.exe"
+    if haehan_mcp.is_file():
+        try:
+            proc = run([str(haehan_mcp)], capture_output=True, timeout=SMOKE_TIMEOUT_S, input=b"")
+        except subprocess.TimeoutExpired:
+            problems.append(f"haehan-mcp.exe 가 {SMOKE_TIMEOUT_S}초 안에 안 끝남(stdin 닫고 실행)")
+        else:
+            text = ((proc.stdout or b"") + (proc.stderr or b"")).decode("utf-8", errors="replace")
+            hit = [m for m in bad_markers if m in text]
+            if hit:
+                problems.append(f"haehan-mcp.exe 실행 출력에 모듈/번들 로드 실패 신호: {', '.join(hit)}")
+    return problems
+
+
 def check_dist(dist: Path) -> list[str]:
     """설치형 산출물(setup.exe)이 함께 나왔는지.
 
@@ -82,12 +134,19 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="데스크톱 설치본 내용물 점검")
     parser.add_argument("unpacked", type=Path, help="electron-builder 의 win-unpacked 폴더")
     parser.add_argument("--dist", type=Path, help="설치 파일이 나오는 산출물 폴더(주면 setup.exe·latest.yml 도 확인)")
+    parser.add_argument(
+        "--smoke",
+        action="store_true",
+        help="local-agent.exe·haehan-mcp.exe 를 실제로 한 번 실행해 정본 모듈 누락을 잡는다(기본 꺼짐, 각 30초 타임아웃)",
+    )
     args = parser.parse_args(argv)
     resources = args.unpacked / "resources"
     if not resources.is_dir():
         print(f"resources 폴더가 없음: {resources}", file=sys.stderr)
         return 2
     problems = check_resources(resources)
+    if args.smoke:
+        problems += check_smoke(resources)
     if args.dist is not None:
         problems += check_dist(args.dist)
     if problems:

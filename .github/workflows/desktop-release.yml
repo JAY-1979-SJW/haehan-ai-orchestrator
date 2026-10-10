@@ -130,8 +130,11 @@ jobs:
       - name: 설치본 내용물 점검 (빠진 파일을 E2E 전에 잡는다)
         # 빌드는 성공해도 묶을 파일이 빠질 수 있다(2026-10-08: .next/static·public 누락 → 앱이 "로딩 중"에서 멈춤).
         # 앱이 실행 때 찾는 경로를 직접 확인해 1분 안에 실패시킨다 — 40분짜리 E2E 까지 가지 않는다.
+        # --smoke: exe "존재"만으론 못 잡는 결함(local-agent.exe·haehan-mcp.exe 가 정본 모듈
+        # 누락 shim 진입점인 채로도 "파일이 있다"며 통과하던 결함, 2026-10-10 실측·W2 e25dd442)
+        # 을 실제 실행으로 잡는다.
         shell: bash
-        run: python scripts/ops/verify_desktop_bundle.py dist-electron-new/win-unpacked --dist dist-electron-new
+        run: python scripts/ops/verify_desktop_bundle.py dist-electron-new/win-unpacked --dist dist-electron-new --smoke
 
       - name: SHA256 checksums
         shell: bash
