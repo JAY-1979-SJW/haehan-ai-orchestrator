@@ -429,11 +429,25 @@ def test_full_classification_sum_equals_runtime_total():
 # ===========================================================================
 
 
-def test_router_direct_import_still_no_cycle():
+def test_router_direct_import_still_no_cycle(monkeypatch):
     """순환 import 해소 상태가 유지된다."""
     import sys
 
-    # 후속 테스트 오염 방지: purge 전 snapshot 저장 후 복원
+    from ai_orchestrator.core import config as _cfg_before_purge
+
+    # 후속 테스트 오염 방지: purge 전 snapshot 저장 후 복원.
+    #
+    # 결함 2026-10-10(DEFECTS_FLAKY.md) 진짜 원인: ai_orchestrator.auth.user_auth_router
+    # 는 import 시점 부작용으로 `register_bearer_resolver(resolve_bearer_user)` 를
+    # 호출해 tools.gates.auth 의 전역 `_bearer_resolver` 를 등록한다("ai_orchestrator"
+    # 접두사가 아닌 tools.gates.auth 는 이 purge 의 snapshot/복원 대상이 아니다). 이
+    # purge 로 user_auth_router 가 재import 되면 그 등록이 다시 실행돼, 이후 영원히
+    # "그 순간의(purge 중) config·user_db 모듈"을 들고 있는 클로저로 _bearer_resolver
+    # 가 바뀐 채 남는다 — sys.modules 복원은 모듈 객체 참조만 되돌릴 뿐 이 등록형
+    # 전역 부작용은 안 건드려서, 이후 JWT 인증 시험들이 엉뚱한 user_db 경로/비밀로
+    # 검증을 시도해 401 이 났다. JWT_SECRET 고정(아래)은 부수적 방어이고, 핵심 수정은
+    # finally 에서 원래 모듈의 resolve_bearer_user 로 재등록하는 것이다.
+    monkeypatch.setenv("JWT_SECRET", _cfg_before_purge.JWT_SECRET)
     _snapshot = {k: v for k, v in sys.modules.items() if k.startswith("ai_orchestrator")}
     for k in list(_snapshot):
         sys.modules.pop(k, None)
@@ -447,6 +461,11 @@ def test_router_direct_import_still_no_cycle():
         for k in [k for k in sys.modules if k.startswith("ai_orchestrator") and k not in _snapshot]:
             sys.modules.pop(k, None)
         sys.modules.update(_snapshot)
+
+        from ai_orchestrator.auth.user_auth_router import resolve_bearer_user
+        from tools.gates.auth import register_bearer_resolver
+
+        register_bearer_resolver(resolve_bearer_user)
 
 
 def test_health_endpoint_still_unchanged():
