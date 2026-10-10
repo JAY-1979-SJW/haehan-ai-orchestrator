@@ -31,7 +31,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.browser.cdp.connection import (  # noqa: E402 - 레거시 sys.path 조작 후 import
     get_page,
 )
-from scripts.browser.page.page_helper import (  # noqa: E402 - 레거시 sys.path 조작 후 import
+from scripts.browser.page.page_helper_common import (  # noqa: E402 - 레거시 sys.path 조작 후 import
     _CRITICAL_SITE_PATTERNS,
     is_work_category,
 )

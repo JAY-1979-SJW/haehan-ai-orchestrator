@@ -25,6 +25,7 @@ import shutil
 import subprocess
 import sys
 import threading
+from collections import Counter
 from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -100,8 +101,33 @@ def new_findings(stderr_text: str) -> list[str]:
 
 
 def finding_key(line: str) -> str:
-    """기준 트리와 변경 트리의 같은 문제를 알아보는 키: 줄 번호(`:12`)와 `(기존)` 표시를 뺀 문장."""
-    return re.sub(r":\d+", ":", line.removesuffix("(기존)").strip())
+    """기준 트리와 변경 트리의 같은 문제를 알아보는 키: 경로:줄번호(`path.py:12`)와 `(기존)` 표시를 뺀 태그+메시지.
+
+    `_hook_finding_key()` 와 같은 정규화(2026-10-08 에 그쪽만 고쳤던 것을 이쪽에도 적용, 2026-10-10):
+    파일이 이동(rename)되면 메시지 속 경로 문자열이 기준/변경 트리에서 달라져, 줄 번호만 지우던 예전 방식으론
+    같은 문제가 "새 문제"로 오탐됐다(이동 파일 ~2780건 커밋에서 실측). 경로:줄번호 토큰을 통째로 떼어내
+    태그(`[...]`)+메시지만 키로 삼는다. 같은 키의 "개수"는 호출부(verify_change.py)가 Counter 로 비교하므로
+    이 함수가 줄 번호를 지워도 "같은 메시지 2건"과 "1건"은 여전히 구별된다.
+    """
+    return re.sub(r"^(\[[^\]]+\])\s+\S+:\d+\s+", r"\1 ", line.removesuffix("(기존)").strip())
+
+
+def new_findings(head: list[str], base: list[str]) -> list[str]:
+    """`head` 중 `base` 에는 없던(개수가 넘치는) 항목만 — `finding_key()` 로 정규화한 뒤 Counter 로 비교한다.
+
+    set 이 아니라 Counter 를 쓰는 이유: 파일 이동으로 `finding_key()` 가 경로:줄번호를 지우면, 같은 메시지가
+    한 파일 안에 여러 줄(= 여러 건) 있을 때 set 비교는 "기준에 1건 있으니 변경본의 N건 전부 known"으로
+    잘못 셀 수 있다. 기준 쪽 개수만큼만 소비하고, 그 이상은 전부 새 항목으로 센다(2026-10-10).
+    """
+    remaining = Counter(finding_key(x) for x in base)
+    out = []
+    for item in head:
+        key = finding_key(item)
+        if remaining[key] > 0:
+            remaining[key] -= 1
+        else:
+            out.append(item)
+    return out
 
 
 def raw_findings(kit: list[str], path: Path, root: Path | None = None) -> list[str] | None:

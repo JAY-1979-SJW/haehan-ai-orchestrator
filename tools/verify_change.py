@@ -759,10 +759,10 @@ def _audit_kit_new_findings(
         _new_typed,
         batch_raw_findings,
         find_audit_kit,
-        finding_key,
         is_real_kit,
         mypy_keys_batch,
         mypy_python,
+        new_findings,
         raw_findings,
     )
 
@@ -823,8 +823,7 @@ def _audit_kit_new_findings(
             base: list[str] | None = []
         else:
             base = base_batch[base_rel] if base_rel in base_batch else raw_findings(kit, base_tree / base_rel, base_tree)
-        known = {finding_key(x) for x in (base or [])}
-        out = [f"{rel}: {x}" for x in head if finding_key(x) not in known]
+        out = [f"{rel}: {x}" for x in new_findings(head, base or [])]
         if py is not None:  # mypy: 기준 트리의 같은 파일(이동했으면 옛 경로)에 없던 타입 오류만
             typed, why = _new_typed(
                 head_tree / rel,
