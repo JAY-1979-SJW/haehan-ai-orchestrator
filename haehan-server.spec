@@ -19,6 +19,8 @@ import sys
 import os
 from pathlib import Path
 
+import playwright
+
 ROOT = Path(SPECPATH)
 
 block_cipher = None
@@ -189,8 +191,12 @@ datas = [
     (str(ROOT / 'scripts'), 'scripts'),
     # 루트 레벨 모듈 (logging_utils 등 ai_orchestrator가 직접 import)
     *[(str(p), '.') for p in ROOT.glob('*.py') if p.stem not in ('run_server', 'conftest')],
-    # Playwright 드라이버 (driver/package)
-    (str(Path(sys.executable).parent / 'Lib' / 'site-packages' / 'playwright' / 'driver'), 'playwright/driver'),
+    # Playwright 드라이버 (driver/package). sys.executable 기준(= Path(sys.executable).parent
+    # / 'Lib' / 'site-packages')은 venv 에서 틀린다 — venv 의 sys.executable 은
+    # Scripts\python.exe 라 그 parent 가 Scripts 지 site-packages 를 담은 폴더가 아니다
+    # (venv 로컬 빌드 리허설 2026-10-10 실측: ..\Scripts\Lib\site-packages 로 꺾여 FileNotFoundError).
+    # 패키지 자신의 설치 위치(playwright.__file__)를 기준으로 하면 venv·非venv 모두 맞다.
+    (str(Path(playwright.__file__).resolve().parent / 'driver'), 'playwright/driver'),
 ]
 
 # ── Playwright Chromium 번들 제외 (2026-09-09) ────────────────────────────────
