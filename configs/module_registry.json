@@ -9545,14 +9545,6 @@
    "confidence": "high",
    "source": "rule"
   },
-  "scripts/check_login_status.py": {
-   "layer": "L12",
-   "role": "ops_tool",
-   "domain": "common",
-   "reason": "운영·감사 도구",
-   "confidence": "high",
-   "source": "rule"
-  },
   "scripts/common/__init__.py": {
    "layer": "L4",
    "role": "generic",

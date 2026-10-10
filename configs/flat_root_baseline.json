@@ -1,8 +1,8 @@
 {
  "_comment": "최상위 평면 금지 게이트(G15) 기준선 — 이미 평면에 있던 파일(기존 부채). 늘리는 변경 금지, 하위 폴더로 옮기거나 삭제해 줄이는 방향만. 규칙: configs/flat_root_gate.json",
  "target": 0,
- "count": 37,
- "note": "병합(W2 stage/flat-root-debt-v2 -> hhwt-asm): HEAD 46 + origin 41 교집합 + browser_rpc_server.py 복구(재이동 확인으로 삭제취소) = 37",
+ "count": 36,
+ "note": "병합(W2 stage/flat-root-debt-v2 -> hhwt-asm): HEAD 46 + origin 41 교집합 + browser_rpc_server.py 복구(재이동 확인으로 삭제취소) = 37 → scripts/check_login_status.py 구경로 shim 실참조 0건(새경로 scripts/auth/check_login_status.py만 참조됨) 확인 후 삭제, 36",
  "files": [
   "ai_orchestrator/audit_logger.py",
   "ai_orchestrator/execution_limits.py",
@@ -16,7 +16,6 @@
   "scripts/browser_rpc_server.py",
   "scripts/browser_tab_monitor.py",
   "scripts/cdp_daemon.py",
-  "scripts/check_login_status.py",
   "scripts/credentials.py",
   "scripts/gate.py",
   "scripts/install_git_hooks.py",
