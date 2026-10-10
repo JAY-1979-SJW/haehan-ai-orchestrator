@@ -5,6 +5,12 @@
 import importlib as _il
 import sys as _sys
 
+from core.agent_runtime import __version__ as __version__  # 동작엔 영향 없음(아래 sys.modules
+# 교체가 실제 값을 돌려준다) — _install() 이 더블언더스코어 이름은 복사에서 빼므로(__name__ 등
+# 보호용), mypy 같은 정적 분석은 globals() 만 보고 __version__ 이 없다고 오판한다(run38009465088
+# 실측 재현: "Module 'local_agent' has no attribute '__version__'"). 정적 시야에도 보이게
+# 명시적으로 다시 내보낸다.
+
 
 def _install(real, g, mods):
     # spec_from_file_location 으로 이 파일을 직접 읽는 쪽은 sys.modules 교체를 못 본다 → 실제 속성을 복사해 준다.
