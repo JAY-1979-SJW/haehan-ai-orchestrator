@@ -389,14 +389,17 @@ data/
 
 ```bash
 # 탭 상태 확인
-python list_tabs.py [filter_domain]
+python scripts/browser_tab_monitor.py list [domain]
+python scripts/browser_tab_monitor.py count
 
 # 탭 정리
-python close_2_more.py
-
-# EUM 설계서
-python eum_docs.py
+python scripts/browser_tab_monitor.py cleanup 5
+python scripts/browser_tab_monitor.py close-domain naver.com
 ```
+
+(2026-10-10 수정: list_tabs.py·close_2_more.py·eum_docs.py 는 실존한 적 없는
+경로 — 탭 상태/정리는 위 scripts/browser_tab_monitor.py 로 대체됐고, "EUM
+설계서"에 대응하는 실행 스크립트는 없음(참고 문서는 docs/eum_design.md).)
 
 ---
 
