@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import random
 from typing import Any
 from urllib.parse import urlparse, urlunparse
@@ -444,6 +445,13 @@ def _resolve_ack(ack_waiters: dict[str, asyncio.Future[bool]], msg: dict, ok: bo
         waiter.set_result(ok)
 
 
+def _ws_once() -> bool:
+    """HAEHAN_AGENT_WS_ONCE=true — auth_ok 직후 메시지 루프를 타지 않고 세션을 바로
+    끝낸다(--once CLI 플래그 전용, agent.py 의 run_forever 호출자 쪽에서 재접속도
+    막는다). 운영(--run)은 이 환경변수를 설정하지 않아 기존 동작 그대로."""
+    return os.environ.get("HAEHAN_AGENT_WS_ONCE", "").strip().lower() in ("1", "true", "yes")
+
+
 async def _run_session(agent_id: str, device_token: str) -> None:
     """한 번의 WebSocket 세션 실행. 종료 시 재접속은 호출자가 담당."""
     websockets = _load_websockets_module()
@@ -457,6 +465,11 @@ async def _run_session(agent_id: str, device_token: str) -> None:
         **websocket_connect_kwargs(config.SERVER_BASE_URL),
     ) as ws:
         if not await _authenticate(ws, agent_id, device_token):
+            return
+
+        if _ws_once():
+            log_local_event("ws_connected", agent_id=agent_id)
+            logger.info("WebSocket auth_ok (agent_id=%s) — WS_ONCE, 메시지 루프 생략 후 종료", agent_id)
             return
 
         log_local_event("ws_connected", agent_id=agent_id)
@@ -562,6 +575,8 @@ async def run_forever(agent_id: str, device_token: str) -> None:
     while True:
         try:
             await _run_session(agent_id, device_token)
+            if _ws_once():
+                return
             # 정상 종료 — 짧은 대기 후 재연결
             backoff = 1.0
             await asyncio.sleep(1.0)
