@@ -314,6 +314,14 @@ def run_agent(server_url: str, license_key: str, retry_interval: int = 5, enable
 
 
 if __name__ == "__main__":
+    # 영문 로케일 Windows(cp1252 등)에서 stdout/stderr 가 파이프로 리다이렉트되면
+    # 콘솔 코드페이지 대신 그 로케일 기본 인코딩을 써서 한글 print 가
+    # UnicodeEncodeError 로 죽는다(2026-10-10, GitHub 데스크톱 빌드 데모 E2E 재현 —
+    # 이 PC(cp949)에선 안 드러남). reconfigure 없는 구버전/환경 대비 hasattr 가드.
+    for _stream in (sys.stdout, sys.stderr):
+        if hasattr(_stream, "reconfigure"):
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="Haehan AI 로컬 CDP 에이전트")
     parser.add_argument("--license", required=True, help="라이선스 키")
     parser.add_argument("--server", default="wss://autowork.haehan-ai.kr", help="서버 WS URL")
